@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     ],
   },
 
-  modules: ['shadcn-nuxt', '@nuxtjs/color-mode'],
+  modules: ['shadcn-nuxt', '@nuxtjs/color-mode', '@nuxt/image', '@nuxt/icon'],
   shadcn: {
     /**
      * Prefix for all the imported component
