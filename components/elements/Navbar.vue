@@ -4,14 +4,14 @@
       <div class="flex items-center justify-start">
         <img class="h-[50px]" src="/images/html/logo.png" alt="logo">
         <ul class="flex space-x-4">
-          <li><a href="#">Tumbler</a></li>
-          <li><a href="#">Powerbank</a></li>
-          <li><a href="#">Stationary</a></li>
-          <li><a href="#">Fashion</a></li>
+          <li><NuxtLink class="text-slate-400 hover:text-black" href="#">Tumbler</NuxtLink></li>
+          <li><NuxtLink class="text-slate-400 hover:text-black" href="#">Powerbank</NuxtLink></li>
+          <li><NuxtLink class="text-slate-400 hover:text-black" href="#">Stationary</NuxtLink></li>
+          <li><NuxtLink class="text-slate-400 hover:text-black" href="#">Fashion</NuxtLink></li>
         </ul>
       </div>
       <div>
-        <Button variant="destructive">Products</Button>
+        <Button variant="primary">Products</Button>
       </div>
     </div>
   </nav>
