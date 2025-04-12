@@ -13,19 +13,19 @@ const datas = [
     "id": 1,
     "src": "/images/html/tumbler.png",
     "name": "tumbler",
-    "url": "/products/tumbler"
+    "url": "/product/tumbler"
   },
   {
     "id": 2,
     "src": "/images/html/powerbank.png",
     "name": "powerbank",
-    "url": "/products/powerbank"
+    "url": "/product/powerbank"
   },
   {
     "id": 3,
     "src": "/images/html/stationary.png",
     "name": "stationary",
-    "url": "/products/stationary"
+    "url": "/product/stationary"
   },
 ]
 </script>
