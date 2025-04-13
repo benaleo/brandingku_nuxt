@@ -33,5 +33,11 @@ export default defineNuxtConfig({
     classSuffix: '-mode',
     storage: 'localStorage', // or 'sessionStorage' or 'cookie'
     storageKey: 'nuxt-color-mode'
+  },
+  runtimeConfig: {
+    apiSecret: '',
+    public: {
+      baseUrl: 'http://localhost:3000'
+    }
   }
 })
