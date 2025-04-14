@@ -140,17 +140,7 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Product Gallery -->
       <div>
-        <div class="aspect-square overflow-hidden rounded-xl mb-4">
-          <img :src="selectedImage" :alt="product.name"
-            class="w-full h-full object-cover transition-opacity duration-300" />
-        </div>
-        <div class="grid grid-cols-4 gap-3">
-          <button v-for="(image, index) in product.images" :key="index" @click="selectedImage = image"
-            class="aspect-square overflow-hidden rounded-lg border-2 transition-all"
-            :class="{ 'border-primary': image === selectedImage, 'border-transparent': image !== selectedImage }">
-            <img :src="image" :alt="`${product.name} thumbnail ${index + 1}`" class="w-full h-full object-cover" />
-          </button>
-        </div>
+        <AtomsProductThumbnail :images="product.images" :class="'sticky top-20'"/>
       </div>
 
       <!-- Product Info -->
