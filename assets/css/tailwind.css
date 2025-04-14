@@ -126,4 +126,7 @@
   .app-container {
     @apply px-4 md:px-12 max-w-[1440px] mx-auto
   }
+  .container{
+    @apply mx-auto
+  }
 }
