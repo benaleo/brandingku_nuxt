@@ -119,7 +119,7 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
 </script>
 
 <template>
-  <ElementsHeaderProduct />
+  <ElementsHeaderProduct :title="product ? product.name : 'Product'" />
   <div v-if="loading" class="container px-4 py-8 md:py-12 flex justify-center">
     <p>Loading...</p>
   </div>
@@ -265,7 +265,7 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
     </div>
 
     <!-- Related Products -->
-    <div class="mt-16 pt-12 border-t">
+    <div class="mt-16 mb-12 pt-12 border-t">
       <h2 class="text-2xl font-bold mb-8">You may also like</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <Card v-for="item in relatedProducts" :key="item.id" class="group overflow-hidden">
