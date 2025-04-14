@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full bg-green-100 p-4 md:p-12">
+  <div class="w-full bg-green-100 p-4 md:p-12 mt-12">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
       <div class="bg-slate-200 rounded-md px-4">
         <nuxt-img src="http://localhost:3000/images/html/logo.png" width="200"/>

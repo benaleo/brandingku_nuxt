@@ -102,8 +102,8 @@ onMounted(async () => {
 })
 
 const relatedProducts = [
-  { id: 2, name: "Organic Cotton T-Shirt", price: 29.99, image: "https://picsum.photos/400/400?random=2", rating: 4.2 }, 
-  { id: 3, name: "Ceramic Coffee Mug", price: 19.99, image: "https://picsum.photos/400/400?random=3", rating: 4.7 }, 
+  { id: 2, name: "Organic Cotton T-Shirt", price: 29.99, image: "https://picsum.photos/400/400?random=2", rating: 4.2 },
+  { id: 3, name: "Ceramic Coffee Mug", price: 19.99, image: "https://picsum.photos/400/400?random=3", rating: 4.7 },
   { id: 4, name: "Natural Face Cream", price: 24.99, image: "https://picsum.photos/400/400?random=4", rating: 4.3 }
 ]
 
@@ -119,37 +119,35 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
 </script>
 
 <template>
+  <ElementsHeaderProduct />
   <div v-if="loading" class="container px-4 py-8 md:py-12 flex justify-center">
     <p>Loading...</p>
   </div>
-  
+
   <div v-else-if="error" class="container px-4 py-8 md:py-12 flex justify-center">
     <p class="text-red-500">{{ error }}</p>
   </div>
-  
-  <div v-else class="container px-4 py-8 md:py-12"> 
+
+  <div v-else class="app-container">
     <!-- Breadcrumb -->
-    <div class="text-sm text-gray-500 mb-6"> 
-      <span class="hover:text-primary cursor-pointer">Home</span> / 
-      <span class="hover:text-primary cursor-pointer">Shop</span> / 
-      <span class="hover:text-primary cursor-pointer">{{ product.category }}</span> / 
-      <span class="text-primary">{{ product.name }}</span> 
+    <div class="text-sm text-gray-500 mb-6">
+      <span class="hover:text-primary cursor-pointer">Home</span> /
+      <span class="hover:text-primary cursor-pointer">Shop</span> /
+      <span class="hover:text-primary cursor-pointer">{{ product.category }}</span> /
+      <span class="text-primary">{{ product.name }}</span>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       <!-- Product Gallery -->
       <div>
         <div class="aspect-square overflow-hidden rounded-xl mb-4">
-          <img :src="selectedImage" :alt="product.name" class="w-full h-full object-cover transition-opacity duration-300" />
+          <img :src="selectedImage" :alt="product.name"
+            class="w-full h-full object-cover transition-opacity duration-300" />
         </div>
         <div class="grid grid-cols-4 gap-3">
-          <button 
-            v-for="(image, index) in product.images" 
-            :key="index" 
-            @click="selectedImage = image" 
-            class="aspect-square overflow-hidden rounded-lg border-2 transition-all" 
-            :class="{ 'border-primary': image === selectedImage, 'border-transparent': image !== selectedImage }"
-          >
+          <button v-for="(image, index) in product.images" :key="index" @click="selectedImage = image"
+            class="aspect-square overflow-hidden rounded-lg border-2 transition-all"
+            :class="{ 'border-primary': image === selectedImage, 'border-transparent': image !== selectedImage }">
             <img :src="image" :alt="`${product.name} thumbnail ${index + 1}`" class="w-full h-full object-cover" />
           </button>
         </div>
@@ -168,8 +166,12 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
         <!-- Rating -->
         <div class="mt-4 flex items-center gap-2">
           <div class="flex">
-            <svg v-for="i in 5" :key="i" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            <svg v-for="i in 5" :key="i" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+              fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-yellow-400">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+              </polygon>
             </svg>
           </div>
           <span class="text-sm text-gray-500">{{ product.rating }} ({{ product.reviews }} reviews)</span>
@@ -179,7 +181,8 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
         <div class="mt-6">
           <div class="flex items-center gap-3">
             <span class="text-3xl font-bold">${{ product.price.toFixed(2) }}</span>
-            <span v-if="product.originalPrice" class="text-lg text-gray-500 line-through">${{ product.originalPrice.toFixed(2) }}</span>
+            <span v-if="product.originalPrice" class="text-lg text-gray-500 line-through">${{
+              product.originalPrice.toFixed(2) }}</span>
             <Badge v-if="product.originalPrice" variant="destructive" class="text-sm">
               {{ Math.round((1 - product.price / product.originalPrice) * 100) }}% OFF
             </Badge>
@@ -193,13 +196,9 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
         <div v-if="product.colors && product.colors.length > 0" class="mt-8">
           <h3 class="text-sm font-medium mb-2">Color</h3>
           <div class="flex gap-2">
-            <button 
-              v-for="color in product.colors" 
-              :key="color" 
-              @click="selectedColor = color" 
-              class="px-4 py-2 border rounded-full text-sm font-medium transition-all" 
-              :class="{ 'border-primary bg-primary/10 text-primary': color === selectedColor, 'border-gray-200 hover:border-gray-300': color !== selectedColor }"
-            >
+            <button v-for="color in product.colors" :key="color" @click="selectedColor = color"
+              class="px-4 py-2 border rounded-full text-sm font-medium transition-all"
+              :class="{ 'border-primary bg-primary/10 text-primary': color === selectedColor, 'border-gray-200 hover:border-gray-300': color !== selectedColor }">
               {{ color }}
             </button>
           </div>
@@ -236,7 +235,9 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
 
         <!-- Stock Status -->
         <div class="mt-6 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="text-green-500">
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
             <line x1="9" y1="9" x2="9.01" y2="9"></line>
@@ -256,7 +257,9 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
               <p class="text-gray-700">{{ product.description }}</p>
               <ul class="mt-4 space-y-2">
                 <li v-for="(feature, index) in product.features" :key="index" class="flex items-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 mt-0.5 text-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="mr-2 mt-0.5 text-primary">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                   {{ feature }}
@@ -282,8 +285,12 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
           <CardContent class="p-4">
             <h3 class="font-medium">{{ item.name }}</h3>
             <div class="mt-2 flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="text-yellow-400">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                </polygon>
               </svg>
               <span class="text-sm">{{ item.rating }}</span>
             </div>
@@ -296,4 +303,7 @@ const decrementQuantity = () => quantity.value > 1 && quantity.value--
       </div>
     </div>
   </div>
+
+  <!-- footer -->
+  <ElementsFooter/>
 </template>

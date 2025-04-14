@@ -97,7 +97,7 @@ const viewProductDetail = (productId) => {
 </script>
 
 <template>
-  <div class="container px-4 py-8 md:py-12">
+  <div class="">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
       <h1 class="text-3xl font-bold">Shop All Products</h1>
       <div class="flex items-center gap-4">
