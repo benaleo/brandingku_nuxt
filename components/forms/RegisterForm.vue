@@ -1,26 +1,54 @@
-<template>
-  <div class="w-full min-h-[50vh] flex gap-4">
-    <div class="group relative bg-green-100 flex flex-col justify-center items-start flex-1 overflow-hidden rounded-bl-4xl">
-      <nuxt-img :src="`${config.public.BASE_URL}/images/html/register.png`" class="w-full absolute inset-0 opacity-40 group-hover:opacity-100 transition-all duration-500"/>
-      <div class="px-16 absolute z-10 text-right">
-        <div class="text-2xl font-bold px-4 group-hover:bg-white rounded-t-2xl inline td-500ms">Hello,</div>
-        <div class="text-lg font-bold px-4 group-hover:bg-white rounded-br-2xl rounded-l-2xl td-500ms"> yuk daftar sekarang menjadi mitra di brandingku!</div>
-        <div class="flex gap-4 mt-8 items-center">
-          <p class="text-xl group-hover:bg-white px-4 rounded-xl td-500ms">atau sudah punya akun ?</p>
-          <Button @click="$emit('switchTab', 'login')">Masuk</Button>
-        </div>
-      </div>
-    </div>
-    <div class="flex-1">Form Register</div>
-  </div>
-</template>
+<script setup lang="ts">
+import { Button } from '@/components/ui/button'
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
 
-<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import { h } from 'vue'
+import * as z from 'zod'
+import {toast} from "vue-sonner";
 
-const config = useRuntimeConfig()
-console.log("baseUrl " + config.public.BASE_URL)
+const formSchema = toTypedSchema(z.object({
+  username: z.string().min(2).max(50),
+}))
 
-const emit = defineEmits(['switchTab'])
+const { isFieldDirty, handleSubmit } = useForm({
+  validationSchema: formSchema,
+})
 
-const feature = ref()
+const onSubmit = handleSubmit((values) => {
+  toast.success({
+    title: 'You submitted the following values:',
+    description: h('pre', { class: 'mt-2 w-[340px] rounded-md bg-slate-950 p-4' }, h('code', { class: 'text-white' }, JSON.stringify(values, null, 2))),
+  })
+})
 </script>
+
+<template>
+  <form class="w-full space-y-6" @submit="onSubmit">
+    <FormField v-slot="{ componentField }" name="username" :validate-on-blur="!isFieldDirty">
+      <FormItem v-auto-animate>
+        <FormLabel>Username</FormLabel>
+        <FormControl>
+          <Input type="text" placeholder="shadcn" v-bind="componentField" />
+        </FormControl>
+        <FormDescription>
+          This is your public display name.
+        </FormDescription>
+        <FormMessage />
+      </FormItem>
+    </FormField>
+    <Button type="submit">
+      Submit
+    </Button>
+  </form>
+</template>
