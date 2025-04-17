@@ -3,11 +3,22 @@ import {Button} from '~/components/ui/button'
 import {h} from 'vue'
 
 export interface Product {
-    id: number
+    id: string
     name: string
+    slug: string
+    description: string
     price: number
-    stock: number
-    createdAt: string
+    discount: number
+    discount_type: string
+    quantity: number
+    thumbnail: string
+    is_recommended: boolean
+    is_upsell: boolean
+    category_name: string
+    created_at: string
+    created_by: string
+    updated_at: string
+    updated_by: string
 }
 
 let index = 1
@@ -35,14 +46,14 @@ export const productColumns: ColumnDef<Product>[] = [
         accessorKey: 'stock',
         header: 'Stok',
         cell: ({row}) => {
-            return `${row.original.stock}`
+            return `${row.original.quantity}`
         }
     },
     {
-        accessorKey: 'createdAt',
-        header: 'Tanggal Dibuat',
+        accessorKey: 'update_at',
+        header: 'Waktu Dibuat',
         cell: ({row}) => {
-            return new Date(row.original.createdAt).toLocaleDateString()
+            return new Date(row.original.updated_at).toLocaleString()
         }
     },
     {
