@@ -36,19 +36,18 @@ const handleLogin = handleSubmit(async (values) => {
   try {
     const response = await authService.login(values.email, values.password);
     tokenCookie.value = response.data.token;
-    console.log('Token:', response.data.token);
     router.push('/console/secret/dashboard');
+    toast.success('Login successful', {
+      description: 'You are now logged in',
+    })
   } catch (error) {
-    console.error('Login failed:', error);
+    // console.error('Login failed:', error);
+    toast.error('Login failed', {
+      description: 'Please check your email and password',
+    })
   }
 })
 
-const onSubmit = handleSubmit((values) => {
-  toast.success({
-    title: 'You submitted the following values:',
-    description: h('pre', { class: 'mt-2 w-[340px] rounded-md bg-slate-950 p-4' }, h('code', { class: 'text-white' }, JSON.stringify(values, null, 2))),
-  })
-})
 </script>
 
 <template>
