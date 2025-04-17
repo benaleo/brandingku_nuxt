@@ -13,7 +13,7 @@
       <div v-else-if="hasProducts">
         <DatatablesDataTable
             :columns="productColumns"
-            :data="productList"
+            :data="productList || []"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
@@ -55,13 +55,17 @@ const paginationData = computed(() => ({
   total: pagination.value.total
 }))
 
-const onPageChange = (page) => {
+const onPageChange = (page : number) => {
   changePage(page)
 }
 
-const onLimitChange = (limit) => {
+const onLimitChange = (limit : number) => {
   changeLimit(limit)
 }
+
+useHead({
+  title: 'Produk',
+})
 
 definePageMeta({
   layout: 'console-secret'

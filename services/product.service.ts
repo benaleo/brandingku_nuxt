@@ -38,6 +38,8 @@ export const useProductService = () => {
         loading,
         error,
         pagination,
-        getProducts
+        getProducts,
+        changePage,
+        changeLimit
     }
 }
