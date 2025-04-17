@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import {ref} from 'vue';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
-import AuthLoginTabs from "~/components/elements/AuthLoginTabs.vue";
-import AuthRegisterTabs from "~/components/elements/AuthRegisterTabs.vue";
+import AuthLoginTabs from "~/components/layouts/AuthLoginTabs.vue";
+import AuthRegisterTabs from "~/components/layouts/AuthRegisterTabs.vue";
 
 const activeTab = ref('login')
 

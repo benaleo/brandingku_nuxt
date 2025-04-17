@@ -1,6 +1,6 @@
 <template>
   <div>
-    Dashboard
+    Product Category
   </div>
 </template>
 

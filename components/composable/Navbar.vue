@@ -2,7 +2,7 @@
   <nav class="fixed top-5 left-1/2 transform -translate-x-1/2 z-10 hidden md:block">
     <div class="overflow-hidden w-full md:w-[90vw] h-[60px] px-2 md:px-4 bg-yellow-50 rounded-md shadow md:sticky top-0 flex justify-between items-center">
       <div class="flex items-center justify-start">
-        <NuxtLink to="/">
+        <NuxtLink to="/public">
           <img class="h-[50px]" src="/images/html/logo.png" alt="logo">
         </NuxtLink>
         <ul class="flex space-x-4">
