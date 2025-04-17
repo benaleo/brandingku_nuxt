@@ -33,20 +33,20 @@ import {computed} from 'vue'
 import {productCategoryColumns} from "~/components/datatables/productCategoryColumns";
 
 const {
-  products,
+  datas,
   loading,
   error,
   pagination,
   changePage,
   changeLimit
-} = useProductService()
+} = useProductCategoryService()
 
 const hasProducts = computed(() => {
-  return Array.isArray(products.value) && products.value.length > 0
+  return Array.isArray(datas.value) && datas.value.length > 0
 })
 
 const productList = computed(() => {
-  return products.value || []
+  return datas.value || []
 })
 
 const paginationData = computed(() => ({

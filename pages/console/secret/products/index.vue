@@ -1,7 +1,6 @@
 <template>
   <div>
     <AppBreadcrumb/>
-    <h1 class="text-2xl font-bold mt-4">Produk</h1>
 
     <div class="mt-6">
       <div v-if="loading" class="text-center py-4">
@@ -11,9 +10,10 @@
         {{ error }}
       </div>
       <div v-else-if="hasProducts">
+        <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
         <DatatablesDataTable
             :columns="productColumns"
-            :data="productList || []"
+            :data="dataList || []"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
@@ -31,9 +31,10 @@ import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
 import {productColumns} from '~/components/datatables/productColumns'
 import {useProductService} from '~/services/product.service'
 import {computed} from 'vue'
+import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 
 const {
-  products,
+  datas,
   loading,
   error,
   pagination,
@@ -42,11 +43,11 @@ const {
 } = useProductService()
 
 const hasProducts = computed(() => {
-  return Array.isArray(products.value) && products.value.length > 0
+  return Array.isArray(datas.value) && datas.value.length > 0
 })
 
-const productList = computed(() => {
-  return products.value || []
+const dataList = computed(() => {
+  return datas.value || []
 })
 
 const paginationData = computed(() => ({
@@ -55,16 +56,18 @@ const paginationData = computed(() => ({
   total: pagination.value.total
 }))
 
-const onPageChange = (page : number) => {
+const onPageChange = (page: number) => {
   changePage(page)
 }
 
-const onLimitChange = (limit : number) => {
+const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
 
+const pageTitle = 'Produk';
+
 useHead({
-  title: 'Produk',
+  title: pageTitle,
 })
 
 definePageMeta({

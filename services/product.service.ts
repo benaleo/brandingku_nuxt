@@ -34,7 +34,7 @@ export const useProductService = () => {
     }
 
     return {
-        products: data,
+        datas: data,
         loading,
         error,
         pagination,
