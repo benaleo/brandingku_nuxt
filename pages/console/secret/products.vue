@@ -12,11 +12,11 @@
       </div>
       <div v-else-if="hasProducts">
         <DatatablesDataTable
-          :columns="productColumns"
-          :data="productList"
-          :pagination="paginationData"
-          @page-change="changePage"
-          @limit-change="changeLimit"
+            :columns="productColumns"
+            :data="productList"
+            :pagination="paginationData"
+            @page-change="changePage"
+            @limit-change="changeLimit"
         />
       </div>
       <div v-else class="text-center py-4">
@@ -28,13 +28,13 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import { productColumns } from '~/components/datatables/product/columns'
-import { useProductService } from '~/services/product.service'
-import { computed } from 'vue'
+import {productColumns} from '~/components/datatables/product/columns'
+import {useProductService} from '~/services/product.service'
+import {computed} from 'vue'
 
-const { 
-  products, 
-  loading, 
+const {
+  products,
+  loading,
   error,
   pagination,
   changePage,
