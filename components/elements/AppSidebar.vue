@@ -12,12 +12,18 @@ import {
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { ChevronDown, Home, LayoutDashboard, Package, Layers } from 'lucide-vue-next'
 import { secretConsoleMenu } from '~/utils/list.menu'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const iconComponents = {
   Home,
   LayoutDashboard,
   Product: Package,
   'Produk Kategori': Layers
+}
+
+const isActive = (href: string) => {
+  return route.path === href || route.path.startsWith(href)
 }
 </script>
 
@@ -50,6 +56,7 @@ const iconComponents = {
                     <NuxtLink 
                       :to="item.href" 
                       class="flex items-center gap-2 px-4 py-2"
+                      :class="{ 'bg-green-200': isActive(item.href) }"
                     >
                       <component 
                         v-if="item.icon" 
