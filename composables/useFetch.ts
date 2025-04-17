@@ -2,6 +2,23 @@ import type {Ref} from 'vue'
 import {useCookie} from '#app'
 import {useRouter} from 'vue-router'
 
+export interface ApiResponse<T> {
+    success: boolean;
+    message: string;
+    data: T;
+}
+
+export interface PaginatedResponse<T> {
+    result: T[];
+    currentPage: number;
+    prevPage: number | null;
+    nextPage: number | null;
+    firstPage: number;
+    lastPage: number | null;
+    perPage: number;
+    totalItems: number;
+}
+
 export const useFetch = <T>(url: string, options: {
     isResult?: boolean
     dynamicParam?: string
@@ -18,14 +35,15 @@ export const useFetch = <T>(url: string, options: {
 
     const pagination = ref({
         page: options.initialPage || 0,
-        limit: options.initialLimit || 10
+        limit: options.initialLimit || 10,
+        total: 0
     })
 
     const fetchData = async () => {
         let apiUrl = url
 
         // Handle dynamic params
-        if (options.isResult && options.dynamicParam) {
+        if (options.dynamicParam) {
             apiUrl = apiUrl.replace(`{${options.dynamicParam}}`, options.dynamicParam)
         }
 
@@ -38,7 +56,7 @@ export const useFetch = <T>(url: string, options: {
 
         try {
             loading.value = true
-            const response = await $fetch<T>(apiUrl, {
+            const response = await $fetch<ApiResponse<options['isResult'] extends true ? PaginatedResponse<T> : T>>(apiUrl, {
                 headers: {
                     'accept': '*/*',
                     'Authorization': token.value ? `Bearer ${token.value}` : ''
@@ -48,9 +66,22 @@ export const useFetch = <T>(url: string, options: {
             if ((response as any)?.status === 403) {
                 token.value = null
                 router.push('/login')
+                return
             }
 
-            data.value = options.isResult ? (response as any)?.data?.result : response
+            if (!response.success) {
+                error.value = response.message
+                return
+            }
+
+            if (options.isResult) {
+                const paginatedData = response.data as PaginatedResponse<T>
+                data.value = paginatedData.result as any
+                pagination.value.total = paginatedData.totalItems
+                pagination.value.page = paginatedData.currentPage
+            } else {
+                data.value = response.data as any
+            }
         } catch (err: any) {
             error.value = err.message
         } finally {
@@ -59,9 +90,10 @@ export const useFetch = <T>(url: string, options: {
         }
     }
 
-    const reFetch = () => {
+    const reFetch = async () => {
         refetching.value = true
-        fetchData()
+        await fetchData()
+        return data.value
     }
 
     const changePage = (newPage: number) => {

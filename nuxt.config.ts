@@ -37,7 +37,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiSecret: '',
     public: {
-      BASE_URL: 'http://localhost:3000'
+      BASE_URL: 'http://localhost:3000',
+      API_URL: 'http://localhost:8080'
     }
   }
 })

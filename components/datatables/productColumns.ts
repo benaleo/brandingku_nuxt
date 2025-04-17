@@ -1,5 +1,6 @@
-import type {ColumnDef} from '@tanstack/vue-table'
-import {Button} from '@/components/ui/button'
+import type {ColumnDef, Header, Row} from '@tanstack/vue-table'
+import {Button} from '~/components/ui/button'
+import {h} from 'vue'
 
 export interface Product {
     id: number
@@ -9,10 +10,15 @@ export interface Product {
     createdAt: string
 }
 
+let index = 1
+
 export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
+        cell: () => {
+            return index++
+        }
     },
     {
         accessorKey: 'name',
@@ -28,6 +34,9 @@ export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'stock',
         header: 'Stok',
+        cell: ({row}) => {
+            return `${row.original.stock}`
+        }
     },
     {
         accessorKey: 'createdAt',
@@ -38,13 +47,8 @@ export const productColumns: ColumnDef<Product>[] = [
     },
     {
         id: 'actions',
-        cell: ({row}) => {
-            return h(Button, {
-                variant: 'ghost',
-                onClick: () => {
-                    // Handle action
-                }
-            }, 'Edit')
+        cell: () => {
+            return h(Button, {variant: 'destructive'}, {default: () => 'Hapus'})
         }
     }
 ]

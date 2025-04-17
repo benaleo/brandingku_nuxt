@@ -15,8 +15,8 @@
             :columns="productColumns"
             :data="productList"
             :pagination="paginationData"
-            @page-change="changePage"
-            @limit-change="changeLimit"
+            @page-change="onPageChange"
+            @limit-change="onLimitChange"
         />
       </div>
       <div v-else class="text-center py-4">
@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import {productColumns} from '~/components/datatables/product/columns'
+import {productColumns} from '~/components/datatables/productColumns'
 import {useProductService} from '~/services/product.service'
 import {computed} from 'vue'
 
@@ -42,7 +42,7 @@ const {
 } = useProductService()
 
 const hasProducts = computed(() => {
-  return products.value?.length > 0
+  return Array.isArray(products.value) && products.value.length > 0
 })
 
 const productList = computed(() => {
@@ -52,8 +52,16 @@ const productList = computed(() => {
 const paginationData = computed(() => ({
   page: pagination.value.page,
   limit: pagination.value.limit,
-  total: products.value?.length || 0
+  total: pagination.value.total
 }))
+
+const onPageChange = (page) => {
+  changePage(page)
+}
+
+const onLimitChange = (limit) => {
+  changeLimit(limit)
+}
 
 definePageMeta({
   layout: 'console-secret'

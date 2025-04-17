@@ -1,8 +1,11 @@
-import type {Product} from '~/types/product'
-import type {Pagination} from '~/types/pagination'
 import {useFetch} from '~/composables/useFetch'
+import type {Product} from "~/components/datatables/productColumns";
 
 export const useProductService = () => {
+    const config = useRuntimeConfig()
+    const BASE_URL = config.public.API_URL
+    const url = `${BASE_URL}/cms/v1/product`
+
     const {
         data,
         loading,
@@ -11,7 +14,7 @@ export const useProductService = () => {
         changePage,
         changeLimit,
         reFetch
-    } = useFetch<Pagination<Product>>('http://localhost:8080/cms/v1/product', {
+    } = useFetch<Product>(url, {
         isResult: true,
         initialPage: 0,
         initialLimit: 10
