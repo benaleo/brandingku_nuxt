@@ -29,12 +29,12 @@ export const secretConsoleMenu: MenuGroup[] = [
             {
                 name: 'Produk',
                 icon: 'Home',
-                href: '/console/secret/product'
+                href: '/console/secret/products'
             },
             {
                 name: 'Produk Kategori',
                 icon: 'Home',
-                href: '/console/secret/product-category'
+                href: '/console/secret/product-categories'
             },
 
         ]

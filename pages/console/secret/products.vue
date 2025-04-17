@@ -1,10 +1,14 @@
 <template>
   <div>
+    <AppBreadcrumb/>
+    <h1 class="text-2xl font-bold mt-4">Produk</h1>
     Product
   </div>
 </template>
 
 <script setup>
+import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue";
+
 definePageMeta({
   layout: 'console-secret'
 })
