@@ -1,8 +1,6 @@
 <template>
   <div>
     <AppBreadcrumb/>
-    <h1 class="text-2xl font-bold mt-4">{{ pageTitle }}</h1>
-
     <div class="mt-6">
       <div v-if="loading" class="text-center py-4">
         Loading products...
@@ -11,6 +9,7 @@
         {{ error }}
       </div>
       <div v-else-if="hasProducts">
+        <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/product-categories/add'"/>
         <DatatablesDataTable
             :columns="productCategoryColumns"
             :data="productList || []"
@@ -28,9 +27,10 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import {useProductService} from '~/services/product.service'
 import {computed} from 'vue'
 import {productCategoryColumns} from "~/components/datatables/productCategoryColumns";
+import {useProductCategoryService} from "~/services/product-category.service";
+import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 
 const {
   datas,

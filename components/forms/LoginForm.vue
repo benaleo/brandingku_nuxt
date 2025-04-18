@@ -1,24 +1,16 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/button'
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { vAutoAnimate } from '@formkit/auto-animate/vue'
+import {Button} from '@/components/ui/button'
+import {FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form'
+import {Input} from '@/components/ui/input'
+import {vAutoAnimate} from '@formkit/auto-animate/vue'
 
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
-import { h } from 'vue'
+import {toTypedSchema} from '@vee-validate/zod'
+import {useForm} from 'vee-validate'
 import * as z from 'zod'
 import {toast} from "vue-sonner";
 import authService from '~/services/auth.service';
-import { useRouter } from 'vue-router';
-import { useCookie } from '#app';
+import {useRouter} from 'vue-router';
+import {useCookie} from '#app';
 
 const router = useRouter();
 const tokenCookie = useCookie('token');
@@ -28,7 +20,7 @@ const formSchema = toTypedSchema(z.object({
   password: z.string().min(8),
 }))
 
-const { isFieldDirty, handleSubmit } = useForm({
+const {isFieldDirty, handleSubmit} = useForm({
   validationSchema: formSchema,
 })
 
@@ -56,24 +48,24 @@ const handleLogin = handleSubmit(async (values) => {
       <FormItem v-auto-animate>
         <FormLabel>Email</FormLabel>
         <FormControl>
-          <Input type="email" placeholder="user@example.com" v-bind="componentField" />
+          <Input type="email" placeholder="user@example.com" v-bind="componentField"/>
         </FormControl>
         <FormDescription>
           Your email address.
         </FormDescription>
-        <FormMessage />
+        <FormMessage/>
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="password" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>
         <FormLabel>Password</FormLabel>
         <FormControl>
-          <Input type="password" placeholder="password" v-bind="componentField" />
+          <Input type="password" placeholder="password" v-bind="componentField"/>
         </FormControl>
         <FormDescription>
           Your password.
         </FormDescription>
-        <FormMessage />
+        <FormMessage/>
       </FormItem>
     </FormField>
     <Button type="submit">

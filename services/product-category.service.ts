@@ -33,12 +33,37 @@ export const useProductCategoryService = () => {
         return reFetch();
     }
 
+    const createProductCategory = async (payload: {
+        name: string
+        slug: string
+        description: string
+    }) => {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+
+        if (!response.ok) {
+            const error = await response.json()
+            throw error
+        }
+
+        const data = await response.json()
+        return data
+    }
+
     return {
-        products: data,
+        datas: data,
         loading,
         error,
         pagination,
         getProductsCategory,
+        createProductCategory,
         changePage,
         changeLimit
     }
