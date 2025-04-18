@@ -41,7 +41,7 @@ const {
   changePage,
   changeLimit,
   deleteProductCategoryById
-} = useProductCategoryService()
+} = useProductCategoryService(true)
 
 const productList = computed(() => {
   return datas.value || []

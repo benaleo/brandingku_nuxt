@@ -12,3 +12,12 @@ export function getPathWithoutIdViewAndEdit(pathname: string): string {
     }
     return pathname;
 }
+
+export function getIdFromPath(pathname: string): string {
+    const paths = pathname.split('/');
+    const lastSegment = paths[paths.length - 1];
+    if (lastSegment === 'detail' || lastSegment === 'edit') {
+        return paths[paths.length - 2];
+    }
+    return '';
+}

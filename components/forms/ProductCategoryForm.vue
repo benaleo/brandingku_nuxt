@@ -11,12 +11,18 @@ import * as z from 'zod'
 import {onMounted, ref, watch} from 'vue'
 import {toast} from "vue-sonner";
 import {useProductCategoryService} from '~/services/product-category.service'
-import {getPathWithoutAdd, getPathWithoutIdViewAndEdit} from "~/utils/global.utils";
+import {getIdFromPath, getPathWithoutAdd, getPathWithoutIdViewAndEdit} from "~/utils/global.utils";
 import {useRouter} from 'vue-router'
 
-const productCategoryService = useProductCategoryService()
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
+const id = getIdFromPath(router.currentRoute.value.path)
+const {
+  datas,
+  loading,
+  error,
+  reFetch
+} = useProductCategoryService(false, id)
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
@@ -33,22 +39,22 @@ const slug = ref('')
 const description = ref('')
 const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
+let isApiUpdate = false
 
-// Fetch detail if isCreate and route has an id param
-onMounted(async () => {
-  if (!isCreate && router.currentRoute.value.params.id) {
-    try {
-      console.log("fetch detail")
-      const { getProductCategoryById } = productCategoryService
-      const detail = await getProductCategoryById(router.currentRoute.value.params.id as string)
-      name.value = detail.name
-      slug.value = detail.slug
-      description.value = detail.description
-    } catch (error) {
-      toast.error('Failed to load product category detail')
+// Watch for API data load and set fields when available
+watch(
+  [loading, datas],
+  ([loadingVal, datasVal]) => {
+    if (!isCreate && !loadingVal && datasVal) {
+      isApiUpdate = true
+      name.value = datasVal.name || ''
+      slug.value = datasVal.slug || ''
+      description.value = datasVal.description || ''
+      isApiUpdate = false
     }
-  }
-})
+  },
+  { immediate: true }
+)
 
 const updateSlugFromName = (nameValue: string | undefined) => {
   if (!nameValue) {
@@ -62,13 +68,13 @@ const updateSlugFromName = (nameValue: string | undefined) => {
 }
 
 watch(name, (newVal) => {
-  updateSlugFromName(newVal)
+  if (!isApiUpdate) updateSlugFromName(newVal)
 })
 
 const handleSubmitForm = handleSubmit(async (values) => {
   try {
     console.log(values)
-    await productCategoryService.createProductCategory(values)
+    await useProductCategoryService().createProductCategory(values)
     router.push(getPathWithoutAdd(currentPath))
     toast.success('Product category created successfully!')
   } catch (error) {
@@ -93,12 +99,13 @@ const handleBack = () => {
         <FormLabel>Name</FormLabel>
         <FormControl>
           <Input
-            type="text"
-            placeholder="Enter name"
-            v-model="name"
-            v-bind="componentField"
-            :disabled
-            @input="(e: any) => updateSlugFromName(e.target.value)"
+              type="text"
+              placeholder="Enter name"
+              v-model="name"
+              v-bind="componentField"
+              :value="name"
+              :disabled
+              @input="(e: any) => updateSlugFromName(e.target.value)"
           />
         </FormControl>
         <FormMessage/>

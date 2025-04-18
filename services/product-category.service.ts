@@ -1,10 +1,11 @@
 import {useFetch} from '~/composables/useFetch'
 import type {ProductCategory} from "~/components/datatables/productCategoryColumns";
 
-export const useProductCategoryService = () => {
+export const useProductCategoryService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
-    const url = `${BASE_URL}/cms/v1/product-category`
+    const url = `${BASE_URL}/cms/v1/product-category${dataId ? `/${dataId}` : ''}`
+    console.log("url fetch is ", url)
 
     const {
         data,
@@ -15,7 +16,8 @@ export const useProductCategoryService = () => {
         changeLimit,
         reFetch
     } = useFetch<ProductCategory>(url, {
-        isResult: true,
+        isResult: fetchResult,
+        dynamicParam: dataId ? url : null,
         initialPage: 0,
         initialLimit: 10
     })
@@ -73,31 +75,16 @@ export const useProductCategoryService = () => {
         return await response.json()
     }
 
-    const getProductCategoryById = async (id: string) => {
-        const response = await fetch(`${url}/${id}`, {
-            method: 'GET',
-            headers: {
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
-            }
-        })
-        if (!response.ok) {
-            const error = await response.json()
-            throw error
-        }
-        return await response.json() as ProductCategory
-    }
-
     return {
         datas: data,
         loading,
         error,
         pagination,
+        reFetch,
         getProductsCategory,
         createProductCategory,
         changePage,
         changeLimit,
-        deleteProductCategoryById,
-        getProductCategoryById
+        deleteProductCategoryById
     }
 }

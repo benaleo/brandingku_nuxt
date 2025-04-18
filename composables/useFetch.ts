@@ -21,10 +21,11 @@ export interface PaginatedResponse<T> {
 
 export const useFetch = <T>(url: string, options: {
     isResult?: boolean
-    dynamicParam?: string
+    dynamicParam?: string | null
     initialPage?: number
     initialLimit?: number
 }) => {
+    console.log("Running useFetch")
     const token = useCookie('token')
     const router = useRouter()
 
@@ -40,6 +41,7 @@ export const useFetch = <T>(url: string, options: {
     })
 
     const fetchData = async () => {
+        console.log("Running fetchData")
         let apiUrl = url
 
         // Handle dynamic params
@@ -56,7 +58,9 @@ export const useFetch = <T>(url: string, options: {
 
         try {
             loading.value = true
-            const response = await $fetch<ApiResponse<options['isResult'] extends true ? PaginatedResponse<T> : T>>(apiUrl, {
+            const response = await $fetch<ApiResponse<
+                typeof options.isResult extends true ? PaginatedResponse<T> : T
+            >>(apiUrl, {
                 headers: {
                     'accept': '*/*',
                     'Authorization': token.value ? `Bearer ${token.value}` : ''
@@ -79,8 +83,11 @@ export const useFetch = <T>(url: string, options: {
                 data.value = paginatedData.result as any
                 pagination.value.total = paginatedData.totalItems
                 pagination.value.page = paginatedData.currentPage
+                console.log("data pagination is ", data.value)
             } else {
+                console.log("dynamic param is ", options.dynamicParam)
                 data.value = response.data as any
+                console.log("data non result is ", data.value)
             }
         } catch (err: any) {
             error.value = err.message

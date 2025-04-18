@@ -1,9 +1,6 @@
 import type {ColumnDef} from '@tanstack/vue-table'
-import {h} from "vue";
+import {h, ref} from "vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
-
-// Remove unused TableMeta augmentation to resolve TS error
-
 
 export type ProductCategory = {
     id: string
@@ -16,14 +13,14 @@ export type ProductCategory = {
     description: string
 }
 
-let index = 1
+let indexRef = 1
 
 export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
         cell: () => {
-            return index++
+            return indexRef++
         }
     },
     {
