@@ -8,10 +8,10 @@ import {vAutoAnimate} from '@formkit/auto-animate/vue'
 import {toTypedSchema} from '@vee-validate/zod'
 import {useForm} from 'vee-validate'
 import * as z from 'zod'
-import {onMounted, ref, watch} from 'vue'
+import {ref, watch} from 'vue'
 import {toast} from "vue-sonner";
 import {useProductCategoryService} from '~/services/product-category.service'
-import {getIdFromPath, getPathWithoutAdd, getPathWithoutIdViewAndEdit} from "~/utils/global.utils";
+import {getIdFromPath, getPathWithoutIdInForm} from "~/utils/global.utils";
 import {useRouter} from 'vue-router'
 
 const router = useRouter()
@@ -43,17 +43,17 @@ let isApiUpdate = false
 
 // Watch for API data load and set fields when available
 watch(
-  [loading, datas],
-  ([loadingVal, datasVal]) => {
-    if (!isCreate && !loadingVal && datasVal) {
-      isApiUpdate = true
-      name.value = datasVal.name || ''
-      slug.value = datasVal.slug || ''
-      description.value = datasVal.description || ''
-      isApiUpdate = false
-    }
-  },
-  { immediate: true }
+    [loading, datas],
+    ([loadingVal, datasVal]) => {
+      if (!isCreate && !loadingVal && datasVal) {
+        isApiUpdate = true
+        name.value = datasVal.name || ''
+        slug.value = datasVal.slug || ''
+        description.value = datasVal.description || ''
+        isApiUpdate = false
+      }
+    },
+    {immediate: true}
 )
 
 const updateSlugFromName = (nameValue: string | undefined) => {
@@ -74,9 +74,14 @@ watch(name, (newVal) => {
 const handleSubmitForm = handleSubmit(async (values) => {
   try {
     console.log(values)
-    await useProductCategoryService().createProductCategory(values)
-    router.push(getPathWithoutAdd(currentPath))
-    toast.success('Product category created successfully!')
+    if (isCreate) {
+      await useProductCategoryService().createProductCategory(values)
+      toast.success('Product category created successfully!')
+    } else {
+      await useProductCategoryService().updateProductCategoryById(id, values)
+      toast.success('Product category updated successfully!')
+    }
+    router.push(getPathWithoutIdInForm(currentPath))
   } catch (error) {
     toast.error('Failed to create product category')
     console.error(error)
@@ -84,11 +89,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
 })
 
 const handleBack = () => {
-  if (currentPath.includes("/detail") || currentPath.includes("/edit")) {
-    router.push(getPathWithoutIdViewAndEdit(currentPath))
-  } else {
-    router.push(getPathWithoutAdd(currentPath))
-  }
+  router.push(getPathWithoutIdInForm(currentPath))
 }
 </script>
 

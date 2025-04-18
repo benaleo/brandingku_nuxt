@@ -51,12 +51,27 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         })
 
         if (!response.ok) {
-            const error = await response.json()
-            throw error
+            throw await response.json()
         }
 
-        const data = await response.json()
-        return data
+        return await response.json()
+    }
+
+    // General UPDATE function
+    const updateProductCategoryById = async (id: string, payload: any) => {
+        const response = await fetch(`${url}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            throw await response.json()
+        }
+        return await response.json()
     }
 
     // General DELETE function
@@ -83,6 +98,7 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         reFetch,
         getProductsCategory,
         createProductCategory,
+        updateProductCategoryById,
         changePage,
         changeLimit,
         deleteProductCategoryById
