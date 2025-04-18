@@ -90,6 +90,22 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         return await response.json()
     }
 
+    // Update Image
+    const updateProductCategoryImage = async (id: string, payload: FormData) => {
+        const response = await fetch(`${url}/${id}/image`, {
+            method: 'PUT',
+            body: payload,
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            throw await response.json()
+        }
+        return await response.json()
+    }
+
     return {
         datas: data,
         loading,
@@ -99,6 +115,7 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         getProductsCategory,
         createProductCategory,
         updateProductCategoryById,
+        updateProductCategoryImage,
         changePage,
         changeLimit,
         deleteProductCategoryById

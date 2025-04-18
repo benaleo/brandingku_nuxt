@@ -14,7 +14,7 @@
             :columns="productCategoryColumns"
             :data="productList || []"
             :pagination="pagination"
-            :meta="{ handleDelete }"
+            :meta="{ handleDelete, handleImageUpdate }"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
         />
@@ -40,7 +40,9 @@ const {
   pagination,
   changePage,
   changeLimit,
-  deleteProductCategoryById
+  deleteProductCategoryById,
+  updateProductCategoryImage,
+  reFetch
 } = useProductCategoryService(true)
 
 const productList = computed(() => {
@@ -64,6 +66,21 @@ const handleDelete = async (id: string) => {
   } catch (error) {
     console.error('Error deleting product category:', error)
     toast.error('Gagal menghapus data')
+  }
+}
+
+const handleImageUpdate = async (id: string, file: File) => {
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    await updateProductCategoryImage(id, formData)
+    
+    toast.success('Berhasil mengupdate gambar')
+    await reFetch()
+  } catch (error) {
+    console.error('Error updating product category image:', error)
+    toast.error('Gagal mengupdate gambar')
   }
 }
 

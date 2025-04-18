@@ -1,6 +1,8 @@
 import type {ColumnDef} from '@tanstack/vue-table'
-import {h, ref} from "vue";
+import {h} from "vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
+import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
+import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 
 export type ProductCategory = {
     id: string
@@ -24,6 +26,16 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         }
     },
     {
+        accessorKey: 'image',
+        header: () => h('div', {class: 'text-left'}, 'Image'),
+        cell: ({row}) => {
+            const src: string = row.getValue('image') ?? '/images/no-image.jpg'
+            return h('div', {class: 'flex items-ceter justify-center overflow-hidden h-16'}, [
+                h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-h-16 object-cover'})
+            ])
+        },
+    },
+    {
         accessorKey: 'name',
         header: () => h('div', {class: 'text-left'}, 'Nama'),
         cell: ({row}) => {
@@ -41,15 +53,20 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         id: 'actions',
         enableHiding: false,
         cell: ({row, table}) => {
-            // Get handleDelete from table meta (provided by parent component)
             const data = row.original;
             const handleDelete = table.options.meta?.handleDelete;
-            
-            return h('div', {class: 'relative'}, h(GeneralColumnAction, {
-                data,
-                isDelete: true,
-                handleDelete: () => handleDelete?.(data.id)
-            }));
+            const handleImageUpdate = table.options.meta?.handleImageUpdate;
+
+            return h('div', {class: 'relative'}, [
+                h(GeneralColumnAction, {
+                    data,
+                    isDelete: true,
+                    handleDelete: () => handleDelete?.(data.id)
+                }),
+                h(ActionImageUpdate, {
+                    handleUpdate: (file: File) => handleImageUpdate?.(data.id, file)
+                })
+            ]);
         }
     },
 ]
