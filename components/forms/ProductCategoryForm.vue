@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {Button} from '@/components/ui/button'
-import {FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form'
+import {FormControl, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form'
 import {Input} from '@/components/ui/input'
 import {Textarea} from '@/components/ui/textarea'
 import {vAutoAnimate} from '@formkit/auto-animate/vue'
@@ -8,13 +8,15 @@ import {vAutoAnimate} from '@formkit/auto-animate/vue'
 import {toTypedSchema} from '@vee-validate/zod'
 import {useForm} from 'vee-validate'
 import * as z from 'zod'
-import {ref, watch} from 'vue'
+import {onMounted, ref, watch} from 'vue'
 import {toast} from "vue-sonner";
 import {useProductCategoryService} from '~/services/product-category.service'
-import {getPathWithoutAdd} from "~/utils/global.utils";
+import {getPathWithoutAdd, getPathWithoutIdViewAndEdit} from "~/utils/global.utils";
+import {useRouter} from 'vue-router'
 
 const productCategoryService = useProductCategoryService()
 const router = useRouter()
+const currentPath = router.currentRoute.value.path
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
@@ -28,16 +30,35 @@ const {isFieldDirty, handleSubmit} = useForm({
 
 const name = ref('')
 const slug = ref('')
+const description = ref('')
+const disabled = currentPath.includes("/detail")
+const isCreate = currentPath.includes("/add")
 
-const updateSlugFromName = (nameValue : string) => {
-  console.log('Input value:', nameValue)
-  const newSlug = nameValue
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_]/g, '')
-  console.log('Transformed slug:', newSlug)
-  slug.value = newSlug
-  console.log('Current slug ref:', slug.value)
+// Fetch detail if isCreate and route has an id param
+onMounted(async () => {
+  if (!isCreate && router.currentRoute.value.params.id) {
+    try {
+      console.log("fetch detail")
+      const { getProductCategoryById } = productCategoryService
+      const detail = await getProductCategoryById(router.currentRoute.value.params.id as string)
+      name.value = detail.name
+      slug.value = detail.slug
+      description.value = detail.description
+    } catch (error) {
+      toast.error('Failed to load product category detail')
+    }
+  }
+})
+
+const updateSlugFromName = (nameValue: string | undefined) => {
+  if (!nameValue) {
+    slug.value = ''
+    return
+  }
+  slug.value = nameValue
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
 }
 
 watch(name, (newVal) => {
@@ -48,13 +69,21 @@ const handleSubmitForm = handleSubmit(async (values) => {
   try {
     console.log(values)
     await productCategoryService.createProductCategory(values)
-    router.push(getPathWithoutAdd(router.currentRoute.value.path))
+    router.push(getPathWithoutAdd(currentPath))
     toast.success('Product category created successfully!')
   } catch (error) {
     toast.error('Failed to create product category')
     console.error(error)
   }
 })
+
+const handleBack = () => {
+  if (currentPath.includes("/detail") || currentPath.includes("/edit")) {
+    router.push(getPathWithoutIdViewAndEdit(currentPath))
+  } else {
+    router.push(getPathWithoutAdd(currentPath))
+  }
+}
 </script>
 
 <template>
@@ -68,6 +97,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
             placeholder="Enter name"
             v-model="name"
             v-bind="componentField"
+            :disabled
             @input="(e: any) => updateSlugFromName(e.target.value)"
           />
         </FormControl>
@@ -78,7 +108,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
       <FormItem v-auto-animate>
         <FormLabel>Slug</FormLabel>
         <FormControl>
-          <Input type="text" placeholder="Enter slug" v-model="slug" v-bind="componentField" :value="slug"/>
+          <Input type="text" placeholder="Enter slug" v-model="slug" v-bind="componentField" :value="slug" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -87,13 +117,18 @@ const handleSubmitForm = handleSubmit(async (values) => {
       <FormItem v-auto-animate>
         <FormLabel>Description</FormLabel>
         <FormControl>
-          <Textarea placeholder="Enter description" v-bind="componentField"/>
+          <Textarea placeholder="Enter description" v-bind="componentField" :disabled v-model="description"/>
         </FormControl>
         <FormMessage/>
       </FormItem>
     </FormField>
-    <Button type="submit">
-      Submit
-    </Button>
+    <div class="w-full flex justify-end items-center gap-2">
+      <Button variant="secondary" @click="handleBack" type="button">
+        Batal
+      </Button>
+      <Button type="submit">
+        Simpan
+      </Button>
+    </div>
   </form>
 </template>

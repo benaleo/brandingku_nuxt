@@ -1,6 +1,7 @@
 <template>
   <div>
     <AppBreadcrumb/>
+    <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/product-categories/add'"/>
     <div class="mt-6">
       <div v-if="loading" class="text-center py-4">
         Loading products...
@@ -8,18 +9,15 @@
       <div v-else-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-else-if="hasProducts">
-        <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/product-categories/add'"/>
+      <div v-if="!loading">
         <DatatablesDataTable
             :columns="productCategoryColumns"
             :data="productList || []"
-            :pagination="paginationData"
+            :pagination="pagination"
+            :meta="{ handleDelete }"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
         />
-      </div>
-      <div v-else class="text-center py-4">
-        No products found
       </div>
     </div>
   </div>
@@ -31,6 +29,9 @@ import {computed} from 'vue'
 import {productCategoryColumns} from "~/components/datatables/productCategoryColumns";
 import {useProductCategoryService} from "~/services/product-category.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
+import {toast} from 'vue-sonner'
+
+const pageTitle = 'Produk Kategori'
 
 const {
   datas,
@@ -38,22 +39,13 @@ const {
   error,
   pagination,
   changePage,
-  changeLimit
+  changeLimit,
+  deleteProductCategoryById
 } = useProductCategoryService()
-
-const hasProducts = computed(() => {
-  return Array.isArray(datas.value) && datas.value.length > 0
-})
 
 const productList = computed(() => {
   return datas.value || []
 })
-
-const paginationData = computed(() => ({
-  page: pagination.value.page,
-  limit: pagination.value.limit,
-  total: pagination.value.total
-}))
 
 const onPageChange = (page: number) => {
   changePage(page)
@@ -63,7 +55,17 @@ const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
 
-const pageTitle = 'Produk Kategori'
+const handleDelete = async (id: string) => {
+  try {
+    await deleteProductCategoryById(id)
+    // Refresh the current page
+    window.location.href = '/console/secret/product-categories'
+    toast.success('Berhasil menghapus data')
+  } catch (error) {
+    console.error('Error deleting product category:', error)
+    toast.error('Gagal menghapus data')
+  }
+}
 
 useHead({
   title: pageTitle,

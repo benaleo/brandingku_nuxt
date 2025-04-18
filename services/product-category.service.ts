@@ -57,6 +57,37 @@ export const useProductCategoryService = () => {
         return data
     }
 
+    // General DELETE function
+    const deleteProductCategoryById = async (id: string) => {
+        const response = await fetch(`${url}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            const error = await response.json()
+            throw error
+        }
+        return await response.json()
+    }
+
+    const getProductCategoryById = async (id: string) => {
+        const response = await fetch(`${url}/${id}`, {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            const error = await response.json()
+            throw error
+        }
+        return await response.json() as ProductCategory
+    }
+
     return {
         datas: data,
         loading,
@@ -65,6 +96,8 @@ export const useProductCategoryService = () => {
         getProductsCategory,
         createProductCategory,
         changePage,
-        changeLimit
+        changeLimit,
+        deleteProductCategoryById,
+        getProductCategoryById
     }
 }

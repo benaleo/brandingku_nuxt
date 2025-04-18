@@ -1,7 +1,7 @@
 <template>
   <div>
     <AppBreadcrumb/>
-
+    <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
     <div class="mt-6">
       <div v-if="loading" class="text-center py-4">
         Loading products...
@@ -10,7 +10,6 @@
         {{ error }}
       </div>
       <div v-else-if="hasProducts">
-        <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
         <DatatablesDataTable
             :columns="productColumns"
             :data="dataList || []"

@@ -1,6 +1,9 @@
 import type {ColumnDef} from '@tanstack/vue-table'
 import {h} from "vue";
-import {Button} from "~/components/ui/button";
+import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
+
+// Remove unused TableMeta augmentation to resolve TS error
+
 
 export type ProductCategory = {
     id: string
@@ -31,16 +34,25 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         },
     },
     {
-        accessorKey: 'update_at',
+        accessorKey: 'updated_at',
         header: 'Waktu Dibuat',
         cell: ({row}) => {
             return new Date(row.original.updated_at).toLocaleString()
-        }
+        },
     },
     {
         id: 'actions',
-        cell: () => {
-            return h(Button, {variant: 'destructive'}, {default: () => 'Hapus'})
+        enableHiding: false,
+        cell: ({row, table}) => {
+            // Get handleDelete from table meta (provided by parent component)
+            const data = row.original;
+            const handleDelete = table.options.meta?.handleDelete;
+            
+            return h('div', {class: 'relative'}, h(GeneralColumnAction, {
+                data,
+                isDelete: true,
+                handleDelete: () => handleDelete?.(data.id)
+            }));
         }
-    }
+    },
 ]
