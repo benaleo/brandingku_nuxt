@@ -27,9 +27,9 @@ defineProps({
 <template>
   <AlertDialog>
     <AlertDialogTrigger as-child>
-      <Button variant="outline">
+      <button class="dropdown-menu-item hover:bg-red-400 hover:text-white rounded-md w-full">
         <slot/>
-      </Button>
+      </button>
     </AlertDialogTrigger>
     <AlertDialogContent>
       <AlertDialogHeader>
