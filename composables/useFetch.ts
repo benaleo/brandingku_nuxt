@@ -59,6 +59,7 @@ export const useFetch = <T>(url: string, options: {
 
         try {
             loading.value = true
+            console.log("apiUrl is", apiUrl)
             const response = await $fetch<ApiResponse<
                 typeof options.isResult extends true ? PaginatedResponse<T> : T
             >>(apiUrl, {
@@ -84,8 +85,10 @@ export const useFetch = <T>(url: string, options: {
                 data.value = paginatedData.result as any
                 pagination.value.total = paginatedData.totalItems
                 pagination.value.page = paginatedData.currentPage
+                console.log("response pagination", data.value)
             } else {
                 data.value = response.data as any
+                console.log("response single", data.value)
             }
         } catch (err: any) {
             error.value = err.message

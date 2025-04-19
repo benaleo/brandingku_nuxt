@@ -104,11 +104,23 @@ const filteredProducts = computed(() => {
   return products.filter(product => product.category === selectedCategory.value)
 })
 
+const pageTitle = computed(() => {
+  return `Brandingku Products`
+})
+
+useHead({
+  title: pageTitle,
+})
+
+definePageMeta({
+  layout: 'page-layout'
+})
+
 </script>
 
 <template>
   <!-- Header -->
-  <ElementsHeaderProduct :title="'Brandingku Products'" />
+  <HeaderProduct :title="pageTitle" />
 
   <!-- Content -->
   <main class="app-container my-12 flex gap-4">

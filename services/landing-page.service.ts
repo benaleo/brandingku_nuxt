@@ -1,10 +1,18 @@
 import {useFetch} from '~/composables/useFetch'
 import type {ProductCategory} from "~/components/datatables/productCategoryColumns";
 
-export const useLandingFeaturedCategories = (fetchResult?: boolean, dataId?: string | null, isPublic?: boolean) => {
+export const useLandingFeaturedCategories = (fetchResult?: boolean, slug?: string | null, isPublic?: boolean) => {
   const config = useRuntimeConfig()
   const BASE_URL = config.public.API_URL
+
+  // Always build query string with all params
+  const params = new URLSearchParams()
+  if (slug) params.append('slug', slug)
+  // Add more params as needed
+
   const url = `${BASE_URL}/api/v1/featured-category`
+
+  const dynamicParam = slug ? url : null
 
   const {
     data,
@@ -16,7 +24,7 @@ export const useLandingFeaturedCategories = (fetchResult?: boolean, dataId?: str
     reFetch
   } = useFetch<ProductCategory>(url, {
     isResult: fetchResult,
-    dynamicParam: dataId ? url : null,
+    dynamicParam,
     initialPage: 0,
     initialLimit: 10,
     isPublic
@@ -30,8 +38,7 @@ export const useLandingFeaturedCategories = (fetchResult?: boolean, dataId?: str
   } = {}) => {
     if (params.page !== undefined) changePage(params.page)
     if (params.limit) changeLimit(params.limit)
-
-    // Additional query params can be added here
+    // Optionally handle sortBy/direction here
     return reFetch();
   }
 

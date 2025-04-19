@@ -23,7 +23,7 @@
         <use xlink:href="#gentle-wave" x="48" y="3"></use>
       </svg>
     </div>
-    <div class="absolute w-full top-40 flex flex-col items-center justify-center z-10">
+    <div class="px-4 absolute w-full top-24 md:top-40 flex flex-col items-center justify-center z-10">
       <Badge variant="outline" class="text-white bg-slate-400/20">We Are</Badge>
       <div class="text-4xl font-bold text-white">Brandingku supplier merchandise terpercaya.</div>
       <div class="text-2xl text-white">Kami menyediakan berbagai produk untuk memenuhi kebutuhan Anda.</div>
@@ -56,7 +56,7 @@
 
   svg {
     position: absolute;
-    bottom: -100px;
+    top: 60vh;
     left: 0;
   }
 
