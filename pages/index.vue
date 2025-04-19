@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
   <div class="min-h-screen bg-white">
 
     <!-- Hero Section -->
-     <ElementsHero/>
+     <Hero/>
     <section class="relative bg-gray-50 py-16 md:py-24">
       <div class="container px-4 mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -33,18 +33,18 @@ import { Badge } from '@/components/ui/badge'
 
     <section class="app-container">
       <!-- Featured Categories -->
-       <ElementsFeaturedCategories/>
+       <FeaturedCategories/>
 
       <!-- Featured Products -->
-       <ElementsFeaturesProduct/>
+       <FeaturesProduct/>
       
     </section>
 
     <!-- Newsletter -->
-    <ElementsBannerCTA />
+    <BannerCTA />
 
     <!-- Footer -->
-    <ElementsFooter />
+    <Footer />
   </div>
 </template>
 
