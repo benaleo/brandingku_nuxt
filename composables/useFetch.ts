@@ -24,6 +24,7 @@ export const useFetch = <T>(url: string, options: {
     dynamicParam?: string | null
     initialPage?: number
     initialLimit?: number
+    isPublic?: boolean
 }) => {
     console.log("Running useFetch")
     const token = useCookie('token')
@@ -63,7 +64,7 @@ export const useFetch = <T>(url: string, options: {
             >>(apiUrl, {
                 headers: {
                     'accept': '*/*',
-                    'Authorization': token.value ? `Bearer ${token.value}` : ''
+                    ...(options.isPublic ? {} : { 'Authorization': token.value ? `Bearer ${token.value}` : '' })
                 }
             })
 
@@ -83,11 +84,8 @@ export const useFetch = <T>(url: string, options: {
                 data.value = paginatedData.result as any
                 pagination.value.total = paginatedData.totalItems
                 pagination.value.page = paginatedData.currentPage
-                console.log("data pagination is ", data.value)
             } else {
-                console.log("dynamic param is ", options.dynamicParam)
                 data.value = response.data as any
-                console.log("data non result is ", data.value)
             }
         } catch (err: any) {
             error.value = err.message
