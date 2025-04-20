@@ -1,6 +1,9 @@
 import type {ColumnDef, Header, Row} from '@tanstack/vue-table'
 import {Button} from '~/components/ui/button'
 import {h} from 'vue'
+import DialogViewImage from "~/components/elements/DialogViewImage.vue";
+import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
+import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
 
 export interface Product {
     id: string
@@ -11,10 +14,11 @@ export interface Product {
     discount: number
     discount_type: string
     quantity: number
-    thumbnail: string
+    image: string
     is_recommended: boolean
     is_upsell: boolean
     category_name: string
+    category_id: string
     created_at: string
     created_by: string
     updated_at: string
@@ -30,6 +34,16 @@ export const productColumns: ColumnDef<Product>[] = [
         cell: () => {
             return index++
         }
+    },
+    {
+        accessorKey: 'image',
+        header: () => h('div', {class: 'text-left'}, 'Image'),
+        cell: ({row}) => {
+            const src: string = row.getValue('image') ?? '/images/no-image.jpg'
+            return h('div', {class: 'flex items-ceter justify-start overflow-hidden h-16'}, [
+                h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-h-16 object-cover'})
+            ])
+        },
     },
     {
         accessorKey: 'name',
@@ -50,16 +64,30 @@ export const productColumns: ColumnDef<Product>[] = [
         }
     },
     {
-        accessorKey: 'update_at',
-        header: 'Waktu Dibuat',
+        accessorKey: 'updated_at',
+        header: 'Timestamp',
         cell: ({row}) => {
             return new Date(row.original.updated_at).toLocaleString()
-        }
+        },
     },
     {
         id: 'actions',
-        cell: () => {
-            return h(Button, {variant: 'destructive'}, {default: () => 'Hapus'})
+        enableHiding: false,
+        cell: ({row, table}) => {
+            const data = row.original;
+            const handleDelete = table.options.meta?.handleDelete;
+            const handleImageUpdate = table.options.meta?.handleImageUpdate;
+
+            return h('div', {class: 'relative'}, [
+                h(GeneralColumnAction, {
+                    data,
+                    isDelete: true,
+                    handleDelete: () => handleDelete?.(data.id)
+                }),
+                h(ActionImageUpdate, {
+                    handleUpdate: (file: File) => handleImageUpdate?.(data.id, file)
+                })
+            ]);
         }
-    }
+    },
 ]

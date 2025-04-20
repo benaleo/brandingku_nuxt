@@ -44,7 +44,7 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
     },
     {
         accessorKey: 'updated_at',
-        header: 'Waktu Dibuat',
+        header: 'Timestamp',
         cell: ({row}) => {
             return new Date(row.original.updated_at).toLocaleString()
         },

@@ -1,10 +1,11 @@
 import {useFetch} from '~/composables/useFetch'
 import type {Product} from "~/components/datatables/productColumns";
 
-export const useProductService = () => {
+export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
-    const url = `${BASE_URL}/cms/v1/product`
+    const url = `${BASE_URL}/cms/v1/product${dataId ? `/${dataId}` : ''}`
+    console.log("url fetch is ", url)
 
     const {
         data,
@@ -15,7 +16,8 @@ export const useProductService = () => {
         changeLimit,
         reFetch
     } = useFetch<Product>(url, {
-        isResult: true,
+        isResult: fetchResult,
+        dynamicParam: dataId ? url : null,
         initialPage: 0,
         initialLimit: 10
     })
@@ -33,13 +35,89 @@ export const useProductService = () => {
         return reFetch();
     }
 
+    const createProduct = async (payload: {
+        name: string
+        slug: string
+        description: string
+    }) => {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+
+        if (!response.ok) {
+            throw await response.json()
+        }
+
+        return await response.json()
+    }
+
+    // General UPDATE function
+    const updateProductById = async (id: string, payload: any) => {
+        const response = await fetch(`${url}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            throw await response.json()
+        }
+        return await response.json()
+    }
+
+    // General DELETE function
+    const deleteProductById = async (id: string) => {
+        const response = await fetch(`${url}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            const error = await response.json()
+            throw error
+        }
+        return await response.json()
+    }
+
+    // Update Image
+    const updateProductImage = async (id: string, payload: FormData) => {
+        const response = await fetch(`${url}/${id}/image`, {
+            method: 'PUT',
+            body: payload,
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${useCookie('token').value}`
+            }
+        })
+        if (!response.ok) {
+            throw await response.json()
+        }
+        return await response.json()
+    }
+
     return {
         datas: data,
         loading,
         error,
         pagination,
+        reFetch,
         getProducts,
+        createProduct,
+        updateProductById,
+        updateProductImage,
         changePage,
-        changeLimit
+        changeLimit,
+        deleteProductById
     }
 }
