@@ -118,31 +118,32 @@ const handleBack = () => {
 
 <template>
 
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <div class="pb-12 flex items-end">
+  <form class="w-full space-y-6 flex flex-wrap" @submit.prevent="handleSubmitForm">
+    <div class="pb-12 flex items-end w-full">
       <p class="text-sm font-bold italic">
-        {{ config.public.BASE_URL}} /
+        {{ config.public.BASE_URL }} /
       </p>
       <FormField v-slot="{ componentField }" name="slug" :validate-on-blur="!isFieldDirty">
         <FormItem v-auto-animate class="inline-flex">
           <FormControl>
-            <Input class="h-6 text-sm font-bold italic focus-visible:border-0 focus-visible:ring-0" type="text" placeholder="Enter slug" v-model="slug" v-bind="componentField" :value="slug" :disabled />
+            <Input class="h-6 text-sm font-bold italic focus-visible:border-0 focus-visible:ring-0" type="text"
+                   placeholder="Enter slug" v-model="slug" v-bind="componentField" :value="slug" :disabled/>
           </FormControl>
           <FormMessage class="inline-flex text-sm font-bold italic whitespace-nowrap items-end"/>
         </FormItem>
       </FormField>
     </div>
     <FormField v-slot="{ componentField }" name="name" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
+      <FormItem class="w-full" v-auto-animate>
         <FormLabel>Name</FormLabel>
         <FormControl>
-          <Input type="text" placeholder="Enter name" v-model="name" v-bind="componentField" :disabled />
+          <Input type="text" placeholder="Enter name" v-model="name" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="description" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
+      <FormItem class="w-full" v-auto-animate>
         <FormLabel>Description</FormLabel>
         <FormControl>
           <Textarea placeholder="Enter description" v-bind="componentField" :disabled v-model="description"/>
@@ -151,68 +152,87 @@ const handleBack = () => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="price" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
+      <FormItem class="w-full md:w-1/2" v-auto-animate>
         <FormLabel>Price</FormLabel>
         <FormControl>
-          <Input type="number" placeholder="Enter price" v-model="price" v-bind="componentField" :disabled />
-        </FormControl>
-        <FormMessage/>
-      </FormItem>
-    </FormField>
-    <FormField v-slot="{ componentField }" name="discount" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
-        <FormLabel>Discount</FormLabel>
-        <FormControl>
-          <Input type="number" placeholder="Enter discount" v-model="discount" v-bind="componentField" :disabled />
-        </FormControl>
-        <FormMessage/>
-      </FormItem>
-    </FormField>
-    <FormField v-slot="{ componentField }" name="discount_type" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
-        <FormLabel>Discount Type</FormLabel>
-        <FormControl>
-          <Input type="text" placeholder="Enter discount type" v-model="discount_type" v-bind="componentField" :disabled />
+          <Input type="number" placeholder="Enter price" v-model="price" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="quantity" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
+      <FormItem class="w-full md:w-1/2" v-auto-animate>
         <FormLabel>Quantity</FormLabel>
         <FormControl>
-          <Input type="number" placeholder="Enter quantity" v-model="quantity" v-bind="componentField" :disabled />
+          <Input type="number" placeholder="Enter quantity" v-model="quantity" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
     </FormField>
+    <FormField v-slot="{ componentField }" name="discount" :validate-on-blur="!isFieldDirty">
+      <FormItem class="w-full md:w-1/2" v-auto-animate>
+        <FormLabel>Discount</FormLabel>
+        <FormControl>
+          <Input type="number" placeholder="Enter discount" v-model="discount" v-bind="componentField" :disabled/>
+        </FormControl>
+        <FormMessage/>
+      </FormItem>
+    </FormField>
+    <FormField v-slot="{ componentField }" name="discount_type" :validate-on-blur="!isFieldDirty">
+      <FormItem v-auto-animate class="w-full md:w-1/2">
+        <FormLabel>Discount Type</FormLabel>
+
+        <Select v-bind="componentField">
+          <FormControl>
+            <SelectTrigger class="w-full">
+              <SelectValue placeholder="Select discount type"/>
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent class="w-full md:w-1/2">
+            <SelectGroup>
+              <SelectItem value="PERCENTAGE">
+                Percentage (%)
+              </SelectItem>
+              <SelectItem value="AMOUNT">
+                Amount
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <FormMessage/>
+      </FormItem>
+    </FormField>
+
+    <FormField v-slot="{ componentField }" name="category_id" :validate-on-blur="!isFieldDirty">
+      <FormItem class="w-full md:w-1/2" v-auto-animate>
+        <FormLabel>Kategori</FormLabel>
+        <FormControl>
+          <Input type="text" placeholder="Enter category id" v-model="category_id" v-bind="componentField" :disabled/>
+        </FormControl>
+        <FormMessage/>
+      </FormItem>
+    </FormField>
+
     <FormField v-slot="{ componentField }" name="is_recommended" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
+      <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
         <FormLabel>Is Recommended</FormLabel>
         <FormControl>
-          <input type="checkbox" v-model="is_recommended" v-bind="componentField" :disabled />
+          <input type="checkbox" v-model="is_recommended" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="is_upsell" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
+      <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
         <FormLabel>Is Upsell</FormLabel>
         <FormControl>
-          <input type="checkbox" v-model="is_upsell" v-bind="componentField" :disabled />
+          <input type="checkbox" v-model="is_upsell" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
     </FormField>
-    <FormField v-slot="{ componentField }" name="category_id" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
-        <FormLabel></FormLabel>
-        <FormControl>
-          <Input type="text" placeholder="Enter category id" v-model="category_id" v-bind="componentField" :disabled />
-        </FormControl>
-        <FormMessage/>
-      </FormItem>
-    </FormField>
+
+
     <div class="w-full flex justify-end items-center gap-2">
       <Button variant="secondary" @click="handleBack" type="button">
         Batal
