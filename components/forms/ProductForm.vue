@@ -34,8 +34,8 @@ const formSchema = toTypedSchema(z.object({
   discount: z.coerce.number().int('Discount must be an integer'),
   discount_type: z.string().min(1, 'Discount type is required'),
   quantity: z.coerce.number().int('Quantity must be an integer'),
-  is_recommended: z.boolean(),
-  is_upsell: z.boolean(),
+  is_recommended: z.coerce.boolean(),
+  is_upsell: z.coerce.boolean(),
   category_id: z.string().min(1, 'Category is required'),
 }))
 
@@ -70,8 +70,8 @@ watch(
         discount.value = datasVal.discount || 0
         discount_type.value = datasVal.discount_type || ''
         quantity.value = datasVal.quantity || 0
-        is_recommended.value = datasVal.is_recommended || false
-        is_upsell.value = datasVal.is_upsell || false
+        is_recommended.value = Boolean(datasVal.is_recommended) || false
+        is_upsell.value = Boolean(datasVal.is_upsell) || false
         category_id.value = datasVal.category_id || ''
         isApiUpdate = false
       }
@@ -96,6 +96,10 @@ watch(name, (newVal) => {
 
 const handleSubmitForm = handleSubmit(async (values) => {
   try {
+    // Ensure boolean values are properly converted
+    values.is_recommended = Boolean(values.is_recommended);
+    values.is_upsell = Boolean(values.is_upsell);
+    
     console.log(values)
     if (isCreate) {
       await useProductService().createProduct(values)
@@ -119,7 +123,7 @@ const handleBack = () => {
 <template>
 
   <form class="w-full space-y-6 flex flex-wrap" @submit.prevent="handleSubmitForm">
-    <div class="pb-12 flex items-end w-full">
+    <div class="pb-4 flex items-end w-full">
       <p class="text-sm font-bold italic">
         {{ config.public.BASE_URL }} /
       </p>
@@ -217,7 +221,13 @@ const handleBack = () => {
       <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
         <FormLabel>Is Recommended</FormLabel>
         <FormControl>
-          <input type="checkbox" v-model="is_recommended" v-bind="componentField" :disabled/>
+          <input 
+            type="checkbox" 
+            :checked="Boolean(is_recommended)"
+            v-model="is_recommended"
+            v-bind="componentField"
+            :disabled
+          />
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -226,7 +236,13 @@ const handleBack = () => {
       <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
         <FormLabel>Is Upsell</FormLabel>
         <FormControl>
-          <input type="checkbox" v-model="is_upsell" v-bind="componentField" :disabled/>
+          <input 
+            type="checkbox" 
+            :checked="Boolean(is_upsell)"
+            v-model="is_upsell"
+            v-bind="componentField"
+            :disabled
+          />
         </FormControl>
         <FormMessage/>
       </FormItem>
