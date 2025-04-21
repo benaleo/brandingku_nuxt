@@ -13,6 +13,7 @@
         <DatatablesDataTable
             :columns="productColumns"
             :data="dataList || []"
+            :meta="{ handleDelete, handleImageUpdate }"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
@@ -31,6 +32,7 @@ import {productColumns} from '~/components/datatables/productColumns'
 import {useProductService} from '~/services/product.service'
 import {computed} from 'vue'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
+import {toast} from "vue-sonner";
 
 const {
   datas,
@@ -39,7 +41,9 @@ const {
   pagination,
   changePage,
   changeLimit,
-  reFetch
+  reFetch,
+  deleteProductById,
+  updateProductImage
 } = useProductService(true)
 
 const hasProducts = computed(() => {
@@ -62,6 +66,33 @@ const onPageChange = (page: number) => {
 
 const onLimitChange = (limit: number) => {
   changeLimit(limit)
+}
+
+const handleDelete = async (id: string) => {
+  try {
+    await deleteProductById(id)
+    // Refresh the current page
+    reFetch()
+    toast.success('Berhasil menghapus data')
+  } catch (error) {
+    console.error('Error deleting product category:', error)
+    toast.error('Gagal menghapus data')
+  }
+}
+
+const handleImageUpdate = async (id: string, file: File) => {
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    await updateProductImage(id, formData)
+
+    toast.success('Berhasil mengupdate gambar')
+    await reFetch()
+  } catch (error) {
+    console.error('Error updating product category image:', error)
+    toast.error('Gagal mengupdate gambar')
+  }
 }
 
 const pageTitle = 'Produk';
