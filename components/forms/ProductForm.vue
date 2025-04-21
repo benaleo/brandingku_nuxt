@@ -27,6 +27,7 @@ import {getIdFromPath, getPathWithoutIdInForm} from "~/utils/global.utils";
 import {useRouter} from 'vue-router'
 import {useProductService} from "~/services/product.service";
 import {useOptionsService} from "~/services/options.service";
+import type {OptionType} from "~/types/OptionType";
 
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
@@ -53,8 +54,25 @@ const formSchema = toTypedSchema(z.object({
   category_id: z.string().min(1, 'Category is required'),
 }))
 
-const {isFieldDirty, handleSubmit} = useForm({
+const {
+  isFieldDirty,
+  handleSubmit,
+  setFieldValue,
+  values
+} = useForm({
   validationSchema: formSchema,
+  initialValues: {
+    name: '',
+    slug: '',
+    description: '',
+    price: 0,
+    discount: 0,
+    discount_type: '',
+    quantity: 0,
+    is_recommended: false,
+    is_upsell: false,
+    category_id: '',
+  }
 })
 
 const name = ref('')
@@ -72,7 +90,17 @@ const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
 
 // Fetch product categories
-const {datas: categories, loading: categoryLoading, error: errorCategory, reFetch: reFetchCategories} = useOptionsService()
+const { 
+  datas: categories,
+  loading: categoryLoading, 
+  error: errorCategory,
+  reFetch: reFetchCategories
+} = useOptionsService()
+
+const dtypes = ref<OptionType[]>([]) as Ref<OptionType[]>
+useOptionsService().fetchDiscountTypes().then((val) => {
+  dtypes.value = val
+})
 
 // Watch for API data load and set fields when available
 watch(
@@ -90,6 +118,19 @@ watch(
         is_recommended.value = Boolean(datasVal.is_recommended) || false
         is_upsell.value = Boolean(datasVal.is_upsell) || false
         category_id.value = datasVal.category_id || ''
+        
+        // Update form values for validation
+        setFieldValue('name', datasVal.name || '')
+        setFieldValue('slug', datasVal.slug || '')
+        setFieldValue('description', datasVal.description || '')
+        setFieldValue('price', datasVal.price || 0)
+        setFieldValue('discount', datasVal.discount || 0)
+        setFieldValue('discount_type', datasVal.discount_type || '')
+        setFieldValue('quantity', datasVal.quantity || 0)
+        setFieldValue('is_recommended', Boolean(datasVal.is_recommended) || false)
+        setFieldValue('is_upsell', Boolean(datasVal.is_upsell) || false)
+        setFieldValue('category_id', datasVal.category_id || '')
+        
         isApiUpdate = false
       }
     },
@@ -120,14 +161,14 @@ const handleSubmitForm = handleSubmit(async (values) => {
     console.log(values)
     if (isCreate) {
       await useProductService().createProduct(values)
-      toast.success('Product category created successfully!')
+      toast.success('Product created successfully!')
     } else {
       await useProductService().updateProductById(id, values)
-      toast.success('Product category updated successfully!')
+      toast.success('Product updated successfully!')
     }
     router.push(getPathWithoutIdInForm(currentPath))
   } catch (error) {
-    toast.error('Failed to create product category')
+    toast.error('Failed to save product')
     console.error(error)
   }
 })
@@ -142,7 +183,7 @@ const handleBack = () => {
   <form class="w-full space-y-6 flex flex-wrap" @submit.prevent="handleSubmitForm">
     <div class="pb-4 flex items-end w-full">
       <p class="text-sm font-bold italic">
-        {{ config.public.BASE_URL }} /
+        {{ config.public.BASE_URL }} /product/
       </p>
       <FormField v-slot="{ componentField }" name="slug" :validate-on-blur="!isFieldDirty">
         <FormItem v-auto-animate class="inline-flex">
@@ -165,7 +206,7 @@ const handleBack = () => {
       <FormItem class="w-full" v-auto-animate>
         <FormLabel>Name</FormLabel>
         <FormControl>
-          <Input type="text" placeholder="Enter name" v-model="name" v-bind="componentField" :disabled/>
+          <Input type="text" placeholder="Enter name" v-model="name" v-bind="componentField" :value="name" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -183,7 +224,7 @@ const handleBack = () => {
       <FormItem class="w-full md:w-1/2" v-auto-animate>
         <FormLabel>Price</FormLabel>
         <FormControl>
-          <Input type="number" placeholder="Enter price" v-model="price" v-bind="componentField" :disabled/>
+          <Input type="number" placeholder="Enter price" v-model="price" :value="price" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -192,7 +233,7 @@ const handleBack = () => {
       <FormItem class="w-full md:w-1/2" v-auto-animate>
         <FormLabel>Quantity</FormLabel>
         <FormControl>
-          <Input type="number" placeholder="Enter quantity" v-model="quantity" v-bind="componentField" :disabled/>
+          <Input type="number" placeholder="Enter quantity" v-model="quantity" :value="quantity" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -201,7 +242,7 @@ const handleBack = () => {
       <FormItem class="w-full md:w-1/2" v-auto-animate>
         <FormLabel>Discount</FormLabel>
         <FormControl>
-          <Input type="number" placeholder="Enter discount" v-model="discount" v-bind="componentField" :disabled/>
+          <Input type="number" placeholder="Enter discount" v-model="discount" :value="discount || 0" v-bind="componentField" :disabled/>
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -209,20 +250,21 @@ const handleBack = () => {
     <FormField v-slot="{ componentField }" name="discount_type" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate class="w-full md:w-1/2">
         <FormLabel>Discount Type</FormLabel>
-
-        <Select v-bind="componentField">
+        <Select v-bind="componentField" v-model="discount_type" :disabled>
           <FormControl>
             <SelectTrigger class="w-full">
               <SelectValue placeholder="Select discount type"/>
             </SelectTrigger>
           </FormControl>
-          <SelectContent class="w-full md:w-1/2">
+          <SelectContent>
             <SelectGroup>
-              <SelectItem value="PERCENTAGE">
-                Percentage (%)
-              </SelectItem>
-              <SelectItem value="AMOUNT">
-                Amount
+              <SelectItem 
+                v-for="type in (dtypes || [])"
+                :key="type.id"
+                :value="type.id"
+                :disabled
+              >
+                {{ type.label }}
               </SelectItem>
             </SelectGroup>
           </SelectContent>

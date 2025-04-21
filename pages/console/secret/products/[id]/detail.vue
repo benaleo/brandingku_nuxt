@@ -1,11 +1,11 @@
 <template>
   <AppTableHeader page-title="Detail Kategori Produk"/>
-  <ProductCategoryForm/>
+  <ProductForm/>
 </template>
 
 <script setup lang="ts">
-import ProductCategoryForm from "~/components/forms/ProductCategoryForm.vue";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
+import ProductForm from "~/components/forms/ProductForm.vue";
 
 definePageMeta({
   layout: 'console-secret'

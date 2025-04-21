@@ -21,11 +21,19 @@ export const useOptionsService = () => {
     return reFetch();
   }
 
+  const fetchDiscountTypes  = async (): Promise<OptionType[]> => {
+    return [
+      { id: 'PERCENTAGE', label: 'Percentage (%)' },
+      { id: 'AMOUNT', label: 'Amount' }
+    ];
+  }
+
   return {
     datas: data,
     loading,
     error,
     reFetch,
     getProductsCategory,
+    fetchDiscountTypes,
   }
 }
