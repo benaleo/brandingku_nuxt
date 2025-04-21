@@ -19,14 +19,13 @@ export interface PaginatedResponse<T> {
     totalItems: number;
 }
 
-export const useFetch = <T>(url: string, options: {
+export const useApiFetch = <T>(url: string, options: {
     isResult?: boolean
     dynamicParam?: string | null
     initialPage?: number
     initialLimit?: number
     isPublic?: boolean
 }) => {
-    console.log("Running useFetch")
     const token = useCookie('token')
     const router = useRouter()
 
@@ -42,7 +41,6 @@ export const useFetch = <T>(url: string, options: {
     })
 
     const fetchData = async () => {
-        console.log("Running fetchData")
         let apiUrl = url
 
         // Handle dynamic params

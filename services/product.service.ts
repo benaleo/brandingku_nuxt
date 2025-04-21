@@ -1,4 +1,4 @@
-import {useFetch} from '~/composables/useFetch'
+import {useApiFetch} from '~/composables/useApiFetch'
 import type {Product} from "~/components/datatables/productColumns";
 
 export const useProductService = (fetchResult?: boolean, dataId?: string) => {
@@ -15,7 +15,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         changePage,
         changeLimit,
         reFetch
-    } = useFetch<Product>(url, {
+    } = useApiFetch<Product>(url, {
         isResult: fetchResult,
         dynamicParam: dataId ? url : null,
         initialPage: 0,
