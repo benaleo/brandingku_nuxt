@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import {Button} from '@/components/ui/button'
 import {FormControl, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form'
+import {
+  Combobox,
+  ComboboxAnchor,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxItemIndicator,
+  ComboboxList,
+  ComboboxTrigger
+} from '@/components/ui/combobox'
+import {Check, ChevronsUpDown, Search} from 'lucide-vue-next'
+
 import {Input} from '@/components/ui/input'
 import {Textarea} from '@/components/ui/textarea'
 import {vAutoAnimate} from '@formkit/auto-animate/vue'
@@ -13,6 +26,7 @@ import {toast} from "vue-sonner";
 import {getIdFromPath, getPathWithoutIdInForm} from "~/utils/global.utils";
 import {useRouter} from 'vue-router'
 import {useProductService} from "~/services/product.service";
+import {useOptionsService} from "~/services/options.service";
 
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
@@ -28,7 +42,7 @@ const {
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
-  slug: z.string().min(1, 'Slug is required'),
+  slug: z.string().nullable().optional(),
   description: z.string().min(1, 'Description is required'),
   price: z.coerce.number().int('Price must be an integer'),
   discount: z.coerce.number().int('Discount must be an integer'),
@@ -56,6 +70,9 @@ const category_id = ref('')
 const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
+
+// Fetch product categories
+const {datas: categories, loading: categoryLoading, error: errorCategory, reFetch: reFetchCategories} = useOptionsService()
 
 // Watch for API data load and set fields when available
 watch(
@@ -99,7 +116,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
     // Ensure boolean values are properly converted
     values.is_recommended = Boolean(values.is_recommended);
     values.is_upsell = Boolean(values.is_upsell);
-    
+
     console.log(values)
     if (isCreate) {
       await useProductService().createProduct(values)
@@ -130,8 +147,15 @@ const handleBack = () => {
       <FormField v-slot="{ componentField }" name="slug" :validate-on-blur="!isFieldDirty">
         <FormItem v-auto-animate class="inline-flex">
           <FormControl>
-            <Input class="h-6 text-sm font-bold italic focus-visible:border-0 focus-visible:ring-0" type="text"
-                   placeholder="Enter slug" v-model="slug" v-bind="componentField" :value="slug" :disabled/>
+            <Input 
+              class="h-6 text-sm font-bold italic focus-visible:border-0 focus-visible:ring-0" 
+              type="text"
+              placeholder="Enter slug (optional)"
+              v-model="slug" 
+              v-bind="componentField" 
+              :value="slug" 
+              :disabled="disabled"
+            />
           </FormControl>
           <FormMessage class="inline-flex text-sm font-bold italic whitespace-nowrap items-end"/>
         </FormItem>
@@ -211,7 +235,50 @@ const handleBack = () => {
       <FormItem class="w-full md:w-1/2" v-auto-animate>
         <FormLabel>Kategori</FormLabel>
         <FormControl>
-          <Input type="text" placeholder="Enter category id" v-model="category_id" v-bind="componentField" :disabled/>
+          <Combobox v-model="category_id" by="id" v-bind="componentField">
+            <ComboboxAnchor as-child>
+              <ComboboxTrigger as-child :disabled="disabled">
+                <Button variant="outline" class="justify-between w-full">
+                  {{ (categories ?? []).find(cat => cat.id === category_id)?.label ?? 'Select category' }}
+                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50"/>
+                </Button>
+              </ComboboxTrigger>
+            </ComboboxAnchor>
+
+            <ComboboxList>
+              <div class="relative w-full items-center">
+                <ComboboxInput class="pl-9 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Search category..."/>
+                <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                  <Search class="size-4 text-muted-foreground"/>
+                </span>
+              </div>
+
+              <ComboboxEmpty>
+                No category found.
+              </ComboboxEmpty>
+
+              <ComboboxGroup>
+                <template v-if="categoryLoading">
+                  <div class="px-4 py-2 text-gray-500">Loading categories...</div>
+                </template>
+                <template v-else-if="errorCategory">
+                  <div class="px-4 py-2 text-red-500">Failed to load categories</div>
+                </template>
+                <template v-else>
+                  <ComboboxItem
+                      v-for="category in (categories ?? [])"
+                      :key="category.id"
+                      :value="category.id"
+                  >
+                    {{ category.label }}
+                    <ComboboxItemIndicator>
+                      <Check class="ml-auto h-4 w-4"/>
+                    </ComboboxItemIndicator>
+                  </ComboboxItem>
+                </template>
+              </ComboboxGroup>
+            </ComboboxList>
+          </Combobox>
         </FormControl>
         <FormMessage/>
       </FormItem>
@@ -221,12 +288,12 @@ const handleBack = () => {
       <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
         <FormLabel>Is Recommended</FormLabel>
         <FormControl>
-          <input 
-            type="checkbox" 
-            :checked="Boolean(is_recommended)"
-            v-model="is_recommended"
-            v-bind="componentField"
-            :disabled
+          <input
+              type="checkbox"
+              :checked="Boolean(is_recommended)"
+              v-model="is_recommended"
+              v-bind="componentField"
+              :disabled
           />
         </FormControl>
         <FormMessage/>
@@ -236,12 +303,12 @@ const handleBack = () => {
       <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
         <FormLabel>Is Upsell</FormLabel>
         <FormControl>
-          <input 
-            type="checkbox" 
-            :checked="Boolean(is_upsell)"
-            v-model="is_upsell"
-            v-bind="componentField"
-            :disabled
+          <input
+              type="checkbox"
+              :checked="Boolean(is_upsell)"
+              v-model="is_upsell"
+              v-bind="componentField"
+              :disabled
           />
         </FormControl>
         <FormMessage/>

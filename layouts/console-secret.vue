@@ -13,7 +13,7 @@ import AppTopBar from "~/components/elements/AppTopBar.vue";
         <div class="px-8 py-4">
           <slot/>
         </div>
-        <FooterConsole/>
+        <FooterConsole class="fixed bottom-0 left-0 w-full"/>
       </div>
     </div>
   </SidebarProvider>
