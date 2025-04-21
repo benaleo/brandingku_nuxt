@@ -5,7 +5,6 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
     const url = `${BASE_URL}/cms/v1/product${dataId ? `/${dataId}` : ''}`
-    console.log("url fetch is ", url)
 
     const {
         data,

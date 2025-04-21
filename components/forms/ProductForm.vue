@@ -17,6 +17,8 @@ import {useProductService} from "~/services/product.service";
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
 const id = getIdFromPath(router.currentRoute.value.path)
+const config = useRuntimeConfig()
+
 const {
   datas,
   loading,
@@ -115,21 +117,26 @@ const handleBack = () => {
 </script>
 
 <template>
+
   <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
+    <div class="pb-12 flex items-end">
+      <p class="text-sm font-bold italic">
+        {{ config.public.BASE_URL}} /
+      </p>
+      <FormField v-slot="{ componentField }" name="slug" :validate-on-blur="!isFieldDirty">
+        <FormItem v-auto-animate class="inline-flex">
+          <FormControl>
+            <Input class="h-6 text-sm font-bold italic focus-visible:border-0 focus-visible:ring-0" type="text" placeholder="Enter slug" v-model="slug" v-bind="componentField" :value="slug" :disabled />
+          </FormControl>
+          <FormMessage class="inline-flex text-sm font-bold italic whitespace-nowrap items-end"/>
+        </FormItem>
+      </FormField>
+    </div>
     <FormField v-slot="{ componentField }" name="name" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>
         <FormLabel>Name</FormLabel>
         <FormControl>
           <Input type="text" placeholder="Enter name" v-model="name" v-bind="componentField" :disabled />
-        </FormControl>
-        <FormMessage/>
-      </FormItem>
-    </FormField>
-    <FormField v-slot="{ componentField }" name="slug" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
-        <FormLabel>Slug</FormLabel>
-        <FormControl>
-          <Input type="text" placeholder="Enter slug" v-model="slug" v-bind="componentField" :disabled />
         </FormControl>
         <FormMessage/>
       </FormItem>

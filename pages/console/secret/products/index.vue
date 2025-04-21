@@ -38,8 +38,9 @@ const {
   error,
   pagination,
   changePage,
-  changeLimit
-} = useProductService()
+  changeLimit,
+  reFetch
+} = useProductService(true)
 
 const hasProducts = computed(() => {
   return Array.isArray(datas.value) && datas.value.length > 0

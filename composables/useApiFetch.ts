@@ -57,7 +57,6 @@ export const useApiFetch = <T>(url: string, options: {
 
         try {
             loading.value = true
-            console.log("apiUrl is", apiUrl)
             const response = await $fetch<ApiResponse<
                 typeof options.isResult extends true ? PaginatedResponse<T> : T
             >>(apiUrl, {
