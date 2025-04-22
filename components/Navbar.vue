@@ -1,5 +1,5 @@
 <template>
-  <nav class="fixed top-5 left-1/2 transform -translate-x-1/2 z-10 hidden md:block">
+  <nav v-if="isDesktop" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-10">
     <div class="overflow-hidden w-full md:w-[90vw] h-[60px] px-2 md:px-4 bg-yellow-50 rounded-md shadow md:sticky top-0 flex justify-between items-center">
       <div class="flex items-center justify-start">
         <NuxtLink to="/">
@@ -17,7 +17,7 @@
       </div>
     </div>
   </nav>
-  <nav class="fixed top-5 left-1/2 w-[90vw] transform -translate-x-1/2 z-10 md:hidden block z-20">
+  <nav v-if="!isDesktop" class="fixed top-5 left-1/2 w-[90vw] transform -translate-x-1/2 z-20">
     <div class="overflow-hidden w-full h-[60px] px-2 md:px-4 bg-yellow-50 rounded-md shadow md:sticky top-0 flex justify-between items-center">
       <div class="flex items-center justify-start">
         <NuxtLink to="/">
@@ -34,5 +34,22 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+
 const router = useRouter();
+const isDesktop = ref(false);
+
+const checkScreenWidth = () => {
+  isDesktop.value = window.innerWidth >= 768; // md breakpoint
+};
+
+onMounted(() => {
+  checkScreenWidth();
+  window.addEventListener('resize', checkScreenWidth);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkScreenWidth);
+});
 </script>
