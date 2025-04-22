@@ -1,6 +1,6 @@
 <template>
   <div class="w-full bg-green-200 p-4 md:p-12">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:max-w-3/4 mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 md:max-w-3/4 mx-auto">
       <div class="rounded-md px-4">
         <nuxt-img src="http://localhost:3000/images/html/logo.png" width="200" />
         <div class="flex items-center gap-4">

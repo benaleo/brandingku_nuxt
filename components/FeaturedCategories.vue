@@ -13,7 +13,7 @@
           Retry
         </Button>
       </div>
-      <div v-else class="flex justify-center items-center gap-4">
+      <div v-else class="flex justify-center items-center gap-4 flex-wrap">
         <Card v-for="category in featuredCategories" :key="category.slug" class="hover:shadow-md transition-shadow py-0 w-[120px]">
           <NuxtLink :to="`/category/${category.slug}`">
             <CardContent class="p-4 flex flex-col items-center">
