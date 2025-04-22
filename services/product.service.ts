@@ -87,7 +87,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
 
     // Update Image
     const updateProductImage = async (id: string, payload: FormData) => {
-        const response = await fetch(`${url}/${id}/image`, {
+        const response = await fetch(`${url}/${id}/highlight`, {
             method: 'PUT',
             body: payload,
             headers: {
