@@ -37,12 +37,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiSecret: '',
     public: {
-      BASE_URL: 'http://localhost:3000',
-      API_URL: 'http://localhost:8080',
+      BASE_URL: process.env.NUXT_PUBLIC_BASE_URL || '',
+      API_URL: process.env.NUXT_PUBLIC_API_URL || '',
       supabaseUrl: process.env.SUPABASE_URL || '',
       supabaseKey: process.env.SUPABASE_KEY || '',
-      supabaseAccessKey: process.env.SUPABASE_ACCESS_KEY || '',
-      supabaseSecretAccessKey: process.env.SUPABASE_SECRET_ACCESS_KEY || ''
     }
   }
 })
