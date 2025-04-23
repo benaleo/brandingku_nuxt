@@ -15,6 +15,9 @@ export interface Product {
     discount_type: string
     quantity: number
     image: string
+    highlight_image: string
+    highlight_description: string
+    is_highlight: boolean
     is_recommended: boolean
     is_upsell: boolean
     category_name: string
@@ -85,7 +88,7 @@ export const productColumns: ColumnDef<Product>[] = [
                     handleDelete: () => handleDelete?.(data.id)
                 }),
                 h(ActionImageUpdate, {
-                    handleUpdate: (file: File) => handleImageUpdate?.(data.id, file)
+                    handleUpdate: (fileUrl: string, file: File) => handleImageUpdate?.(data.id, fileUrl, file)
                 })
             ]);
         }

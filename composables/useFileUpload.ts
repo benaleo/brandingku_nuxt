@@ -1,23 +1,28 @@
-// composables/useFileUpload.ts
-import { createClient } from '@supabase/supabase-js'
+import { useNuxtApp } from '#app'
 
 export const useFileUpload = () => {
     const { $supabase } = useNuxtApp()
 
-    const uploadFile = async (bucket, fileName, file) => {
+    /**
+     * Upload a file to Supabase Storage
+     * @param bucket The storage bucket name
+     * @param path The path within the bucket
+     * @param file The file to upload
+     * @returns The upload result or null on error
+     */
+    const uploadFile = async (bucket: string, path: string, file: File) => {
         try {
-            // Check if user is authenticated
+            // Check authentication
             const { data: { session } } = await $supabase.auth.getSession()
 
             if (!session) {
-                throw new Error('You must be logged in to upload files')
+                throw new Error('Authentication required for file upload')
             }
 
-            // Use userId as the first folder in the path for RLS protection
+            // Use userId for folder prefix if path doesn't already include it
             const userId = session.user.id
-            const filePath = `${userId}/${fileName}`
+            const filePath = path.startsWith(userId) ? path : `${userId}/${path}`
 
-            // Upload the file directly
             const { data, error } = await $supabase
                 .storage
                 .from(bucket)
@@ -32,19 +37,30 @@ export const useFileUpload = () => {
             }
 
             return data
-        } catch (err) {
-            console.error('Upload error:', err)
-            throw err
+        } catch (error: any) {
+            console.error('Upload error:', error)
+            return null
         }
     }
 
-    const getFileUrl = async (bucket, filePath) => {
-        const { data } = await $supabase
-            .storage
-            .from(bucket)
-            .getPublicUrl(filePath)
+    /**
+     * Get the public URL for a file in Supabase Storage
+     * @param bucket The storage bucket name
+     * @param path The path within the bucket
+     * @returns The public URL or null on error
+     */
+    const getFileUrl = async (bucket: string, path: string) => {
+        try {
+            const { data } = await $supabase
+                .storage
+                .from(bucket)
+                .getPublicUrl(path)
 
-        return data?.publicUrl
+            return data?.publicUrl || null
+        } catch (error) {
+            console.error('Failed to get file URL:', error)
+            return null
+        }
     }
 
     return {

@@ -91,13 +91,12 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
     }
 
     // Update Image
-    const updateProductCategoryImage = async (id: string, payload: FormData) => {
-        const response = await fetch(`${url}/${id}/image`, {
+    const updateProductCategoryImage = async (id: string, data: { url: string }) => {
+        const response = await fetch(`${url}/${id}/image?file=${data.url}`, {
             method: 'PUT',
-            body: payload,
             headers: {
                 'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+                'Authorization': `Bearer ${useCookie('token').value}`,
             }
         })
         if (!response.ok) {

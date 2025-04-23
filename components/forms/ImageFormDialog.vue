@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import {type PropType, ref} from 'vue'
-import {Button} from '@/components/ui/button'
-import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,} from '@/components/ui/dialog'
-import {Input} from '@/components/ui/input'
+import { type PropType, ref } from 'vue'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
   submit: {
-    type: Function as PropType<(...args: any[]) => void>,
+    type: Function as PropType<(fileUrl: string, file: File) => void | Promise<void>>,
     required: true,
   },
+  bucket: {
+    type: String,
+    default: 'images'
+  }
 })
 
 const emit = defineEmits(['close'])
@@ -16,6 +20,7 @@ const emit = defineEmits(['close'])
 const file = ref<File | null>(null)
 const previewUrl = ref<string | null>(null)
 const dragActive = ref(false)
+const isUploading = ref(false)
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
@@ -49,11 +54,46 @@ function onDragLeave(e: DragEvent) {
 }
 
 async function handleSubmit() {
-  if (file.value) {
-    await props.submit(file.value)
+  if (!file.value) {
+    toast.error('Please select a file first')
+    return
+  }
+
+  isUploading.value = true
+
+  try {
+    const { uploadFile, getFileUrl } = useFileUpload()
+
+    // Generate a unique filename to avoid conflicts
+    const fileExtension = file.value.name.split('.').pop()
+    const uniqueFileName = `images-${Date.now()}.${fileExtension}`
+
+    // Upload to S3
+    const uploadResult = await uploadFile(props.bucket, uniqueFileName, file.value)
+
+    if (!uploadResult) {
+      throw new Error('Upload failed')
+    }
+
+    // Get the public URL
+    const fileUrl = await getFileUrl(props.bucket, uploadResult.path)
+
+    if (!fileUrl) {
+      throw new Error('Failed to get file URL')
+    }
+
+    // Send the URL to the parent component
+    await props.submit(fileUrl, file.value)
+
+    // Reset form
     file.value = null
     previewUrl.value = null
     emit('close')
+  } catch (error: any) {
+    console.error('Error during upload:', error)
+    toast.error(error.message || 'Upload failed')
+  } finally {
+    isUploading.value = false
   }
 }
 </script>
@@ -88,6 +128,7 @@ async function handleSubmit() {
               accept="image/*"
               class="hidden"
               @change="onFileChange"
+              :disabled="isUploading"
           />
           <div v-if="previewUrl" class="mb-2">
             <img :src="previewUrl" alt="Preview" class="max-h-32 rounded shadow"/>
@@ -100,7 +141,9 @@ async function handleSubmit() {
           </div>
         </div>
         <DialogFooter class="mt-4">
-          <Button type="submit" :disabled="!file">Upload</Button>
+          <Button type="submit" :disabled="!file || isUploading">
+            {{ isUploading ? 'Uploading...' : 'Upload' }}
+          </Button>
         </DialogFooter>
       </form>
     </DialogContent>

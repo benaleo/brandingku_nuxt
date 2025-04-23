@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ImageUp } from 'lucide-vue-next';
-import ImageForm from "~/components/forms/ImageForm.vue";
+import ImageFormDialog from "~/components/forms/ImageFormDialog.vue";
 
 defineProps<{
-  handleUpdate: (file: File) => void | Promise<void>
+  handleUpdate: (fileUrl: string, file: File) => void | Promise<void>
 }>()
 
 </script>
 
 <template>
-  <ImageForm :submit="handleUpdate">
+  <ImageFormDialog :submit="handleUpdate">
     <ImageUp />
-  </ImageForm>
+  </ImageFormDialog>
 </template>

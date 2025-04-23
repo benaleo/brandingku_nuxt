@@ -69,16 +69,21 @@ const handleDelete = async (id: string) => {
   }
 }
 
-const handleImageUpdate = async (id: string, file: File) => {
+const handleImageUpdate = async (id: string, fileUrl: string, file: File) => {
   try {
-    const formData = new FormData()
-    formData.append('file', file)
-    
-    await updateProductCategoryImage(id, formData)
-    
-    toast.success('Berhasil mengupdate gambar')
+    // Show loading state
+    toast.loading('Mengirim data gambar...')
+
+    // The file is already uploaded to S3 by the ImageFormDialog component
+    // Now we just need to send the URL to the API
+    await updateProductCategoryImage(id, { url: fileUrl })
+
+    // Success!
+    toast.dismiss()
+    toast.success('Berhasil mengupload gambar')
     await reFetch()
   } catch (error) {
+    toast.dismiss()
     console.error('Error updating product category image:', error)
     toast.error('Gagal mengupdate gambar')
   }
