@@ -48,16 +48,27 @@ const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().nullable().optional(),
   description: z.string().min(1, 'Description is required'),
-  price: z.coerce.number().int('Price must be an integer'),
-  discount: z.coerce.number().int('Discount must be an integer'),
-  discount_type: z.string().min(1, 'Discount type is required'),
-  quantity: z.coerce.number().int('Quantity must be an integer'),
+  is_highlight: z.coerce.boolean(),
   highlight_image: z.string().nullable().optional(),
   highlight_description: z.string().nullable().optional(),
-  is_highlight: z.coerce.boolean(),
   is_recommended: z.coerce.boolean(),
   is_upsell: z.coerce.boolean(),
   category_id: z.string().min(1, 'Category is required'),
+  additionals: z.array(z.object({
+    // id is optional for update, not sent on create
+    id: z.string().optional(),
+    price: z.coerce.number().int('Price must be an integer'),
+    moq: z.coerce.number().int('MOQ must be an integer'),
+    stock: z.coerce.number().int('Stock must be an integer'),
+    discount: z.coerce.number().int('Discount must be an integer'),
+    discount_type: z.string().min(1, 'Discount type is required'),
+    attributes: z.array(z.object({
+      id: z.string().optional(),
+      category: z.string().min(1, 'Category is required'),
+      name: z.string().min(1, 'Name is required'), // single string per Product model
+    })),
+
+  })).min(1, 'At least one additional is required'),
 }))
 
 const {
@@ -71,18 +82,67 @@ const {
     name: '',
     slug: '',
     description: '',
-    price: 0,
-    discount: 0,
-    discount_type: '',
-    quantity: 0,
+    is_highlight: false,
     highlight_image: '',
     highlight_description: '',
-    is_highlight: false,
     is_recommended: false,
     is_upsell: false,
     category_id: '',
+    additionals: [
+      {
+        price: 0,
+        moq: 0,
+        stock: 0,
+        discount: 0,
+        discount_type: 'AMOUNT',
+        attributes: [
+          { category: '', name: '' }
+        ]
+      }
+    ],
   }
 })
+
+// For dynamic additionals and attributes
+const additionals = ref(values.additionals)
+
+function addAdditional() {
+  additionals.value.push({
+    price: 0,
+    moq: 0,
+    stock: 0,
+    discount: 0,
+    discount_type: '',
+    attributes: [ { category: '', name: '' } ]
+  })
+}
+function removeAdditional(idx) {
+  if(additionals.value.length > 1) additionals.value.splice(idx, 1)
+}
+
+function addAttribute(addIdx) {
+  additionals.value[addIdx].attributes.push({ category: '', name: '' })
+}
+function removeAttribute(addIdx, attrIdx) {
+  if(additionals.value[addIdx].attributes.length > 1) additionals.value[addIdx].attributes.splice(attrIdx, 1)
+}
+
+// For filtered name options per category
+const attributeNameOptions = ref({}) // { [categoryId]: [name1, name2, ...] }
+// You should fetch/populate this from API or static data
+// Example:
+// attributeNameOptions.value = {
+//   'cat1': ['Name A', 'Name B'],
+//   'cat2': ['Name X', 'Name Y']
+// }
+
+function getNamesForCategory(categoryId) {
+  return attributeNameOptions.value[categoryId] || []
+}
+
+watch(() => values.additionals, (val) => {
+  additionals.value = val
+}, { deep: true })
 
 const name = ref('')
 const slug = ref('')
@@ -124,10 +184,6 @@ watch(
       name.value = datasVal.name || ''
       slug.value = datasVal.slug || ''
       description.value = datasVal.description || ''
-      price.value = datasVal.price || 0
-      discount.value = datasVal.discount || 0
-      discount_type.value = datasVal.discount_type || ''
-      quantity.value = datasVal.quantity || 0
       highlight_image.value = datasVal.highlight_image || ''
       highlight_description.value = datasVal.highlight_description || ''
       is_highlight.value = Boolean(datasVal.is_highlight) || false
@@ -139,17 +195,20 @@ watch(
       setFieldValue('name', datasVal.name || '')
       setFieldValue('slug', datasVal.slug || '')
       setFieldValue('description', datasVal.description || '')
-      setFieldValue('price', datasVal.price || 0)
-      setFieldValue('discount', datasVal.discount || 0)
-      setFieldValue('discount_type', datasVal.discount_type || '')
-      setFieldValue('quantity', datasVal.quantity || 0)
       setFieldValue('highlight_image', datasVal.highlight_image || '')
       setFieldValue('highlight_description', datasVal.highlight_description || '')
       setFieldValue('is_highlight', Boolean(datasVal.is_highlight) || false)
       setFieldValue('is_recommended', Boolean(datasVal.is_recommended) || false)
       setFieldValue('is_upsell', Boolean(datasVal.is_upsell) || false)
       setFieldValue('category_id', datasVal.category_id || '')
-
+      // Set additionals with correct mapping
+      setFieldValue('additionals', (datasVal.additionals || []).map((add) => ({
+        ...add,
+        attributes: (add.attributes || []).map(attr => ({
+          ...attr,
+          name: typeof attr.name === 'string' ? attr.name : (Array.isArray(attr.name) ? attr.name[0] || '' : '')
+        }))
+      })))
       isApiUpdate = false
     }
   },
@@ -266,59 +325,64 @@ const handleBack = () => {
       </FormItem>
     </FormField>
     <!-- Price -->
-    <FormField v-slot="{ componentField }" name="price" :validate-on-blur="!isFieldDirty">
-      <FormItem class="w-full md:w-1/2" v-auto-animate>
-        <FormLabel>Price</FormLabel>
-        <FormControl>
-          <Input type="number" placeholder="Enter price" v-model="price" :value="price" v-bind="componentField"
-            :disabled />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
-    <!-- Quantity -->
-    <FormField v-slot="{ componentField }" name="quantity" :validate-on-blur="!isFieldDirty">
-      <FormItem class="w-full md:w-1/2" v-auto-animate>
-        <FormLabel>Quantity</FormLabel>
-        <FormControl>
-          <Input type="number" placeholder="Enter quantity" v-model="quantity" :value="quantity" v-bind="componentField"
-            :disabled />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
-    <!-- Discount -->
-    <FormField v-slot="{ componentField }" name="discount" :validate-on-blur="!isFieldDirty">
-      <FormItem class="w-full md:w-1/2" v-auto-animate>
-        <FormLabel>Discount</FormLabel>
-        <FormControl>
-          <Input type="number" placeholder="Enter discount" v-model="discount" :value="discount || 0"
-            v-bind="componentField" :disabled />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
-    <!-- Discount Type -->
-    <FormField v-slot="{ componentField }" name="discount_type" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate class="w-full md:w-1/2">
-        <FormLabel>Discount Type</FormLabel>
-        <Select v-bind="componentField" v-model="discount_type" :disabled>
-          <FormControl>
-            <SelectTrigger class="w-full">
-              <SelectValue placeholder="Select discount type" />
-            </SelectTrigger>
-          </FormControl>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem v-for="type in (dtypes || [])" :key="type.id" :value="type.id" :disabled>
-                {{ type.label }}
-              </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <FormMessage />
-      </FormItem>
-    </FormField>
+    <!-- Additionals Section -->
+    <div class="w-full">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-bold">Additionals</h3>
+        <Button type="button" @click="addAdditional">Add Additional</Button>
+      </div>
+      <div v-for="(additional, addIdx) in additionals" :key="addIdx" class="border rounded p-4 mb-4 relative">
+        <Button type="button" variant="destructive" class="absolute top-2 right-2" @click="removeAdditional(addIdx)" v-if="additionals.length > 1">Remove</Button>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold">Price</label>
+            <Input type="number" v-model.number="additional.price" placeholder="Enter price" />
+          </div>
+          <div>
+            <label class="block font-semibold">MOQ</label>
+            <Input type="number" v-model.number="additional.moq" placeholder="Enter MOQ" />
+          </div>
+          <div>
+            <label class="block font-semibold">Stock</label>
+            <Input type="number" v-model.number="additional.stock" placeholder="Enter stock" />
+          </div>
+          <div>
+            <label class="block font-semibold">Discount</label>
+            <Input type="number" v-model.number="additional.discount" placeholder="Enter discount" />
+          </div>
+          <div>
+            <label class="block font-semibold">Discount Type</label>
+            <select v-model="additional.discount_type" class="w-full border rounded px-2 py-1">
+              <option v-for="type in dtypes" :key="type.id" :value="type.id">{{ type.label }}</option>
+            </select>
+          </div>
+        </div>
+        <!-- Attributes -->
+        <div class="mt-4">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold">Attributes</span>
+            <Button type="button" size="sm" @click="addAttribute(addIdx)">Add Attribute</Button>
+          </div>
+          <div v-for="(attr, attrIdx) in additional.attributes" :key="attrIdx" class="flex gap-2 items-end mt-2">
+            <div class="flex-1">
+              <label class="block text-xs">Category</label>
+              <select v-model="attr.category" class="w-full border rounded px-2 py-1">
+                <option value="" disabled>Select category</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.label }}</option>
+              </select>
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs">Name</label>
+              <select v-model="attr.name" class="w-full border rounded px-2 py-1">
+                <option value="" disabled>Select name</option>
+                <option v-for="name in getNamesForCategory(attr.category)" :key="name" :value="name">{{ name }}</option>
+              </select>
+            </div>
+            <Button type="button" variant="destructive" size="sm" @click="removeAttribute(addIdx, attrIdx)" v-if="additional.attributes.length > 1">Remove</Button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Product Categories -->
     <FormField v-slot="{ componentField }" name="category_id" :validate-on-blur="!isFieldDirty">
       <FormItem class="w-full md:w-1/2" v-auto-animate>

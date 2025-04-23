@@ -10,10 +10,6 @@ export interface Product {
     name: string
     slug: string
     description: string
-    price: number
-    discount: number
-    discount_type: string
-    quantity: number
     image: string
     highlight_image: string
     highlight_description: string
@@ -22,6 +18,19 @@ export interface Product {
     is_upsell: boolean
     category_name: string
     category_id: string
+    additionals: {
+        id: string,
+        price: number,
+        moq: number,
+        stock: number,
+        discount: number,
+        discount_type: string,
+        attributes: {
+            id: string
+            category: string,
+            name: string
+        }[]
+    }[],
     created_at: string
     created_by: string
     updated_at: string
@@ -51,20 +60,6 @@ export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'name',
         header: 'Nama Produk',
-    },
-    {
-        accessorKey: 'price',
-        header: 'Harga',
-        cell: ({row}) => {
-            return `Rp${row.original.price.toLocaleString()}`
-        }
-    },
-    {
-        accessorKey: 'stock',
-        header: 'Stok',
-        cell: ({row}) => {
-            return `${row.original.quantity}`
-        }
     },
     {
         accessorKey: 'updated_at',
