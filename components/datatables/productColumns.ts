@@ -1,42 +1,10 @@
-import type {ColumnDef, Header, Row} from '@tanstack/vue-table'
-import {Button} from '~/components/ui/button'
+import type {ColumnDef} from '@tanstack/vue-table'
 import {h} from 'vue'
 import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
-import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
 import ActionBulkImageUpdate from '../elements/ActionBulkImageUpdate.vue';
+import type {Product} from "~/types/products.type";
 
-export interface Product {
-    id: string
-    name: string
-    slug: string
-    description: string
-    image: string
-    highlight_image: string
-    highlight_description: string
-    is_highlight: boolean
-    is_recommended: boolean
-    is_upsell: boolean
-    category_name: string
-    category_id: string
-    additionals: {
-        id: string,
-        price: number,
-        moq: number,
-        stock: number,
-        discount: number,
-        discount_type: string,
-        attributes: {
-            id: string
-            category: string,
-            name: string
-        }[]
-    }[],
-    created_at: string
-    created_by: string
-    updated_at: string
-    updated_by: string
-}
 
 let index = 1
 
@@ -75,7 +43,6 @@ export const productColumns: ColumnDef<Product>[] = [
         cell: ({row, table}) => {
             const data = row.original;
             const handleDelete = table.options.meta?.handleDelete;
-            const handleImageUpdate = table.options.meta?.handleImageUpdate;
             const handleProductGalleries = table.options.meta?.handleProductGalleries;
 
             return h('div', {class: 'relative'}, [
@@ -86,6 +53,7 @@ export const productColumns: ColumnDef<Product>[] = [
                 }),
                 h(ActionBulkImageUpdate, {
                     productId: data.id,
+                    galleries: data.galleries,
                     handleUpdate: (fileUrls, removeIds) => handleProductGalleries?.(data.id, fileUrls, removeIds)
                 })
             ]);

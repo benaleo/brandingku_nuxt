@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { XIcon } from 'lucide-vue-next'
+import type {ProductGalleriesList} from "~/types/products.type";
 
 interface FileWithPreview {
   file: File;
@@ -23,10 +24,17 @@ const props = defineProps({
   productId: {
     type: String,
     required: true
+  },
+  galleries: {
+    type: Array as PropType<ProductGalleriesList[]>,
   }
 })
 
 const emit = defineEmits(['close'])
+
+onMounted(() => {
+  console.log("galleries list", props.galleries)
+})
 
 const files = ref<FileWithPreview[]>([])
 const dragActive = ref(false)
