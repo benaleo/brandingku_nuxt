@@ -120,7 +120,7 @@ defineOptions({
       </FormItem>
     </FormField>
     <!-- Is Active -->
-    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled :isFieldDirty="isFieldDirty('is_active')" />
+    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled" :isFieldDirty="isFieldDirty('is_active')" />
 
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />

@@ -31,6 +31,7 @@ import type { OptionType } from "~/types/OptionType";
 import ImageFormDialog from "~/components/forms/ImageFormDialog.vue";
 import ImageUploadField from "~/components/forms/ImageUploadField.vue";
 import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
+import FormButton from '../atoms/FormButton.vue'
 
 interface ProductAttribute {
   id: string;
