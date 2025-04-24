@@ -28,8 +28,8 @@ import { useRouter } from 'vue-router'
 import { useProductService } from "~/services/product.service";
 import { useOptionsService } from "~/services/options.service";
 import type { OptionType, ProductAttributeOptions } from "~/types/options.type";
-import ImageFormDialog from "~/components/forms/ImageFormDialog.vue";
-import ImageUploadField from "~/components/forms/ImageUploadField.vue";
+import ImageFormDialog from "~/components/forms/ImageSingleFormDialog.vue";
+import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
 import FormButton from '../atoms/FormButton.vue'
 import type { ProductAdditional } from '~/types/products.type'

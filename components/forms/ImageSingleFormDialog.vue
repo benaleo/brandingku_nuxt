@@ -21,6 +21,7 @@ const file = ref<File | null>(null)
 const previewUrl = ref<string | null>(null)
 const dragActive = ref(false)
 const isUploading = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
@@ -119,7 +120,7 @@ async function handleSubmit() {
             @dragover="onDragOver"
             @dragleave="onDragLeave"
             @drop="onDrop"
-            @click="$refs.fileInput.click()"
+            @click="fileInput?.click()"
             style="min-height: 160px;"
         >
           <input

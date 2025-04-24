@@ -4,6 +4,7 @@ import {h} from 'vue'
 import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
 import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
+import ActionBulkImageUpdate from '../elements/ActionBulkImageUpdate.vue';
 
 export interface Product {
     id: string
@@ -75,6 +76,7 @@ export const productColumns: ColumnDef<Product>[] = [
             const data = row.original;
             const handleDelete = table.options.meta?.handleDelete;
             const handleImageUpdate = table.options.meta?.handleImageUpdate;
+            const handleProductGalleries = table.options.meta?.handleProductGalleries;
 
             return h('div', {class: 'relative'}, [
                 h(GeneralColumnAction, {
@@ -82,8 +84,9 @@ export const productColumns: ColumnDef<Product>[] = [
                     isDelete: true,
                     handleDelete: () => handleDelete?.(data.id)
                 }),
-                h(ActionImageUpdate, {
-                    handleUpdate: (fileUrl: string, file: File) => handleImageUpdate?.(data.id, fileUrl, file)
+                h(ActionBulkImageUpdate, {
+                    productId: data.id,
+                    handleUpdate: (fileUrls, removeIds) => handleProductGalleries?.(data.id, fileUrls, removeIds)
                 })
             ]);
         }

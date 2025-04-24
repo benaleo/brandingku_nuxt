@@ -47,6 +47,7 @@ const file = ref<File | null>(props.file)
 const previewUrl = ref<string | null>(props.fileUrl || null)
 const dragActive = ref(false)
 const isUploading = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 watch(() => props.fileUrl, (val) => {
   if (val && val !== previewUrl.value) {
@@ -122,7 +123,7 @@ async function uploadImage() {
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop="onDrop"
-      @click="$refs.fileInput.click()"
+      @click="fileInput?.click()"
       style="min-height: 160px;"
     >
       <input

@@ -13,7 +13,7 @@
         <DatatablesDataTable
             :columns="productColumns"
             :data="dataList || []"
-            :meta="{ handleDelete, handleImageUpdate }"
+            :meta="{ handleDelete, handleProductGalleries }"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
@@ -43,7 +43,7 @@ const {
   changeLimit,
   reFetch,
   deleteProductById,
-  updateProductImage
+  updateProductGalleries,
 } = useProductService(true)
 
 const hasProducts = computed(() => {
@@ -80,17 +80,17 @@ const handleDelete = async (id: string) => {
   }
 }
 
-const handleImageUpdate = async (id: string, file: File) => {
+const handleProductGalleries = async (id: string, fileUrl: string[], removeIds: string[]) => {
   try {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    await updateProductImage(id, formData)
+    await updateProductGalleries(id, {
+      newFileUrl: fileUrl,
+      removeIds: removeIds
+    })
 
     toast.success('Berhasil mengupdate gambar')
     await reFetch()
   } catch (error) {
-    console.error('Error updating product category image:', error)
+    console.error('Error updating product image:', error)
     toast.error('Gagal mengupdate gambar')
   }
 }

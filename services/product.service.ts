@@ -85,11 +85,13 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         return await response.json()
     }
 
-    // Update Image
-    const updateProductImage = async (id: string, payload: FormData) => {
-        const response = await fetch(`${url}/${id}/highlight`, {
+    // Update Image Product Galleries
+    const updateProductGalleries = async (id: string, payload: {
+        newFileUrl: string[],
+        removeIds: string[]
+    }) => {
+        const response = await fetch(`${url}/${id}/gallery?newFileUrl=${payload.newFileUrl.join(',')}&removeIds=${payload.removeIds.join(',')}`, {
             method: 'PUT',
-            body: payload,
             headers: {
                 'Accept': '*/*',
                 'Authorization': `Bearer ${useCookie('token').value}`
@@ -99,7 +101,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             throw await response.json()
         }
         return await response.json()
-    }
+    }    
+
 
     return {
         datas: data,
@@ -110,7 +113,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         getProducts,
         createProduct,
         updateProductById,
-        updateProductImage,
+        updateProductGalleries,
         changePage,
         changeLimit,
         deleteProductById

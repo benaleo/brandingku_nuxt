@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ImageUp } from 'lucide-vue-next';
-import ImageFormDialog from "~/components/forms/ImageFormDialog.vue";
+import ImageFormDialog from "~/components/forms/ImageSingleFormDialog.vue";
 
 defineProps<{
   handleUpdate: (fileUrl: string, file: File) => void | Promise<void>
