@@ -23,11 +23,11 @@ const {
   loading,
   error,
   reFetch
-} = useProductAttributeService(true, id)
+} = useProductAttributeService(false, id)
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
-  
+
   category: z.string().min(1, 'Category is required'),
   is_active: z.coerce.boolean()
 }))
@@ -77,6 +77,12 @@ const handleSubmitForm = handleSubmit(async (values) => {
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))
 }
+
+defineOptions({
+  directives: {
+    autoAnimate: vAutoAnimate
+  }
+})
 </script>
 
 <template>
@@ -101,13 +107,8 @@ const handleBack = () => {
       </FormItem>
     </FormField>
     <!-- Is Active -->
-    <FieldXCheckbox
-      name="is_active"
-      label="Is Active"
-      v-model="is_active"
-      :disabled="disabled"
-      :isFieldDirty="isFieldDirty('is_active')"
-    />
+    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
+      :isFieldDirty="isFieldDirty('is_active')" />
 
     <div class="w-full flex justify-end items-center gap-2">
       <Button variant="secondary" @click="handleBack" type="button">

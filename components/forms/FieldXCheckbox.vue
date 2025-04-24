@@ -25,6 +25,13 @@
 import { FormField, FormItem, FormControl, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '~/components/ui/checkbox';
 import { computed } from 'vue';
+import { vAutoAnimate } from '@formkit/auto-animate/vue'
+
+defineOptions({
+  directives: {
+    autoAnimate: vAutoAnimate
+  }
+})
 
 const props = defineProps({
   name: { type: String, required: true },

@@ -48,12 +48,6 @@ export const secretConsoleMenu: MenuGroup[] = [
                 icon: 'Package',
                 href: '/console/secret/product-attributes'
             },
-            {
-                name: 'Produk Kategori',
-                icon: 'Box',
-                href: '/console/secret/product-categories'
-            },
-
         ]
     },
     {
@@ -63,12 +57,12 @@ export const secretConsoleMenu: MenuGroup[] = [
             {
                 name: 'Privilege',
                 icon: 'ShieldCheck',
-                href: '/console/secret/products'
+                href: '/console/secret/privilege'
             },
             {
                 name: 'Admin',
                 icon: 'UserCog',
-                href: '/console/secret/product-categories'
+                href: '/console/secret/admin'
             },
 
         ]
