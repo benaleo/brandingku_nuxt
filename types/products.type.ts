@@ -51,3 +51,16 @@ export type ProductGalleriesList = {
     id: string
     url: string
 }
+
+export type ProductCategory = {
+    id: string
+    created_at: string
+    updated_at: string
+    created_by: string
+    updated_by: string
+    name: string
+    slug: string
+    description: string
+    is_landing_page: boolean
+    is_active: boolean
+}

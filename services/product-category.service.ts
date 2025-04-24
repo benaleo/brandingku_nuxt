@@ -1,5 +1,5 @@
 import {useApiFetch} from '~/composables/useApiFetch'
-import type {ProductCategory} from "~/components/datatables/productCategoryColumns";
+import type {ProductCategory} from "~/types/products.type";
 
 export const useProductCategoryService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()
@@ -39,6 +39,8 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         name: string
         slug: string
         description: string
+        is_landing_page: boolean
+        is_active: boolean
     }) => {
         const response = await fetch(url, {
             method: 'POST',

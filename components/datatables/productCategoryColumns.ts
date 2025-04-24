@@ -3,17 +3,7 @@ import {h} from "vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
 import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
 import DialogViewImage from "~/components/elements/DialogViewImage.vue";
-
-export type ProductCategory = {
-    id: string
-    created_at: string
-    updated_at: string
-    created_by: string
-    updated_by: string
-    name: string
-    slug: string
-    description: string
-}
+import type {ProductCategory} from "~/types/products.type";
 
 let indexRef = 1
 

@@ -1,27 +1,29 @@
 <template>
   <FormField v-slot="{ componentField }" :name="name" :validate-on-blur="!isFieldDirty">
-    <FormItem class="w-full" v-auto-animate>
+    <FormItem :class="itemClass" v-auto-animate>
       <FormLabel v-if="label">{{ label }}</FormLabel>
       <FormControl>
-        <Input 
-          :type="type" 
-          :placeholder="placeholder" 
-          v-model="modelValue" 
-          v-bind="componentField" 
-          :value="modelValue" 
-          :disabled="disabled" 
+        <Input
+            :type="type"
+            :placeholder="placeholder"
+            v-model="modelValue"
+            v-bind="componentField"
+            :value="modelValue"
+            :disabled="disabled"
+            :class="inputClass"
         />
       </FormControl>
-      <FormMessage />
+      <FormMessage/>
     </FormItem>
   </FormField>
 </template>
 
 <script lang="ts" setup>
-import { Input } from '@/components/ui/input'
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {Input} from '@/components/ui/input'
+import {FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form'
+import {vAutoAnimate} from '@formkit/auto-animate/vue'
 
-const props = defineProps({
+defineProps({
   name: {
     type: String,
     required: true
@@ -45,6 +47,14 @@ const props = defineProps({
   isFieldDirty: {
     type: Boolean,
     default: false
+  },
+  itemClass: {
+    type: String,
+    default: 'w-full'
+  },
+  inputClass:{
+    type: String,
+    default: ''
   }
 })
 
