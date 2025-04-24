@@ -32,6 +32,12 @@ import ImageFormDialog from "~/components/forms/ImageFormDialog.vue";
 import ImageUploadField from "~/components/forms/ImageUploadField.vue";
 import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
 
+interface ProductAttribute {
+  id: string;
+  label: string;
+  category: string;
+}
+
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
 const id = getIdFromPath(router.currentRoute.value.path)
@@ -104,7 +110,7 @@ const {
 })
 
 // For dynamic additionals and attributes
-const additionals = ref(values.additionals)
+const additionals = ref([...values.additionals])
 
 function addAdditional() {
   additionals.value.push({
@@ -129,28 +135,20 @@ function removeAttribute(addIdx, attrIdx) {
 
 // For filtered name options per category
 const attributeNameOptions = ref({}) // { [categoryId]: [name1, name2, ...] }
-// You should fetch/populate this from API or static data
-// Example:
-// attributeNameOptions.value = {
-//   'cat1': ['Name A', 'Name B'],
-//   'cat2': ['Name X', 'Name Y']
-// }
 
-function getNamesForCategory(categoryId) {
-  return attributeNameOptions.value[categoryId] || []
+// Get attribute options for a specific category
+function getNamesForCategory(categoryId: string): ProductAttribute[] {
+  return attributesByCategory.value[categoryId] || []
 }
 
-watch(() => values.additionals, (val) => {
-  additionals.value = val
+// Sync local additionals changes back to the form values
+watch(additionals, (val) => {
+  setFieldValue('additionals', val)
 }, { deep: true })
 
 const name = ref('')
 const slug = ref('')
 const description = ref('')
-const price = ref(0)
-const discount = ref(0)
-const discount_type = ref('')
-const quantity = ref(0)
 const highlight_image = ref('')
 const highlight_image_file = ref<File | null>(null)
 const highlight_description = ref('')
@@ -174,6 +172,50 @@ const dtypes = ref<OptionType[]>([]) as Ref<OptionType[]>
 useOptionsService().fetchDiscountTypes().then((val) => {
   dtypes.value = val
 })
+
+// Fetch product attributes
+const productAttributes = ref<ProductAttribute[]>([])
+const attributesByCategory = ref<Record<string, ProductAttribute[]>>({})
+const loadingAttributes = ref(true)
+const errorAttributes = ref(false)
+
+// Fetch product attributes and group them by category
+const fetchProductAttributes = async () => {
+  try {
+    loadingAttributes.value = true
+    errorAttributes.value = false
+    
+    // Get product attributes and wait for data to be loaded
+    const attributes = await useOptionsService().getProductAttributes()
+    console.log('Product Attributes Data:', attributes)
+    
+    if (attributes && attributes.length > 0) {
+      productAttributes.value = attributes
+      
+      // Group attributes by category
+      attributesByCategory.value = attributes.reduce((acc, attr) => {
+        if (!acc[attr.category]) {
+          acc[attr.category] = []
+        }
+        acc[attr.category].push(attr)
+        return acc
+      }, {} as Record<string, ProductAttribute[]>)
+      
+      console.log('Attributes By Category:', attributesByCategory.value)
+    } else {
+      console.warn('No product attributes returned from API')
+    }
+    
+    loadingAttributes.value = false
+  } catch (error) {
+    console.error('Failed to fetch product attributes:', error)
+    errorAttributes.value = true
+    loadingAttributes.value = false
+  }
+}
+
+// Call the fetch function
+fetchProductAttributes()
 
 // Watch for API data load and set fields when available
 watch(
@@ -304,6 +346,7 @@ const handleBack = () => {
         </FormItem>
       </FormField>
     </div>
+    
     <!-- Name -->
     <FormField v-slot="{ componentField }" name="name" :validate-on-blur="!isFieldDirty">
       <FormItem class="w-full" v-auto-animate>
@@ -333,24 +376,24 @@ const handleBack = () => {
       </div>
       <div v-for="(additional, addIdx) in additionals" :key="addIdx" class="border rounded p-4 mb-4 relative">
         <Button type="button" variant="destructive" class="absolute top-2 right-2" @click="removeAdditional(addIdx)" v-if="additionals.length > 1">Remove</Button>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
+        <div class="flex flex-wrap">
+          <div class="w-full md:w-1/2 lg:w-1/3 px-1">
             <label class="block font-semibold">Price</label>
             <Input type="number" v-model.number="additional.price" placeholder="Enter price" />
           </div>
-          <div>
+          <div class="w-full md:w-1/2 lg:w-1/3 px-1">
             <label class="block font-semibold">MOQ</label>
             <Input type="number" v-model.number="additional.moq" placeholder="Enter MOQ" />
           </div>
-          <div>
+          <div class="w-full md:w-1/2 lg:w-1/3 px-1">
             <label class="block font-semibold">Stock</label>
             <Input type="number" v-model.number="additional.stock" placeholder="Enter stock" />
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-1">
             <label class="block font-semibold">Discount</label>
             <Input type="number" v-model.number="additional.discount" placeholder="Enter discount" />
           </div>
-          <div>
+          <div class="w-full md:w-1/2 px-1">
             <label class="block font-semibold">Discount Type</label>
             <select v-model="additional.discount_type" class="w-full border rounded px-2 py-1">
               <option v-for="type in dtypes" :key="type.id" :value="type.id">{{ type.label }}</option>
@@ -359,23 +402,29 @@ const handleBack = () => {
         </div>
         <!-- Attributes -->
         <div class="mt-4">
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center flex-wrap md:flex-nowrap">
             <span class="font-semibold">Attributes</span>
             <Button type="button" size="sm" @click="addAttribute(addIdx)">Add Attribute</Button>
           </div>
-          <div v-for="(attr, attrIdx) in additional.attributes" :key="attrIdx" class="flex gap-2 items-end mt-2">
-            <div class="flex-1">
+          <div v-for="(attr, attrIdx) in additional.attributes" :key="attrIdx" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="col-span-1">
               <label class="block text-xs">Category</label>
               <select v-model="attr.category" class="w-full border rounded px-2 py-1">
                 <option value="" disabled>Select category</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.label }}</option>
+                <option v-for="category in Object.keys(attributesByCategory)" :key="category" :value="category">{{ category }}</option>
               </select>
             </div>
-            <div class="flex-1">
+            <div class="col-span-1">
               <label class="block text-xs">Name</label>
-              <select v-model="attr.name" class="w-full border rounded px-2 py-1">
-                <option value="" disabled>Select name</option>
-                <option v-for="name in getNamesForCategory(attr.category)" :key="name" :value="name">{{ name }}</option>
+              <select v-model="attr.name" class="w-full border rounded px-2 py-1" :disabled="!attr.category">
+                <option value="" disabled>{{ !attr.category ? 'Select category first' : 'Select name' }}</option>
+                <option 
+                  v-for="attrOption in getNamesForCategory(attr.category || '')" 
+                  :key="attrOption.id.toString()" 
+                  :value="attrOption.label"
+                >
+                  {{ attrOption.label }}
+                </option>
               </select>
             </div>
             <Button type="button" variant="destructive" size="sm" @click="removeAttribute(addIdx, attrIdx)" v-if="additional.attributes.length > 1">Remove</Button>
