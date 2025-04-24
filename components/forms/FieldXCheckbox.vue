@@ -1,6 +1,6 @@
 <template>
   <FormField v-slot="{ handleChange, componentField }" :name="name" :type="'checkbox'" :validate-on-blur="!isFieldDirty">
-    <FormItem :class="itemClass" v-auto-animate>
+    <FormItem class="flex items-center gap-2 justify-start w-full" v-auto-animate>
       <FormControl>
         <Checkbox
           :model-value="modelValue"
@@ -39,7 +39,6 @@ const props = defineProps({
   modelValue: { type: Boolean, required: true },
   disabled: { type: Boolean, default: false },
   isFieldDirty: { type: Boolean, default: true },
-  itemClass: { type: String, default: 'w-full flex flex-row items-start gap-x-3 space-y-0 rounded-md' },
 });
 
 const emit = defineEmits(['update:modelValue']);

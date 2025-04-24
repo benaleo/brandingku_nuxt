@@ -14,6 +14,7 @@ import { useProductAttributeService } from '~/services/product-attribute.service
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
 import FieldXCheckbox from './FieldXCheckbox.vue'
+import FormButton from '../atoms/FormButton.vue'
 
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
@@ -32,8 +33,13 @@ const formSchema = toTypedSchema(z.object({
   is_active: z.coerce.boolean()
 }))
 
-const { isFieldDirty, handleSubmit } = useForm({
+const { isFieldDirty, setFieldValue, handleSubmit } = useForm({
   validationSchema: formSchema,
+  initialValues: {
+    name: '',
+    category: '',
+    is_active: false
+  }
 })
 
 const name = ref('')
@@ -41,6 +47,7 @@ const category = ref('')
 const is_active = ref(false)
 const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
+let isApiUpdate = false
 
 // Watch for API data load and set fields when available
 watch(
@@ -50,8 +57,15 @@ watch(
       console.log('API data received:', datasVal)
       name.value = datasVal.name || ''
       category.value = datasVal.category || ''
-      is_active.value = datasVal.is_active !== undefined ? datasVal.is_active : false
+      is_active.value = Boolean(datasVal.is_active) || false
       console.log('Component state after update - is_active:', is_active.value)
+
+
+      setFieldValue('name', datasVal.name || '')
+      setFieldValue('category', datasVal.category || '')
+      setFieldValue('is_active', Boolean(datasVal.is_active) || false)
+      
+      isApiUpdate = false
     }
   },
   { immediate: true }
@@ -100,23 +114,15 @@ defineOptions({
       <FormItem v-auto-animate>
         <FormLabel>Category</FormLabel>
         <FormControl>
-          <Input type="text" placeholder="Enter category" v-model="category" v-bind="componentField" :value="category"
-            :disabled />
+          <Input type="text" placeholder="Enter category" v-model="category" v-bind="componentField" :value="category" :disabled />
         </FormControl>
         <FormMessage />
       </FormItem>
     </FormField>
     <!-- Is Active -->
-    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
-      :isFieldDirty="isFieldDirty('is_active')" />
+    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled :isFieldDirty="isFieldDirty('is_active')" />
 
-    <div class="w-full flex justify-end items-center gap-2">
-      <Button variant="secondary" @click="handleBack" type="button">
-        Batal
-      </Button>
-      <Button type="submit">
-        Simpan
-      </Button>
-    </div>
+    <!-- Form Button -->
+    <FormButton :handleBack="handleBack" />
   </form>
 </template>

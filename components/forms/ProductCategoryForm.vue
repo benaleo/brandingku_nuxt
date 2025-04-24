@@ -130,13 +130,8 @@ const handleBack = () => {
         <FormMessage/>
       </FormItem>
     </FormField>
-    <div class="w-full flex justify-end items-center gap-2">
-      <Button variant="secondary" @click="handleBack" type="button">
-        Batal
-      </Button>
-      <Button type="submit">
-        Simpan
-      </Button>
-    </div>
+
+    <!-- Form Button -->
+    <FormButton :handleBack="handleBack" />
   </form>
 </template>

@@ -468,7 +468,6 @@ const handleBack = () => {
       v-model="is_recommended"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('is_recommended')"
-      itemClass="flex items-center gap-2 justify-start w-full"
     />
     <!-- Is Upsell -->
     <FieldXCheckbox
@@ -477,17 +476,9 @@ const handleBack = () => {
       v-model="is_upsell"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('is_upsell')"
-      itemClass="flex items-center gap-2 justify-start w-full"
     />
 
-
-    <div class="w-full flex justify-end items-center gap-2">
-      <Button variant="secondary" @click="handleBack" type="button">
-        Batal
-      </Button>
-      <Button type="submit">
-        Simpan
-      </Button>
-    </div>
+    <!-- Form Button -->
+    <FormButton :handleBack="handleBack" />
   </form>
 </template>
