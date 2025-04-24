@@ -87,6 +87,11 @@ const handleProductGalleries = async (id: string, fileUrl: string[], removeIds: 
       removeIds: removeIds
     })
 
+    console.log("payload", {
+      newFileUrl: fileUrl,
+      removeIds: removeIds
+    })
+
     toast.success('Berhasil mengupdate gambar')
     await reFetch()
   } catch (error) {

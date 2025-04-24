@@ -90,13 +90,14 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         newFileUrl: string[],
         removeIds: string[]
     }) => {
-        const response = await fetch(`${url}/${id}/gallery?newFileUrl=${payload.newFileUrl.join(',')}&removeIds=${payload.removeIds.join(',')}`, {
+        const response = await fetch(`${url}/${id}/gallery?newFile=${payload.newFileUrl.join(',')}&removeId=${payload.removeIds.join(',')}`, {
             method: 'PUT',
             headers: {
                 'Accept': '*/*',
                 'Authorization': `Bearer ${useCookie('token').value}`
             }
         })
+        // console.log("response upload image gallery", await response.json())
         if (!response.ok) {
             throw await response.json()
         }

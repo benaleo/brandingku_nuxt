@@ -4,6 +4,33 @@ export const useFileUpload = () => {
     const { $supabase } = useNuxtApp()
 
     /**
+     * Get a Supabase session using hardcoded credentials
+     * @returns Promise<boolean> True if successful, false otherwise
+     */
+    const getSupabaseSession = async () => {
+        try {
+            // Hardcoded credentials - replace with your actual credentials
+            const email = 'admin@brandingku.com'
+            const password = 'kosongan'
+            
+            const { data, error } = await $supabase.auth.signInWithPassword({
+                email,
+                password
+            })
+            
+            if (error) {
+                console.error('Error signing in to Supabase:', error)
+                return false
+            }
+            
+            return true
+        } catch (error) {
+            console.error('Failed to sign in to Supabase:', error)
+            return false
+        }
+    }
+
+    /**
      * Upload a file to Supabase Storage
      * @param bucket The storage bucket name
      * @param path The path within the bucket
@@ -12,6 +39,9 @@ export const useFileUpload = () => {
      */
     const uploadFile = async (bucket: string, path: string, file: File) => {
         try {
+            // Try to get a session first
+            await getSupabaseSession()
+            
             // Check authentication
             const { data: { session } } = await $supabase.auth.getSession()
 
@@ -28,7 +58,7 @@ export const useFileUpload = () => {
                 .from(bucket)
                 .upload(filePath, file, {
                     cacheControl: '3600',
-                    upsert: false
+                    upsert: true // Set to true to allow overwriting
                 })
 
             if (error) {
@@ -39,7 +69,7 @@ export const useFileUpload = () => {
             return data
         } catch (error: any) {
             console.error('Upload error:', error)
-            return null
+            throw error // Re-throw to allow caller to handle it
         }
     }
 

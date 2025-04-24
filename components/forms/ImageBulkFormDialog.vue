@@ -91,40 +91,59 @@ async function handleSubmit() {
   try {
     const { uploadFile, getFileUrl } = useFileUpload()
     const fileUrls: string[] = []
+    const failedUploads: string[] = []
 
     // Upload each file
     for (const fileItem of files.value) {
-      // Generate a unique filename to avoid conflicts
-      const fileExtension = fileItem.file.name.split('.').pop()
-      const uniqueFileName = `product-${props.productId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExtension}`
+      try {
+        // Generate a unique filename to avoid conflicts
+        const fileExtension = fileItem.file.name.split('.').pop()
+        const uniqueFileName = `product-${props.productId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExtension}`
 
-      // Upload to S3
-      const uploadResult = await uploadFile(props.bucket, uniqueFileName, fileItem.file)
+        // Upload to S3 - authentication is handled inside uploadFile
+        const uploadResult = await uploadFile(props.bucket, uniqueFileName, fileItem.file)
 
-      if (!uploadResult) {
-        throw new Error('Upload failed')
+        if (!uploadResult) {
+          failedUploads.push(fileItem.file.name)
+          continue
+        }
+
+        // Get the public URL
+        const fileUrl = await getFileUrl(props.bucket, uploadResult.path)
+
+        if (!fileUrl) {
+          failedUploads.push(fileItem.file.name)
+          continue
+        }
+
+        fileUrls.push(fileUrl)
+      } catch (fileError: any) {
+        console.error(`Error uploading ${fileItem.file.name}:`, fileError)
+        failedUploads.push(fileItem.file.name)
       }
+    }
 
-      // Get the public URL
-      const fileUrl = await getFileUrl(props.bucket, uploadResult.path)
-
-      if (!fileUrl) {
-        throw new Error('Failed to get file URL')
-      }
-
-      fileUrls.push(fileUrl)
+    // If we have some successful uploads but some failed
+    if (fileUrls.length > 0 && failedUploads.length > 0) {
+      toast.warning(`${failedUploads.length} image(s) failed to upload. Successfully uploaded ${fileUrls.length} image(s).`)
+    } 
+    // If all uploads failed
+    else if (fileUrls.length === 0) {
+      throw new Error('All uploads failed. Please check your connection and try again.')
     }
 
     // Send all URLs to the parent component
-    await props.submit(fileUrls, removeIds.value)
-
-    // Reset form
-    files.value.forEach(f => URL.revokeObjectURL(f.preview))
-    files.value = []
-    removeIds.value = []
-    emit('close')
-    
-    toast.success(`Successfully uploaded ${fileUrls.length} image${fileUrls.length > 1 ? 's' : ''}`)
+    if (fileUrls.length > 0) {
+      await props.submit(fileUrls, removeIds.value)
+      
+      // Reset form
+      files.value.forEach(f => URL.revokeObjectURL(f.preview))
+      files.value = []
+      removeIds.value = []
+      emit('close')
+      
+      toast.success(`Successfully uploaded ${fileUrls.length} image${fileUrls.length > 1 ? 's' : ''}`)
+    }
   } catch (error: any) {
     console.error('Error during upload:', error)
     toast.error(error.message || 'Upload failed')
