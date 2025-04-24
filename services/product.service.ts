@@ -1,5 +1,5 @@
 import {useApiFetch} from '~/composables/useApiFetch'
-import type {Product} from "~/components/datatables/productColumns";
+import type {Product} from "~/types/products.type";
 
 export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()

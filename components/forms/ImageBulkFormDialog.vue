@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { type PropType, ref } from 'vue'
+import { type PropType, ref, onMounted } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
-import { XIcon } from 'lucide-vue-next'
+import { XIcon, Trash2Icon } from 'lucide-vue-next'
 import type {ProductGalleriesList} from "~/types/products.type";
 
 interface FileWithPreview {
@@ -27,20 +27,34 @@ const props = defineProps({
   },
   galleries: {
     type: Array as PropType<ProductGalleriesList[]>,
+    default: () => []
   }
 })
 
 const emit = defineEmits(['close'])
 
-onMounted(() => {
-  console.log("galleries list", props.galleries)
-})
-
 const files = ref<FileWithPreview[]>([])
 const dragActive = ref(false)
-const isUploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const removeIds = ref<string[]>([])
+const galleries = ref<ProductGalleriesList[]>([...props.galleries])
+const isUploading = ref(false)
+
+function removeGalleryItem(galleryItem: ProductGalleriesList) {
+  if (galleryItem.id) {
+    removeIds.value.push(galleryItem.id)
+    galleries.value = galleries.value.filter(g => g.id !== galleryItem.id)
+    toast.success('Image marked for removal')
+  }
+}
+
+function removeFile(id: string) {
+  const fileToRemove = files.value.find(f => f.id === id)
+  if (fileToRemove) {
+    URL.revokeObjectURL(fileToRemove.preview)
+  }
+  files.value = files.value.filter(f => f.id !== id)
+}
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
@@ -62,14 +76,6 @@ function addFiles(newFiles: File[]) {
   }
 }
 
-function removeFile(id: string) {
-  const fileToRemove = files.value.find(f => f.id === id)
-  if (fileToRemove) {
-    URL.revokeObjectURL(fileToRemove.preview)
-  }
-  files.value = files.value.filter(f => f.id !== id)
-}
-
 function onDrop(e: DragEvent) {
   e.preventDefault()
   dragActive.value = false
@@ -89,72 +95,72 @@ function onDragLeave(e: DragEvent) {
 }
 
 async function handleSubmit() {
-  if (files.value.length === 0) {
-    toast.error('Please select at least one image')
+  if (files.value.length === 0 && removeIds.value.length === 0) {
+    toast.error('Please select at least one image to upload or mark an existing image for removal')
     return
   }
 
   isUploading.value = true
 
   try {
-    const { uploadFile, getFileUrl } = useFileUpload()
     const fileUrls: string[] = []
-    const failedUploads: string[] = []
+    
+    if (files.value.length > 0) {
+      const { uploadFile, getFileUrl } = useFileUpload()
+      const failedUploads: string[] = []
 
-    // Upload each file
-    for (const fileItem of files.value) {
-      try {
-        // Generate a unique filename to avoid conflicts
-        const fileExtension = fileItem.file.name.split('.').pop()
-        const uniqueFileName = `product-${props.productId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExtension}`
+      for (const fileItem of files.value) {
+        try {
+          const fileExtension = fileItem.file.name.split('.').pop()
+          const uniqueFileName = `product-${props.productId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExtension}`
 
-        // Upload to S3 - authentication is handled inside uploadFile
-        const uploadResult = await uploadFile(props.bucket, uniqueFileName, fileItem.file)
+          const uploadResult = await uploadFile(props.bucket, uniqueFileName, fileItem.file)
 
-        if (!uploadResult) {
+          if (!uploadResult) {
+            failedUploads.push(fileItem.file.name)
+            continue
+          }
+
+          const fileUrl = await getFileUrl(props.bucket, uploadResult.path)
+
+          if (!fileUrl) {
+            failedUploads.push(fileItem.file.name)
+            continue
+          }
+
+          fileUrls.push(fileUrl)
+        } catch (fileError: any) {
+          console.error(`Error uploading ${fileItem.file.name}:`, fileError)
           failedUploads.push(fileItem.file.name)
-          continue
         }
+      }
 
-        // Get the public URL
-        const fileUrl = await getFileUrl(props.bucket, uploadResult.path)
-
-        if (!fileUrl) {
-          failedUploads.push(fileItem.file.name)
-          continue
-        }
-
-        fileUrls.push(fileUrl)
-      } catch (fileError: any) {
-        console.error(`Error uploading ${fileItem.file.name}:`, fileError)
-        failedUploads.push(fileItem.file.name)
+      if (fileUrls.length === 0 && files.value.length > 0) {
+        throw new Error('All uploads failed. Please check your connection and try again.')
+      }
+      
+      if (failedUploads.length > 0) {
+        toast.warning(`${failedUploads.length} image(s) failed to upload. ${fileUrls.length} image(s) uploaded successfully.`)
       }
     }
 
-    // If we have some successful uploads but some failed
-    if (fileUrls.length > 0 && failedUploads.length > 0) {
-      toast.warning(`${failedUploads.length} image(s) failed to upload. Successfully uploaded ${fileUrls.length} image(s).`)
-    } 
-    // If all uploads failed
-    else if (fileUrls.length === 0) {
-      throw new Error('All uploads failed. Please check your connection and try again.')
-    }
-
-    // Send all URLs to the parent component
-    if (fileUrls.length > 0) {
-      await props.submit(fileUrls, removeIds.value)
-      
-      // Reset form
-      files.value.forEach(f => URL.revokeObjectURL(f.preview))
-      files.value = []
-      removeIds.value = []
-      emit('close')
-      
+    await props.submit(fileUrls, removeIds.value)
+    
+    files.value.forEach(f => URL.revokeObjectURL(f.preview))
+    files.value = []
+    removeIds.value = []
+    emit('close')
+    
+    if (fileUrls.length > 0 && removeIds.value.length > 0) {
+      toast.success(`Successfully updated images (${fileUrls.length} added, ${removeIds.value.length} removed)`)
+    } else if (fileUrls.length > 0) {
       toast.success(`Successfully uploaded ${fileUrls.length} image${fileUrls.length > 1 ? 's' : ''}`)
+    } else if (removeIds.value.length > 0) {
+      toast.success(`Successfully removed ${removeIds.value.length} image${removeIds.value.length > 1 ? 's' : ''}`)
     }
   } catch (error: any) {
-    console.error('Error during upload:', error)
-    toast.error(error.message || 'Upload failed')
+    console.error('Error during operation:', error)
+    toast.error(error.message || 'Operation failed')
   } finally {
     isUploading.value = false
   }
@@ -164,43 +170,56 @@ async function handleSubmit() {
 <template>
   <Dialog>
     <DialogTrigger as-child>
-      <Button variant="outline">
-        <slot/>
-      </Button>
+      <slot />
     </DialogTrigger>
-    <DialogContent class="sm:max-w-[600px]">
+    <DialogContent class="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Bulk Upload Images</DialogTitle>
+        <DialogTitle>Upload Images</DialogTitle>
         <DialogDescription>
-          Drag and drop multiple images here, or click to select. You can upload multiple images at once.
+          Add new images or remove existing ones
         </DialogDescription>
       </DialogHeader>
       <form @submit.prevent="handleSubmit">
+        <!-- Existing gallery previews -->
+        <div v-if="galleries.length > 0" class="w-full grid grid-cols-3 gap-2 mb-4">
+          <div v-for="gallery in galleries" :key="gallery.id" class="relative">
+            <img :src="gallery.url" alt="Gallery preview" class="w-full h-24 object-cover rounded shadow"/>
+            <button 
+              type="button" 
+              @click="removeGalleryItem(gallery)"
+              class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md hover:bg-red-600"
+            >
+              <Trash2Icon class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        
+        <!-- Upload area -->
         <div
-            class="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors"
-            :class="dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'"
-            @dragover="onDragOver"
-            @dragleave="onDragLeave"
-            @drop="onDrop"
-            @click="fileInput?.click()"
-            style="min-height: 160px;"
+          class="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors"
+          :class="dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'"
+          @dragover="onDragOver"
+          @dragleave="onDragLeave"
+          @drop="onDrop"
+          @click="fileInput?.click()"
+          style="min-height: 160px;"
         >
           <input
-              ref="fileInput"
-              type="file"
-              accept="image/*"
-              multiple
-              class="hidden"
-              @change="onFileChange"
-              :disabled="isUploading"
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            multiple
+            class="hidden"
+            @change="onFileChange"
+            :disabled="isUploading"
           />
           
           <div v-if="files.length > 0" class="w-full grid grid-cols-3 gap-2 mb-2">
             <div v-for="file in files" :key="file.id" class="relative">
-              <img :src="file.preview" alt="Preview" class="w-full h-24 object-cover rounded shadow"/>
-              <button 
-                type="button" 
-                @click.stop="removeFile(file.id)" 
+              <img :src="file.preview" class="w-full h-24 object-cover rounded shadow" />
+              <button
+                type="button"
+                @click.stop="removeFile(file.id)"
                 class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md hover:bg-red-600"
               >
                 <XIcon class="w-4 h-4" />
@@ -212,16 +231,16 @@ async function handleSubmit() {
             <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5V19a2 2 0 002 2h14a2 2 0 002-2v-2.5M16 6l-4-4m0 0L8 6m4-4v14"/>
             </svg>
-            <span>Drag & drop or click to select multiple images</span>
+            <p class="mt-2 text-sm">Drag & drop images here or click to browse</p>
           </div>
         </div>
         
         <div class="mt-4 flex justify-between">
           <div class="text-sm text-gray-500">
-            {{ files.length }} image{{ files.length !== 1 ? 's' : '' }} selected
+            {{ files.length + galleries.length }} image{{ files.length + galleries.length !== 1 ? 's' : '' }} selected
           </div>
-          <Button type="submit" :disabled="files.length === 0 || isUploading">
-            {{ isUploading ? `Uploading (${files.length} images)...` : 'Upload All' }}
+          <Button type="submit" :disabled="(files.length === 0 && removeIds.length === 0) || isUploading">
+            {{ isUploading ? `Uploading (${files.length} images)...` : 'Simpan' }}
           </Button>
         </div>
       </form>
