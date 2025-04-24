@@ -27,17 +27,12 @@ import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
 import { useProductService } from "~/services/product.service";
 import { useOptionsService } from "~/services/options.service";
-import type { OptionType } from "~/types/OptionType";
+import type { OptionType, ProductAttributeOptions } from "~/types/options.type";
 import ImageFormDialog from "~/components/forms/ImageFormDialog.vue";
 import ImageUploadField from "~/components/forms/ImageUploadField.vue";
 import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
 import FormButton from '../atoms/FormButton.vue'
-
-interface ProductAttribute {
-  id: string;
-  label: string;
-  category: string;
-}
+import type { ProductAdditional } from '~/types/products.type'
 
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
@@ -111,7 +106,7 @@ const {
 })
 
 // For dynamic additionals and attributes
-const additionals = ref([...values.additionals])
+const additionals = ref([...values.additionals as ProductAdditional[]])
 
 function addAdditional() {
   additionals.value.push({
@@ -123,14 +118,14 @@ function addAdditional() {
     attributes: [ { category: '', name: '' } ]
   })
 }
-function removeAdditional(idx) {
+function removeAdditional(idx: number) {
   if(additionals.value.length > 1) additionals.value.splice(idx, 1)
 }
 
-function addAttribute(addIdx) {
+function addAttribute(addIdx: number) {
   additionals.value[addIdx].attributes.push({ category: '', name: '' })
 }
-function removeAttribute(addIdx, attrIdx) {
+function removeAttribute(addIdx: number, attrIdx: number) {
   if(additionals.value[addIdx].attributes.length > 1) additionals.value[addIdx].attributes.splice(attrIdx, 1)
 }
 
@@ -138,7 +133,7 @@ function removeAttribute(addIdx, attrIdx) {
 const attributeNameOptions = ref({}) // { [categoryId]: [name1, name2, ...] }
 
 // Get attribute options for a specific category
-function getNamesForCategory(categoryId: string): ProductAttribute[] {
+function getNamesForCategory(categoryId: string): ProductAttributeOptions[] {
   return attributesByCategory.value[categoryId] || []
 }
 
@@ -175,8 +170,8 @@ useOptionsService().fetchDiscountTypes().then((val) => {
 })
 
 // Fetch product attributes
-const productAttributes = ref<ProductAttribute[]>([])
-const attributesByCategory = ref<Record<string, ProductAttribute[]>>({})
+const productAttributes = ref<ProductAttributeOptions[]>([])
+const attributesByCategory = ref<Record<string, ProductAttributeOptions[]>>({})
 const loadingAttributes = ref(true)
 const errorAttributes = ref(false)
 
@@ -200,7 +195,7 @@ const fetchProductAttributes = async () => {
         }
         acc[attr.category].push(attr)
         return acc
-      }, {} as Record<string, ProductAttribute[]>)
+      }, {} as Record<string, ProductAttributeOptions[]>)
       
       console.log('Attributes By Category:', attributesByCategory.value)
     } else {
@@ -258,31 +253,35 @@ watch(
   { immediate: true }
 )
 
-const updateSlugFromName = (nameValue: string | undefined) => {
-  if (!nameValue) {
-    slug.value = ''
-    return
-  }
-  slug.value = nameValue
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_]/g, '')
+const generateSlug = (str: string) => {
+  return str.toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special chars
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // Trim hyphens from start/end
 }
 
-watch(name, (newVal) => {
-  if (!isApiUpdate) updateSlugFromName(newVal)
-})
+watch(() => name.value, (newName) => {
+  if (newName) {
+    slug.value = generateSlug(newName)
+  } else {
+    slug.value = ''
+  }
+}, { immediate: true })
 
 const handleSubmitForm = handleSubmit(async (values) => {
+  const submitData = {
+    ...values,
+    slug: slug.value || generateSlug(name.value)
+  }
   try {
     // Ensure boolean values are properly converted
-    values.is_recommended = Boolean(values.is_recommended);
-    values.is_upsell = Boolean(values.is_upsell);
+    submitData.is_recommended = Boolean(submitData.is_recommended);
+    submitData.is_upsell = Boolean(submitData.is_upsell);
 
     // If highlight is required, handle upload if needed
-    if (values.is_highlight) {
+    if (submitData.is_highlight) {
       // If a file is selected but no url yet, upload it
-      if (highlight_image_file.value && !values.highlight_image) {
+      if (highlight_image_file.value && !submitData.highlight_image) {
         const { uploadFile, getFileUrl } = useFileUpload();
         const file = highlight_image_file.value;
         const fileExtension = file.name.split('.').pop();
@@ -297,23 +296,23 @@ const handleSubmitForm = handleSubmit(async (values) => {
           toast.error('Failed to get image URL');
           return;
         }
-        values.highlight_image = url;
+        submitData.highlight_image = url;
         highlight_image.value = url;
       }
-      if (!values.highlight_image) {
+      if (!submitData.highlight_image) {
         toast.error('Please select an image for highlight.');
         return;
       }
     }
     // --- PLACEHOLDER: Insert your custom logic here if needed ---
-    // console.log('Highlight image URL:', values.highlight_image);
+    // console.log('Highlight image URL:', submitData.highlight_image);
 
-    console.log(values)
+    console.log(submitData)
     if (isCreate) {
-      await useProductService().createProduct(values)
+      await useProductService().createProduct(submitData)
       toast.success('Product created successfully!')
     } else {
-      await useProductService().updateProductById(id, values)
+      await useProductService().updateProductById(id, submitData)
       toast.success('Product updated successfully!')
     }
     router.push(getPathWithoutIdInForm(currentPath))

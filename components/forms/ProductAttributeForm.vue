@@ -14,6 +14,7 @@ import { useProductAttributeService } from '~/services/product-attribute.service
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
 import FieldXCheckbox from './FieldXCheckbox.vue'
+import FieldXText from './FieldXText.vue'
 import FormButton from '../atoms/FormButton.vue'
 
 const router = useRouter()
@@ -101,24 +102,25 @@ defineOptions({
 
 <template>
   <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <FormField v-slot="{ componentField }" name="name" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
-        <FormLabel>Name</FormLabel>
-        <FormControl>
-          <Input type="text" placeholder="Enter name" v-model="name" v-bind="componentField" :value="name" :disabled />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
-    <FormField v-slot="{ componentField }" name="category" :validate-on-blur="!isFieldDirty">
-      <FormItem v-auto-animate>
-        <FormLabel>Category</FormLabel>
-        <FormControl>
-          <Input type="text" placeholder="Enter category" v-model="category" v-bind="componentField" :value="category" :disabled />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    </FormField>
+    <!-- Name -->
+    <FieldXText 
+      name="name"
+      label="Name"
+      placeholder="Enter name"
+      v-model="name"
+      :disabled="disabled"
+      :isFieldDirty="isFieldDirty('name')"
+    />
+    <!-- Category -->
+    <FieldXText 
+      name="category"
+      label="Category"
+      placeholder="Enter category"
+      v-model="category"
+      :disabled="disabled"
+      :isFieldDirty="isFieldDirty('category')"
+    />
+
     <!-- Is Active -->
     <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled" :isFieldDirty="isFieldDirty('is_active')" />
 

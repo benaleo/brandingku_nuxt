@@ -1,5 +1,5 @@
 import { useApiFetch } from '~/composables/useApiFetch'
-import type { OptionType } from '~/types/OptionType';
+import type { OptionType } from '~/types/options.type';
 
 interface ProductAttribute {
   id: string;
