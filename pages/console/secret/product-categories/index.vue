@@ -61,7 +61,7 @@ const handleDelete = async (id: string) => {
   try {
     await deleteProductCategoryById(id)
     // Refresh the current page
-    window.location.href = '/console/secret/product-categories'
+    reFetch()
     toast.success('Berhasil menghapus data')
   } catch (error) {
     console.error('Error deleting product category:', error)

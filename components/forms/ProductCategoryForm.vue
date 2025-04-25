@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import {toTypedSchema} from '@vee-validate/zod'
-import {useForm} from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import {ref, watch} from 'vue'
-import {toast} from "vue-sonner";
-import {useProductCategoryService} from '~/services/product-category.service'
-import {getIdFromPath, getPathWithoutIdInForm} from "~/utils/global.utils";
-import {useRouter} from 'vue-router'
+import { ref, watch } from 'vue'
+import { toast } from "vue-sonner";
+import { useProductCategoryService } from '~/services/product-category.service'
+import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
+import { useRouter } from 'vue-router'
 import FieldXText from "~/components/forms/FieldXText.vue";
 import FieldXArea from '~/components/forms/FieldXArea.vue'
 import FormButton from "~/components/atoms/FormButton.vue";
 import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
+import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
+import type { ProductCategoryRequest } from '~/types/products.type';
+
 
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
@@ -28,17 +31,19 @@ const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().nullable().optional(),
   description: z.string().min(1, 'Description is required'),
+  sub_categories: z.array(z.string()).optional(),
   is_active: z.coerce.boolean(),
   is_landing_page: z.coerce.boolean(),
 }))
 
-const {isFieldDirty, setFieldValue, handleSubmit} = useForm({
+const { isFieldDirty, setFieldValue, handleSubmit } = useForm({
   validationSchema: formSchema,
 })
 
 const name = ref('')
 const slug = ref('')
 const description = ref('')
+const sub_categories = ref<string[]>([])
 const is_active = ref(false)
 const is_landing_page = ref(false)
 
@@ -48,25 +53,27 @@ let isApiUpdate = false
 
 // Watch for API data load and set fields when available
 watch(
-    [loading, datas],
-    ([loadingVal, datasVal]) => {
-      if (!isCreate && !loadingVal && datasVal) {
-        isApiUpdate = true
-        name.value = datasVal.name || ''
-        slug.value = datasVal.slug || ''
-        description.value = datasVal.description || ''
-        is_active.value = Boolean(datasVal.is_active) || false
-        is_landing_page.value = Boolean(datasVal.is_landing_page) || false
+  [loading, datas],
+  ([loadingVal, datasVal]) => {
+    if (!isCreate && !loadingVal && datasVal) {
+      isApiUpdate = true
+      name.value = datasVal.name || ''
+      slug.value = datasVal.slug || ''
+      description.value = datasVal.description || ''
+      sub_categories.value = datasVal.sub_categories || []
+      is_active.value = Boolean(datasVal.is_active) || false
+      is_landing_page.value = Boolean(datasVal.is_landing_page) || false
 
-        setFieldValue('name', datasVal.name || '')
-        setFieldValue('slug', datasVal.slug || '')
-        setFieldValue('description', datasVal.description || '')
-        setFieldValue('is_active', Boolean(datasVal.is_active) || false)
-        setFieldValue('is_landing_page', Boolean(datasVal.is_active) || false)
-        isApiUpdate = false
-      }
-    },
-    {immediate: true}
+      setFieldValue('name', datasVal.name || '')
+      setFieldValue('slug', datasVal.slug || '')
+      setFieldValue('description', datasVal.description || '')
+      setFieldValue('sub_categories', datasVal.sub_categories || [])
+      setFieldValue('is_active', Boolean(datasVal.is_active) || false)
+      setFieldValue('is_landing_page', Boolean(datasVal.is_active) || false)
+      isApiUpdate = false
+    }
+  },
+  { immediate: true }
 )
 
 const updateSlugFromName = (nameValue: string | undefined) => {
@@ -75,20 +82,20 @@ const updateSlugFromName = (nameValue: string | undefined) => {
     return
   }
   slug.value = nameValue
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
 }
 
 watch(name, (newVal) => {
   if (!isApiUpdate) updateSlugFromName(newVal)
 })
 
-const handleSubmitForm = handleSubmit(async (values) => {
+const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
   try {
     console.log(values)
     if (isCreate) {
-      await useProductCategoryService().createProductCategory(values as any)
+      await useProductCategoryService().createProductCategory(values)
       toast.success('Product category created successfully!')
     } else {
       await useProductCategoryService().updateProductCategoryById(id, values)
@@ -113,47 +120,51 @@ const handleBack = () => {
         {{ config.public.BASE_URL }} /category/
       </p>
       <!-- Slug -->
-      <FieldXText
-          name="slug"
-          label=""
-          placeholder="Enter slug"
-          v-model="slug"
-          :disabled="disabled"
-          :isFieldDirty="isFieldDirty('slug')"
-          :item-class="'inline-flex'"
-          :input-class="'h-6'"
-      />
+      <FieldXText name="slug" label="" placeholder="Enter slug" v-model="slug" :disabled="disabled"
+        :isFieldDirty="isFieldDirty('slug')" :item-class="'inline-flex'" :input-class="'h-6'" />
     </div>
 
     <!-- Name -->
-    <FieldXText
-        name="name"
-        label="Name"
-        placeholder="Enter name"
-        v-model="name"
-        :disabled="disabled"
-        :isFieldDirty="isFieldDirty('name')"
-    />
+    <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
+      :isFieldDirty="isFieldDirty('name')" />
 
-    <FieldXArea
-        name="description"
-        label="Description"
-        placeholder="Enter description"
-        :disabled="disabled"
-        v-model="description"
-        :validate-on-blur="!isFieldDirty('description')"
-    />
+    <!-- Description -->
+    <FieldXArea name="description" label="Description" placeholder="Enter description" :disabled="disabled"
+      v-model="description" :validate-on-blur="!isFieldDirty('description')" />
+
+    <!-- Sub Category -->
+    <FormField v-slot="{ componentField }" name="sub_categories">
+      <FormItem>
+        <FormLabel>Sub Categories</FormLabel>
+        <FormControl>
+          <TagsInput :model-value="componentField.modelValue"
+            @update:model-value="componentField['onUpdate:modelValue']">
+            <TagsInputItem v-for="item in componentField.modelValue" :key="item" :value="item">
+              <TagsInputItemText />
+              <TagsInputItemDelete />
+            </TagsInputItem>
+
+            <TagsInputInput placeholder="Sub Categories..." />
+          </TagsInput>
+        </FormControl>
+        <FormDescription>
+          Select your sub categories.
+        </FormDescription>
+        <FormMessage />
+      </FormItem>
+    </FormField>
 
     <!-- Is Landing Page -->
     <FieldXCheckbox name="is_landing_page" label="Is Landing Page" v-model="is_landing_page" :disabled="disabled"
-                    :isFieldDirty="isFieldDirty('is_landing_page')"/>
+      :isFieldDirty="isFieldDirty('is_landing_page')" />
 
 
     <!-- Is Active -->
-    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled" :isFieldDirty="isFieldDirty('is_active')"/>
+    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
+      :isFieldDirty="isFieldDirty('is_active')" />
 
 
     <!-- Form Button -->
-    <FormButton :handleBack="handleBack"/>
+    <FormButton :handleBack="handleBack" />
   </form>
 </template>

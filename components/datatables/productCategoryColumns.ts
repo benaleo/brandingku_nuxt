@@ -5,14 +5,14 @@ import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
 import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 import type {ProductCategory} from "~/types/products.type";
 
-let indexRef = 1
 
 export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: () => {
-            return indexRef++
+        cell: ({row}) => {
+            const index = row.index + 1
+            return index
         }
     },
     {
@@ -33,10 +33,23 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         },
     },
     {
+        accessorKey: 'sub_categories',
+        header: () => h('div', {class: 'text-left'}, 'Sub Categories'),
+        cell: ({row}) => {
+            const subCategories : string[] = row.getValue('sub_categories') ?? []
+            return h('div', {
+                class: 'text-left font-medium p-1 rounded-md flex items-end flex-wrap',
+            }, subCategories.map((subCategory: string, index: number) => [
+                h('span', {class: 'bg-black text-white px-2 py-1 rounded-md', key: `sub-category-${index}`}, subCategory),
+                index < subCategories.length - 1 ? h('span', {class: 'mx-1', key: `sub-category-comma-${index}`}, '') : null
+            ]).flat())
+        },
+    },
+    {
         accessorKey: 'updated_at',
         header: 'Timestamp',
         cell: ({row}) => {
-            return new Date(row.original.updated_at).toLocaleString()
+            return h('div', {class: 'text-left'}, new Date(row.original.updated_at).toLocaleString())
         },
     },
     {

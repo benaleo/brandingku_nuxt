@@ -1,5 +1,5 @@
-import {useApiFetch} from '~/composables/useApiFetch'
-import type {ProductCategory} from "~/types/products.type";
+import { useApiFetch } from '~/composables/useApiFetch'
+import type { ProductCategory, ProductCategoryRequest } from "~/types/products.type";
 
 export const useProductCategoryService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()
@@ -35,13 +35,7 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         return reFetch();
     }
 
-    const createProductCategory = async (payload: {
-        name: string
-        slug: string
-        description: string
-        is_landing_page: boolean
-        is_active: boolean
-    }) => {
+    const createProductCategory = async (payload: ProductCategoryRequest) => {
         const response = await fetch(url, {
             method: 'POST',
             body: JSON.stringify(payload),
@@ -60,7 +54,7 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
     }
 
     // General UPDATE function
-    const updateProductCategoryById = async (id: string, payload: any) => {
+    const updateProductCategoryById = async (id: string, payload: ProductCategoryRequest) => {
         const response = await fetch(`${url}/${id}`, {
             method: 'PUT',
             body: JSON.stringify(payload),
