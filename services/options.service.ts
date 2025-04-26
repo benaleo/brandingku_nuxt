@@ -17,7 +17,7 @@ export const useOptionsService = () => {
     data,
     loading,
     error,
-    reFetch
+    refetch
   } = useApiFetch<OptionType[]>(categoriesUrl, {
     isResult: false,
     initialPage: 0,
@@ -25,7 +25,7 @@ export const useOptionsService = () => {
   })
 
   const getProductsCategory = async () => {
-    return reFetch();
+    return refetch();
   }
 
   const fetchDiscountTypes = async (): Promise<OptionType[]> => {
@@ -37,7 +37,7 @@ export const useOptionsService = () => {
 
   const getProductAttributes = async (): Promise<ProductAttribute[]> => {
     return new Promise((resolve) => {
-      const { data, loading, error, reFetch } = useApiFetch<ProductAttribute[]>(attributesUrl, {
+      const { data, loading, error, refetch } = useApiFetch<ProductAttribute[]>(attributesUrl, {
         isResult: false,
         initialPage: 0,
         initialLimit: 10
@@ -62,7 +62,7 @@ export const useOptionsService = () => {
     datas: data,
     loading,
     error,
-    reFetch,
+    reFetch: refetch,
     getProductsCategory,
     fetchDiscountTypes,
     getProductAttributes,

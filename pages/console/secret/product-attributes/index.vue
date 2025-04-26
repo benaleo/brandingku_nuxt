@@ -73,17 +73,23 @@ const onLimitChange = (limit: number) => {
 
 const selectedCategory = ref<string | number | undefined>()
 
-const categoryOptions = computed<OptionType[]>(() => {
-  const seen = new Set<string>()
-  const result = Array.isArray(datas.value) ? datas.value : [datas.value]
-  const arr = result
+// Import useOptionsService and fetch all product attributes for category options
+import { useOptionsService } from '@/services/options.service';
+const { getProductAttributes } = useOptionsService();
+
+const allAttributeCategories = ref<OptionType[]>([]);
+
+getProductAttributes().then((attributes) => {
+  const seen = new Set<string>();
+  const arr = attributes
     .filter(item => item && typeof item.category === 'string')
     .map(item => item.category)
     .filter(cat => !seen.has(cat) && seen.add(cat))
-    .map(cat => ({ id: cat, label: cat }))
-  // Add 'All' option at the beginning (id: 'all')
-  return [{ id: 'all', label: 'All' }, ...arr]
-})
+    .map(cat => ({ id: cat, label: cat }));
+  allAttributeCategories.value = [{ id: 'all', label: 'All' }, ...arr];
+});
+
+const categoryOptions = computed<OptionType[]>(() => allAttributeCategories.value);
 
 watch(
   [categoryOptions, loading],
@@ -100,7 +106,7 @@ watch(
 // Watch selectedCategory and trigger server-side filter
 watch(selectedCategory, (val: any) => {
   console.log('selectedCategory changed:', val)
-  if (val === 'all') {
+  if (val === 'all' || val === undefined || val === '') {
     setParams({ category: undefined }) // Remove category param to show all
   } else {
     setParams({ category: val })
