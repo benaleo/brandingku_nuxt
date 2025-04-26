@@ -1,6 +1,6 @@
 <template>
   <div>
-    <label v-if="label" class="form-label">{{ label }}</label>
+    <label v-if="label" class="form-label mb-2">{{ label }}</label>
     <Select v-model="selectedValue" :disabled="disabled">
       <SelectTrigger class="w-full">
         <SelectValue :placeholder="placeholder" />

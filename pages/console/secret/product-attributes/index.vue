@@ -1,19 +1,19 @@
 <template>
   <div>
+    <!-- Breadcrumb -->
     <AppBreadcrumb/>
+
+    <!-- Table Header -->
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/product-attributes/add'"/>
-    <section class="grid">
-      <div class="flex justify-center items-center gap-2">
-        <div class="flex-1">
-          <div class="form-label mb-2">
-            Kategori
-          </div>
-          <FieldXSelectSimple name="category" :options="categoryOptions" placeholder="Pilih Kategori"
-                              v-model="selectedCategory"/>
-        </div>
+
+    <!-- Filter -->
+    <AppFilterTable v-model="keyword">
+      <div class="flex-1">
+        <FieldXSelectSimple label="Kategori" name="category" :options="categoryOptions" placeholder="Pilih Kategori" v-model="selectedCategory"/>
       </div>
-      <FieldXSearch name="search" placeholder="Cari" v-model="keyword"/>
-    </section>
+    </AppFilterTable>
+
+    <!-- Table -->
     <div class="mt-2">
       <div v-if="loading" class="text-center py-4">
         Loading products...
@@ -41,6 +41,7 @@ import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue
 // Import useOptionsService and fetch all product attributes for category options
 import {useOptionsService} from '@/services/options.service';
 import FieldXSearch from '~/components/forms/fields/FieldXSearch.vue';
+import AppFilterTable from "~/components/elements/AppFilterTable.vue";
 
 const pageTitle = 'Produk Attribute'
 
@@ -79,6 +80,7 @@ const {getProductAttributes} = useOptionsService();
 
 // Watch keyword to trigger search with minimum 3 characters
 watch(keyword, (newValue: string) => {
+  console.log('index.vue keyword changed:', newValue)
   if (newValue && newValue.length >= 3) {
     isFetch.value = true
     // If 3 or more characters, set keyword param
