@@ -57,8 +57,7 @@ const formSchema = toTypedSchema(z.object({
       category: z.string().min(1, 'Category is required'),
       name: z.string().min(1, 'Name is required'), // single string per Product model
     })),
-
-  })).min(1, 'At least one additional is required'),
+  })).min(1, 'At least one additional is required')
 }))
 
 const {
@@ -155,10 +154,10 @@ const fetchCategories = async () => {
   categoryLoading.value = true;
   
   try {
-    // Use the improved options service with caching
+    // Use the improved options service with modified promise-based fetching
     const optionsService = useOptionsService();
     categories.value = await optionsService.getProductsCategory();
-    console.log('[ProductForm] Categories loaded');
+    console.log('[ProductForm] Categories loaded:', categories.value);
   } catch (e) {
     console.error('[ProductForm] Categories load error:', e);
     errorCategory.value = e;
@@ -351,8 +350,14 @@ const handleBack = () => {
 
 // --- DISCOUNT TYPES (dtypes) ---
 const dtypes = ref<OptionType[]>([])
-useOptionsService().fetchDiscountTypes().then((val) => {
-  dtypes.value = val
+
+// Use async/await pattern for consistency
+onMounted(async () => {
+  try {
+    dtypes.value = await useOptionsService().fetchDiscountTypes()
+  } catch (e) {
+    console.error('[ProductForm] Error fetching discount types:', e)
+  }
 })
 </script>
 

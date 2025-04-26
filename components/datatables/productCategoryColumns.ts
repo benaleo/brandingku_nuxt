@@ -38,10 +38,10 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         cell: ({row}) => {
             const subCategories : string[] = row.getValue('sub_categories') ?? []
             return h('div', {
-                class: 'text-left font-medium p-1 rounded-md flex items-end flex-wrap',
+                class: 'text-left font-medium rounded-md flex items-top flex-wrap space-x-1 space-y-1',
             }, subCategories.map((subCategory: string, index: number) => [
-                h('span', {class: 'bg-black text-white px-2 py-1 rounded-md', key: `sub-category-${index}`}, subCategory),
-                index < subCategories.length - 1 ? h('span', {class: 'mx-1', key: `sub-category-comma-${index}`}, '') : null
+                h('span', {class: 'bg-black text-white px-2 py-1 rounded-md max-h-fit', key: `sub-category-${index}`}, subCategory),
+                index < subCategories.length - 1 ? h('span', {class: '', key: `sub-category-comma-${index}`}, '') : null
             ]).flat())
         },
     },

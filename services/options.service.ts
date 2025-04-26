@@ -18,17 +18,6 @@ export const useOptionsService = () => {
   const cachedCategories = useState<OptionType[]>('product-categories', () => [])
   const isFetchingCategories = useState<boolean>('is-fetching-categories', () => false)
 
-  const {
-    data,
-    loading,
-    error,
-    refetch
-  } = useApiFetch<OptionType[]>(categoriesUrl, {
-    isResult: false,
-    initialPage: 0,
-    initialLimit: 10
-  })
-
   const getProductsCategory = async (): Promise<OptionType[]> => {
     // If we already have cached categories, return them immediately
     if (cachedCategories.value.length > 0) {
@@ -51,18 +40,43 @@ export const useOptionsService = () => {
       return cachedCategories.value
     }
     
-    // Otherwise, fetch the categories
+    // Create a new promise-based approach similar to getProductAttributes
+    isFetchingCategories.value = true
+    
     try {
       console.log('[OPTIONS] Fetching categories from API')
-      isFetchingCategories.value = true
-      await refetch()
-      
-      if (data.value) {
-        cachedCategories.value = data.value
-      }
-      return data.value || []
-    } finally {
+      return await new Promise<OptionType[]>((resolve) => {
+        const { data, loading, error, refetch } = useApiFetch<OptionType[]>(categoriesUrl, {
+          isResult: false,
+          initialPage: 0,
+          initialLimit: 10
+        })
+        
+        // Watch for data changes to resolve the promise when data is loaded
+        watch([loading, data], ([isLoading, currentData]) => {
+          console.log('[OPTIONS] Categories loading:', isLoading, 'data:', currentData)
+          if (!isLoading && currentData) {
+            // Update the cache
+            cachedCategories.value = currentData || []
+            isFetchingCategories.value = false
+            resolve(currentData || [])
+          }
+        }, { immediate: true })
+        
+        // If there's already data available, resolve immediately
+        if (!loading.value && data.value) {
+          cachedCategories.value = data.value || []
+          isFetchingCategories.value = false
+          resolve(data.value)
+        }
+        
+        // Trigger the fetch
+        refetch()
+      })
+    } catch (error) {
+      console.error('[OPTIONS] Error fetching categories:', error)
       isFetchingCategories.value = false
+      return []
     }
   }
 
@@ -97,10 +111,6 @@ export const useOptionsService = () => {
   }
 
   return {
-    datas: data,
-    loading,
-    error,
-    reFetch: refetch,
     getProductsCategory,
     fetchDiscountTypes,
     getProductAttributes,
