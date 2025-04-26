@@ -1,5 +1,6 @@
 import { useApiFetch } from '~/composables/useApiFetch'
 import type { OptionType } from '~/types/options.type';
+import { useState, watch } from '#imports'
 
 interface ProductAttribute {
   id: string;
@@ -13,6 +14,10 @@ export const useOptionsService = () => {
   const categoriesUrl = `${BASE_URL}/cms/v1/option/product-categories`
   const attributesUrl = `${BASE_URL}/cms/v1/option/product-attributes`
 
+  // Cached data for product categories
+  const cachedCategories = useState<OptionType[]>('product-categories', () => [])
+  const isFetchingCategories = useState<boolean>('is-fetching-categories', () => false)
+
   const {
     data,
     loading,
@@ -24,8 +29,41 @@ export const useOptionsService = () => {
     initialLimit: 10
   })
 
-  const getProductsCategory = async () => {
-    return refetch();
+  const getProductsCategory = async (): Promise<OptionType[]> => {
+    // If we already have cached categories, return them immediately
+    if (cachedCategories.value.length > 0) {
+      console.log('[OPTIONS] Returning cached categories')
+      return cachedCategories.value
+    }
+    
+    // If already fetching, wait for it to complete
+    if (isFetchingCategories.value) {
+      console.log('[OPTIONS] Already fetching categories, waiting...')
+      // Wait for the current fetch to complete
+      await new Promise<void>(resolve => {
+        const unwatch = watch(isFetchingCategories, (val) => {
+          if (!val) {
+            unwatch()
+            resolve()
+          }
+        })
+      })
+      return cachedCategories.value
+    }
+    
+    // Otherwise, fetch the categories
+    try {
+      console.log('[OPTIONS] Fetching categories from API')
+      isFetchingCategories.value = true
+      await refetch()
+      
+      if (data.value) {
+        cachedCategories.value = data.value
+      }
+      return data.value || []
+    } finally {
+      isFetchingCategories.value = false
+    }
   }
 
   const fetchDiscountTypes = async (): Promise<OptionType[]> => {

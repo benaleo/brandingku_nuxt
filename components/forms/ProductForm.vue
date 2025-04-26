@@ -7,7 +7,7 @@ import {vAutoAnimate} from '@formkit/auto-animate/vue'
 import {toTypedSchema} from '@vee-validate/zod'
 import {useForm} from 'vee-validate'
 import * as z from 'zod'
-import {ref, watch} from 'vue'
+import {ref, watch, onMounted} from 'vue'
 import {toast} from "vue-sonner";
 import {getIdFromPath, getPathWithoutIdInForm} from "~/utils/global.utils";
 import {useRouter} from 'vue-router'
@@ -147,17 +147,35 @@ const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
 
 // Fetch product categories
-const {
-  datas: categories,
-  loading: categoryLoading,
-  error: errorCategory,
-  reFetch: reFetchCategories
-} = useOptionsService()
+const categories = ref<OptionType[] | null>(null)
+const categoryLoading = ref(false)
+const errorCategory = ref(null)
 
-const dtypes = ref<OptionType[]>([]) as Ref<OptionType[]>
-useOptionsService().fetchDiscountTypes().then((val) => {
-  dtypes.value = val
-})
+const fetchCategories = async () => {
+  categoryLoading.value = true;
+  
+  try {
+    // Use the improved options service with caching
+    const optionsService = useOptionsService();
+    categories.value = await optionsService.getProductsCategory();
+    console.log('[ProductForm] Categories loaded');
+  } catch (e) {
+    console.error('[ProductForm] Categories load error:', e);
+    errorCategory.value = e;
+  } finally {
+    categoryLoading.value = false;
+  }
+}
+
+// Call fetch only once during component setup
+onMounted(() => {
+  fetchCategories();
+});
+
+// Show warning in console if in update mode
+if (!isCreate) {
+  console.warn('UPDATE MODE!');
+}
 
 // Fetch product attributes
 const productAttributes = ref<ProductAttributeOptions[]>([])
@@ -229,14 +247,29 @@ watch(
         setFieldValue('is_recommended', Boolean(datasVal.is_recommended) || false)
         setFieldValue('is_upsell', Boolean(datasVal.is_upsell) || false)
         setFieldValue('category_id', datasVal.category_id || '')
-        // Set additionals with correct mapping
-        setFieldValue('additionals', (datasVal.additionals || []).map((add) => ({
+        
+        // Process additionals array from API data
+        const processedAdditionals = (datasVal.additionals || []).map((add) => ({
           ...add,
+          price: Number(add.price) || 0,
+          moq: Number(add.moq) || 0,
+          stock: Number(add.stock) || 0,
+          discount: Number(add.discount) || 0,
+          discount_type: add.discount_type || 'AMOUNT',
           attributes: (add.attributes || []).map(attr => ({
-            ...attr,
+            id: attr.id || undefined,
+            category: attr.category || '',
             name: typeof attr.name === 'string' ? attr.name : (Array.isArray(attr.name) ? attr.name[0] || '' : '')
           }))
-        })))
+        }))
+        
+        // Update additionals ref to trigger UI updates
+        additionals.value = processedAdditionals
+        
+        // Set form values for additionals
+        setFieldValue('additionals', processedAdditionals)
+        
+        console.log('Form data loaded from API:', processedAdditionals)
         isApiUpdate = false
       }
     },
@@ -315,6 +348,12 @@ const handleSubmitForm = handleSubmit(async (values) => {
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))
 }
+
+// --- DISCOUNT TYPES (dtypes) ---
+const dtypes = ref<OptionType[]>([])
+useOptionsService().fetchDiscountTypes().then((val) => {
+  dtypes.value = val
+})
 </script>
 
 <template>
@@ -405,6 +444,14 @@ const handleBack = () => {
       </div>
     </div>
     <!-- Product Categories -->
+    <!-- 
+      NOTE: The warning about "Extraneous non-props attributes (class)" occurs in the ComboboxPortal.
+      
+      Fix options:
+      1. Remove class="w-full" from <ComboboxPortal> in the ComboboxList component
+      2. OR modify FieldXSelect to use a custom wrapper with inheritAttrs: false
+      3. OR use a wrapper div with the class around the FieldXSelect
+    -->
     <FieldXSelect name="category_id" label="Kategori" placeholder="Select category"
                   searchPlaceholder="Search category..." emptyMessage="No category found." v-model="category_id"
                   :options="categories ?? []" :loading="categoryLoading" :error="errorCategory !== null"

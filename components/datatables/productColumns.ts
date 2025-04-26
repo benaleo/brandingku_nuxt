@@ -6,14 +6,13 @@ import ActionBulkImageUpdate from '../elements/ActionBulkImageUpdate.vue';
 import type {Product} from "~/types/products.type";
 
 
-let index = 1
 
 export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: () => {
-            return index++
+        cell: ({row}) => {
+            return row.index + 1
         }
     },
     {
