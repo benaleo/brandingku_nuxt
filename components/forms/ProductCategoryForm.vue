@@ -7,10 +7,10 @@ import { toast } from "vue-sonner";
 import { useProductCategoryService } from '~/services/product-category.service'
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
-import FieldXText from "~/components/forms/FieldXText.vue";
-import FieldXArea from '~/components/forms/FieldXArea.vue'
+import FieldXText from "~/components/forms/fields/FieldXText.vue";
+import FieldXArea from '~/components/forms/fields/FieldXArea.vue'
 import FormButton from "~/components/atoms/FormButton.vue";
-import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
+import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
 import type { ProductCategoryRequest } from '~/types/products.type';
 

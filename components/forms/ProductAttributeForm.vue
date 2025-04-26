@@ -13,8 +13,8 @@ import { toast } from "vue-sonner";
 import { useProductAttributeService } from '~/services/product-attribute.service'
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
-import FieldXCheckbox from './FieldXCheckbox.vue'
-import FieldXText from './FieldXText.vue'
+import FieldXCheckbox from './fields/FieldXCheckbox.vue'
+import FieldXText from './fields/FieldXText.vue'
 import FormButton from '../atoms/FormButton.vue'
 
 const router = useRouter()

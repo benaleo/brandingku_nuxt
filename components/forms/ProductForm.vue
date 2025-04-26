@@ -29,12 +29,12 @@ import { useProductService } from "~/services/product.service";
 import { useOptionsService } from "~/services/options.service";
 import type { OptionType, ProductAttributeOptions } from "~/types/options.type";
 import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
-import FieldXCheckbox from "~/components/forms/FieldXCheckbox.vue";
-import FieldXSelect from "~/components/forms/FieldXSelect.vue";
+import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
+import FieldXSelect from "~/components/forms/fields/FieldXSelect.vue";
 import FormButton from '../atoms/FormButton.vue'
 import type { ProductAdditional } from '~/types/products.type'
-import FieldXText from "~/components/forms/FieldXText.vue";
-import FieldXArea from "~/components/forms/FieldXArea.vue";
+import FieldXText from "~/components/forms/fields/FieldXText.vue";
+import FieldXArea from "~/components/forms/fields/FieldXArea.vue";
 
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
