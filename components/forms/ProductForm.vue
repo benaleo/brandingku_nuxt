@@ -407,14 +407,14 @@ const handleBack = () => {
     <!-- Product Categories -->
     <FieldXSelect name="category_id" label="Kategori" placeholder="Select category"
                   searchPlaceholder="Search category..." emptyMessage="No category found." v-model="category_id"
-                  :options="categories ?? []" :loading="categoryLoading" :error="errorCategory" :disabled
-                  :isFieldDirty="isFieldDirty('category_id')" itemClass="w-full md:w-1/2"/>
+                  :options="categories ?? []" :loading="categoryLoading" :error="errorCategory !== null"
+                  :disabled :isFieldDirty="isFieldDirty('category_id')" itemClass="w-full md:w-1/2"/>
     <!-- Is Highlight -->
     <FieldXCheckbox name="is_highlight" label="Is Highlight" v-model="is_highlight" :disabled="disabled"
                     :isFieldDirty="isFieldDirty('is_highlight')"/>
 
     <!-- Additional if Is Highlight true   -->
-    <Card class="w-full" v-if="is_highlight">
+    <Card class="w-full" v-if="values.is_highlight">
       <CardContent class="grid gap-2">
         <!-- Highlight Image -->
         <ImageUploadField v-model:fileUrl="highlight_image" v-model:file="highlight_image_file" label="Highlight Image"
