@@ -55,7 +55,7 @@ const formSchema = toTypedSchema(z.object({
     attributes: z.array(z.object({
       id: z.string().optional(),
       category: z.string().min(1, 'Category is required'),
-      name: z.string().min(1, 'Name is required'), // single string per Product model
+      name: z.string().optional() // single string per Product model
     })),
   })).min(1, 'At least one additional is required')
 }))
@@ -85,7 +85,7 @@ const {
         discount: 0,
         discount_type: 'AMOUNT',
         attributes: [
-          {category: '', name: ''}
+          {id: '', category: '', name: ''}
         ]
       }
     ],
@@ -102,7 +102,7 @@ function addAdditional() {
     stock: 0,
     discount: 0,
     discount_type: '',
-    attributes: [{category: '', name: ''}]
+    attributes: [{id: '', category: '', name: ''}]
   })
 }
 
@@ -111,15 +111,12 @@ function removeAdditional(idx: number) {
 }
 
 function addAttribute(addIdx: number) {
-  additionals.value[addIdx].attributes.push({category: '', name: ''})
+  additionals.value[addIdx].attributes.push({id: '', category: '', name: ''})
 }
 
 function removeAttribute(addIdx: number, attrIdx: number) {
   if (additionals.value[addIdx].attributes.length > 1) additionals.value[addIdx].attributes.splice(attrIdx, 1)
 }
-
-// For filtered name options per category
-const attributeNameOptions = ref({}) // { [categoryId]: [name1, name2, ...] }
 
 // Get attribute options for a specific category
 function getNamesForCategory(categoryId: string): ProductAttributeOptions[] {
@@ -143,12 +140,20 @@ const is_upsell = ref(false)
 const category_id = ref('')
 const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
-let isApiUpdate = false
+
+// Track images that should be deleted on submit
+const imagesToDelete = ref<{ url: string, path: string, bucket: string }[]>([])
+
+// Handle image delete requests
+function handleImageDelete(imageData: { url: string, path: string, bucket: string }) {
+  console.log('Image marked for deletion:', imageData)
+  imagesToDelete.value.push(imageData)
+}
 
 // Fetch product categories
 const categories = ref<OptionType[] | null>(null)
 const categoryLoading = ref(false)
-const errorCategory = ref(null)
+const errorCategory = ref(<any>null)
 
 const fetchCategories = async () => {
   categoryLoading.value = true;
@@ -225,7 +230,6 @@ watch(
     [loading, datas],
     ([loadingVal, datasVal]) => {
       if (!isCreate && !loadingVal && datasVal) {
-        isApiUpdate = true
         name.value = datasVal.name || ''
         slug.value = datasVal.slug || ''
         description.value = datasVal.description || ''
@@ -258,7 +262,7 @@ watch(
           attributes: (add.attributes || []).map(attr => ({
             id: attr.id || undefined,
             category: attr.category || '',
-            name: typeof attr.name === 'string' ? attr.name : (Array.isArray(attr.name) ? attr.name[0] || '' : '')
+            name: typeof attr.id === 'string' ? attr.id : (Array.isArray(attr.name) ? attr.name[0] || '' : '')
           }))
         }))
         
@@ -269,7 +273,6 @@ watch(
         setFieldValue('additionals', processedAdditionals)
         
         console.log('Form data loaded from API:', processedAdditionals)
-        isApiUpdate = false
       }
     },
     {immediate: true}
@@ -326,10 +329,10 @@ const handleSubmitForm = handleSubmit(async (values) => {
         return;
       }
     }
-    // --- PLACEHOLDER: Insert your custom logic here if needed ---
-    // console.log('Highlight image URL:', submitData.highlight_image);
 
     console.log(submitData)
+    
+    // First save the form data
     if (isCreate) {
       await useProductService().createProduct(submitData)
       toast.success('Product created successfully!')
@@ -337,6 +340,38 @@ const handleSubmitForm = handleSubmit(async (values) => {
       await useProductService().updateProductById(id, submitData)
       toast.success('Product updated successfully!')
     }
+
+    // Then process any pending image deletions
+    if (imagesToDelete.value.length > 0) {
+      const { deleteFile } = useFileUpload();
+      let deletionErrors = 0;
+
+      // Process each image to delete
+      for (const img of imagesToDelete.value) {
+        console.log(`Deleting image: ${img.path} from bucket: ${img.bucket}`);
+        const success = await deleteFile(img.bucket, img.path);
+        if (!success) {
+          deletionErrors++;
+          console.error(`Failed to delete image: ${img.path}`);
+        }
+      }
+
+      // Report deletion results
+      if (deletionErrors > 0) {
+        if (deletionErrors === imagesToDelete.value.length) {
+          toast.error(`Failed to delete ${deletionErrors} image(s)`);
+        } else {
+          toast.warning(`Deleted ${imagesToDelete.value.length - deletionErrors} image(s), but failed to delete ${deletionErrors} image(s)`);
+        }
+      } else if (imagesToDelete.value.length > 0) {
+        toast.success(`Successfully deleted ${imagesToDelete.value.length} image(s)`);
+      }
+
+      // Clear the deletion queue
+      imagesToDelete.value = [];
+    }
+
+    // Navigate back
     router.push(getPathWithoutIdInForm(currentPath))
   } catch (error) {
     toast.error('Failed to save product')
@@ -420,8 +455,8 @@ onMounted(async () => {
             <Button type="button" size="sm" @click="addAttribute(addIdx)">Add Attribute</Button>
           </div>
           <div v-for="(attr, attrIdx) in additional.attributes" :key="attrIdx"
-               class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div class="col-span-1">
+               class="grid grid-cols-1 items-end gap-2 mb-2" :class="additional.attributes.length > 1 ? 'md:grid-cols-[1fr_1fr_80px]' : 'md:grid-cols-2'">
+            <div class="">
               <label class="form-label mb-2">Kategori Attribute</label>
               <select v-model="attr.category" class="form-input">
                 <option value="" disabled>Select category</option>
@@ -431,17 +466,17 @@ onMounted(async () => {
                 </option>
               </select>
             </div>
-            <div class="col-span-1">
+            <div class="">
               <label class="form-label mb-2">Nama Attribute</label>
-              <select v-model="attr.name" class="form-input" :disabled="!attr.category">
+              <select v-model="attr.id" class="form-input" :disabled="!attr.category">
                 <option value="" disabled>{{ !attr.category ? 'Select category first' : 'Select name' }}</option>
                 <option v-for="attrOption in getNamesForCategory(attr.category || '')" :key="attrOption.id.toString()"
-                        :value="attrOption.label">
+                        :value="attrOption.id">
                   {{ attrOption.label }}
                 </option>
               </select>
             </div>
-            <Button type="button" variant="destructive" size="sm" @click="removeAttribute(addIdx, attrIdx)"
+            <Button class="w-[80px]" type="button" variant="destructive" @click="removeAttribute(addIdx, attrIdx)"
                     v-if="additional.attributes.length > 1">Remove
             </Button>
           </div>
@@ -470,7 +505,7 @@ onMounted(async () => {
       <CardContent class="grid gap-2">
         <!-- Highlight Image -->
         <ImageUploadField v-model:fileUrl="highlight_image" v-model:file="highlight_image_file" label="Highlight Image"
-                          :disabled="disabled"/>
+                          :disabled="disabled" @delete="handleImageDelete"/>
         <!-- Highlight Description -->
         <FormField v-slot="{ componentField }" name="highlight_description" :validate-on-blur="!isFieldDirty">
           <FormItem class="w-full" v-auto-animate>

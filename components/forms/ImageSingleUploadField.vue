@@ -2,6 +2,15 @@
 import { ref, watch, type PropType } from 'vue'
 import { Button } from '@/components/ui/button'
 import { toast } from 'vue-sonner'
+import { Trash2 } from 'lucide-vue-next'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 const props = defineProps({
   /**
@@ -41,13 +50,14 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:fileUrl','update:file'])
+const emit = defineEmits(['update:fileUrl','update:file', 'delete'])
 
 const file = ref<File | null>(props.file)
 const previewUrl = ref<string | null>(props.fileUrl || null)
 const dragActive = ref(false)
 const isUploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+const deleteConfirmOpen = ref(false)
 
 watch(() => props.fileUrl, (val) => {
   if (val && val !== previewUrl.value) {
@@ -85,6 +95,46 @@ function onDragOver(e: DragEvent) {
 function onDragLeave(e: DragEvent) {
   e.preventDefault()
   dragActive.value = false
+}
+
+function openDeleteConfirm() {
+  if (props.disabled) return;
+  deleteConfirmOpen.value = true;
+}
+
+function cancelDelete() {
+  deleteConfirmOpen.value = false;
+}
+
+async function confirmDelete() {
+  deleteConfirmOpen.value = false;
+  try {
+    if (props.fileUrl) {
+      const { deleteFile, getPathFromUrl } = useFileUpload();
+      const path = getPathFromUrl(props.bucket, props.fileUrl);
+      
+      if (!path) {
+        toast.error('Could not determine file path from URL');
+        return;
+      }
+      
+      // Emit delete event for parent component to handle
+      emit('delete', { url: props.fileUrl, path, bucket: props.bucket });
+      
+      // Clear local preview
+      if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+      previewUrl.value = null;
+      file.value = null;
+      
+      // Update model values
+      emit('update:fileUrl', '');
+      emit('update:file', null);
+      
+      toast.success('Image removed');
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to remove image');
+  }
 }
 
 async function uploadImage() {
@@ -143,10 +193,23 @@ async function uploadImage() {
         </svg>
         <span>Drag & drop or click to select image</span>
       </div>
+
     </div>
-    
-    <!-- <div v-if="props.fileUrl" class="mt-2 text-xs text-green-700 break-all">
-      Uploaded URL: {{ props.fileUrl }}
-    </div> -->
+    <Button v-if="previewUrl" @click="openDeleteConfirm" class="mt-2" variant="destructive" size="sm" type="button">
+      <Trash2 class="w-4 h-4 mr-1" />
+      Delete
+    </Button>
+    <Dialog :open="deleteConfirmOpen" @close="cancelDelete">
+      <DialogContent class="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Image</DialogTitle>
+          <DialogDescription>Are you sure you want to delete this image?</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button @click="cancelDelete">Cancel</Button>
+          <Button variant="destructive" @click="confirmDelete">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

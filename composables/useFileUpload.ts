@@ -93,8 +93,71 @@ export const useFileUpload = () => {
         }
     }
 
+    /**
+     * Delete a file from Supabase Storage
+     * @param bucket The storage bucket name
+     * @param path The path within the bucket
+     * @returns boolean indicating success or failure
+     */
+    const deleteFile = async (bucket: string, path: string) => {
+        try {
+            // Try to get a session first
+            await getSupabaseSession()
+            
+            // Check authentication
+            const { data: { session } } = await $supabase.auth.getSession()
+
+            if (!session) {
+                throw new Error('Authentication required for file deletion')
+            }
+
+            const { error } = await $supabase
+                .storage
+                .from(bucket)
+                .remove([path])
+
+            if (error) {
+                console.error('Storage delete error:', error)
+                return false
+            }
+
+            return true
+        } catch (error: any) {
+            console.error('Delete error:', error)
+            return false
+        }
+    }
+
+    /**
+     * Get path from a public URL
+     * @param bucket The storage bucket name
+     * @param url The public URL
+     * @returns The path within the bucket or null
+     */
+    const getPathFromUrl = (bucket: string, url: string): string | null => {
+        try {
+            if (!url) return null;
+            
+            // Extract the path from URL
+            // Example URL: https://xxxx.supabase.co/storage/v1/object/public/images/xxx-xxx-xxxx/filename.jpg
+            const regex = new RegExp(`/storage/v1/object/public/${bucket}/(.+)$`);
+            const match = url.match(regex);
+            
+            if (match && match[1]) {
+                return match[1];
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Failed to extract path from URL:', error);
+            return null;
+        }
+    }
+
     return {
         uploadFile,
-        getFileUrl
+        getFileUrl,
+        deleteFile,
+        getPathFromUrl
     }
 }
