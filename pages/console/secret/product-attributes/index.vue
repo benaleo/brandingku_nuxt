@@ -51,7 +51,10 @@ const {
   pagination,
   changePage,
   changeLimit,
-  deleteProductAttributeById
+  deleteProductAttributeById,
+  filterByCategory,
+  setParams,
+  refetch
 } = useProductAttributeService(true)
 
 const dataList = computed(() => {
@@ -73,21 +76,20 @@ const selectedCategory = ref<string | number | undefined>()
 const categoryOptions = computed<OptionType[]>(() => {
   const seen = new Set<string>()
   const result = Array.isArray(datas.value) ? datas.value : [datas.value]
-  console.log('result from category:', result)
   const arr = result
     .filter(item => item && typeof item.category === 'string')
     .map(item => item.category)
     .filter(cat => !seen.has(cat) && seen.add(cat))
     .map(cat => ({ id: cat, label: cat }))
-  console.log('categoryOptions:', arr)
-  return arr
+  // Add 'All' option at the beginning (id: 'all')
+  return [{ id: 'all', label: 'All' }, ...arr]
 })
 
 watch(
   [categoryOptions, loading],
   ([options, isLoading]) => {
     console.log('Watcher triggered. loading:', isLoading, 'categoryOptions:', options, 'selectedCategory:', selectedCategory.value)
-    if (!isLoading && options.length > 0 && !selectedCategory.value) {
+    if (!isLoading && options.length > 0 && (selectedCategory.value === undefined || selectedCategory.value === '')) {
       selectedCategory.value = options[0].id
       console.log('Auto-selected category:', selectedCategory.value)
     }
@@ -95,8 +97,15 @@ watch(
   { immediate: true }
 )
 
-watch(selectedCategory, (val) => {
+// Watch selectedCategory and trigger server-side filter
+watch(selectedCategory, (val: any) => {
   console.log('selectedCategory changed:', val)
+  if (val === 'all') {
+    setParams({ category: undefined }) // Remove category param to show all
+  } else {
+    setParams({ category: val })
+  }
+  refetch()
 })
 
 const handleDelete = async (id: string) => {

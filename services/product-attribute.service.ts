@@ -14,7 +14,9 @@ export const useProductAttributeService = (fetchResult?: boolean, dataId?: strin
         pagination,
         changePage,
         changeLimit,
-        reFetch
+        setParams,
+        refetch,
+        params
     } = useApiFetch<ProductAttribute>(url, {
         isResult: fetchResult,
         dynamicParam: dataId ? url : null,
@@ -41,7 +43,7 @@ export const useProductAttributeService = (fetchResult?: boolean, dataId?: strin
         }
 
         // Use reFetch with dynamicParam if category is set
-        return reFetch(params.category ? { dynamicParam: fetchUrl } : undefined);
+        return refetch();
     }
 
     const createProductAttribute = async (payload: {
@@ -104,17 +106,27 @@ export const useProductAttributeService = (fetchResult?: boolean, dataId?: strin
     }
 
 
+    // Add filterByCategory function
+    function filterByCategory(categoryId: string) {
+        if (!Array.isArray(data.value)) return [];
+        // Adjust the property name if needed
+        return data.value.filter(attr => attr.category_id === categoryId);
+    }
+
     return {
         datas: data,
         loading,
         error,
         pagination,
-        reFetch,
+        refetch,
+        setParams,
+        params,
         getProductsAttribute,
         createProductAttribute,
         updateProductAttributeById,
         deleteProductAttributeById,
         changePage,
-        changeLimit
+        changeLimit,
+        filterByCategory
     }
 }

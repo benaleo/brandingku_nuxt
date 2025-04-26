@@ -26,6 +26,12 @@ export const useApiFetch = <T>(url: string, options: {
     initialLimit?: number
     isPublic?: boolean
 }) => {
+    // --- NEW: Dynamic query params support ---
+    const params = reactive<{ [key: string]: any }>({})
+    const setParams = (newParams: Record<string, any>) => {
+        Object.assign(params, newParams)
+    }
+    // --- END NEW ---
     const token = useCookie('token')
     const router = useRouter()
 
@@ -48,18 +54,33 @@ export const useApiFetch = <T>(url: string, options: {
             apiUrl = apiUrl.replace(`{${options.dynamicParam}}`, options.dynamicParam)
         }
 
+        // --- MERGED: Append custom params + pagination params ---
+        const query = new URLSearchParams()
+        // Add custom params
+        for (const key in params) {
+            if (params[key] != null && params[key] !== '') {
+                query.append(key, params[key])
+            }
+        }
         // Add pagination params
-        const query = new URLSearchParams({
-            page: pagination.value.page.toString(),
-            limit: pagination.value.limit.toString()
-        })
-        apiUrl += `?${query.toString()}`
+        if (pagination.value.page !== undefined) query.append('page', pagination.value.page.toString())
+        if (pagination.value.limit !== undefined) query.append('limit', pagination.value.limit.toString())
 
+        if ([...query].length > 0) {
+            apiUrl += (apiUrl.includes('?') ? '&' : '?') + query.toString()
+        }
+        // --- END MERGED ---
+
+        const finalUrl = apiUrl;
+        // Add log for debugging URL after selectedOptions
+        console.log('[useApiFetch] Fetching URL:', finalUrl)
+
+        loading.value = true
+        error.value = null
         try {
-            loading.value = true
             const response = await $fetch<ApiResponse<
                 typeof options.isResult extends true ? PaginatedResponse<T> : T
-            >>(apiUrl, {
+            >>(finalUrl, {
                 headers: {
                     'accept': '*/*',
                     ...(options.isPublic ? {} : { 'Authorization': token.value ? `Bearer ${token.value}` : '' })
@@ -111,6 +132,10 @@ export const useApiFetch = <T>(url: string, options: {
         fetchData()
     }
 
+    // --- NEW: Watch params and auto-refetch ---
+    watch(params, fetchData, { deep: true })
+    // --- END NEW ---
+
     // Initial fetch
     onMounted(fetchData)
     watch(refetching, (val) => val && fetchData())
@@ -119,9 +144,11 @@ export const useApiFetch = <T>(url: string, options: {
         data,
         loading,
         error,
-        reFetch,
+        refetch: fetchData,
         pagination,
         changePage,
-        changeLimit
+        changeLimit,
+        setParams,
+        params,
     }
 }

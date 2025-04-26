@@ -14,14 +14,13 @@ export type ProductAttribute = {
     is_active: boolean
 }
 
-let indexRef = 1
 
 export const productAttributeColumns: ColumnDef<ProductAttribute>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: () => {
-            return indexRef++
+        cell: ({row}) => {
+            return row.index + 1
         }
     },
     {
