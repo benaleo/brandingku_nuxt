@@ -27,12 +27,21 @@ export const useProductAttributeService = (fetchResult?: boolean, dataId?: strin
         limit?: number
         sortBy?: string
         direction?: 'asc' | 'desc'
+        category?: string | number
     } = {}) => {
         if (params.page !== undefined) changePage(params.page)
         if (params.limit) changeLimit(params.limit)
 
-        // Additional query params can be added here
-        return reFetch();
+        // Add category to query params if provided
+        let fetchUrl = url
+        if (params.category) {
+            const urlObj = new URL(fetchUrl)
+            urlObj.searchParams.set('category', String(params.category))
+            fetchUrl = urlObj.toString()
+        }
+
+        // Use reFetch with dynamicParam if category is set
+        return reFetch(params.category ? { dynamicParam: fetchUrl } : undefined);
     }
 
     const createProductAttribute = async (payload: {
