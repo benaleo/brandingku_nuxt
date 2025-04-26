@@ -22,17 +22,24 @@ const handleInput = (event: Event) => {
 </script>
 
 <template>
-  <div class="relative w-full max-w-sm items-center">
-    <Input 
-      :id="name" 
-      :name="name"
-      type="text" 
-      :placeholder="placeholder || 'Search...'" 
-      class="pl-10"
-      @input="handleInput"
-    />
-    <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
+  <div class="grid gap-2 mt-2">
+    <div class="flex justify-end items-end gap-2">
+      <p class="form-label mb-2">
+        Pencarian :
+      </p>
+      <div class="relative w-full max-w-sm items-center">
+        <Input
+            :id="name"
+            :name="name"
+            type="text"
+            :placeholder="placeholder || 'Search...'"
+            class="pl-10"
+            @input="handleInput"
+        />
+        <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
       <Search class="size-6 text-muted-foreground" />
     </span>
+      </div>
+    </div>
   </div>
 </template>
