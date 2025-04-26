@@ -40,7 +40,7 @@ function handleInput(e: Event) {
 
 <template>
   <FormField v-slot="{ componentField }" :name="name" :validate-on-blur="validateOnBlur">
-    <FormItem v-auto-animate>
+    <FormItem v-auto-animate class="w-full">
       <FormLabel v-if="label">{{ label }}</FormLabel>
       <FormControl>
         <Textarea 
