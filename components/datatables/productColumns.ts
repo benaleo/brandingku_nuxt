@@ -4,6 +4,7 @@ import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
 import ActionBulkImageUpdate from '../elements/ActionBulkImageUpdate.vue';
 import type {Product} from "~/types/products.type";
+import { CircleCheck,CircleX } from 'lucide-vue-next';
 
 
 
@@ -30,6 +31,21 @@ export const productColumns: ColumnDef<Product>[] = [
         header: 'Nama Produk',
     },
     {
+        accessorKey: 'category_name',
+        header: 'Kategori',
+    },
+    {
+        accessorKey: 'is_highlight',
+        header: 'Highlight',
+        cell: ({row}) => {
+            return h('div', {class: 'flex items-center justify-center'}, [
+                row.getValue('is_highlight') ?
+                    h(CircleCheck, {class: 'text-green-500'}) :
+                    h(CircleX, {class: 'text-red-500'})
+            ])
+        }
+    },
+    {
         accessorKey: 'updated_at',
         header: 'Timestamp',
         cell: ({row}) => {
@@ -44,7 +60,7 @@ export const productColumns: ColumnDef<Product>[] = [
             const handleDelete = table.options.meta?.handleDelete;
             const handleProductGalleries = table.options.meta?.handleProductGalleries;
 
-            return h('div', {class: 'relative'}, [
+            return h('div', {class: 'relative flex items-center gap-2 flex-wrap md:flex-nowrap'}, [
                 h(GeneralColumnAction, {
                     data,
                     isDelete: true,

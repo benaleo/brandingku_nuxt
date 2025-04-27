@@ -1,12 +1,6 @@
 import { useApiFetch } from '~/composables/useApiFetch'
-import type { OptionType } from '~/types/options.type';
+import type {OptionType, ProductAttributeOptions} from '~/types/options.type';
 import { useState, watch } from '#imports'
-
-interface ProductAttribute {
-  id: string;
-  label: string;
-  category: string;
-}
 
 export const useOptionsService = () => {
   const config = useRuntimeConfig()
@@ -87,9 +81,9 @@ export const useOptionsService = () => {
     ];
   }
 
-  const getProductAttributes = async (): Promise<ProductAttribute[]> => {
+  const getProductAttributes = async (): Promise<ProductAttributeOptions[]> => {
     return new Promise((resolve) => {
-      const { data, loading, error, refetch } = useApiFetch<ProductAttribute[]>(attributesUrl, {
+      const { data, loading, error, refetch } = useApiFetch<ProductAttributeOptions[]>(attributesUrl, {
         isResult: false,
         initialPage: 0,
         initialLimit: 10

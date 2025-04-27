@@ -13,7 +13,9 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         pagination,
         changePage,
         changeLimit,
-        reFetch
+        setParams,
+        refetch,
+        params
     } = useApiFetch<Product>(url, {
         isResult: fetchResult,
         dynamicParam: dataId ? url : null,
@@ -31,7 +33,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         if (params.limit) changeLimit(params.limit)
 
         // Additional query params can be added here
-        return reFetch();
+        return refetch();
     }
 
     const createProduct = async (payload: any) => {
@@ -102,7 +104,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             throw await response.json()
         }
         return await response.json()
-    }    
+    }
 
 
     return {
@@ -110,13 +112,15 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         loading,
         error,
         pagination,
-        reFetch,
+        reFetch: refetch,
         getProducts,
         createProduct,
         updateProductById,
         updateProductGalleries,
+        deleteProductById,
         changePage,
         changeLimit,
-        deleteProductById
+        setParams,
+        params
     }
 }

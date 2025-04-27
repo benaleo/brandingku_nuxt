@@ -53,7 +53,6 @@ const {
   changePage,
   changeLimit,
   deleteProductAttributeById,
-  filterByCategory,
   setParams,
   refetch
 } = useProductAttributeService(true)
@@ -72,12 +71,14 @@ const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
 
+// Filter options
 const selectedCategory = ref<string | number | undefined>()
 const keyword = ref<string>('')
 const isFetch = ref<boolean>(false)
 
 const {getProductAttributes} = useOptionsService();
 
+const categoryOptions = computed<OptionType[]>(() => allAttributeCategories.value);
 // Watch keyword to trigger search with minimum 3 characters
 watch(keyword, (newValue: string) => {
   console.log('index.vue keyword changed:', newValue)
@@ -97,7 +98,7 @@ watch(keyword, (newValue: string) => {
 })
 
 const allAttributeCategories = ref<OptionType[]>([]);
-
+// Fetch all attribute categories
 getProductAttributes().then((attributes) => {
   const seen = new Set<string>();
   const arr = attributes
@@ -108,8 +109,7 @@ getProductAttributes().then((attributes) => {
   allAttributeCategories.value = [{id: 'all', label: 'All'}, ...arr];
 });
 
-const categoryOptions = computed<OptionType[]>(() => allAttributeCategories.value);
-
+// Watch categoryOptions and loading
 watch(
     [categoryOptions, loading],
     ([options, isLoading]) => {
