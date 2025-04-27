@@ -61,6 +61,7 @@ export type ProductCategory = {
     name: string
     slug: string
     description: string
+    image: string
     sub_categories: string[]
     is_landing_page: boolean
     is_active: boolean
