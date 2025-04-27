@@ -394,6 +394,12 @@ onMounted(async () => {
     console.error('[ProductForm] Error fetching discount types:', e)
   }
 })
+
+const highlightUploading = ref(false)
+function onHighlightImageUploaded(url) {
+  highlight_image.value = url
+  setFieldValue('highlight_image', url)
+}
 </script>
 
 <template>
@@ -504,8 +510,15 @@ onMounted(async () => {
     <Card class="w-full" v-if="values.is_highlight">
       <CardContent class="grid gap-2">
         <!-- Highlight Image -->
-        <ImageUploadField v-model:fileUrl="highlight_image" v-model:file="highlight_image_file" label="Highlight Image"
-                          :disabled="disabled" @delete="handleImageDelete"/>
+        <ImageUploadField
+          v-model:fileUrl="highlight_image"
+          v-model:file="highlight_image_file"
+          label="Highlight Image"
+          :disabled="disabled"
+          @update:fileUrl="onHighlightImageUploaded"
+          @update:isUploading="val => highlightUploading.value = val"
+          @delete="handleImageDelete"
+        />
         <!-- Highlight Description -->
         <FormField v-slot="{ componentField }" name="highlight_description" :validate-on-blur="!isFieldDirty">
           <FormItem class="w-full" v-auto-animate>

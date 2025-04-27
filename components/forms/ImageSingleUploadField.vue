@@ -50,7 +50,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:fileUrl','update:file', 'delete'])
+const emit = defineEmits(['update:fileUrl','update:file', 'delete', 'update:isUploading'])
 
 const file = ref<File | null>(props.file)
 const previewUrl = ref<string | null>(props.fileUrl || null)
@@ -64,6 +64,8 @@ watch(() => props.fileUrl, (val) => {
     previewUrl.value = val
   }
 })
+
+watch(isUploading, (val) => emit('update:isUploading', val))
 
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
