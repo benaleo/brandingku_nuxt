@@ -42,6 +42,7 @@ import {useProductCategoryService} from "~/services/product-category.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from 'vue-sonner'
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
+import {useFileUpload} from "~/composables/useFileUpload";
 
 const pageTitle = 'Produk Kategori'
 const keyword = ref<string>('')
@@ -102,19 +103,23 @@ watch(keyword, (newValue: string) => {
   }
 })
 
-const handleImageUpdate = async (id: string, fileUrl: string, file: File) => {
+const handleImageUpdate = async (id: string, fileUrl: string, file: File, oldImageUrl?: string) => {
   try {
-    // Show loading state
     toast.loading('Mengirim data gambar...')
-
-    // The file is already uploaded to S3 by the ImageFormDialog component
-    // Now we just need to send the URL to the API
     await updateProductCategoryImage(id, {url: fileUrl})
-
-    // Success!
     toast.dismiss()
     toast.success('Berhasil mengupload gambar')
     await reFetch()
+    // Delete old image if exists
+    if (oldImageUrl) {
+      const { deleteFile } = useFileUpload()
+      const match = oldImageUrl.match(/\/object\/public\/([^/]+)\/(.+)$/)
+      if (match) {
+        const bucket = match[1]
+        const path = match[2]
+        await deleteFile(bucket, path)
+      }
+    }
   } catch (error) {
     toast.dismiss()
     console.error('Error updating product category image:', error)

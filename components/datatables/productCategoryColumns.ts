@@ -67,7 +67,8 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
                     handleDelete: () => handleDelete?.(data.id)
                 }),
                 h(ActionImageUpdate, {
-                    handleUpdate: (fileUrl: string, file: File) => handleImageUpdate?.(data.id, fileUrl, file)
+                    handleUpdate: (fileUrl: string, file: File, oldImageUrl?: string) => handleImageUpdate?.(data.id, fileUrl, file, oldImageUrl),
+                    oldImageUrl: data.image
                 })
             ]);
         }

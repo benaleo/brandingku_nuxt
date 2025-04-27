@@ -3,13 +3,14 @@ import { ImageUp } from 'lucide-vue-next';
 import ImageFormDialog from "~/components/forms/ImageSingleFormDialog.vue";
 
 defineProps<{
-  handleUpdate: (fileUrl: string, file: File) => void | Promise<void>
+  handleUpdate: (fileUrl: string, file: File, oldImageUrl?: string) => void | Promise<void>
+  oldImageUrl?: string
 }>()
 
 </script>
 
 <template>
-  <ImageFormDialog :submit="handleUpdate">
+  <ImageFormDialog :submit="(fileUrl, file) => handleUpdate(fileUrl, file, oldImageUrl)">
     <ImageUp />
   </ImageFormDialog>
 </template>
