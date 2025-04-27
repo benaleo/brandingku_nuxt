@@ -1,8 +1,19 @@
 <template>
   <div>
+    <!-- Breadcrumb -->
     <AppBreadcrumb/>
+
+    <!-- Table Header -->
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/product-categories/add'"/>
-    <div class="mt-6">
+
+    <!-- Filter -->
+    <AppFilterTable v-model="keyword">
+      <div class="flex-1">
+      </div>
+    </AppFilterTable>
+
+    <!-- Data Table -->
+    <div class="mt-2">
       <div v-if="loading" class="text-center py-4">
         Loading products...
       </div>
@@ -25,13 +36,16 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import {computed} from 'vue'
+import {computed, ref} from 'vue'
 import {productCategoryColumns} from "~/components/datatables/productCategoryColumns";
 import {useProductCategoryService} from "~/services/product-category.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from 'vue-sonner'
+import AppFilterTable from "~/components/elements/AppFilterTable.vue";
 
 const pageTitle = 'Produk Kategori'
+const keyword = ref<string>('')
+const isFetch = ref<boolean>(false)
 
 const {
   datas,
@@ -42,6 +56,7 @@ const {
   changeLimit,
   deleteProductCategoryById,
   updateProductCategoryImage,
+  setParams,
   reFetch
 } = useProductCategoryService(true)
 
@@ -69,6 +84,24 @@ const handleDelete = async (id: string) => {
   }
 }
 
+// Watch keyword to trigger search with minimum 3 characters
+watch(keyword, (newValue: string) => {
+  console.log('index.vue keyword changed:', newValue)
+  if (newValue && newValue.length >= 3) {
+    isFetch.value = true
+    // If 3 or more characters, set keyword param
+    setParams({keyword: newValue})
+    reFetch()
+  } else {
+    // If less than 3 characters, clear keyword param
+    if (isFetch.value) {
+      setParams({keyword: undefined})
+      reFetch()
+      isFetch.value = false
+    }
+  }
+})
+
 const handleImageUpdate = async (id: string, fileUrl: string, file: File) => {
   try {
     // Show loading state
@@ -76,7 +109,7 @@ const handleImageUpdate = async (id: string, fileUrl: string, file: File) => {
 
     // The file is already uploaded to S3 by the ImageFormDialog component
     // Now we just need to send the URL to the API
-    await updateProductCategoryImage(id, { url: fileUrl })
+    await updateProductCategoryImage(id, {url: fileUrl})
 
     // Success!
     toast.dismiss()

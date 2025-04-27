@@ -27,7 +27,7 @@ const handleInput = (event: Event) => {
       <p class="form-label mb-2">
         Pencarian :
       </p>
-      <div class="relative w-full max-w-sm items-center">
+      <div class="relative w-full max-w-[200px] items-center">
         <Input
             :id="name"
             :name="name"

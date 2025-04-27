@@ -1,5 +1,5 @@
-import { useApiFetch } from '~/composables/useApiFetch'
-import type { ProductCategory, ProductCategoryRequest } from "~/types/products.type";
+import {useApiFetch} from '~/composables/useApiFetch'
+import type {ProductCategory, ProductCategoryRequest} from "~/types/products.type";
 
 export const useProductCategoryService = (fetchResult?: boolean, dataId?: string) => {
     const config = useRuntimeConfig()
@@ -14,7 +14,9 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         pagination,
         changePage,
         changeLimit,
-        reFetch
+        setParams,
+        refetch,
+        params
     } = useApiFetch<ProductCategory>(url, {
         isResult: fetchResult,
         dynamicParam: dataId ? url : null,
@@ -32,7 +34,8 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         if (params.limit) changeLimit(params.limit)
 
         // Additional query params can be added here
-        return reFetch();
+        let fetchUrl = url
+        return refetch();
     }
 
     const createProductCategory = async (payload: ProductCategoryRequest) => {
@@ -106,7 +109,9 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         loading,
         error,
         pagination,
-        reFetch,
+        reFetch: refetch,
+        setParams,
+        params,
         getProductsCategory,
         createProductCategory,
         updateProductCategoryById,
