@@ -22,6 +22,34 @@ export const secretConsoleMenu: MenuGroup[] = [
             }
         ]
     },
+
+    {
+        group_name: 'Landing Page',
+        group_icon: 'Product',
+        sub: [
+            {
+                name: 'Benefit',
+                icon: 'Package',
+                href: '/console/secret/landing-page/benefit'
+            },
+            {
+                name: 'Client',
+                icon: 'Box',
+                href: '/console/secret/landing-page/client'
+            },
+            {
+                name: 'Testimonial',
+                icon: 'Box',
+                href: '/console/secret/landing-page/testimonial'
+            },
+            {
+                name: 'Options',
+                icon: 'Box',
+                href: '/console/secret/landing-page/options'
+            },
+
+        ]
+    },
     {
         group_name: 'Toko',
         group_icon: 'Product',
