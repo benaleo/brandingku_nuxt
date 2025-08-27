@@ -11,7 +11,16 @@ export default defineNuxtConfig({
     ],
   },
 
-  modules: ['shadcn-nuxt', '@nuxtjs/color-mode', '@nuxt/image', '@nuxt/icon'],
+  modules: ['shadcn-nuxt', '@nuxtjs/color-mode', '@nuxt/image', '@nuxt/icon', '@nuxtjs/apollo'],
+
+  apollo: {
+    clients: {
+      default: {
+        httpEndpoint: 'http://localhost:8080/query'
+      }
+    },
+  },
+  
   shadcn: {
     /**
      * Prefix for all the imported component

@@ -39,6 +39,7 @@
   "devDependencies": {
     "@iconify-json/radix-icons": "^1.2.2",
     "@iconify/vue": "^4.3.0",
+    "@nuxtjs/apollo": "5.0.0-alpha.15",
     "@nuxtjs/color-mode": "^3.5.2",
     "@types/node": "^22.14.1",
     "typescript": "^5.8.3"
