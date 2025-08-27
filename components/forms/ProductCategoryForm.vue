@@ -58,33 +58,37 @@ watch(
     if (!isCreate && !loadingVal && datasVal) {
       isApiUpdate = true
       name.value = datasVal.name || ''
-      slug.value = datasVal.slug || ''
+      // Set slug directly from the API data
+      const apiSlug = datasVal.slug || ''
+      slug.value = apiSlug
       description.value = datasVal.description || ''
       sub_categories.value = datasVal.sub_categories || []
       is_active.value = Boolean(datasVal.is_active) || false
       is_landing_page.value = Boolean(datasVal.is_landing_page) || false
 
+      // Update form values
       setFieldValue('name', datasVal.name || '')
-      setFieldValue('slug', datasVal.slug || '')
+      setFieldValue('slug', apiSlug)
       setFieldValue('description', datasVal.description || '')
       setFieldValue('sub_categories', datasVal.sub_categories || [])
       setFieldValue('is_active', Boolean(datasVal.is_active) || false)
-      setFieldValue('is_landing_page', Boolean(datasVal.is_active) || false)
+      setFieldValue('is_landing_page', Boolean(datasVal.is_landing_page) || false)
       isApiUpdate = false
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 const updateSlugFromName = (nameValue: string | undefined) => {
-  if (!nameValue) {
-    slug.value = ''
+  if (!nameValue || isApiUpdate) {
     return
   }
-  slug.value = nameValue
+  const newSlug = nameValue
     .toLowerCase()
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_]/g, '')
+  slug.value = newSlug
+  setFieldValue('slug', newSlug)
 }
 
 watch(name, (newVal) => {

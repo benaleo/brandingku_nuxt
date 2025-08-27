@@ -9,13 +9,8 @@
         <use xlink:href="#gentle-wave" x="48" y="7"></use>
       </svg>
     </div>
-    <div class="boat">
-      <div class="sail1"></div>
-      <div class="sail2"></div>
-      <div class="hull"></div>
-    </div>
     <div class="waves front">
-      <svg viewBox="0 24 150 28" style="transform: scaleY(-1);">
+      <svg viewBox="0 24 150 28" style="transform: scaleY(-1); width: 100vw; height: 200px">
         <defs>
           <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"></path>
         </defs>
@@ -38,12 +33,13 @@
 <style scoped>
 .waves {
   position: absolute;
-  bottom: 100px;
+  top: 0;
   left: 0;
-  height: 75vh;
+  height: 35vh;
   width: 100%;
+  background: #135d13;
 
-  &:after {
+  /* &:after {
     content: '';
     display: block;
     position: absolute;
@@ -52,17 +48,17 @@
     bottom:0;
     height: 50px;
     background: #1A202C;
-  }
+  } */
 
   svg {
     position: absolute;
-    top: 60vh;
+    top: 35vh;
     left: 0;
   }
 
   use {
     animation: wavewave 5s cubic-bezier(.55, .5, .45, .5) infinite;
-    fill: #1A202C;
+    fill: #135d13;
     opacity: 0.7;
   }
 }
