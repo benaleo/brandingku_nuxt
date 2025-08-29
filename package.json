@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@apollo/client": "^4.0.2",
     "@formkit/auto-animate": "^0.8.2",
     "@nuxt/icon": "1.12.0",
     "@nuxt/image": "1.10.0",
@@ -22,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-vue": "^8.6.0",
+    "graphql": "^16.11.0",
     "lucide-vue-next": "^0.487.0",
     "nuxt": "^3.16.2",
     "reka-ui": "^2.2.0",
