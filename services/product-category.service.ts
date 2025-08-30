@@ -116,7 +116,11 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     image
                     is_landing_page
                     is_active
-                    
+                    sub_categories {
+                        id
+                        name
+                        slug
+                    }
                 }
             }
         `
@@ -239,6 +243,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         image?: string
         parent_id?: number
         is_landing_page?: boolean
+        sub_categories?: string[]
     }) => {
         const mutation = `
             mutation CreateProductCategory(
@@ -247,7 +252,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 $description: String,
                 $image: String,
                 $parent_id: Int,
-                $is_landing_page: Boolean
+                $is_landing_page: Boolean,
+                $sub_categories: [String!]
             ) {
                 createProductCategory(
                     name: $name,
@@ -255,7 +261,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     description: $description,
                     image: $image,
                     parent_id: $parent_id,
-                    is_landing_page: $is_landing_page
+                    is_landing_page: $is_landing_page,
+                    sub_categories: $sub_categories
                 ) {
                     id
                     name
@@ -266,13 +273,24 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     is_active
                     created_at
                     updated_at
+                    sub_categories {
+                        id
+                        name
+                        slug
+                    }
                 }
             }
         `
+        
+        // Prepare the variables, including sub_categories if they exist
+        const variables: any = { ...vars }
+        if (Array.isArray(vars.sub_categories)) {
+            variables.sub_categories = vars.sub_categories
+        }
 
         const data = await gqlFetch<{ createProductCategory: ProductCategory }>(
             mutation,
-            { ...vars },
+            variables,
             { auth: true }
         )
         return data.createProductCategory
@@ -288,6 +306,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         parent_id?: number
         is_landing_page?: boolean
         is_active?: boolean
+        sub_categories?: string[]
     }) => {
         const mutation = `
             mutation UpdateProductCategory(
@@ -298,7 +317,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 $image: String,
                 $parent_id: Int,
                 $is_landing_page: Boolean,
-                $is_active: Boolean
+                $is_active: Boolean,
+                $sub_categories: [String!]
             ) {
                 updateProductCategory(
                     id: $id,
@@ -308,7 +328,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     image: $image,
                     parent_id: $parent_id,
                     is_landing_page: $is_landing_page,
-                    is_active: $is_active
+                    is_active: $is_active,
+                    sub_categories: $sub_categories
                 ) {
                     id
                     name
@@ -319,12 +340,23 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     is_active
                     created_at
                     updated_at
+                    sub_categories {
+                        id
+                        name
+                        slug
+                    }
                 }
             }
         `
+        
+        // Prepare the variables, including sub_categories if they exist
+        const variables: any = { ...vars }
+        if (Array.isArray(vars.sub_categories)) {
+            variables.sub_categories = vars.sub_categories
+        }
         const data = await gqlFetch<{ updateProductCategory: ProductCategory }>(
             mutation,
-            { ...vars },
+            variables,
             { auth: true }
         )
         return data.updateProductCategory

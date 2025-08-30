@@ -66,7 +66,12 @@ const setFieldsFromDetail = (val: any) => {
   const apiSlug = val.slug || ''
   slug.value = apiSlug
   description.value = val.description || ''
-  sub_categories.value = (val as any).sub_categories || []
+  
+  // Map sub_categories to just names for the tags input
+  sub_categories.value = Array.isArray(val.sub_categories) 
+    ? val.sub_categories.map((sc: any) => sc.name || '') 
+    : []
+  
   image.value = val.image ? STORAGE_URL + val.image : ''
   is_active.value = Boolean(val.is_active) || false
   is_landing_page.value = Boolean(val.is_landing_page) || false
@@ -200,6 +205,7 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           image: payload.image,
           is_landing_page: payload.is_landing_page,
           is_active: payload.is_active,
+          sub_categories: payload.sub_categories || [],
         }
         await service.updateChildCategory(Number(resolvedEditId.value), childPayload)
         toast.success('Child category updated successfully!')
