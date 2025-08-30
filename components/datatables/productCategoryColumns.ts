@@ -20,10 +20,8 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         accessorKey: 'image',
         header: () => h('div', {class: 'text-left'}, 'Image'),
         cell: ({row}) => {
-            const API_URL = useRuntimeConfig().public.API_URL
-            console.log('API_URL', API_URL)
-            const src: string = row.getValue('image') ? `${API_URL}${row.getValue('image')}` : `/images/no-image.jpg`
-            console.log('src', src)
+            const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
+            const src: string = row.getValue('image') ? `${STORAGE_URL}${row.getValue('image')}` : `/images/no-image.jpg`
             return h('div', {class: 'flex items-ceter justify-center overflow-hidden h-16'}, [
                 h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-h-16 object-cover'})
             ])

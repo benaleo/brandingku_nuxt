@@ -11,12 +11,19 @@ export default defineNuxtConfig({
     ],
   },
 
-  modules: ['shadcn-nuxt', '@nuxtjs/color-mode', '@nuxt/image', '@nuxt/icon', '@nuxtjs/apollo'],
+  modules: [
+    'shadcn-nuxt',
+    '@nuxtjs/color-mode',
+    '@nuxt/image',
+    '@nuxt/icon',
+    '@nuxtjs/apollo',
+    '@nuxthub/core'
+  ],
 
   apollo: {
     clients: {
       default: {
-        httpEndpoint: 'http://localhost:8080/query'
+        httpEndpoint: process.env.NUXT_PUBLIC_BASE_URL + '/query'
       }
     },
   },
@@ -48,6 +55,7 @@ export default defineNuxtConfig({
     public: {
       BASE_URL: process.env.NUXT_PUBLIC_BASE_URL || '',
       API_URL: process.env.NUXT_PUBLIC_API_URL || '',
+      STORAGE_URL: process.env.NUXT_PUBLIC_STORAGE_URL || '',
       supabaseUrl: process.env.SUPABASE_URL || '',
       supabaseKey: process.env.SUPABASE_KEY || '',
     }
