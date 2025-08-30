@@ -3,7 +3,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
 
 
-export const useProductCategoryService = () => {
+export const useProductCategoryService = (opts?: { autoFetchParents?: boolean }) => {
     const { gqlFetch } = useGql()
 
     // State for list view (client-side pagination over GraphQL results)
@@ -79,8 +79,11 @@ export const useProductCategoryService = () => {
         Object.assign(params, newParams)
     }
 
-    watch(params, fetchParents, { deep: true })
-    onMounted(fetchParents)
+    const autoFetchParents = opts?.autoFetchParents ?? true
+    if (autoFetchParents) {
+        watch(params, fetchParents, { deep: true })
+        onMounted(fetchParents)
+    }
 
     // Get all parent categories
     const getProductCategoriesParent = async () => {
@@ -150,6 +153,80 @@ export const useProductCategoryService = () => {
         detailData.sub_categories = await getSubCategories(id)
         detail.value = detailData
         return detail.value
+    }
+
+    // Children as full objects
+    const getChildCategoriesByParentId = async (parentId: number) => {
+        const query = `
+            query GetProductCategoriesChild($parent_id: Int!) {
+                getProductCategoriesChild(parent_id: $parent_id) {
+                    id
+                    name
+                    slug
+                    description
+                    image
+                    is_landing_page
+                    is_active
+                    created_at
+                    updated_at
+                    parent_id
+                }
+            }
+        `
+        const res = await gqlFetch<{ getProductCategoriesChild: ProductCategory[] }>(
+            query,
+            { parent_id: parentId },
+            { auth: true }
+        )
+        const all = (res?.getProductCategoriesChild || []) as ProductCategory[]
+        return all.filter((x: any) => Number(x.parent_id) === Number(parentId))
+    }
+
+    // Create a child category under a parent, auto-prefix slug with parent slug
+    const createChildCategory = async (parentId: number, payload: {
+        name: string
+        slug?: string | null
+        description: string
+        image?: string
+        is_landing_page?: boolean
+        is_active?: boolean
+    }) => {
+        const parent = await getProductCategoryDetail(parentId)
+        const base = (payload.slug ?? payload.name)
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '')
+        const slug = `${parent.slug}-${base}`
+        return await createProductCategory({
+            name: payload.name,
+            slug,
+            description: payload.description,
+            image: payload.image,
+            parent_id: parentId,
+            is_landing_page: payload.is_landing_page,
+        })
+    }
+
+    // Update a child category
+    const updateChildCategory = async (childId: number, payload: {
+        name: string
+        slug?: string | null
+        description: string
+        image?: string
+        is_landing_page?: boolean
+        is_active?: boolean
+    }) => {
+        // Keep slug if not provided
+        const current = await getProductCategoryDetail(childId)
+        return await updateProductCategory({
+            id: Number(childId),
+            name: payload.name,
+            slug: payload.slug ?? current.slug,
+            description: payload.description,
+            image: payload.image,
+            is_landing_page: payload.is_landing_page,
+            is_active: payload.is_active,
+        })
     }
 
     // Create a new product category
@@ -409,5 +486,9 @@ return {
     updateProductCategory,
     updateProductCategoryById,
     deleteProductCategory,
+    // Children helpers
+    getChildCategoriesByParentId,
+    createChildCategory,
+    updateChildCategory,
 }
 }

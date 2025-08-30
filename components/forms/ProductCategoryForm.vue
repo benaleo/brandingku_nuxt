@@ -2,7 +2,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { toast } from "vue-sonner";
 import { useProductCategoryService } from '~/services/product-category.service'
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
@@ -16,14 +16,20 @@ import type { ProductCategoryRequest } from '~/types/products.type';
 import { useFileToBase64 } from '~/composables/useFileToBase64'
 
 const router = useRouter()
+const props = defineProps<{
+  isChild?: boolean
+  parentId?: number | null
+  hideSubCategories?: boolean
+  editId?: number | null
+  detail?: any
+}>()
 const currentPath = router.currentRoute.value.path
-const id = getIdFromPath(router.currentRoute.value.path)
+const idFromPath = getIdFromPath(router.currentRoute.value.path)
+const resolvedEditId = computed(() => props.editId ?? idFromPath)
 const config = useRuntimeConfig()
 
-const {
-  detail,
-  loadDetail,
-} = useProductCategoryService()
+const service = useProductCategoryService({ autoFetchParents: false })
+const { detail, loadDetail } = service
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
@@ -53,11 +59,36 @@ const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
 
+const setFieldsFromDetail = (val: any) => {
+  isApiUpdate = true
+  name.value = val.name || ''
+  const apiSlug = val.slug || ''
+  slug.value = apiSlug
+  description.value = val.description || ''
+  sub_categories.value = (val as any).sub_categories || []
+  image.value = val.image ? config.public.BASE_URL + val.image : ''
+  is_active.value = Boolean(val.is_active) || false
+  is_landing_page.value = Boolean(val.is_landing_page) || false
+
+  // Update form values
+  setFieldValue('name', name.value)
+  setFieldValue('slug', slug.value)
+  setFieldValue('description', description.value)
+  setFieldValue('sub_categories', sub_categories.value)
+  setFieldValue('image', image.value)
+  setFieldValue('is_active', is_active.value)
+  setFieldValue('is_landing_page', is_landing_page.value)
+  isApiUpdate = false
+}
+
 // Load detail on mount for edit/detail pages
 onMounted(async () => {
-  if (!isCreate && id) {
+  if (props.detail) {
+    detail.value = props.detail
+    setFieldsFromDetail(props.detail)
+  } else if (!isCreate && resolvedEditId.value) {
     try {
-      await loadDetail(Number(id))
+      await loadDetail(Number(resolvedEditId.value))
     } catch (e) {
       console.error('Failed to load category detail', e)
     }
@@ -102,7 +133,8 @@ const onImageChange = (event: Event) => {
 }
 
 const updateSlugFromName = (nameValue: string | undefined) => {
-  if (!nameValue || isApiUpdate) {
+  // Only auto-generate slug when creating a new record
+  if (!isCreate || !nameValue || isApiUpdate) {
     return
   }
   const newSlug = nameValue
@@ -131,8 +163,21 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           console.log('[create] image base64 length:', payload.image.length)
         }
       }
-      await useProductCategoryService().createProductCategoryWithSubs(payload)
-      toast.success('Product category created successfully!')
+      if (props.isChild && props.parentId) {
+        const childPayload: any = {
+          name: payload.name,
+          slug: payload.slug,
+          description: payload.description,
+          image: payload.image,
+          is_landing_page: payload.is_landing_page,
+          is_active: payload.is_active,
+        }
+        await service.createChildCategory(Number(props.parentId), childPayload)
+        toast.success('Child category created successfully!')
+      } else {
+        await service.createProductCategoryWithSubs(payload)
+        toast.success('Product category created successfully!')
+      }
     } else {
       const payload = { ...values }
       if (imageFile.value) {
@@ -146,8 +191,21 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
       } else {
         delete payload.image
       }
-      await useProductCategoryService().updateProductCategoryById(id, payload)
-      toast.success('Product category updated successfully!')
+      if (props.isChild && resolvedEditId.value) {
+        const childPayload: any = {
+          name: payload.name!,
+          slug: payload.slug,
+          description: payload.description!,
+          image: payload.image,
+          is_landing_page: payload.is_landing_page,
+          is_active: payload.is_active,
+        }
+        await service.updateChildCategory(Number(resolvedEditId.value), childPayload)
+        toast.success('Child category updated successfully!')
+      } else {
+        await service.updateProductCategoryById(resolvedEditId.value as any, payload)
+        toast.success('Product category updated successfully!')
+      }
     }
     router.push(getPathWithoutIdInForm(currentPath))
   } catch (error) {
@@ -188,7 +246,7 @@ const handleBack = () => {
     </div>
 
     <!-- Sub Category -->
-    <FormField v-slot="{ componentField }" name="sub_categories">
+    <FormField v-if="!props.hideSubCategories" v-slot="{ componentField }" name="sub_categories">
       <FormItem>
         <FormLabel>Sub Categories</FormLabel>
         <FormControl>

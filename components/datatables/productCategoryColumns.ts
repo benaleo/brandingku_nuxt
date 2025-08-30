@@ -4,6 +4,7 @@ import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue
 import ActionImageUpdate from "~/components/elements/ActionImageUpdate.vue";
 import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 import type {ProductCategory} from "~/types/products.type";
+// Removed Button import; using simple anchor link for navigation
 
 
 export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
@@ -63,16 +64,18 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
             const handleDelete = table.options.meta?.handleDelete;
             const handleImageUpdate = table.options.meta?.handleImageUpdate;
 
-            return h('div', {class: 'relative'}, [
+            return h('div', {class: 'relative flex items-center gap-2'}, [
                 h(GeneralColumnAction, {
                     data,
                     isDelete: true,
+                    isView: true,
+                    isEdit: true,
                     handleDelete: () => handleDelete?.(data.id)
                 }),
-                // h(ActionImageUpdate, {
-                //     handleUpdate: (fileUrl: string, file: File, oldImageUrl?: string) => handleImageUpdate?.(data.id, fileUrl, file, oldImageUrl),
-                //     oldImageUrl: data.image
-                // })
+                h('a', {
+                    href: `/console/secret/product-categories/${data.id}/sub-list`,
+                    class: 'inline-flex items-center px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700'
+                }, 'Sub List')
             ]);
         }
     },

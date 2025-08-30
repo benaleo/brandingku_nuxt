@@ -1,26 +1,33 @@
-<script setup lang="ts">
+  <script setup lang="ts">
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal } from 'lucide-vue-next'
-import AppConfirmDeleteDialog from "~/components/elements/AppConfirmDeleteDialog.vue";
-import type { PropType } from 'vue'
 
 const router = useRouter()
 
-defineProps<{
+const props = defineProps<{
   data: {
     id: string
   },
   isDelete: boolean,
+  isView?: boolean,
+  isEdit?: boolean,
   handleDelete: () => void | Promise<void>
 }>()
 
-let isDelete = ref(true)
+const valIsDelete = props.isDelete ?? true
+const valIsView = props.isView ?? true
+const valIsEdit = props.isEdit ?? true
+
+console.log('valIsDelete', valIsDelete)
+console.log('valIsView', valIsView)
+console.log('valIsEdit', valIsEdit)
 
 function copy(id: string) {
   navigator.clipboard.writeText(id)
 }
 
+import AppConfirmDeleteDialog from "~/components/elements/AppConfirmDeleteDialog.vue";
 </script>
 
 <template>
@@ -37,9 +44,9 @@ function copy(id: string) {
         Copy payment ID
       </DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="router.push(router.currentRoute.value.path + '/' + data.id + '/detail')">View Details</DropdownMenuItem>
-      <DropdownMenuItem @click="router.push(router.currentRoute.value.path + '/' + data.id + '/edit')">Edit</DropdownMenuItem>
-      <AppConfirmDeleteDialog v-if="isDelete" :add-fn="handleDelete">Hapus</AppConfirmDeleteDialog>
+      <DropdownMenuItem v-if="valIsView" @click="router.push(router.currentRoute.value.path + '/' + data.id + '/detail')">View Details</DropdownMenuItem>
+      <DropdownMenuItem v-if="valIsEdit" @click="router.push(router.currentRoute.value.path + '/' + data.id + '/edit')">Edit</DropdownMenuItem>
+      <AppConfirmDeleteDialog v-if="valIsDelete" :add-fn="handleDelete">Hapus</AppConfirmDeleteDialog>
     </DropdownMenuContent>
   </DropdownMenu>
 </template>
