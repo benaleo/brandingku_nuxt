@@ -95,6 +95,18 @@ export const secretConsoleMenu: MenuGroup[] = [
 
         ]
     },
+    {
+        group_name: 'Website',
+        group_icon: 'ShieldUser',
+        sub: [
+            {
+                name: 'Visit Home',
+                icon: 'ShieldCheck',
+                href: '/'
+            },
+        ]
+    },
+    
 
 
     // Add more menu groups here

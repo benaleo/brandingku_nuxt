@@ -15,7 +15,7 @@ import {secretConsoleMenu} from '~/utils/list.menu'
 import {useRoute} from 'vue-router'
 
 const route = useRoute()
-const iconComponents = {
+const iconComponents: Record<string, any> = {
   Home,
   LayoutDashboard,
   ShieldUser,
@@ -61,7 +61,7 @@ const isActive = (href: string) => {
                     <NuxtLink
                         :to="item.href"
                         class="flex items-center gap-2 px-4 py-2"
-                        :class="{ 'bg-green-200': isActive(item.href) }"
+                        :class="{ 'bg-green-200': item.href ? isActive(item.href) : false }"
                     >
                       <component
                           v-if="item.icon"
