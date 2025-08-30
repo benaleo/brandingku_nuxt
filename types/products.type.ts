@@ -65,6 +65,7 @@ export type ProductCategory = {
     sub_categories: string[]
     is_landing_page: boolean
     is_active: boolean
+    parent_id?: number | null
 }
 
 export type ProductCategoryRequest = {

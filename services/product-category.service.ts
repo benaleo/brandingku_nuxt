@@ -1,7 +1,7 @@
 import type { ProductCategory } from "~/types/products.type";
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
-import { useCookie } from '#app'
+
 
 export const useProductCategoryService = () => {
     const { gqlFetch } = useGql()
@@ -12,6 +12,7 @@ export const useProductCategoryService = () => {
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 })
     const params = reactive<{ keyword?: string }>({})
+    const detail = ref<ProductCategory | null>(null)
 
     const fetchParents = async () => {
         loading.value = true
@@ -100,6 +101,34 @@ export const useProductCategoryService = () => {
         return data.getProductCategories
     }
 
+    // Detail by id
+    const getProductCategoryDetail = async (id: number) => {
+        const query = `
+            query GetProductCategoryDetail($id: Int!) {
+                getProductCategoryDetail(id: $id) {
+                    id
+                    name
+                    slug
+                    description
+                    image
+                    is_landing_page
+                    is_active
+                }
+            }
+        `
+        const data = await gqlFetch<{ getProductCategoryDetail: ProductCategory }>(
+            query,
+            { id },
+            { auth: true }
+        )
+        return data.getProductCategoryDetail
+    }
+
+    const loadDetail = async (id: number) => {
+        detail.value = await getProductCategoryDetail(id)
+        return detail.value
+    }
+
     // Create a new product category
     const createProductCategory = async (vars: {
         name: string
@@ -147,25 +176,27 @@ export const useProductCategoryService = () => {
         return data.createProductCategory
     }
 
-    // Update a product category
+    // Update an existing product category
     const updateProductCategory = async (vars: {
         id: number
-        name: string
+        name?: string
         slug?: string
         description?: string
         image?: string
         parent_id?: number
         is_landing_page?: boolean
+        is_active?: boolean
     }) => {
         const mutation = `
             mutation UpdateProductCategory(
                 $id: Int!,
-                $name: String!,
+                $name: String,
                 $slug: String,
                 $description: String,
                 $image: String,
                 $parent_id: Int,
-                $is_landing_page: Boolean
+                $is_landing_page: Boolean,
+                $is_active: Boolean
             ) {
                 updateProductCategory(
                     id: $id,
@@ -174,7 +205,8 @@ export const useProductCategoryService = () => {
                     description: $description,
                     image: $image,
                     parent_id: $parent_id,
-                    is_landing_page: $is_landing_page
+                    is_landing_page: $is_landing_page,
+                    is_active: $is_active
                 ) {
                     id
                     name
@@ -188,7 +220,6 @@ export const useProductCategoryService = () => {
                 }
             }
         `
-
         const data = await gqlFetch<{ updateProductCategory: ProductCategory }>(
             mutation,
             { ...vars },
@@ -197,63 +228,152 @@ export const useProductCategoryService = () => {
         return data.updateProductCategory
     }
 
-    // Delete a product category
-    const deleteProductCategory = async (id: number) => {
-        const mutation = `
-            mutation DeleteProductCategory($id: Int!) {
-                deleteProductCategory(id: $id)
+    // Create along with sub categories
+    const createProductCategoryWithSubs = async (vars: {
+        name: string
+        slug?: string | null
+        description: string
+        sub_categories?: string[]
+        is_landing_page: boolean
+        is_active: boolean
+    }) => {
+        // create parent
+        const parentSlug = (vars.slug ?? vars.name)
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '')
+        const parent = await createProductCategory({
+            name: vars.name,
+            slug: parentSlug,
+            description: vars.description,
+            is_landing_page: vars.is_landing_page,
+            // image undefined, is_active handled by backend default or separate mutation if required
+        })
+
+        console.log('sub categories list', vars.sub_categories)
+
+        // create subs if provided
+        if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
+            for (const sub of vars.sub_categories) {
+                const subName = String(sub).trim()
+                if (!subName) continue
+                const subSlug = subName
+                    .toLowerCase()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-z0-9_]/g, '')
+                await createProductCategory({
+                    name: subName,
+                    slug: parent.slug + "-" + subSlug,
+                    description: '-',
+                    parent_id: Number(parent.id),
+                })
             }
-        `
-
-        const data = await gqlFetch<{ deleteProductCategory: boolean }>(
-            mutation,
-            { id },
-            { auth: true }
-        )
-        return data.deleteProductCategory
+        }
+        return parent
     }
 
-    // GraphQL wrappers to match page usages
-    const updateProductCategoryImage = async (id: string, payload: { url: string }) => {
-        const mutation = `
-            mutation UpdateProductCategoryImage($id: Int!, $image: String!) {
-                updateProductCategory(id: $id, image: $image) {
-                    id
-                    image
-                }
+    // Update by id and optionally create new sub categories
+    const updateProductCategoryById = async (
+        id: string | number,
+        vars: {
+            name: string
+            slug?: string | null
+            description: string
+            sub_categories?: string[]
+            is_landing_page: boolean
+            is_active: boolean
+        }
+    ) => {
+        const updated = await updateProductCategory({
+            id: Number(id),
+            name: vars.name,
+            slug: vars.slug ?? undefined,
+            description: vars.description,
+            is_landing_page: vars.is_landing_page,
+        })
+        if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
+            for (const sub of vars.sub_categories) {
+                const subName = String(sub).trim()
+                if (!subName) continue
+                const subSlug = subName
+                    .toLowerCase()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-z0-9_]/g, '')
+                await createProductCategory({
+                    name: subName,
+                    slug: subSlug,
+                    description: '-',
+                    parent_id: Number(id),
+                })
             }
-        `
-        const data = await gqlFetch<{ updateProductCategory: { id: string; image: string } }>(
-            mutation,
-            { id: Number(id), image: payload.url },
-            { auth: true }
-        )
-        return data.updateProductCategory
+        }
+        return updated
     }
 
-    const deleteProductCategoryById = async (id: string) => {
-        const deleted = await deleteProductCategory(Number(id))
-        return deleted
-    }
+// Delete a product category
+const deleteProductCategory = async (id: number) => {
+    const mutation = `
+        mutation DeleteProductCategory($id: Int!) {
+            deleteProductCategory(id: $id)
+        }
+    `
 
-    return {
-        // GraphQL list state (backward-compatible shape for the page)
-        datas,
-        loading,
-        error,
-        pagination,
-        changePage,
-        changeLimit,
-        setParams,
-        params,
-        reFetch,
-        deleteProductCategoryById,
-        updateProductCategoryImage,
+    const data = await gqlFetch<{ deleteProductCategory: boolean }>(
+        mutation,
+        { id },
+        { auth: true }
+    )
+    return data.deleteProductCategory
+}
 
-        // GraphQL APIs
-        getProductCategoriesParent,
-        createProductCategory,
-        updateProductCategory,
-        deleteProductCategory,
-    }
+// GraphQL wrappers to match page usages
+const updateProductCategoryImage = async (id: string, payload: { url: string }) => {
+    const mutation = `
+        mutation UpdateProductCategoryImage($id: Int!, $image: String!) {
+            updateProductCategory(id: $id, image: $image) {
+                id
+                image
+            }
+        }
+    `
+    const data = await gqlFetch<{ updateProductCategory: { id: string; image: string } }>(
+        mutation,
+        { id: Number(id), image: payload.url },
+        { auth: true }
+    )
+    return data.updateProductCategory
+}
+
+const deleteProductCategoryById = async (id: string) => {
+    const deleted = await deleteProductCategory(Number(id))
+    return deleted
+}
+
+return {
+    // GraphQL list state (backward-compatible shape for the page)
+    datas,
+    loading,
+    error,
+    pagination,
+    changePage,
+    changeLimit,
+    setParams,
+    params,
+    reFetch,
+    deleteProductCategoryById,
+    updateProductCategoryImage,
+
+    // Detail helpers
+    detail,
+    loadDetail,
+
+    // GraphQL APIs
+    getProductCategoriesParent,
+    getProductCategoryDetail,
+    createProductCategory,
+    createProductCategoryWithSubs,
+    updateProductCategory,
+    updateProductCategoryById,
+    deleteProductCategory,
+}
 }

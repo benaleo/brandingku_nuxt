@@ -2,7 +2,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { toast } from "vue-sonner";
 import { useProductCategoryService } from '~/services/product-category.service'
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
@@ -14,17 +14,14 @@ import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
 import type { ProductCategoryRequest } from '~/types/products.type';
 
-
 const router = useRouter()
 const currentPath = router.currentRoute.value.path
 const id = getIdFromPath(router.currentRoute.value.path)
 const config = useRuntimeConfig()
 
 const {
-  datas,
-  loading,
-  error,
-  reFetch
+  detail,
+  loadDetail,
 } = useProductCategoryService()
 
 const formSchema = toTypedSchema(z.object({
@@ -51,32 +48,42 @@ const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
 
-// Watch for API data load and set fields when available
+// Load detail on mount for edit/detail pages
+onMounted(async () => {
+  if (!isCreate && id) {
+    try {
+      await loadDetail(Number(id))
+    } catch (e) {
+      console.error('Failed to load category detail', e)
+    }
+  }
+})
+
+// Watch for detail load and set fields when available
 watch(
-  [loading, datas],
-  ([loadingVal, datasVal]) => {
-    if (!isCreate && !loadingVal && datasVal) {
+  detail,
+  (val) => {
+    if (!isCreate && val) {
       isApiUpdate = true
-      name.value = datasVal.name || ''
-      // Set slug directly from the API data
-      const apiSlug = datasVal.slug || ''
+      name.value = val.name || ''
+      const apiSlug = val.slug || ''
       slug.value = apiSlug
-      description.value = datasVal.description || ''
-      sub_categories.value = datasVal.sub_categories || []
-      is_active.value = Boolean(datasVal.is_active) || false
-      is_landing_page.value = Boolean(datasVal.is_landing_page) || false
+      description.value = val.description || ''
+      sub_categories.value = (val as any).sub_categories || []
+      is_active.value = Boolean(val.is_active) || false
+      is_landing_page.value = Boolean(val.is_landing_page) || false
 
       // Update form values
-      setFieldValue('name', datasVal.name || '')
-      setFieldValue('slug', apiSlug)
-      setFieldValue('description', datasVal.description || '')
-      setFieldValue('sub_categories', datasVal.sub_categories || [])
-      setFieldValue('is_active', Boolean(datasVal.is_active) || false)
-      setFieldValue('is_landing_page', Boolean(datasVal.is_landing_page) || false)
+      setFieldValue('name', name.value)
+      setFieldValue('slug', slug.value)
+      setFieldValue('description', description.value)
+      setFieldValue('sub_categories', sub_categories.value)
+      setFieldValue('is_active', is_active.value)
+      setFieldValue('is_landing_page', is_landing_page.value)
       isApiUpdate = false
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 )
 
 const updateSlugFromName = (nameValue: string | undefined) => {
@@ -99,7 +106,7 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
   try {
     console.log(values)
     if (isCreate) {
-      await useProductCategoryService().createProductCategory(values)
+      await useProductCategoryService().createProductCategoryWithSubs(values)
       toast.success('Product category created successfully!')
     } else {
       await useProductCategoryService().updateProductCategoryById(id, values)
