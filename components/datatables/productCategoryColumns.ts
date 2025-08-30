@@ -19,7 +19,10 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         accessorKey: 'image',
         header: () => h('div', {class: 'text-left'}, 'Image'),
         cell: ({row}) => {
-            const src: string = row.getValue('image') ?? '/images/no-image.jpg'
+            const API_URL = useRuntimeConfig().public.API_URL
+            console.log('API_URL', API_URL)
+            const src: string = row.getValue('image') ? `${API_URL}${row.getValue('image')}` : `/images/no-image.jpg`
+            console.log('src', src)
             return h('div', {class: 'flex items-ceter justify-center overflow-hidden h-16'}, [
                 h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-h-16 object-cover'})
             ])
@@ -66,10 +69,10 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
                     isDelete: true,
                     handleDelete: () => handleDelete?.(data.id)
                 }),
-                h(ActionImageUpdate, {
-                    handleUpdate: (fileUrl: string, file: File, oldImageUrl?: string) => handleImageUpdate?.(data.id, fileUrl, file, oldImageUrl),
-                    oldImageUrl: data.image
-                })
+                // h(ActionImageUpdate, {
+                //     handleUpdate: (fileUrl: string, file: File, oldImageUrl?: string) => handleImageUpdate?.(data.id, fileUrl, file, oldImageUrl),
+                //     oldImageUrl: data.image
+                // })
             ]);
         }
     },

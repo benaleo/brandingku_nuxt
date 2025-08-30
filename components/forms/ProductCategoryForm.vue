@@ -125,6 +125,11 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
       if (imageFile.value) {
         const { convertToBase64 } = useFileToBase64()
         payload.image = await convertToBase64(imageFile.value)
+        // debug: show base64 prefix and length only
+        if (payload.image) {
+          console.log('[create] image base64 prefix:', payload.image.substring(0, 30))
+          console.log('[create] image base64 length:', payload.image.length)
+        }
       }
       await useProductCategoryService().createProductCategoryWithSubs(payload)
       toast.success('Product category created successfully!')
@@ -133,6 +138,11 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
       if (imageFile.value) {
         const { convertToBase64 } = useFileToBase64()
         payload.image = await convertToBase64(imageFile.value)
+        // debug: show base64 prefix and length only
+        if (payload.image) {
+          console.log('[update] image base64 prefix:', payload.image.substring(0, 30))
+          console.log('[update] image base64 length:', payload.image.length)
+        }
       } else {
         delete payload.image
       }

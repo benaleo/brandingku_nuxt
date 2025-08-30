@@ -213,8 +213,8 @@ export const useProductCategoryService = () => {
         const mutation = `
             mutation UpdateProductCategory(
                 $id: Int!,
-                $name: String,
-                $slug: String,
+                $name: String!,
+                $slug: String!,
                 $description: String,
                 $image: String,
                 $parent_id: Int,
@@ -256,6 +256,7 @@ export const useProductCategoryService = () => {
         name: string
         slug?: string | null
         description: string
+        image?: string
         sub_categories?: string[]
         is_landing_page: boolean
         is_active: boolean
@@ -269,17 +270,21 @@ export const useProductCategoryService = () => {
             name: vars.name,
             slug: parentSlug,
             description: vars.description,
+            image: vars.image,
             is_landing_page: vars.is_landing_page,
-            // image undefined, is_active handled by backend default or separate mutation if required
+            // is_active handled by backend default or separate mutation if required
         })
 
         console.log('sub categories list', vars.sub_categories)
 
         // create subs if provided
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
+            // fetch existing children names to avoid duplicates
+            const existingNames = await getSubCategories(Number(parent.id))
             for (const sub of vars.sub_categories) {
                 const subName = String(sub).trim()
                 if (!subName) continue
+                if (existingNames.includes(subName)) continue
                 const subSlug = subName
                     .toLowerCase()
                     .replace(/\s+/g, '_')
@@ -313,19 +318,24 @@ export const useProductCategoryService = () => {
             name: vars.name,
             slug: vars.slug ?? undefined,
             description: vars.description,
+            image: vars.image ?? undefined,
             is_landing_page: vars.is_landing_page,
         })
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
+            // get parent detail and existing children to avoid duplicates and prefix slug
+            const parentDetail = await getProductCategoryDetail(Number(id))
+            const existingNames = await getSubCategories(Number(id))
             for (const sub of vars.sub_categories) {
                 const subName = String(sub).trim()
                 if (!subName) continue
+                if (existingNames.includes(subName)) continue
                 const subSlug = subName
                     .toLowerCase()
                     .replace(/\s+/g, '_')
                     .replace(/[^a-z0-9_]/g, '')
                 await createProductCategory({
                     name: subName,
-                    slug: subSlug,
+                    slug: parentDetail.slug + "-" + subSlug,
                     description: '-',
                     parent_id: Number(id),
                 })
