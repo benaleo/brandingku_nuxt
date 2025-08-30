@@ -154,9 +154,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
 
     const loadDetail = async (id: number) => {
         const detailData = await getProductCategoryDetail(id)
-        // Populate sub_categories without broad fetching all categories
-        const children = await getChildCategoriesByParentId(id)
-        ;(detailData as any).sub_categories = (children || []).map((c: any) => c.name)
+        // Sub-categories are now included in the getProductCategoryDetail response
         detail.value = detailData
         return detail.value
     }

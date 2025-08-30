@@ -67,9 +67,9 @@ const setFieldsFromDetail = (val: any) => {
   slug.value = apiSlug
   description.value = val.description || ''
   
-  // Map sub_categories to just names for the tags input
+  // Extract sub-category names from the nested structure
   sub_categories.value = Array.isArray(val.sub_categories) 
-    ? val.sub_categories.map((sc: any) => sc.name || '') 
+    ? val.sub_categories.map((sc: any) => sc?.name || '').filter(Boolean) 
     : []
   
   image.value = val.image ? STORAGE_URL + val.image : ''
@@ -157,9 +157,14 @@ watch(name, (newVal) => {
 
 const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
   try {
-    console.log(values)
     if (isCreate) {
-      const payload = { ...values }
+      const payload = { 
+        ...values,
+        // Ensure sub_categories is an array of strings (names)
+        sub_categories: Array.isArray(values.sub_categories) 
+          ? values.sub_categories.filter(Boolean) 
+          : []
+      }
       if (imageFile.value) {
         const { convertToBase64 } = useFileToBase64()
         payload.image = await convertToBase64(imageFile.value)
@@ -185,7 +190,13 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
         toast.success('Product category created successfully!')
       }
     } else {
-      const payload = { ...values }
+      const payload = { 
+        ...values,
+        // Ensure sub_categories is an array of strings (names)
+        sub_categories: Array.isArray(values.sub_categories) 
+          ? values.sub_categories.filter(Boolean) 
+          : []
+      }
       if (imageFile.value) {
         const { convertToBase64 } = useFileToBase64()
         payload.image = await convertToBase64(imageFile.value)
