@@ -113,6 +113,7 @@ export const useProductCategoryService = () => {
                     image
                     is_landing_page
                     is_active
+                    
                 }
             }
         `
@@ -124,8 +125,30 @@ export const useProductCategoryService = () => {
         return data.getProductCategoryDetail
     }
 
+    // Get sub categories for a parent
+    const getSubCategories = async (parentId: number): Promise<string[]> => {
+        const query = `
+            query getProductCategories {
+                getProductCategories {
+                    id
+                    name
+                    parent_id
+                }
+            }
+        `
+        const res = await gqlFetch<{ getProductCategories: ProductCategory[] }>(
+            query,
+            undefined,
+            { auth: true }
+        )
+        const children = (res?.getProductCategories || []).filter(cat => cat.parent_id === parentId).map(cat => cat.name)
+        return children
+    }
+
     const loadDetail = async (id: number) => {
-        detail.value = await getProductCategoryDetail(id)
+        const detailData = await getProductCategoryDetail(id)
+        detailData.sub_categories = await getSubCategories(id)
+        detail.value = detailData
         return detail.value
     }
 
@@ -279,6 +302,7 @@ export const useProductCategoryService = () => {
             name: string
             slug?: string | null
             description: string
+            image?: string
             sub_categories?: string[]
             is_landing_page: boolean
             is_active: boolean
