@@ -8,12 +8,13 @@ import {toTypedSchema} from '@vee-validate/zod'
 import {useForm} from 'vee-validate'
 import * as z from 'zod'
 import {toast} from "vue-sonner";
-import authService from '~/services/auth.service';
-import {useRouter} from 'vue-router';
-import {useCookie} from '#app';
+import { useAuthService } from '~/services/auth.service';
+import { useRouter } from 'vue-router';
+import { useCookie } from '#app';
 
 const router = useRouter();
 const tokenCookie = useCookie('token');
+const authService = useAuthService();
 
 const formSchema = toTypedSchema(z.object({
   email: z.string().email(),
@@ -26,16 +27,16 @@ const {isFieldDirty, handleSubmit} = useForm({
 
 const handleLogin = handleSubmit(async (values) => {
   try {
-    const response = await authService.login(values.email, values.password);
-    tokenCookie.value = response.data.token;
+    const { token } = await authService.login(values.email, values.password);
+    tokenCookie.value = token;
     router.push('/console/secret/dashboard');
     toast.success('Login successful', {
       description: 'You are now logged in',
     })
-  } catch (error) {
-    // console.error('Login failed:', error);
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || err.message || 'Please check your email and password';
     toast.error('Login failed', {
-      description: 'Please check your email and password',
+      description: errorMessage,
     })
   }
 })

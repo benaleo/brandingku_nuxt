@@ -30,7 +30,9 @@ import AvatarUploadForm from '~/components/forms/AvatarUploadForm.vue';
 const userId = ref<number>(1); // Default user ID, you can make this dynamic
 const avatarUrl = ref<string>('');
 
+const config = useRuntimeConfig();
+
 const handleUploadSuccess = (newAvatarUrl: string) => {
-  avatarUrl.value = newAvatarUrl;
+  avatarUrl.value = config.public.API_URL ? `${config.public.API_URL}${newAvatarUrl}` : newAvatarUrl;
 };
 </script>
