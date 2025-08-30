@@ -107,17 +107,18 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
     // Detail by id
     const getProductCategoryDetail = async (id: number) => {
         const query = `
-          query GetProductCategoryDetail($id: Int!) {
-            getProductCategoryDetail(id: $id) {
-              id
-              name
-              slug
-              description
-              image
-              is_landing_page
-              is_active
+            query GetProductCategoryDetail($id: Int!) {
+                getProductCategoryDetail(id: $id) {
+                    id
+                    name
+                    slug
+                    description
+                    image
+                    is_landing_page
+                    is_active
+                    
+                }
             }
-          }
         `
         const data = await gqlFetch<{ getProductCategoryDetail: ProductCategory }>(
             query,
@@ -148,10 +149,12 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
     }
 
     const loadDetail = async (id: number) => {
-      const detailData = await getProductCategoryDetail(id)
-      detailData.sub_categories = await getSubCategories(id)
-      detail.value = detailData
-      return detail.value
+        const detailData = await getProductCategoryDetail(id)
+        // Populate sub_categories without broad fetching all categories
+        const children = await getChildCategoriesByParentId(id)
+        ;(detailData as any).sub_categories = (children || []).map((c: any) => c.name)
+        detail.value = detailData
+        return detail.value
     }
 
     // Children as full objects
