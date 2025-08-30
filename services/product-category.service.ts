@@ -403,21 +403,36 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
             // get parent detail and existing children to avoid duplicates and prefix slug
             const parentDetail = await getProductCategoryDetail(Number(id))
-            const existingNames = await getSubCategories(Number(id))
+            const existingChildren = await getChildCategoriesByParentId(Number(id))
+            const existingSlugs = new Set(existingChildren.map(c => c.slug))
+            
             for (const sub of vars.sub_categories) {
                 const subName = String(sub).trim()
                 if (!subName) continue
-                if (existingNames.includes(subName)) continue
+                
+                // Generate the expected slug
                 const subSlug = subName
                     .toLowerCase()
                     .replace(/\s+/g, '_')
                     .replace(/[^a-z0-9_]/g, '')
-                await createProductCategory({
-                    name: subName,
-                    slug: parentDetail.slug + "-" + subSlug,
-                    description: '-',
-                    parent_id: Number(id),
-                })
+                const fullSlug = `${parentDetail.slug}-${subSlug}`
+                
+                // Skip if a category with this slug already exists
+                if (existingSlugs.has(fullSlug)) continue
+                
+                try {
+                    await createProductCategory({
+                        name: subName,
+                        slug: fullSlug,
+                        description: '-',
+                        parent_id: Number(id),
+                    })
+                    // Add to existing slugs to prevent duplicates in the same batch
+                    existingSlugs.add(fullSlug)
+                } catch (error) {
+                    console.error(`Failed to create sub-category "${subName}":`, error)
+                    // Continue with next sub-category even if one fails
+                }
             }
         }
         return updated
