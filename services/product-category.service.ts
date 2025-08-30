@@ -1,12 +1,14 @@
-import {useApiFetch} from '~/composables/useApiFetch'
-import type {ProductCategory, ProductCategoryRequest} from "~/types/products.type";
+import type { ProductCategory, ProductCategoryRequest } from "~/types/products.type";
+import { useApiFetch } from '~/composables/useApiFetch'
+import { useCookie } from '#app'
 
 export const useProductCategoryService = (fetchResult?: boolean, dataId?: string) => {
+    const { gqlFetch } = useGql()
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
     const url = `${BASE_URL}/cms/v1/product-category${dataId ? `/${dataId}` : ''}`
-    console.log("url fetch is ", url)
 
+    // REST listing with pagination/filters (backward compatible API)
     const {
         data,
         loading,
@@ -24,56 +26,158 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
         initialLimit: 10
     })
 
-    const getProductsCategory = async (params: {
-        page?: number
-        limit?: number
-        sortBy?: string
-        direction?: 'asc' | 'desc'
-    } = {}) => {
-        if (params.page !== undefined) changePage(params.page)
-        if (params.limit) changeLimit(params.limit)
-
-        // Additional query params can be added here
-        let fetchUrl = url
-        return refetch();
-    }
-
-    const createProductCategory = async (payload: ProductCategoryRequest) => {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+    // Get all parent categories
+    const getProductCategoriesParent = async () => {
+        const query = `
+            query GetProductCategoriesParent {
+                getProductCategoriesParent {
+                    id
+                    name
+                    slug
+                    description
+                    image
+                    is_landing_page
+                    is_active
+                    created_at
+                    updated_at
+                }
             }
-        })
+        `
 
-        if (!response.ok) {
-            throw await response.json()
-        }
-
-        return await response.json()
+        const data = await gqlFetch<{ getProductCategoriesParent: ProductCategory[] }>(query)
+        return data.getProductCategoriesParent
     }
 
-    // General UPDATE function
-    const updateProductCategoryById = async (id: string, payload: ProductCategoryRequest) => {
-        const response = await fetch(`${url}/${id}`, {
+    // Create a new product category
+    const createProductCategory = async (vars: {
+        name: string
+        slug: string
+        description?: string
+        image?: string
+        parent_id?: number
+        is_landing_page?: boolean
+    }) => {
+        const mutation = `
+            mutation CreateProductCategory(
+                $name: String!,
+                $slug: String!,
+                $description: String,
+                $image: String,
+                $parent_id: Int,
+                $is_landing_page: Boolean
+            ) {
+                createProductCategory(
+                    name: $name,
+                    slug: $slug,
+                    description: $description,
+                    image: $image,
+                    parent_id: $parent_id,
+                    is_landing_page: $is_landing_page
+                ) {
+                    id
+                    name
+                    slug
+                    description
+                    image
+                    is_landing_page
+                    is_active
+                    created_at
+                    updated_at
+                }
+            }
+        `
+
+        const data = await gqlFetch<{ createProductCategory: ProductCategory }>(
+            mutation,
+            { ...vars },
+            { auth: true }
+        )
+        return data.createProductCategory
+    }
+
+    // Update a product category
+    const updateProductCategory = async (vars: {
+        id: number
+        name: string
+        slug?: string
+        description?: string
+        image?: string
+        parent_id?: number
+        is_landing_page?: boolean
+    }) => {
+        const mutation = `
+            mutation UpdateProductCategory(
+                $id: Int!,
+                $name: String!,
+                $slug: String,
+                $description: String,
+                $image: String,
+                $parent_id: Int,
+                $is_landing_page: Boolean
+            ) {
+                updateProductCategory(
+                    id: $id,
+                    name: $name,
+                    slug: $slug,
+                    description: $description,
+                    image: $image,
+                    parent_id: $parent_id,
+                    is_landing_page: $is_landing_page
+                ) {
+                    id
+                    name
+                    slug
+                    description
+                    image
+                    is_landing_page
+                    is_active
+                    created_at
+                    updated_at
+                }
+            }
+        `
+
+        const data = await gqlFetch<{ updateProductCategory: ProductCategory }>(
+            mutation,
+            { ...vars },
+            { auth: true }
+        )
+        return data.updateProductCategory
+    }
+
+    // Delete a product category
+    const deleteProductCategory = async (id: number) => {
+        const mutation = `
+            mutation DeleteProductCategory($id: Int!) {
+                deleteProductCategory(id: $id)
+            }
+        `
+
+        const data = await gqlFetch<{ deleteProductCategory: boolean }>(
+            mutation,
+            { id },
+            { auth: true }
+        )
+        return data.deleteProductCategory
+    }
+
+    // REST: update image
+    const updateProductCategoryImage = async (id: string, data: { url: string }) => {
+        const response = await fetch(`${url}/${id}/image?file=${data.url}`, {
             method: 'PUT',
-            body: JSON.stringify(payload),
             headers: {
-                'Content-Type': 'application/json',
                 'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+                'Authorization': `Bearer ${useCookie('token').value}`,
             }
         })
+
         if (!response.ok) {
             throw await response.json()
         }
         return await response.json()
     }
 
-    // General DELETE function
+    // REST: delete by id
     const deleteProductCategoryById = async (id: string) => {
         const response = await fetch(`${url}/${id}`, {
             method: 'DELETE',
@@ -83,41 +187,32 @@ export const useProductCategoryService = (fetchResult?: boolean, dataId?: string
             }
         })
         if (!response.ok) {
-            const error = await response.json()
-            throw error
+            const err = await response.json()
+            throw err
         }
         return await response.json()
     }
 
-    // Update Image
-    const updateProductCategoryImage = async (id: string, data: { url: string }) => {
-        const response = await fetch(`${url}/${id}/image?file=${data.url}`, {
-            method: 'PUT',
-            headers: {
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`,
-            }
-        })
-        if (!response.ok) {
-            throw await response.json()
-        }
-        return await response.json()
-    }
+    const reFetch = () => refetch()
 
     return {
+        // REST list API expected by index.vue
         datas: data,
         loading,
         error,
         pagination,
-        reFetch: refetch,
-        setParams,
-        params,
-        getProductsCategory,
-        createProductCategory,
-        updateProductCategoryById,
-        updateProductCategoryImage,
         changePage,
         changeLimit,
-        deleteProductCategoryById
+        setParams,
+        params,
+        reFetch,
+        deleteProductCategoryById,
+        updateProductCategoryImage,
+
+        // GraphQL APIs
+        getProductCategoriesParent,
+        createProductCategory,
+        updateProductCategory,
+        deleteProductCategory,
     }
 }

@@ -62,7 +62,7 @@ const {
 } = useProductCategoryService(true)
 
 const productList = computed(() => {
-  return datas.value || []
+  return (datas as any)?.value || []
 })
 
 const onPageChange = (page: number) => {
