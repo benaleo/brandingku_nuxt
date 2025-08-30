@@ -25,7 +25,7 @@ const {
   loading,
   error,
   reFetch
-} = useProductCategoryService(false, id)
+} = useProductCategoryService()
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),

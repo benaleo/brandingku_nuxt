@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import {computed, ref} from 'vue'
+import {computed, ref, watch} from 'vue'
 import {productCategoryColumns} from "~/components/datatables/productCategoryColumns";
 import {useProductCategoryService} from "~/services/product-category.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
@@ -59,10 +59,10 @@ const {
   updateProductCategoryImage,
   setParams,
   reFetch
-} = useProductCategoryService(true)
+} = useProductCategoryService()
 
 const productList = computed(() => {
-  return (datas as any)?.value || []
+  return datas.value || []
 })
 
 const onPageChange = (page: number) => {
