@@ -106,25 +106,8 @@ watch(
   detail,
   (val) => {
     if (!isCreate && val) {
-      isApiUpdate = true
-      name.value = val.name || ''
-      const apiSlug = val.slug || ''
-      slug.value = apiSlug
-      description.value = val.description || ''
-      sub_categories.value = (val as any).sub_categories || []
-      image.value = val.image ? STORAGE_URL + val.image : ''
-      is_active.value = Boolean(val.is_active) || false
-      is_landing_page.value = Boolean(val.is_landing_page) || false
-
-      // Update form values
-      setFieldValue('name', name.value)
-      setFieldValue('slug', slug.value)
-      setFieldValue('description', description.value)
-      setFieldValue('sub_categories', sub_categories.value)
-      setFieldValue('image', image.value)
-      setFieldValue('is_active', is_active.value)
-      setFieldValue('is_landing_page', is_landing_page.value)
-      isApiUpdate = false
+      // Reuse the same mapping logic, including sub_categories name extraction
+      setFieldsFromDetail(val)
     }
   },
   { immediate: true }
