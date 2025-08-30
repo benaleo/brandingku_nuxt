@@ -1,55 +1,43 @@
-import {useApiFetch} from '~/composables/useApiFetch'
-import type {ProductCategory} from "~/components/datatables/productCategoryColumns";
+import { gql } from '@apollo/client'
+import type { ProductCategory } from '~/types/products.type'
+import { useGql } from '~/composables/useGql'
 
-export const useLandingFeaturedCategories = (fetchResult?: boolean, slug?: string | null, isPublic?: boolean) => {
-  const config = useRuntimeConfig()
-  const BASE_URL = config.public.API_URL
+export const useLandingFeaturedCategories = () => {
+  const { gqlFetch } = useGql()
 
-  // Always build query string with all params
-  const params = new URLSearchParams()
-  if (slug) params.append('slug', slug)
-  // Add more params as needed
+  const data = ref<ProductCategory[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  const url = `${BASE_URL}/api/v1/featured-category`
-
-  const dynamicParam = slug ? url : null
-
-  const {
-    data,
-    loading,
-    error,
-    pagination,
-    changePage,
-    changeLimit,
-    reFetch
-  } = useApiFetch<ProductCategory>(url, {
-    isResult: fetchResult,
-    dynamicParam,
-    initialPage: 0,
-    initialLimit: 10,
-    isPublic
-  })
-
-  const fetchFeaturedCategories = async (params: {
-    page?: number
-    limit?: number
-    sortBy?: string
-    direction?: 'asc' | 'desc'
-  } = {}) => {
-    if (params.page !== undefined) changePage(params.page)
-    if (params.limit) changeLimit(params.limit)
-    // Optionally handle sortBy/direction here
-    return reFetch();
+  const fetchCategories = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const query = `
+        query GetProductCategories {
+          getProductCategories(is_landing_page: true) {
+            id
+            name
+            image
+            slug
+          }
+        }
+      `
+      const res = await gqlFetch<{ getProductCategories: ProductCategory[] }>(query, undefined, { auth: true })
+      data.value = res.getProductCategories || []
+    } catch (e: any) {
+      error.value = e.message || 'Failed to fetch categories'
+    } finally {
+      loading.value = false
+    }
   }
 
+  onMounted(fetchCategories)
+
   return {
-    datas: data,
-    loading,
-    error,
-    pagination,
-    reFetch,
-    fetchFeaturedCategories,
-    changePage,
-    changeLimit,
+    data: computed(() => data.value),
+    loading: computed(() => loading.value),
+    error: computed(() => error.value),
+    refetch: fetchCategories
   }
 }

@@ -27,6 +27,7 @@ const currentPath = router.currentRoute.value.path
 const idFromPath = getIdFromPath(router.currentRoute.value.path)
 const resolvedEditId = computed(() => props.editId ?? idFromPath)
 const config = useRuntimeConfig()
+const STORAGE_URL = config.public.STORAGE_URL
 
 const service = useProductCategoryService({ autoFetchParents: false })
 const { detail, loadDetail } = service
@@ -66,7 +67,7 @@ const setFieldsFromDetail = (val: any) => {
   slug.value = apiSlug
   description.value = val.description || ''
   sub_categories.value = (val as any).sub_categories || []
-  image.value = val.image ? config.public.BASE_URL + val.image : ''
+  image.value = val.image ? STORAGE_URL + val.image : ''
   is_active.value = Boolean(val.is_active) || false
   is_landing_page.value = Boolean(val.is_landing_page) || false
 
@@ -106,7 +107,7 @@ watch(
       slug.value = apiSlug
       description.value = val.description || ''
       sub_categories.value = (val as any).sub_categories || []
-      image.value = val.image ? config.public.BASE_URL + val.image : ''
+      image.value = val.image ? STORAGE_URL + val.image : ''
       is_active.value = Boolean(val.is_active) || false
       is_landing_page.value = Boolean(val.is_landing_page) || false
 

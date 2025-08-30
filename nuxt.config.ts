@@ -23,7 +23,7 @@ export default defineNuxtConfig({
   apollo: {
     clients: {
       default: {
-        httpEndpoint: process.env.NUXT_PUBLIC_BASE_URL + '/query'
+        httpEndpoint: process.env.NUXT_PUBLIC_API_URL + '/query'
       }
     },
   },
