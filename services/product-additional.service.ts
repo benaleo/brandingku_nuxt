@@ -48,7 +48,7 @@ export const useProductAdditionalService = () => {
     return response?.getProductAdditionalDetail
   }
 
-  const createProductAdditional = async (input: Omit<ProductAdditional, 'id' | 'created_at' | 'updated_at'>) => {
+  const createProductAdditional = async (input: (Omit<ProductAdditional, 'id' | 'created_at' | 'updated_at'> & { product_id: number })) => {
     const mutation = `
       mutation CreateProductAdditional(
         $name: String!,
@@ -90,13 +90,13 @@ export const useProductAdditionalService = () => {
     const mutation = `
       mutation UpdateProductAdditional(
         $id: Int!,
-        $name: String,
-        $moq: Int,
-        $price: Int,
-        $stock: Int,
-        $discount: Int,
-        $discount_type: String,
-        $attributes: String
+        $name: String!,
+        $moq: Int!,
+        $price: Int!,
+        $stock: Int!,
+        $discount: Int!,
+        $discount_type: String!,
+        $attributes: String!
       ) {
         updateProductAdditional(
           id: $id,
@@ -119,7 +119,18 @@ export const useProductAdditionalService = () => {
         }
       }
     `
-    const response = await gqlFetch<{ updateProductAdditional: ProductAdditional }>(mutation, { id, ...input }, { auth: true })
+    // Ensure all required fields are provided with sensible defaults
+    const variables = {
+      id,
+      name: input.name ?? '',
+      moq: Number(input.moq ?? 0),
+      price: Number(input.price ?? 0),
+      stock: Number(input.stock ?? 0),
+      discount: Number(input.discount ?? 0),
+      discount_type: input.discount_type ?? 'AMOUNT',
+      attributes: typeof input.attributes === 'string' ? input.attributes : '[]',
+    }
+    const response = await gqlFetch<{ updateProductAdditional: ProductAdditional }>(mutation, variables, { auth: true })
     return response?.updateProductAdditional
   }
 

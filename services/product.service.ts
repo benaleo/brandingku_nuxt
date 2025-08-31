@@ -299,6 +299,55 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             }
         }
 
+        // Handle additionals update/create/delete if any
+        if (Array.isArray(payload.additionals)) {
+            try {
+                const additionalService = useProductAdditionalService()
+
+                // Fetch existing additionals to detect deletions
+                const existing = await additionalService.getProductAdditionals(Number(id))
+                const existingIds = new Set((existing || []).map((a: any) => String(a.id)))
+                const incomingIds = new Set(
+                    payload.additionals
+                        .filter((a: any) => a?.id != null && `${a.id}`.length > 0)
+                        .map((a: any) => String(a.id))
+                )
+
+                // Update or create incoming additionals
+                for (const add of payload.additionals) {
+                    const hasId = add?.id != null && `${add.id}`.length > 0
+                    const normalized = {
+                        name: add.name ?? '',
+                        moq: Number(add.moq) || 0,
+                        price: Number(add.price) || 0,
+                        stock: Number(add.stock) || 0,
+                        discount: Number(add.discount) || 0,
+                        discount_type: add.discount_type ?? 'AMOUNT',
+                        attributes: typeof add.attributes === 'string' ? add.attributes : '[]',
+                    }
+
+                    if (hasId) {
+                        await additionalService.updateProductAdditional(Number(add.id), normalized)
+                    } else {
+                        await additionalService.createProductAdditional({
+                            ...normalized,
+                            product_id: Number(id),
+                        })
+                    }
+                }
+
+                // Delete removed additionals (present in existing but not in incoming)
+                for (const ex of existing || []) {
+                    const exId = String(ex.id)
+                    if (!incomingIds.has(exId)) {
+                        await additionalService.deleteProductAdditional(Number(exId))
+                    }
+                }
+            } catch (e) {
+                console.error('[product] updateProductById additionals mutation failed:', e)
+            }
+        }
+
         return res?.updateProduct
     }
 
