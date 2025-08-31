@@ -412,7 +412,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
             // get parent detail and existing children to avoid duplicates and prefix slug
             const parentDetail = await getProductCategoryDetail(Number(id))
-            const existingChildren = await getChildCategoriesByParentId(Number(id))
+            const existingChildren = await getChildCategoriesByParentId(Number(id), false)
             const existingSlugs = new Set(existingChildren.map(c => c.slug))
             
             for (const sub of vars.sub_categories) {
