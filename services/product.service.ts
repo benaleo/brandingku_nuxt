@@ -87,7 +87,6 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             const end = start + (pagination.value.limit || 10)
             datas.value = list.slice(start, end)
         } catch (e: any) {
-            console.error('[product] fetchProducts error:', e)
             error.value = e?.message || 'Failed to load products'
         } finally {
             loading.value = false
@@ -133,7 +132,6 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             const res = await gqlFetch<{ getProductDetail: Product }>(query, { id }, { auth: true })
             datas.value = res.getProductDetail
         } catch (e: any) {
-            console.error('[product] fetchDetail error:', e)
             error.value = e?.message || 'Failed to load product detail'
         } finally {
             loading.value = false
@@ -294,7 +292,6 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         })
                     }
                 } catch (e) {
-                    console.error('[product] updateProductById galleries mutation failed:', e)
                 }
             }
         }
@@ -312,13 +309,9 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         .filter((a: any) => a?.id != null && `${a.id}`.length > 0)
                         .map((a: any) => String(a.id))
                 )
-                console.log('[product] incoming additionals array:', JSON.parse(JSON.stringify(payload.additionals)))
-                console.log('[product] existingIds:', Array.from(existingIds))
-                console.log('[product] incomingIds:', Array.from(incomingIds))
 
                 // Update or create incoming additionals
                 for (const add of payload.additionals) {
-                    console.log('[product] processing additional (raw):', JSON.parse(JSON.stringify(add)))
                     const hasId = add?.id != null && `${add.id}`.length > 0
                     const normalized = {
                         name: add.name ?? '',
@@ -331,12 +324,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                     }
 
                     if (hasId) {
-                        console.log('[product] UPDATE additional -> id:', add.id, 'payload:', normalized)
-                        console.debug('[product] update additional -> id:', add.id, 'payload:', normalized)
                         await additionalService.updateProductAdditional(Number(add.id), normalized)
                     } else {
-                        console.log('[product] CREATE additional -> product_id:', Number(id), 'payload:', normalized)
-                        console.debug('[product] create additional -> product_id:', Number(id), 'payload:', normalized)
                         await additionalService.createProductAdditional({
                             ...normalized,
                             product_id: Number(id),
@@ -348,12 +337,10 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 for (const ex of existing || []) {
                     const exId = String(ex.id)
                     if (!incomingIds.has(exId)) {
-                        console.debug('[product] delete additional -> id:', exId)
                         await additionalService.deleteProductAdditional(Number(exId))
                     }
                 }
             } catch (e) {
-                console.error('[product] updateProductById additionals mutation failed:', e)
             }
         }
 

@@ -31,6 +31,7 @@ export type ProductAdditional = {
     discount: number
     discount_type: string
     attributes: string
+    _uniqueKey?: string
 }
 
 export type ProductGallery = {

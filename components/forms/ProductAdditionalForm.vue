@@ -55,20 +55,17 @@ watch(parsedAttributes, (newVal) => {
 watch(
   () => props.modelValue,
   (v) => {
-    console.log('[additional-form] props.modelValue changed:', JSON.parse(JSON.stringify(v)))
-    list.value = (v || []).map((item, idx) => ({
+      list.value = (v || []).map((item, idx) => ({
       ...item,
       _uniqueKey: item.id ? undefined : `existing-${idx}-${Date.now()}-${Math.random()}`,
     }));
-    console.log('[additional-form] list set from props:', JSON.parse(JSON.stringify(list.value)))
-  },
+    },
   { immediate: true }
 );
 
 const previousList = ref<ProductAdditional[]>([])
 
 watch(list, (v) => {
-  console.log('[additional-form] list changed, emitting update:modelValue:', JSON.parse(JSON.stringify(v)))
   
   // Log specific changes for items with IDs
   v.forEach((item, idx) => {
@@ -85,11 +82,9 @@ watch(list, (v) => {
         if (item.attributes !== prevItem.attributes) changedFields.push(`attributes changed`)
         
         if (changedFields.length > 0) {
-          console.log(`[additional-form] updated additional id:${item.id} - ${changedFields.join(', ')}`)
           // Extra log for ID 1
           if (item.id === '1') {
-            console.log(`[additional-form] SPECIAL: additional id:1 updated - ${changedFields.join(', ')}`)
-          }
+            }
         }
       }
     }
@@ -102,7 +97,6 @@ watch(list, (v) => {
 }, { deep: true });
 
 function addAdditional() {
-  console.log('[additional-form] adding new additional')
   list.value.push({
     _uniqueKey: `new-${Date.now()}-${Math.random()}`,
     name: "",
@@ -125,30 +119,24 @@ function removeAttribute(additionalIdx: number, attrIdx: number) {
 }
 
 async function removeAdditional(id: number, idx: number) {
-  console.log('[additional-form] removing additional param:', id, 'resolved idx:', idx)
   const item = list.value[idx];
   if (!item) return
   // If item has ID -> delete from backend first, then remove locally
   if (item.id) {
     try {
       deletingKey.value = String(id)
-      console.log(`[additional-form] deleting additional id:${item.id}`)
       await additionalService.deleteProductAdditional(Number(item.id))
-      console.log(`[additional-form] deleted additional id:${item.id}`)
       list.value.splice(idx, 1)
     } catch (e) {
-      console.error(`[additional-form] failed to delete additional id:${item.id}`, e)
     } finally {
       deletingKey.value = null
     }
   } else {
     // New (unsaved) item, just remove from UI
-    console.log('[additional-form] removing unsaved additional at index:', idx)
     list.value.splice(idx, 1)
   }
 }
 
-console.log('list additionals', JSON.stringify(props.modelValue))
 
 </script>
 
