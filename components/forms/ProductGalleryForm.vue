@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import type { ProductGallery } from '~/types/products.type'
 import { Trash2 } from 'lucide-vue-next'
+import { useProductGalleriesService } from '~/services/product-galleries.service'
 
 const props = defineProps<{
   modelValue: ProductGallery[]
@@ -17,6 +18,8 @@ const list = ref<ProductGallery[]>(props.modelValue || [])
 watch(() => props.modelValue, (v) => { list.value = v || [] }, { immediate: true })
 watch(list, (v) => emit('update:modelValue', v), { deep: true })
 
+const galleryService = useProductGalleriesService()
+
 function addItem() {
   const newItem: ProductGallery = {
     id: Math.random().toString(36).slice(2),
@@ -27,7 +30,12 @@ function addItem() {
   list.value.push(newItem)
 }
 
-function removeItem(idx: number) {
+async function removeItem(idx: number) {
+  const item = list.value[idx]
+  if (item && /^\d+$/.test(item.id)) {
+    // It's an existing item from DB, delete it
+    await galleryService.deleteProductGallery(Number(item.id))
+  }
   list.value.splice(idx, 1)
   // Reorder after removal
   list.value = list.value.map((g, i) => ({ ...g, orders: i + 1 }))
