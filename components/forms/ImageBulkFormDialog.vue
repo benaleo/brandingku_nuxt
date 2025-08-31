@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { XIcon, Trash2Icon } from 'lucide-vue-next'
-import type {ProductGalleriesList} from "~/types/products.type";
+import type {ProductGallery} from "~/types/products.type";
 
 interface FileWithPreview {
   file: File;
@@ -26,7 +26,7 @@ const props = defineProps({
     required: true
   },
   galleries: {
-    type: Array as PropType<ProductGalleriesList[]>,
+    type: Array as PropType<ProductGallery[]>,
     default: () => []
   }
 })
@@ -37,10 +37,10 @@ const files = ref<FileWithPreview[]>([])
 const dragActive = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const removeIds = ref<string[]>([])
-const galleries = ref<ProductGalleriesList[]>([...props.galleries])
+const galleries = ref<ProductGallery[]>([...props.galleries])
 const isUploading = ref(false)
 
-function removeGalleryItem(galleryItem: ProductGalleriesList) {
+function removeGalleryItem(galleryItem: ProductGallery) {
   if (galleryItem.id) {
     removeIds.value.push(galleryItem.id)
     galleries.value = galleries.value.filter(g => g.id !== galleryItem.id)

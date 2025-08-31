@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ImageUp } from 'lucide-vue-next';
 import ImageBulkFormDialog from '../forms/ImageBulkFormDialog.vue';
-import type {ProductGalleriesList} from "~/types/products.type";
+import type {ProductGallery} from "~/types/products.type";
 
 defineProps<{
   handleUpdate: (fileUrl: string[], removeIds: string[]) => void | Promise<void>,
   productId: string,
-  galleries: ProductGalleriesList[]
+  galleries: ProductGallery[]
 }>()
 
 </script>

@@ -7,7 +7,7 @@ export type Product = {
     is_highlight: boolean
     is_recommended: boolean
     is_upsell: boolean
-    galleries: ProductGalleriesList[]
+    galleries: ProductGallery[]
     additionals: {
         id: string,
         name: string,   
@@ -27,6 +27,7 @@ export type Product = {
 
 export type ProductAdditional = {
     id?: string
+    name: string
     price: number
     moq: number
     stock: number
@@ -38,9 +39,11 @@ export type ProductAdditional = {
     }[]
 }
 
-export type ProductGalleriesList = {
+export type ProductGallery = {
     id: string
-    url: string
+    product_id: string
+    image: string
+    orders: number
 }
 
 export type ProductCategory = {
