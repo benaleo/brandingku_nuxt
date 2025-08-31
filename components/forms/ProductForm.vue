@@ -86,7 +86,7 @@ const {
         stock: 0,
         discount: 0,
         discount_type: 'AMOUNT',
-        attributes: ''
+        attributes: '[]'
       }
     ],
   }
@@ -175,17 +175,29 @@ watch(
       setFieldValue('product_category_id', datasVal.category?.id ? String(datasVal.category.id) : '')
 
       // Process additionals array from API data
-      const processedAdditionals = (datasVal.additionals || []).map((add: any) => ({
-        ...add,
-        id: add.id != null ? String(add.id) : undefined,
-        name: add.name || '',
-        price: Number(add.price) || 0,
-        moq: Number(add.moq) || 0,
-        stock: Number(add.stock) || 0,
-        discount: Number(add.discount) || 0,
-        discount_type: add.discount_type || 'AMOUNT',
-        attributes: typeof add.attributes === 'string' ? add.attributes : ''
-      }))
+      const processedAdditionals = (datasVal.additionals || []).map((add: any) => {
+        const rawAttr = typeof add.attributes === 'string' ? add.attributes : ''
+        let attributes = '[]'
+        try {
+          // If it's already a JSON array string, keep it; otherwise default to []
+          if (rawAttr && Array.isArray(JSON.parse(rawAttr))) {
+            attributes = rawAttr
+          }
+        } catch (_) {
+          attributes = '[]'
+        }
+        return {
+          ...add,
+          id: add.id != null ? String(add.id) : undefined,
+          name: add.name || '',
+          price: Number(add.price) || 0,
+          moq: Number(add.moq) || 0,
+          stock: Number(add.stock) || 0,
+          discount: Number(add.discount) || 0,
+          discount_type: add.discount_type || 'AMOUNT',
+          attributes,
+        }
+      })
 
       // Update additionals ref to trigger UI updates
       additionals.value = processedAdditionals

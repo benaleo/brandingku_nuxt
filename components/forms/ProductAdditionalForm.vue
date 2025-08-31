@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, X } from "lucide-vue-next";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
-import type { OptionType } from "~/types/options.type";
 import type { ProductAdditional } from "~/types/products.type";
+import FieldXSelectSimple from "./fields/FieldXSelectSimple.vue";
 
 const props = defineProps<{
   modelValue: ProductAdditional[];
@@ -16,7 +16,6 @@ const emit = defineEmits<{
   (e: "update:modelValue", v: ProductAdditional[]): void;
 }>();
 
-const dtypes = ref<OptionType[]>([]);
 
 const list = ref<ProductAdditional[]>(props.modelValue || []);
 
@@ -88,6 +87,8 @@ function removeAdditional(idx: number) {
   if (list.value.length > 1) list.value.splice(idx, 1);
 }
 
+console.log('list additionals', JSON.stringify(props.modelValue))
+
 </script>
 
 <template>
@@ -115,47 +116,56 @@ function removeAdditional(idx: number) {
         <div class="w-full grid grid-cols-2 gap-2 mt-4">
           <FieldXText
             item-class="w-full"
-            name="additional_name"
+            :name="`additionals.${addIdx}.name`"
             label="Name"
             placeholder="Name"
             v-model="additional.name"
+            :standalone="true"
           />
           <FieldXText
             item-class="w-full"
-            name="price"
+            :name="`additionals.${addIdx}.price`"
             label="Price"
             placeholder="Price"
             v-model="additional.price"
+            :standalone="true"
           />
           <FieldXText
             item-class="w-full"
-            name="moq"
+            :name="`additionals.${addIdx}.moq`"
             label="MOQ"
             placeholder="MOQ"
             v-model="additional.moq"
+            :standalone="true"
           />
           <FieldXText
             item-class="w-full"
-            name="stock"
+            :name="`additionals.${addIdx}.stock`"
             label="Stock"
             placeholder="Stock"
             v-model="additional.stock"
+            :standalone="true"
           />
           <FieldXText
             item-class="w-full"
-            name="discount"
+            :name="`additionals.${addIdx}.discount`"
             label="Discount"
             placeholder="Discount"
             v-model="additional.discount"
+            :standalone="true"
           />
-          <div class="w-full px-1">
-            <label class="block form-label mb-2">Discount Type</label>
-            <select v-model="additional.discount_type" class="form-input">
-              <option v-for="type in dtypes" :key="type.id" :value="type.id">
-                {{ type.label }}
-              </option>
-            </select>
-          </div>
+          <FieldXSelectSimple
+            item-class="w-full"
+            :name="`additionals.${addIdx}.discount_type`"
+            label="Discount Type"
+            placeholder="Discount Type"
+            v-model="additional.discount_type"
+            :standalone="true"
+            :options="[
+              { id: 'AMOUNT', label: 'Amount' },
+              { id: 'PERCENTAGE', label: 'Percentage' },
+            ]"
+          />
           <div class="w-full px-1 col-span-2">
             <label class="block form-label mb-2">Attributes</label>
             <div class="space-y-2">

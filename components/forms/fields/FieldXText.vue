@@ -1,21 +1,35 @@
 <template>
-  <FormField v-slot="{ componentField }" :name="name" :validate-on-blur="!isFieldDirty">
-    <FormItem :class="itemClass" v-auto-animate>
-      <FormLabel v-if="label">{{ label }}</FormLabel>
-      <FormControl>
-        <Input
-            :type="type"
-            :placeholder="placeholder"
-            v-model="modelValue"
-            v-bind="componentField"
-            :value="modelValue"
-            :disabled="disabled"
-            :class="inputClass"
-        />
-      </FormControl>
-      <FormMessage/>
-    </FormItem>
-  </FormField>
+  <template v-if="standalone">
+    <div :class="itemClass" v-auto-animate>
+      <label v-if="label" class="form-label mb-2">{{ label }}</label>
+      <Input
+        :type="type"
+        :placeholder="placeholder"
+        v-model="modelValue"
+        :disabled="disabled"
+        :class="inputClass"
+      />
+    </div>
+  </template>
+  <template v-else>
+    <FormField v-slot="{ componentField }" :name="name" :validate-on-blur="!isFieldDirty">
+      <FormItem :class="itemClass" v-auto-animate>
+        <FormLabel v-if="label">{{ label }}</FormLabel>
+        <FormControl>
+          <Input
+              :type="type"
+              :placeholder="placeholder"
+              v-model="modelValue"
+              v-bind="componentField"
+              :value="modelValue"
+              :disabled="disabled"
+              :class="inputClass"
+          />
+        </FormControl>
+        <FormMessage/>
+      </FormItem>
+    </FormField>
+  </template>
 </template>
 
 <script lang="ts" setup>
@@ -55,8 +69,12 @@ defineProps({
   inputClass:{
     type: String,
     default: ''
+  },
+  standalone: {
+    type: Boolean,
+    default: false
   }
 })
 
-const modelValue = defineModel()
+const modelValue = defineModel<string | number>()
 </script>
