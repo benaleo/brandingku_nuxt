@@ -10,16 +10,13 @@ export type Product = {
     galleries: ProductGallery[]
     additionals: {
         id: string,
-        name: string,   
+        name: string,
         price: number,
         moq: number,
         stock: number,
         discount: number,
         discount_type: string,
-        attributes: {
-            key: string,
-            value: string
-        }[]
+        attributes: string
     }[],
     created_at: string
     updated_at: string
@@ -33,10 +30,7 @@ export type ProductAdditional = {
     stock: number
     discount: number
     discount_type: string
-    attributes: {
-        key: string,
-        value: string
-    }[]
+    attributes: string
 }
 
 export type ProductGallery = {

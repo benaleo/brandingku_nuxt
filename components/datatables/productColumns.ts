@@ -31,10 +31,6 @@ export const productColumns: ColumnDef<Product>[] = [
         header: 'Nama Produk',
     },
     {
-        accessorKey: 'category_name',
-        header: 'Kategori',
-    },
-    {
         accessorKey: 'is_highlight',
         header: 'Highlight',
         cell: ({row}) => {

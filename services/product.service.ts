@@ -42,21 +42,23 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         name
                         slug
                         description
-                        highlight_image
-                        highlight_description
+                        image
                         is_highlight
                         is_recommended
                         is_upsell
-                        category_id
+                        galleries { id image orders }
                         additionals {
                             id
+                            name
                             price
                             moq
                             stock
                             discount
                             discount_type
-                            attributes { id category name }
+                            attributes
                         }
+                        created_at
+                        updated_at
                     }
                 }
             `
@@ -71,9 +73,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                     (x.slug || '').toLowerCase().includes(kw)
                 )
             }
-            if (params.category) {
-                list = list.filter((x: any) => String(x.category_id) === String(params.category))
-            }
+            // Category-based client filtering removed due to schema changes
 
             // Pagination
             pagination.value.total = list.length
@@ -100,21 +100,23 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         name
                         slug
                         description
-                        highlight_image
-                        highlight_description
+                        image
                         is_highlight
                         is_recommended
                         is_upsell
-                        category_id
+                        galleries { id image orders }
                         additionals {
                             id
+                            name
                             price
                             moq
                             stock
                             discount
                             discount_type
-                            attributes { id category name }
+                            attributes
                         }
+                        created_at
+                        updated_at
                     }
                 }
             `
@@ -148,39 +150,91 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     }
 
     const createProduct = async (payload: any) => {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+        // GraphQL mutation per provided schema
+        const mutation = `
+            mutation CreateProduct(
+                $name: String!,
+                $description: String,
+                $image: String,
+                $product_category_id: Int!,
+                $is_highlight: Boolean!,
+                $is_recommended: Boolean!,
+                $is_upsell: Boolean!,
+                $is_active: Boolean
+            ) {
+                createProduct(
+                    name: $name,
+                    description: $description,
+                    image: $image,
+                    product_category_id: $product_category_id,
+                    is_highlight: $is_highlight,
+                    is_recommended: $is_recommended,
+                    is_upsell: $is_upsell,
+                    is_active: $is_active
+                ) {
+                    id
+                    name
+                }
             }
-        })
-
-        if (!response.ok) {
-            throw await response.json()
+        `
+        const variables = {
+            name: payload.name,
+            description: payload.description ?? null,
+            image: payload.image ?? null,
+            product_category_id: Number(payload.product_category_id),
+            is_highlight: Boolean(payload.is_highlight),
+            is_recommended: Boolean(payload.is_recommended),
+            is_upsell: Boolean(payload.is_upsell),
+            is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
-
-        return await response.json()
+        const res = await gqlFetch<{ createProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+        return res?.createProduct
     }
 
     // General UPDATE function
     const updateProductById = async (id: string, payload: any) => {
-        const response = await fetch(`${url}/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+        // GraphQL mutation per provided schema
+        const mutation = `
+            mutation UpdateProduct(
+                $id: Int!,
+                $name: String!,
+                $description: String,
+                $image: String,
+                $product_category_id: Int!,
+                $is_highlight: Boolean!,
+                $is_recommended: Boolean!,
+                $is_upsell: Boolean!,
+                $is_active: Boolean
+            ) {
+                updateProduct(
+                    id: $id,
+                    name: $name,
+                    description: $description,
+                    image: $image,
+                    product_category_id: $product_category_id,
+                    is_highlight: $is_highlight,
+                    is_recommended: $is_recommended,
+                    is_upsell: $is_upsell,
+                    is_active: $is_active
+                ) {
+                    id
+                    name
+                }
             }
-        })
-
-        if (!response.ok) {
-            throw await response.json()
+        `
+        const variables = {
+            id: Number(id),
+            name: payload.name,
+            description: payload.description ?? null,
+            image: payload.image ?? null,
+            product_category_id: Number(payload.product_category_id),
+            is_highlight: Boolean(payload.is_highlight),
+            is_recommended: Boolean(payload.is_recommended),
+            is_upsell: Boolean(payload.is_upsell),
+            is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
-        return await response.json()
+        const res = await gqlFetch<{ updateProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+        return res?.updateProduct
     }
 
     // General DELETE function
