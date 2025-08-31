@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "vue-sonner";
 import { Trash2 } from "lucide-vue-next";
 import { useFileToBase64 } from "~/composables/useFileToBase64";
+import { useDeleteCloudFile } from "~/composables/useDeleteCloudFile";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,14 @@ const props = defineProps({
   label: {
     type: String,
     default: "Image",
+  },
+  /**
+   * Optional storage path for the image in cloud (preferred for deletion)
+   * Example: "/products/4_1756614665.png"
+   */
+  filePath: {
+    type: String,
+    default: "",
   },
   /**
    * Disabled state
@@ -121,15 +130,29 @@ async function confirmDelete() {
   deleteConfirmOpen.value = false;
   try {
     if (props.fileUrl) {
-      const { deleteFile, getPathFromUrl } = useFileUpload();
-      const path = getPathFromUrl(props.bucket, props.fileUrl);
+      // Determine storage path: prefer prop.filePath, otherwise derive from STORAGE_URL + fileUrl
+      let path = props.filePath || "";
+      if (!path) {
+        const runtime = useRuntimeConfig();
+        const base = runtime.public.STORAGE_URL as string;
+        if (base && props.fileUrl.startsWith(base)) {
+          path = props.fileUrl.slice(base.length);
+        }
+      }
+
+      // Normalize to start with leading slash
+      if (path && !path.startsWith("/")) path = "/" + path;
 
       if (!path) {
-        toast.error("Could not determine file path from URL");
+        toast.error("Could not determine file path for deletion");
         return;
       }
 
-      // Emit delete event for parent component to handle
+      // Call GraphQL delete
+      const { deleteCloudFile } = useDeleteCloudFile();
+      await deleteCloudFile(path);
+
+      // Emit delete event for parent component to handle (optional)
       emit("delete", { url: props.fileUrl, path, bucket: props.bucket });
 
       // Clear local preview

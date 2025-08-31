@@ -52,7 +52,7 @@ function onDelete(idx: number, payload: { url: string, path: string, bucket: str
     <div v-if="list.length === 0" class="text-sm text-muted-foreground">No gallery items. Click "Add Image".</div>
 
     <div class="flex flex-wrap gap-4">
-      <div v-for="(g, idx) in list" :key="g.id || idx" class="border rounded p-4 relative" style="min-width: 400px; flex: 1 1 auto;">
+      <div v-for="(g, idx) in list" :key="g.id || idx" class="border rounded p-4 relative" style="min-width: 150px; flex: 1 1 auto;">
         <Button type="button" variant="destructive" class="absolute top-2 right-2" @click="removeItem(idx)"><Trash2 /></Button>
         <div class="flex flex-col gap-4">
           <div class="w-full mt-4">
