@@ -25,7 +25,7 @@
             :columns="productCategoryColumns"
             :data="productList || []"
             :pagination="pagination"
-            :meta="{ handleDelete, handleImageUpdate }"
+            :meta="{ handleDelete }"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
         />
@@ -42,7 +42,6 @@ import {useProductCategoryService} from "~/services/product-category.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from 'vue-sonner'
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
-import {useFileUpload} from "~/composables/useFileUpload";
 
 const pageTitle = 'Produk Kategori'
 const keyword = ref<string>('')
@@ -102,30 +101,6 @@ watch(keyword, (newValue: string) => {
     }
   }
 })
-
-const handleImageUpdate = async (id: string, fileUrl: string, file: File, oldImageUrl?: string) => {
-  try {
-    toast.loading('Mengirim data gambar...')
-    await updateProductCategoryImage(id, {url: fileUrl})
-    toast.dismiss()
-    toast.success('Berhasil mengupload gambar')
-    await reFetch()
-    // Delete old image if exists
-    if (oldImageUrl) {
-      const { deleteFile } = useFileUpload()
-      const match = oldImageUrl.match(/\/object\/public\/([^/]+)\/(.+)$/)
-      if (match) {
-        const bucket = match[1]
-        const path = match[2]
-        await deleteFile(bucket, path)
-      }
-    }
-  } catch (error) {
-    toast.dismiss()
-    console.error('Error updating product category image:', error)
-    toast.error('Gagal mengupdate gambar')
-  }
-}
 
 useHead({
   title: pageTitle,

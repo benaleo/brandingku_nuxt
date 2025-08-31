@@ -3,7 +3,6 @@ import { ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import type { ProductGallery } from '~/types/products.type'
-import { useFileUpload } from '~/composables/useFileUpload'
 
 const props = defineProps<{
   modelValue: ProductGallery[]
@@ -20,7 +19,7 @@ watch(list, (v) => emit('update:modelValue', v), { deep: true })
 function addItem() {
   const newItem: ProductGallery = {
     id: Math.random().toString(36).slice(2),
-    product_id: '',
+    product_id: 0,
     image: '',
     orders: list.value.length + 1,
   }

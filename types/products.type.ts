@@ -35,7 +35,7 @@ export type ProductAdditional = {
 
 export type ProductGallery = {
     id: string
-    product_id: string
+    product_id: number
     image: string
     orders: number
 }

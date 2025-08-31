@@ -8,7 +8,8 @@ import { toast } from "vue-sonner";
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
 import { useProductService } from "~/services/product.service";
-import { useFileUpload } from '~/composables/useFileUpload'
+import { useFileToBase64 } from '~/composables/useFileToBase64'
+import { useAuth } from '~/composables/useAuth'
 import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import FieldXSelect from "~/components/forms/fields/FieldXSelect.vue";
@@ -17,13 +18,21 @@ import type { ProductAdditional, ProductGallery } from '~/types/products.type'
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import FieldXArea from "~/components/forms/fields/FieldXArea.vue";
 import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue";
-import ProductGalleryForm from "~/components/forms/ProductGalleryForm.vue";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
+import ProductGalleryForm from './ProductGalleryForm.vue';
 
 const router = useRouter()
+const { token } = useAuth()
 const currentPath = router.currentRoute.value.path
 const id = getIdFromPath(router.currentRoute.value.path)
 const config = useRuntimeConfig()
+const STORAGE_URL = config.public.STORAGE_URL
+
+// Ensure user is authenticated
+if (!token.value) {
+  toast.error('Please login first')
+  navigateTo('/login')
+}
 
 const {
   datas,
@@ -42,7 +51,7 @@ const formSchema = toTypedSchema(z.object({
   is_upsell: z.coerce.boolean(),
   product_category_id: z.string().min(1, 'Category is required'),
   additionals: z.array(z.object({
-    id: z.string().optional(),
+    id: z.coerce.string().optional(),
     name: z.string().optional().default(''),
     price: z.coerce.number().int('Price must be an integer'),
     moq: z.coerce.number().int('MOQ must be an integer'),
@@ -131,12 +140,17 @@ watch(
       name.value = datasVal.name || ''
       slug.value = datasVal.slug || ''
       description.value = datasVal.description || ''
-      image.value = datasVal.image || ''
+      image.value = STORAGE_URL + datasVal.image || ''
       is_highlight.value = Boolean(datasVal.is_highlight) || false
       is_recommended.value = Boolean(datasVal.is_recommended) || false
       is_upsell.value = Boolean(datasVal.is_upsell) || false
-      product_category_id.value = (datasVal as any).product_category_id || ''
-      galleries.value = (datasVal.galleries || [])
+      // Set the category ID from the nested category object if it exists
+      // Convert to string since the form expects a string value
+      product_category_id.value = datasVal.category?.id ? String(datasVal.category.id) : ''
+      galleries.value = (datasVal.galleries || []).map((gallery: { image?: string; [key: string]: any }) => ({
+        ...gallery,
+        image: gallery.image ? `${STORAGE_URL}${gallery.image}` : ''
+      }))
 
       // Update form values for validation
       setFieldValue('name', datasVal.name || '')
@@ -146,11 +160,12 @@ watch(
       setFieldValue('is_highlight', Boolean(datasVal.is_highlight) || false)
       setFieldValue('is_recommended', Boolean(datasVal.is_recommended) || false)
       setFieldValue('is_upsell', Boolean(datasVal.is_upsell) || false)
-      setFieldValue('product_category_id', (datasVal as any).product_category_id || '')
+      setFieldValue('product_category_id', datasVal.category?.id ? String(datasVal.category.id) : '')
 
       // Process additionals array from API data
       const processedAdditionals = (datasVal.additionals || []).map((add: any) => ({
         ...add,
+        id: add.id != null ? String(add.id) : undefined,
         name: add.name || '',
         price: Number(add.price) || 0,
         moq: Number(add.moq) || 0,
@@ -190,31 +205,22 @@ watch(() => name.value, (newName) => {
 const handleSubmitForm = handleSubmit(async (values) => {
   const submitData: any = {
     ...values,
-    slug: slug.value || generateSlug(name.value)
+    slug: slug.value || generateSlug(name.value),
+    additionals: additionals.value,
+    galleries: galleries.value
   }
   try {
     // Ensure boolean values are properly converted
     submitData.is_recommended = Boolean(submitData.is_recommended);
     submitData.is_upsell = Boolean(submitData.is_upsell);
 
-    // Upload main image if file selected and no url yet
+    // Convert main image to base64 if file selected and no value yet
     if (image_file.value && !submitData.image) {
-      const { uploadFile, getFileUrl } = useFileUpload();
+      const { convertToBase64 } = useFileToBase64();
       const file = image_file.value;
-      const fileExtension = file.name.split('.').pop();
-      const uniqueFileName = `images-${Date.now()}.${fileExtension}`;
-      const uploadResult = await uploadFile('images', uniqueFileName, file);
-      if (!uploadResult) {
-        toast.error('Image upload failed');
-        return;
-      }
-      const url = await getFileUrl('images', uploadResult.path);
-      if (!url) {
-        toast.error('Failed to get image URL');
-        return;
-      }
-      submitData.image = url;
-      image.value = url;
+      const b64 = await convertToBase64(file);
+      submitData.image = b64;
+      image.value = b64;
     }
 
     console.log(submitData)
@@ -230,6 +236,8 @@ const handleSubmitForm = handleSubmit(async (values) => {
         is_recommended: Boolean(submitData.is_recommended),
         is_upsell: Boolean(submitData.is_upsell),
         is_active: true,
+        additionals: submitData.additionals,
+        galleries: submitData.galleries,
       })
       toast.success('Product created successfully!')
     } else {
@@ -242,45 +250,29 @@ const handleSubmitForm = handleSubmit(async (values) => {
         is_recommended: Boolean(submitData.is_recommended),
         is_upsell: Boolean(submitData.is_upsell),
         is_active: true,
+        additionals: submitData.additionals,
+        galleries: submitData.galleries,
       })
       toast.success('Product updated successfully!')
     }
 
-    // Then process any pending image deletions
-    if (imagesToDelete.value.length > 0) {
-      const { deleteFile } = useFileUpload();
-      let deletionErrors = 0;
-
-      // Process each image to delete
-      for (const img of imagesToDelete.value) {
-        console.log(`Deleting image: ${img.path} from bucket: ${img.bucket}`);
-        const success = await deleteFile(img.bucket, img.path);
-        if (!success) {
-          deletionErrors++;
-          console.error(`Failed to delete image: ${img.path}`);
-        }
-      }
-
-      // Report deletion results
-      if (deletionErrors > 0) {
-        if (deletionErrors === imagesToDelete.value.length) {
-          toast.error(`Failed to delete ${deletionErrors} image(s)`);
-        } else {
-          toast.warning(`Deleted ${imagesToDelete.value.length - deletionErrors} image(s), but failed to delete ${deletionErrors} image(s)`);
-        }
-      } else if (imagesToDelete.value.length > 0) {
-        toast.success(`Successfully deleted ${imagesToDelete.value.length} image(s)`);
-      }
-
-      // Clear the deletion queue
-      imagesToDelete.value = [];
-    }
+    // Skipped storage deletions since we now send base64 directly
 
     // Navigate back
     router.push(getPathWithoutIdInForm(currentPath))
   } catch (e) {
     toast.error('Failed to save product')
     console.error(e)
+  }
+}, (errors) => {
+  try {
+    const firstField = Object.keys(errors || {})[0]
+    const firstMsg = firstField ? (errors as any)[firstField]?.[0] : null
+    toast.error(firstMsg || 'Please fix validation errors before submitting')
+    console.warn('Form validation errors:', errors)
+  } catch (err) {
+    toast.error('Please fix validation errors before submitting')
+    console.warn('Form validation errors:', errors)
   }
 })
 
@@ -346,7 +338,7 @@ function handleBack() {
     <FieldXSelect name="product_category_id" label="Kategori" placeholder="Select category"
                   searchPlaceholder="Search category..." emptyMessage="No category found." v-model="product_category_id"
                   :options="categoryOptions ?? []" :loading="categoryLoading" :error="errorCategory !== null"
-                  :disabled :isFieldDirty="isFieldDirty('product_category_id')" itemClass="w-full md:w-1/2"/>
+                  :disabled="disabled" :isFieldDirty="isFieldDirty('product_category_id')" itemClass="w-full md:w-1/2"/>
 
     <!-- Is Highlight -->
     <FieldXCheckbox name="is_highlight" label="Is Highlight" v-model="is_highlight" :disabled="disabled"

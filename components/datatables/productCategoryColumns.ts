@@ -60,7 +60,6 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         cell: ({row, table}) => {
             const data = row.original;
             const handleDelete = table.options.meta?.handleDelete;
-            const handleImageUpdate = table.options.meta?.handleImageUpdate;
 
             return h('div', {class: 'relative flex items-center gap-2'}, [
                 h(GeneralColumnAction, {

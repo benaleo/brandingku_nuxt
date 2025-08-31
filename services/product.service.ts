@@ -1,6 +1,8 @@
 import type { Product } from "~/types/products.type";
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
+import { useProductAdditionalService } from '~/services/product-additional.service'
+import { useProductGalleriesService } from '~/services/product-galleries.service'
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
 
@@ -43,6 +45,10 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         slug
                         description
                         image
+                        category {
+                            id
+                            name
+                        }
                         is_highlight
                         is_recommended
                         is_upsell
@@ -101,6 +107,10 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         slug
                         description
                         image
+                        category {
+                            id
+                            name
+                        }
                         is_highlight
                         is_recommended
                         is_upsell
@@ -150,26 +160,25 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     }
 
     const createProduct = async (payload: any) => {
-        // GraphQL mutation per provided schema
         const mutation = `
             mutation CreateProduct(
-                $name: String!,
-                $description: String,
-                $image: String,
-                $product_category_id: Int!,
-                $is_highlight: Boolean!,
-                $is_recommended: Boolean!,
-                $is_upsell: Boolean!,
+                $name: String!
+                $description: String!
+                $image: String
+                $product_category_id: Int!
+                $is_highlight: Boolean!
+                $is_recommended: Boolean!
+                $is_upsell: Boolean!
                 $is_active: Boolean
             ) {
                 createProduct(
-                    name: $name,
-                    description: $description,
-                    image: $image,
-                    product_category_id: $product_category_id,
-                    is_highlight: $is_highlight,
-                    is_recommended: $is_recommended,
-                    is_upsell: $is_upsell,
+                    name: $name
+                    description: $description
+                    image: $image
+                    product_category_id: $product_category_id
+                    is_highlight: $is_highlight
+                    is_recommended: $is_recommended
+                    is_upsell: $is_upsell
                     is_active: $is_active
                 ) {
                     id
@@ -187,7 +196,35 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             is_upsell: Boolean(payload.is_upsell),
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
+        
+        // Create product first
         const res = await gqlFetch<{ createProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+        const productId = Number(res?.createProduct.id)
+        
+        if (!productId) throw new Error('Failed to create product')
+        
+        // Handle additionals if any
+        if (payload.additionals?.length) {
+            const additionalService = useProductAdditionalService()
+            for (const additional of payload.additionals) {
+                await additionalService.createProductAdditional({
+                    ...additional,
+                    product_id: productId
+                })
+            }
+        }
+        
+        // Handle galleries if any
+        if (payload.galleries?.length) {
+            const galleryService = useProductGalleriesService()
+            for (const gallery of payload.galleries) {
+                await galleryService.createProductGallery({
+                    ...gallery,
+                    product_id: productId
+                })
+            }
+        }
+        
         return res?.createProduct
     }
 
