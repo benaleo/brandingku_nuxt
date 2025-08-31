@@ -129,8 +129,19 @@ if (!isCreate) {
   console.warn('UPDATE MODE!');
 }
 
-// Galleries
+// Galleries with proper synchronization and image path handling
 const galleries = ref<ProductGallery[]>([])
+
+// Sync galleries changes back to form values (similar to additionals)
+watch(galleries, (val) => {
+  // Convert full URLs back to relative paths for server
+  const processedGalleries = val.map(gallery => ({
+    ...gallery,
+    image: gallery.image.startsWith(STORAGE_URL) 
+      ? gallery.image.slice(STORAGE_URL.length) 
+      : gallery.image
+  }))
+}, { deep: true })
 
 // Watch for API data load and set fields when available
 watch(
@@ -147,9 +158,10 @@ watch(
       // Set the category ID from the nested category object if it exists
       // Convert to string since the form expects a string value
       product_category_id.value = datasVal.category?.id ? String(datasVal.category.id) : ''
-      galleries.value = (datasVal.galleries || []).map((gallery: { image?: string; [key: string]: any }) => ({
+      galleries.value = (datasVal.galleries || []).map((gallery: { image?: string; orders?: number; [key: string]: any }) => ({
         ...gallery,
-        image: gallery.image ? `${STORAGE_URL}${gallery.image}` : ''
+        image: gallery.image ? `${STORAGE_URL}${gallery.image}` : '',
+        orders: gallery.orders || 1 // Ensure orders has a default value
       }))
 
       // Update form values for validation
@@ -214,6 +226,21 @@ const handleSubmitForm = handleSubmit(async (values) => {
     submitData.is_recommended = Boolean(submitData.is_recommended);
     submitData.is_upsell = Boolean(submitData.is_upsell);
 
+    console.log('Galleries data:', submitData.galleries)
+    
+    // Process galleries to ensure proper data format
+    if (submitData.galleries && submitData.galleries.length > 0) {
+      submitData.galleries = submitData.galleries.map((gallery: any) => ({
+        ...gallery,
+        // Remove STORAGE_URL prefix if present
+        image: gallery.image.startsWith(STORAGE_URL) 
+          ? gallery.image.slice(STORAGE_URL.length) 
+          : gallery.image,
+        // Ensure orders is a number
+        orders: Number(gallery.orders) || 1
+      }))
+    }
+
     // Convert main image to base64 if file selected and no value yet
     if (image_file.value && !submitData.image) {
       const { convertToBase64 } = useFileToBase64();
@@ -237,7 +264,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
         is_upsell: Boolean(submitData.is_upsell),
         is_active: true,
         additionals: submitData.additionals,
-        galleries: submitData.galleries,
+        galleries: submitData.galleries || [],
       })
       toast.success('Product created successfully!')
     } else {
@@ -251,7 +278,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
         is_upsell: Boolean(submitData.is_upsell),
         is_active: true,
         additionals: submitData.additionals,
-        galleries: submitData.galleries,
+        galleries: submitData.galleries || [],
       })
       toast.success('Product updated successfully!')
     }

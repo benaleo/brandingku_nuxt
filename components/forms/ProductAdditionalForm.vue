@@ -7,7 +7,6 @@ import { Plus, Trash2, X } from "lucide-vue-next";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import type { OptionType } from "~/types/options.type";
 import type { ProductAdditional } from "~/types/products.type";
-import { useOptionsService } from "~/services/options.service";
 
 const props = defineProps<{
   modelValue: ProductAdditional[];
@@ -89,9 +88,6 @@ function removeAdditional(idx: number) {
   if (list.value.length > 1) list.value.splice(idx, 1);
 }
 
-onMounted(async () => {
-  dtypes.value = await useOptionsService().fetchDiscountTypes();
-});
 </script>
 
 <template>

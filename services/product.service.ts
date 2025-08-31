@@ -271,6 +271,34 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
         const res = await gqlFetch<{ updateProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+
+        // Handle galleries update/create if any
+        if (payload.galleries?.length) {
+            const galleryService = useProductGalleriesService()
+            for (const gallery of payload.galleries) {
+                try {
+                    const hasId = gallery.id != null && `${gallery.id}`.length > 0
+                    if (hasId) {
+                        // Update existing gallery (e.g., orders)
+                        await galleryService.updateProductGallery(Number(gallery.id), {
+                            // image can be optionally updated; omit if empty/undefined
+                            ...(gallery.image ? { image: gallery.image } : {}),
+                            orders: Number(gallery.orders) || 0,
+                        })
+                    } else {
+                        // Create new gallery for this product
+                        await galleryService.createProductGallery({
+                            image: gallery.image,
+                            orders: Number(gallery.orders) || 0,
+                            product_id: Number(id)
+                        })
+                    }
+                } catch (e) {
+                    console.error('[product] updateProductById galleries mutation failed:', e)
+                }
+            }
+        }
+
         return res?.updateProduct
     }
 
