@@ -19,21 +19,32 @@ const emit = defineEmits<{
 
 const list = ref<ProductAdditional[]>(props.modelValue || []);
 
-// Parse attributes string to array of objects
-const parseAttributes = (attributes: string) => {
+function parseAttributes(attributes: string): {key: string, value: string}[] {
   try {
-    if (!attributes) return [];
-    const parsed = JSON.parse(attributes);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
+    return JSON.parse(attributes) || [];
+  } catch {
     return [];
   }
-};
+}
+
+const parsedAttributes = ref<Record<number, {key: string, value: string}[]>>({})
+
+// Sync parsedAttributes with list.attributes
+watch(list, () => {
+  list.value.forEach((add, idx) => {
+    parsedAttributes.value[idx] = parseAttributes(add.attributes)
+  })
+}, { deep: true, immediate: true })
+
+// Sync back to list when parsedAttributes changes
+watch(parsedAttributes, (newVal) => {
+  for (const idx in newVal) {
+    list.value[Number(idx)].attributes = JSON.stringify(newVal[idx])
+  }
+}, { deep: true })
 
 // Update attributes array back to string
-const updateAttributes = (idx: number, attributes: any[]) => {
-  list.value[idx].attributes = JSON.stringify(attributes);
-};
+// Removed updateAttributes, now handled by watcher
 
 // Initialize attributes if empty
 watch(
@@ -62,27 +73,15 @@ function addAdditional() {
 }
 
 function addAttribute(additionalIdx: number) {
-  const attributes = parseAttributes(list.value[additionalIdx].attributes);
-  attributes.push({ key: "", value: "" });
-  updateAttributes(additionalIdx, attributes);
+  if (!parsedAttributes.value[additionalIdx]) parsedAttributes.value[additionalIdx] = []
+  parsedAttributes.value[additionalIdx].push({ key: "", value: "" })
 }
 
 function removeAttribute(additionalIdx: number, attrIdx: number) {
-  const attributes = parseAttributes(list.value[additionalIdx].attributes);
-  attributes.splice(attrIdx, 1);
-  updateAttributes(additionalIdx, attributes);
+  parsedAttributes.value[additionalIdx].splice(attrIdx, 1)
 }
 
-function updateAttribute(
-  additionalIdx: number,
-  attrIdx: number,
-  field: "key" | "value",
-  value: string
-) {
-  const attributes = parseAttributes(list.value[additionalIdx].attributes);
-  attributes[attrIdx][field] = value;
-  updateAttributes(additionalIdx, attributes);
-}
+// Removed updateAttribute, now handled by v-model and watchers
 function removeAdditional(idx: number) {
   if (list.value.length > 1) list.value.splice(idx, 1);
 }
@@ -170,9 +169,7 @@ console.log('list additionals', JSON.stringify(props.modelValue))
             <label class="block form-label mb-2">Attributes</label>
             <div class="space-y-2">
               <Card
-                v-for="(attr, attrIdx) in parseAttributes(
-                  additional.attributes
-                )"
+                v-for="(attr, attrIdx) in parsedAttributes[addIdx]"
                 :key="attrIdx"
                 class="relative"
               >
@@ -188,8 +185,7 @@ console.log('list additionals', JSON.stringify(props.modelValue))
                     <div>
                       <label class="text-sm font-medium mb-1 block">Key</label>
                       <Input
-                        :value="attr.key"
-                        @input="(e: any) => updateAttribute(addIdx, attrIdx, 'key', (e.target as HTMLInputElement).value)"
+                        v-model="attr.key"
                         placeholder="e.g. Color"
                       />
                     </div>
@@ -198,8 +194,7 @@ console.log('list additionals', JSON.stringify(props.modelValue))
                         >Value</label
                       >
                       <Input
-                        :value="attr.value"
-                        @input="(e: any) => updateAttribute(addIdx, attrIdx, 'value', (e.target as HTMLInputElement).value)"
+                        v-model="attr.value"
                         placeholder="e.g. Red"
                       />
                     </div>
