@@ -3,7 +3,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { toast } from "vue-sonner";
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
@@ -66,7 +66,7 @@ const {
   isFieldDirty,
   handleSubmit,
   setFieldValue,
-  values
+  values: formValues
 } = useForm({
   validationSchema: formSchema,
   initialValues: {
@@ -93,7 +93,7 @@ const {
 })
 
 // For dynamic additionals
-const additionals = ref([...values.additionals as ProductAdditional[]])
+const additionals = ref([...formValues.additionals as ProductAdditional[]])
 // Sync local additionals changes back to the form values
 watch(additionals, (val) => {
   setFieldValue('additionals', val)
@@ -226,11 +226,29 @@ watch(() => name.value, (newName) => {
   }
 }, { immediate: true })
 
-const handleSubmitForm = handleSubmit(async (values) => {
+const handleSubmitForm = handleSubmit(async (submittedValues) => {
+  // Ensure v-model updates from child forms are flushed
+  await nextTick()
+  // Force-sync latest additionals into form values to avoid any staleness
+  setFieldValue('additionals', additionals.value)
+  await nextTick()
+  // Debug current additionals sources
+  console.debug('[submit] additionals (ref):', JSON.parse(JSON.stringify(additionals.value)))
+  console.debug('[submit] additionals (formValues):', JSON.parse(JSON.stringify(formValues.additionals)))
   const submitData: any = {
-    ...values,
+    ...formValues,
     slug: slug.value || generateSlug(name.value),
-    additionals: additionals.value,
+    // Normalize additionals to correct types and ensure strings are present
+    additionals: ((additionals.value as any[]) || []).map((add) => ({
+      id: add.id != null && `${add.id}`.length > 0 ? String(add.id) : undefined,
+      name: add.name ?? '',
+      price: Number((add as any).price ?? 0),
+      moq: Number((add as any).moq ?? 0),
+      stock: Number((add as any).stock ?? 0),
+      discount: Number((add as any).discount ?? 0),
+      discount_type: (add as any).discount_type ?? 'AMOUNT',
+      attributes: typeof (add as any).attributes === 'string' ? (add as any).attributes : '[]'
+    })),
     galleries: galleries.value
   }
   try {
@@ -239,6 +257,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
     submitData.is_upsell = Boolean(submitData.is_upsell);
 
     console.log('Galleries data:', submitData.galleries)
+    console.debug('[submit] final additionals payload:', JSON.parse(JSON.stringify(submitData.additionals)))
     
     // Process galleries to ensure proper data format
     if (submitData.galleries && submitData.galleries.length > 0) {
