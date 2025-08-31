@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import type { ProductGallery } from '~/types/products.type'
+import { Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: ProductGallery[]
@@ -50,21 +51,23 @@ function onDelete(idx: number, payload: { url: string, path: string, bucket: str
     </div>
     <div v-if="list.length === 0" class="text-sm text-muted-foreground">No gallery items. Click "Add Image".</div>
 
-    <div v-for="(g, idx) in list" :key="g.id || idx" class="border rounded p-4 mb-4 relative">
-      <Button type="button" variant="destructive" class="absolute top-2 right-2" @click="removeItem(idx)">Remove</Button>
-      <div class="flex flex-wrap gap-4 items-start">
-        <div class="w-full md:w-1/2">
-          <ImageUploadField
-            v-model:fileUrl="g.image"
-            label="Gallery Image"
-            @update:fileUrl="(url) => onUploaded(idx, url)"
-            @delete="(payload) => onDelete(idx, payload)"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <label class="form-label mb-2 block">Order</label>
-          <input type="number" min="1" class="form-input" v-model.number="g.orders" />
-          <p class="text-xs text-muted-foreground mt-1">Lower number shows earlier.</p>
+    <div class="flex flex-wrap gap-4">
+      <div v-for="(g, idx) in list" :key="g.id || idx" class="border rounded p-4 relative" style="min-width: 400px; flex: 1 1 auto;">
+        <Button type="button" variant="destructive" class="absolute top-2 right-2" @click="removeItem(idx)"><Trash2 /></Button>
+        <div class="flex flex-col gap-4">
+          <div class="w-full mt-4">
+            <ImageUploadField
+              v-model:fileUrl="g.image"
+              label="Gallery Image"
+              @update:fileUrl="(url) => onUploaded(idx, url)"
+              @delete="(payload) => onDelete(idx, payload)"
+            />
+          </div>
+          <div class="w-full">
+            <label class="form-label mb-2 block">Order</label>
+            <input type="number" min="1" class="form-input" v-model.number="g.orders" />
+            <p class="text-xs text-muted-foreground mt-1">Lower number shows earlier.</p>
+          </div>
         </div>
       </div>
     </div>
