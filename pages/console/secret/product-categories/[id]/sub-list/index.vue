@@ -51,7 +51,7 @@ const fetchChildren = async () => {
   loading.value = true
   error.value = null
   try {
-    children.value = await getChildCategoriesByParentId(parentId)
+    children.value = await getChildCategoriesByParentId(parentId, false)
   } catch (e: any) {
     console.error('[child-list] fetch error:', e)
     error.value = e?.message || 'Failed to load child categories'

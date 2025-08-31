@@ -160,10 +160,10 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
     }
 
     // Children as full objects
-    const getChildCategoriesByParentId = async (parentId: number) => {
+    const getChildCategoriesByParentId = async (parentId: number, isAll: boolean) => {
         const query = `
-            query GetProductCategoriesChild($parent_id: Int!) {
-                getProductCategoriesChild(parent_id: $parent_id) {
+            query GetProductCategoriesChild($parent_id: Int, $is_all: Boolean) {
+                getProductCategoriesChild(parent_id: $parent_id, is_all: $is_all) {
                     id
                     name
                     slug
