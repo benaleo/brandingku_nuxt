@@ -1,10 +1,10 @@
 <template>
-  <AppTableHeader page-title="Edit Atribut Produk"/>
-  <ProductAttributeForm/>
+  <AppTableHeader page-title="Tambah Client"/>
+  <ClientForm/>
 </template>
 
 <script setup lang="ts">
-import ProductAttributeForm from "~/components/forms/ProductAttributeForm.vue";
+import ClientForm from "~/components/forms/ClientForm.vue";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 
 definePageMeta({

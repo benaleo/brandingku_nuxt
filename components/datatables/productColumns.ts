@@ -20,19 +20,17 @@ export const productColumns: ColumnDef<Product>[] = [
         accessorKey: 'image',
         header: () => h('div', {class: 'text-left'}, 'Image'),
         cell: ({row}) => {
+            const config = useRuntimeConfig();
+            const STORAGE_URL = config.public.STORAGE_URL;
             const src: string = row.getValue('image') ?? '/images/no-image.jpg'
             return h('div', {class: 'flex items-ceter justify-start overflow-hidden h-16'}, [
-                h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-h-16 object-cover'})
+                h(DialogViewImage, {src: STORAGE_URL + src, alt: 'Product Image', class: 'max-h-16 object-cover'})
             ])
         },
     },
     {
         accessorKey: 'name',
         header: 'Nama Produk',
-    },
-    {
-        accessorKey: 'category_name',
-        header: 'Kategori',
     },
     {
         accessorKey: 'is_highlight',
@@ -64,6 +62,8 @@ export const productColumns: ColumnDef<Product>[] = [
                 h(GeneralColumnAction, {
                     data,
                     isDelete: true,
+                    isEdit: true,
+                    isView: true,
                     handleDelete: () => handleDelete?.(data.id)
                 }),
                 h(ActionBulkImageUpdate, {

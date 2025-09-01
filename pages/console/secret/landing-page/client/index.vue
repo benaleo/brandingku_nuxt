@@ -4,7 +4,7 @@
     <AppBreadcrumb/>
 
     <!-- Table Header -->
-    <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/product-categories/add'"/>
+    <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/landing-page/client/add'"/>
 
     <!-- Filter -->
     <AppFilterTable v-model="keyword">
@@ -15,16 +15,16 @@
     <!-- Data Table -->
     <div class="mt-2">
       <div v-if="loading" class="text-center py-4">
-        Loading products...
+        Loading clients...
       </div>
       <div v-else-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
       <div v-if="!loading">
         <DatatablesDataTable
-            :columns="productCategoryColumns"
-            :data="productList || []"
-            :pagination="pagination"
+            :columns="clientColumns"
+            :data="clientList || []"
+            :pagination="paginationData"
             :meta="{ handleDelete }"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
@@ -37,13 +37,13 @@
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
 import {computed, ref, watch} from 'vue'
-import {productCategoryColumns} from "~/components/datatables/productCategoryColumns";
-import {useProductCategoryService} from "~/services/product-category.service";
+import {clientColumns} from "~/components/datatables/clientColumns";
+import {useClientService} from "~/services/client.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from 'vue-sonner'
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
 
-const pageTitle = 'Produk Kategori'
+const pageTitle = 'Client'
 const keyword = ref<string>('')
 const isFetch = ref<boolean>(false)
 
@@ -54,15 +54,21 @@ const {
   pagination,
   changePage,
   changeLimit,
-  deleteProductCategoryById,
-  updateProductCategoryImage,
+  deleteClientById,
+  updateClientImage,
   setParams,
   reFetch
-} = useProductCategoryService()
+} = useClientService()
 
-const productList = computed(() => {
+const clientList = computed(() => {
   return datas.value || []
 })
+
+const paginationData = computed(() => ({
+  page: pagination.value.page,
+  limit: pagination.value.limit,
+  total: pagination.value.total
+}))
 
 const onPageChange = (page: number) => {
   changePage(page)
@@ -74,12 +80,12 @@ const onLimitChange = (limit: number) => {
 
 const handleDelete = async (id: string) => {
   try {
-    await deleteProductCategoryById(id)
+    await deleteClientById(id)
     // Refresh the current page
     reFetch()
     toast.success('Berhasil menghapus data')
   } catch (error) {
-    console.error('Error deleting product category:', error)
+    console.error('Error deleting client:', error)
     toast.error('Gagal menghapus data')
   }
 }

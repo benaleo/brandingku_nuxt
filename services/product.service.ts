@@ -1,74 +1,376 @@
-import {useApiFetch} from '~/composables/useApiFetch'
-import type {Product} from "~/types/products.type";
+import type { Product } from "~/types/products.type";
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useGql } from '~/composables/useGql'
+import { useProductAdditionalService } from '~/services/product-additional.service'
+import { useProductGalleriesService } from '~/services/product-galleries.service'
+import { useRuntimeConfig } from '#app'
+import { useCookie } from '#app'
 
 export const useProductService = (fetchResult?: boolean, dataId?: string) => {
+    const { gqlFetch } = useGql()
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
     const url = `${BASE_URL}/cms/v1/product${dataId ? `/${dataId}` : ''}`
 
-    const {
-        data,
-        loading,
-        error,
-        pagination,
-        changePage,
-        changeLimit,
-        setParams,
-        refetch,
-        params
-    } = useApiFetch<Product>(url, {
-        isResult: fetchResult,
-        dynamicParam: dataId ? url : null,
-        initialPage: 0,
-        initialLimit: 10
+    // State mimicking useApiFetch interface
+    const datas = ref<any>(fetchResult ? [] : null)
+    const loading = ref<boolean>(false)
+    const error = ref<string | null>(null)
+    const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
+    const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
+    const params = reactive<{ keyword?: string; category_id?: number | null } >({})
+
+    const changePage = (newPage: number) => {
+        pagination.value.page = newPage
+        if (fetchResult) fetchProducts()
+    }
+    const changeLimit = (newLimit: number) => {
+        pagination.value.limit = newLimit
+        if (fetchResult) fetchProducts()
+    }
+    const setParams = (newParams: Record<string, any>) => {
+        Object.assign(params, newParams)
+    }
+
+    // GraphQL queries
+    const fetchProducts = async () => {
+        if (!fetchResult) return
+        loading.value = true
+        error.value = null
+        try {
+            const query = `
+                query getProducts($page: Int!, $limit: Int!, $category_id: Int) {
+                    getProducts(pagination: { page: $page, limit: $limit }, category_id: $category_id) {
+                        items {
+                            id
+                            name
+                            slug
+                            description
+                            image
+                            category { id name }
+                            is_highlight
+                            is_recommended
+                            is_upsell
+                            galleries { id image orders }
+                            additionals {
+                                id
+                                name
+                                price
+                                moq
+                                stock
+                                discount
+                                discount_type
+                                attributes
+                            }
+                            created_at
+                            updated_at
+                        }
+                        page_info {
+                            current_page
+                            per_page
+                            total_items
+                            total_pages
+                            has_next_page
+                            has_previous_page
+                            start_item
+                            end_item
+                        }
+                    }
+                }
+            `
+            // server is 1-based pages; local is 0-based
+            const serverPage = (pagination.value.page || 0) + 1
+            const serverLimit = pagination.value.limit || 10
+            const res = await gqlFetch<{ getProducts: { items: Product[]; page_info: any } }>(
+                query,
+                { page: serverPage, limit: serverLimit, ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}) },
+                { auth: true }
+            )
+            let list = (res?.getProducts?.items || []) as any[]
+
+            // Apply client-side keyword filter for compatibility with useProductList
+            const kw = params.keyword?.toLowerCase()?.trim()
+            if (kw && kw.length >= 1) {
+                list = list.filter((x: any) =>
+                    (x.name || '').toLowerCase().includes(kw) ||
+                    (x.slug || '').toLowerCase().includes(kw)
+                )
+            }
+
+            // Update pagination from server; keep local page 0-based
+            pageInfo.value = res?.getProducts?.page_info || null
+            if (pageInfo.value) {
+                pagination.value.limit = Number(pageInfo.value.per_page || serverLimit)
+                pagination.value.total = Number(pageInfo.value.total_items || list.length)
+                const cp = Number(pageInfo.value.current_page || serverPage)
+                pagination.value.page = cp > 0 ? cp - 1 : 0
+            } else {
+                // Fallback
+                pagination.value.total = list.length
+            }
+
+            datas.value = list
+        } catch (e: any) {
+            error.value = e?.message || 'Failed to load products'
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const fetchDetail = async (id: number) => {
+        if (fetchResult) return
+        loading.value = true
+        error.value = null
+        try {
+            const query = `
+                query getProductDetail($id: Int!) {
+                    getProductDetail(id: $id) {
+                        id
+                        name
+                        slug
+                        description
+                        image
+                        category {
+                            id
+                            name
+                        }
+                        is_highlight
+                        is_recommended
+                        is_upsell
+                        galleries { id image orders }
+                        additionals {
+                            id
+                            name
+                            price
+                            moq
+                            stock
+                            discount
+                            discount_type
+                            attributes
+                        }
+                        created_at
+                        updated_at
+                    }
+                }
+            `
+            const res = await gqlFetch<{ getProductDetail: Product }>(query, { id }, { auth: true })
+            datas.value = res.getProductDetail
+        } catch (e: any) {
+            error.value = e?.message || 'Failed to load product detail'
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const refetch = async () => {
+        if (fetchResult) return fetchProducts()
+        if (dataId) return fetchDetail(Number(dataId))
+    }
+
+    // Auto fetch
+    onMounted(() => {
+        refetch()
     })
+    if (fetchResult) {
+        watch(params, () => fetchProducts(), { deep: true })
+    }
 
-    const getProducts = async (params: {
-        page?: number
-        limit?: number
-        sortBy?: string
-        direction?: 'asc' | 'desc'
-    } = {}) => {
-        if (params.page !== undefined) changePage(params.page)
-        if (params.limit) changeLimit(params.limit)
-
-        // Additional query params can be added here
-        return refetch();
+    const getProducts = async (p: { page?: number; limit?: number } = {}) => {
+        if (p.page !== undefined) changePage(p.page)
+        if (p.limit) changeLimit(p.limit)
+        return refetch()
     }
 
     const createProduct = async (payload: any) => {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+        const mutation = `
+            mutation CreateProduct(
+                $name: String!
+                $description: String!
+                $image: String
+                $product_category_id: Int!
+                $is_highlight: Boolean!
+                $is_recommended: Boolean!
+                $is_upsell: Boolean!
+                $is_active: Boolean
+            ) {
+                createProduct(
+                    name: $name
+                    description: $description
+                    image: $image
+                    product_category_id: $product_category_id
+                    is_highlight: $is_highlight
+                    is_recommended: $is_recommended
+                    is_upsell: $is_upsell
+                    is_active: $is_active
+                ) {
+                    id
+                    name
+                }
             }
-        })
-
-        if (!response.ok) {
-            throw await response.json()
+        `
+        const variables = {
+            name: payload.name,
+            description: payload.description ?? null,
+            image: payload.image ?? null,
+            product_category_id: Number(payload.product_category_id),
+            is_highlight: Boolean(payload.is_highlight),
+            is_recommended: Boolean(payload.is_recommended),
+            is_upsell: Boolean(payload.is_upsell),
+            is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
-
-        return await response.json()
+        
+        // Create product first
+        const res = await gqlFetch<{ createProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+        const productId = Number(res?.createProduct.id)
+        
+        if (!productId) throw new Error('Failed to create product')
+        
+        // Handle additionals if any
+        if (payload.additionals?.length) {
+            const additionalService = useProductAdditionalService()
+            for (const additional of payload.additionals) {
+                await additionalService.createProductAdditional({
+                    ...additional,
+                    product_id: productId
+                })
+            }
+        }
+        
+        // Handle galleries if any
+        if (payload.galleries?.length) {
+            const galleryService = useProductGalleriesService()
+            for (const gallery of payload.galleries) {
+                await galleryService.createProductGallery({
+                    ...gallery,
+                    product_id: productId
+                })
+            }
+        }
+        
+        return res?.createProduct
     }
 
     // General UPDATE function
     const updateProductById = async (id: string, payload: any) => {
-        const response = await fetch(`${url}/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': '*/*',
-                'Authorization': `Bearer ${useCookie('token').value}`
+        // GraphQL mutation per provided schema
+        const mutation = `
+            mutation UpdateProduct(
+                $id: Int!,
+                $name: String!,
+                $description: String,
+                $image: String,
+                $product_category_id: Int!,
+                $is_highlight: Boolean!,
+                $is_recommended: Boolean!,
+                $is_upsell: Boolean!,
+                $is_active: Boolean
+            ) {
+                updateProduct(
+                    id: $id,
+                    name: $name,
+                    description: $description,
+                    image: $image,
+                    product_category_id: $product_category_id,
+                    is_highlight: $is_highlight,
+                    is_recommended: $is_recommended,
+                    is_upsell: $is_upsell,
+                    is_active: $is_active
+                ) {
+                    id
+                    name
+                }
             }
-        })
-        if (!response.ok) {
-            throw await response.json()
+        `
+        const variables = {
+            id: Number(id),
+            name: payload.name,
+            description: payload.description ?? null,
+            image: payload.image ?? null,
+            product_category_id: Number(payload.product_category_id),
+            is_highlight: Boolean(payload.is_highlight),
+            is_recommended: Boolean(payload.is_recommended),
+            is_upsell: Boolean(payload.is_upsell),
+            is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
-        return await response.json()
+        const res = await gqlFetch<{ updateProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+
+        // Handle galleries update/create if any
+        if (payload.galleries?.length) {
+            const galleryService = useProductGalleriesService()
+            for (const gallery of payload.galleries) {
+                try {
+                    // Only treat as existing when ID is numeric (DB-generated)
+                    const idStr = String(gallery.id ?? '')
+                    const hasId = /^\d+$/.test(idStr)
+                    if (hasId) {
+                        // Update existing gallery (e.g., orders)
+                        await galleryService.updateProductGallery(Number(idStr), {
+                            // image can be optionally updated; omit if empty/undefined
+                            ...(gallery.image ? { image: gallery.image } : {}),
+                            orders: Number(gallery.orders) || 0,
+                        })
+                    } else {
+                        // Create new gallery for this product
+                        await galleryService.createProductGallery({
+                            image: gallery.image,
+                            orders: Number(gallery.orders) || 0,
+                            product_id: Number(id)
+                        })
+                    }
+                } catch (e) {
+                }
+            }
+        }
+
+        // Handle additionals update/create/delete if any
+        if (Array.isArray(payload.additionals)) {
+            try {
+                const additionalService = useProductAdditionalService()
+
+                // Fetch existing additionals to detect deletions
+                const existing = await additionalService.getProductAdditionals(Number(id))
+                const existingIds = new Set((existing || []).map((a: any) => String(a.id)))
+                const incomingIds = new Set(
+                    payload.additionals
+                        .filter((a: any) => a?.id != null && `${a.id}`.length > 0)
+                        .map((a: any) => String(a.id))
+                )
+
+                // Update or create incoming additionals
+                for (const add of payload.additionals) {
+                    const hasId = add?.id != null && `${add.id}`.length > 0
+                    const normalized = {
+                        name: add.name ?? '',
+                        moq: Number(add.moq) || 0,
+                        price: Number(add.price) || 0,
+                        stock: Number(add.stock) || 0,
+                        discount: Number(add.discount) || 0,
+                        discount_type: add.discount_type ?? 'AMOUNT',
+                        attributes: typeof add.attributes === 'string' ? add.attributes : '[]',
+                    }
+
+                    if (hasId) {
+                        await additionalService.updateProductAdditional(Number(add.id), normalized)
+                    } else {
+                        await additionalService.createProductAdditional({
+                            ...normalized,
+                            product_id: Number(id),
+                        })
+                    }
+                }
+
+                // Delete removed additionals (present in existing but not in incoming)
+                for (const ex of existing || []) {
+                    const exId = String(ex.id)
+                    if (!incomingIds.has(exId)) {
+                        await additionalService.deleteProductAdditional(Number(exId))
+                    }
+                }
+            } catch (e) {
+            }
+        }
+
+        return res?.updateProduct
     }
 
     // General DELETE function
@@ -80,6 +382,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 'Authorization': `Bearer ${useCookie('token').value}`
             }
         })
+
         if (!response.ok) {
             const error = await response.json()
             throw error
@@ -106,9 +409,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         return await response.json()
     }
 
-
     return {
-        datas: data,
+        datas,
         loading,
         error,
         pagination,
@@ -121,6 +423,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         changePage,
         changeLimit,
         setParams,
-        params
+        params,
+        pageInfo
     }
 }

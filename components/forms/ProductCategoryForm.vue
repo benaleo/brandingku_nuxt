@@ -27,6 +27,7 @@ const currentPath = router.currentRoute.value.path
 const idFromPath = getIdFromPath(router.currentRoute.value.path)
 const resolvedEditId = computed(() => props.editId ?? idFromPath)
 const config = useRuntimeConfig()
+const STORAGE_URL = config.public.STORAGE_URL
 
 const service = useProductCategoryService({ autoFetchParents: false })
 const { detail, loadDetail } = service
@@ -65,8 +66,13 @@ const setFieldsFromDetail = (val: any) => {
   const apiSlug = val.slug || ''
   slug.value = apiSlug
   description.value = val.description || ''
-  sub_categories.value = (val as any).sub_categories || []
-  image.value = val.image ? config.public.BASE_URL + val.image : ''
+  
+  // Extract sub-category names from the nested structure
+  sub_categories.value = Array.isArray(val.sub_categories) 
+    ? val.sub_categories.map((sc: any) => sc?.name || '').filter(Boolean) 
+    : []
+  
+  image.value = val.image ? STORAGE_URL + val.image : ''
   is_active.value = Boolean(val.is_active) || false
   is_landing_page.value = Boolean(val.is_landing_page) || false
 
@@ -100,25 +106,8 @@ watch(
   detail,
   (val) => {
     if (!isCreate && val) {
-      isApiUpdate = true
-      name.value = val.name || ''
-      const apiSlug = val.slug || ''
-      slug.value = apiSlug
-      description.value = val.description || ''
-      sub_categories.value = (val as any).sub_categories || []
-      image.value = val.image ? config.public.BASE_URL + val.image : ''
-      is_active.value = Boolean(val.is_active) || false
-      is_landing_page.value = Boolean(val.is_landing_page) || false
-
-      // Update form values
-      setFieldValue('name', name.value)
-      setFieldValue('slug', slug.value)
-      setFieldValue('description', description.value)
-      setFieldValue('sub_categories', sub_categories.value)
-      setFieldValue('image', image.value)
-      setFieldValue('is_active', is_active.value)
-      setFieldValue('is_landing_page', is_landing_page.value)
-      isApiUpdate = false
+      // Reuse the same mapping logic, including sub_categories name extraction
+      setFieldsFromDetail(val)
     }
   },
   { immediate: true }
@@ -151,9 +140,14 @@ watch(name, (newVal) => {
 
 const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
   try {
-    console.log(values)
     if (isCreate) {
-      const payload = { ...values }
+      const payload = { 
+        ...values,
+        // Ensure sub_categories is an array of strings (names)
+        sub_categories: Array.isArray(values.sub_categories) 
+          ? values.sub_categories.filter(Boolean) 
+          : []
+      }
       if (imageFile.value) {
         const { convertToBase64 } = useFileToBase64()
         payload.image = await convertToBase64(imageFile.value)
@@ -179,7 +173,13 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
         toast.success('Product category created successfully!')
       }
     } else {
-      const payload = { ...values }
+      const payload = { 
+        ...values,
+        // Ensure sub_categories is an array of strings (names)
+        sub_categories: Array.isArray(values.sub_categories) 
+          ? values.sub_categories.filter(Boolean) 
+          : []
+      }
       if (imageFile.value) {
         const { convertToBase64 } = useFileToBase64()
         payload.image = await convertToBase64(imageFile.value)
@@ -199,6 +199,7 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           image: payload.image,
           is_landing_page: payload.is_landing_page,
           is_active: payload.is_active,
+          sub_categories: payload.sub_categories || [],
         }
         await service.updateChildCategory(Number(resolvedEditId.value), childPayload)
         toast.success('Child category updated successfully!')

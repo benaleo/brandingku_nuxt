@@ -9,7 +9,7 @@
     <!-- Filter -->
     <AppFilterTable v-model="keyword">
       <div class="flex-1">
-        <FieldXSelectSimple label="Kategori" name="category" :options="categoryOptions" placeholder="Pilih Kategori" v-model="selectedCategory"/>
+        <!-- <FieldXSelectSimple label="Kategori" name="category" :options="categoryOptions" placeholder="Pilih Kategori" v-model="selectedCategory"/> -->
       </div>
     </AppFilterTable>
 
@@ -48,8 +48,6 @@ import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from "vue-sonner";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
 import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue";
-import {useOptionsService} from "~/services/options.service";
-import type {OptionType} from "~/types/options.type";
 
 const {
   datas,
@@ -92,9 +90,6 @@ const selectedCategory = ref<string | number | undefined>()
 const keyword = ref<string>('')
 const isFetch = ref<boolean>(false)
 
-const {getProductsCategory} = useOptionsService();
-
-const categoryOptions = computed<OptionType[]>(() => allAttributeCategories.value);
 // Watch keyword to trigger search with minimum 3 characters
 watch(keyword, (newValue: string) => {
   console.log('index.vue keyword changed:', newValue)
@@ -112,31 +107,6 @@ watch(keyword, (newValue: string) => {
     }
   }
 })
-
-const allAttributeCategories = ref<OptionType[]>([]);
-// Fetch all attribute categories
-getProductsCategory().then((attributes) => {
-  const seen = new Set<string>();
-  const arr = attributes
-      .filter(item => item && typeof item.label === 'string')
-      .map(item => item.label)
-      .filter(cat => !seen.has(cat) && seen.add(cat))
-      .map(cat => ({id: cat, label: cat}));
-  allAttributeCategories.value = [{id: 'all', label: 'All'}, ...arr];
-});
-
-// Watch categoryOptions and loading
-watch(
-    [categoryOptions, loading],
-    ([options, isLoading]) => {
-      console.log('Watcher triggered. loading:', isLoading, 'categoryOptions:', options, 'selectedCategory:', selectedCategory.value)
-      if (!isLoading && options.length > 0 && (selectedCategory.value === undefined || selectedCategory.value === '')) {
-        selectedCategory.value = options[0].id
-        console.log('Auto-selected category:', selectedCategory.value)
-      }
-    },
-    {immediate: true}
-)
 
 // Watch selectedCategory and trigger server-side filter
 watch(selectedCategory, (val: any) => {

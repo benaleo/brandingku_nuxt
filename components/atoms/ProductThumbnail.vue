@@ -45,7 +45,7 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
         <CarouselItem v-for="(image, index) in images" :key="index">
           <div class="p-1">
             <Card class="py-0 overflow-hidden rounded-lg shadow">
-              <CardContent class="flex aspect-square items-center justify-center px-0">
+              <CardContent class="flex aspect-square items-center justify-center px-0 overflow-hidden">
                 <img :src="image" :alt="`Product image ${index + 1}`" class="w-full h-full object-cover px-0" />
               </CardContent>
             </Card>
@@ -64,7 +64,7 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
         <CarouselItem v-for="(image, index) in images" :key="index" class="pl-0 basis-1/4 cursor-pointer" @click="onThumbClick(index)">
           <div class="p-1" :class="index === selectedIndex ? '' : 'opacity-50'">
             <Card class="flex items-center justify-center py-0 overflow-hidden rounded-lg">
-              <CardContent class="flex items-center justify-center p-0 aspect-square">
+              <CardContent class="flex items-center justify-center p-0 aspect-square overflow-hidden">
                 <img :src="image" :alt="`Product image ${index + 1}`" class="w-full h-full object-cover" />
               </CardContent>
             </Card>

@@ -4,60 +4,47 @@ export type Product = {
     slug: string
     description: string
     image: string
-    highlight_image: string
-    highlight_description: string
     is_highlight: boolean
     is_recommended: boolean
     is_upsell: boolean
-    category_name: string
-    category_id: string
-    galleries: ProductGalleriesList[]
+    galleries: ProductGallery[]
     additionals: {
         id: string,
+        name: string,
         price: number,
         moq: number,
         stock: number,
         discount: number,
         discount_type: string,
-        attributes: {
-            id: string
-            category: string,
-            name: string
-        }[]
+        attributes: string
     }[],
     created_at: string
-    created_by: string
     updated_at: string
-    updated_by: string
 }
 
 export type ProductAdditional = {
     id?: string
+    name: string
     price: number
     moq: number
     stock: number
     discount: number
     discount_type: string
-    attributes: ProductAttribute[]
+    attributes: string
+    _uniqueKey?: string
 }
 
-export type ProductAttribute = {
-    id?: string
-    name: string
-    category: string
-}
-
-export type ProductGalleriesList = {
+export type ProductGallery = {
     id: string
-    url: string
+    product_id: number
+    image: string
+    orders: number
 }
 
 export type ProductCategory = {
     id: string
     created_at: string
     updated_at: string
-    created_by: string
-    updated_by: string
     name: string
     slug: string
     description: string

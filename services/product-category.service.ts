@@ -19,8 +19,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         error.value = null
         try {
             const query = `
-                query getProductCategories {
-                    getProductCategories {
+                query getProductCategories($only_parent: Boolean) {
+                    getProductCategories(only_parent: $only_parent) {
                         id
                         name
                         slug
@@ -116,7 +116,11 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     image
                     is_landing_page
                     is_active
-                    
+                    sub_categories {
+                        id
+                        name
+                        slug
+                    }
                 }
             }
         `
@@ -150,16 +154,16 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
 
     const loadDetail = async (id: number) => {
         const detailData = await getProductCategoryDetail(id)
-        detailData.sub_categories = await getSubCategories(id)
+        // Sub-categories are now included in the getProductCategoryDetail response
         detail.value = detailData
         return detail.value
     }
 
     // Children as full objects
-    const getChildCategoriesByParentId = async (parentId: number) => {
+    const getChildCategoriesByParentId = async (parentId: number, isAll: boolean) => {
         const query = `
-            query GetProductCategoriesChild($parent_id: Int!) {
-                getProductCategoriesChild(parent_id: $parent_id) {
+            query GetProductCategoriesChild($parent_id: Int, $is_all: Boolean) {
+                getProductCategoriesChild(parent_id: $parent_id, is_all: $is_all) {
                     id
                     name
                     slug
@@ -267,10 +271,13 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 }
             }
         `
+        
+        // Prepare the variables, including sub_categories if they exist
+        const variables: any = { ...vars }
 
         const data = await gqlFetch<{ createProductCategory: ProductCategory }>(
             mutation,
-            { ...vars },
+            variables,
             { auth: true }
         )
         return data.createProductCategory
@@ -286,6 +293,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         parent_id?: number
         is_landing_page?: boolean
         is_active?: boolean
+        sub_categories?: string[]
     }) => {
         const mutation = `
             mutation UpdateProductCategory(
@@ -320,9 +328,12 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 }
             }
         `
+        
+        // Prepare the variables, including sub_categories if they exist
+        const variables: any = { ...vars }
         const data = await gqlFetch<{ updateProductCategory: ProductCategory }>(
             mutation,
-            { ...vars },
+            variables,
             { auth: true }
         )
         return data.updateProductCategory
@@ -401,21 +412,36 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
             // get parent detail and existing children to avoid duplicates and prefix slug
             const parentDetail = await getProductCategoryDetail(Number(id))
-            const existingNames = await getSubCategories(Number(id))
+            const existingChildren = await getChildCategoriesByParentId(Number(id), false)
+            const existingSlugs = new Set(existingChildren.map(c => c.slug))
+            
             for (const sub of vars.sub_categories) {
                 const subName = String(sub).trim()
                 if (!subName) continue
-                if (existingNames.includes(subName)) continue
+                
+                // Generate the expected slug
                 const subSlug = subName
                     .toLowerCase()
                     .replace(/\s+/g, '_')
                     .replace(/[^a-z0-9_]/g, '')
-                await createProductCategory({
-                    name: subName,
-                    slug: parentDetail.slug + "-" + subSlug,
-                    description: '-',
-                    parent_id: Number(id),
-                })
+                const fullSlug = `${parentDetail.slug}-${subSlug}`
+                
+                // Skip if a category with this slug already exists
+                if (existingSlugs.has(fullSlug)) continue
+                
+                try {
+                    await createProductCategory({
+                        name: subName,
+                        slug: fullSlug,
+                        description: '-',
+                        parent_id: Number(id),
+                    })
+                    // Add to existing slugs to prevent duplicates in the same batch
+                    existingSlugs.add(fullSlug)
+                } catch (error) {
+                    console.error(`Failed to create sub-category "${subName}":`, error)
+                    // Continue with next sub-category even if one fails
+                }
             }
         }
         return updated

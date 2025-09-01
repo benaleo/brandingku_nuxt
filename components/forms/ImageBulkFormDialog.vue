@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { XIcon, Trash2Icon } from 'lucide-vue-next'
-import type {ProductGalleriesList} from "~/types/products.type";
+import type {ProductGallery} from "~/types/products.type";
+import { useFileToBase64 } from "~/composables/useFileToBase64";
+import { useProductGalleriesService } from "~/services/product-galleries.service";
 
 interface FileWithPreview {
   file: File;
@@ -12,10 +14,13 @@ interface FileWithPreview {
   id: string;
 }
 
+const config = useRuntimeConfig();
+const STORAGE_URL = config.public.STORAGE_URL
+
 const props = defineProps({
   submit: {
     type: Function as PropType<(fileUrls: string[], removeIds: string[]) => void | Promise<void>>,
-    required: true,
+    required: false,
   },
   bucket: {
     type: String,
@@ -26,7 +31,7 @@ const props = defineProps({
     required: true
   },
   galleries: {
-    type: Array as PropType<ProductGalleriesList[]>,
+    type: Array as PropType<ProductGallery[]>,
     default: () => []
   }
 })
@@ -37,16 +42,19 @@ const files = ref<FileWithPreview[]>([])
 const dragActive = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const removeIds = ref<string[]>([])
-const galleries = ref<ProductGalleriesList[]>([...props.galleries])
+const galleries = ref<ProductGallery[]>([...props.galleries])
 const isUploading = ref(false)
 
-function removeGalleryItem(galleryItem: ProductGalleriesList) {
+function removeGalleryItem(galleryItem: ProductGallery) {
   if (galleryItem.id) {
     removeIds.value.push(galleryItem.id)
     galleries.value = galleries.value.filter(g => g.id !== galleryItem.id)
     toast.success('Image marked for removal')
   }
 }
+
+// show all galleries on json
+console.log('galleries', JSON.stringify(galleries.value))
 
 function removeFile(id: string) {
   const fileToRemove = files.value.find(f => f.id === id)
@@ -103,60 +111,62 @@ async function handleSubmit() {
   isUploading.value = true
 
   try {
-    const fileUrls: string[] = []
-    
+    const createdIds: number[] = []
+    let deletedCount = 0
+    const failedUploads: string[] = []
+    const { convertToBase64 } = useFileToBase64()
+    const { createProductGallery, deleteProductGallery } = useProductGalleriesService()
+
+    // Create galleries for new files
     if (files.value.length > 0) {
-      const { uploadFile, getFileUrl } = useFileUpload()
-      const failedUploads: string[] = []
-
-      for (const fileItem of files.value) {
+      for (let idx = 0; idx < files.value.length; idx++) {
+        const fileItem = files.value[idx]
         try {
-          const fileExtension = fileItem.file.name.split('.').pop()
-          const uniqueFileName = `product-${props.productId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExtension}`
-
-          const uploadResult = await uploadFile(props.bucket, uniqueFileName, fileItem.file)
-
-          if (!uploadResult) {
-            failedUploads.push(fileItem.file.name)
-            continue
-          }
-
-          const fileUrl = await getFileUrl(props.bucket, uploadResult.path)
-
-          if (!fileUrl) {
-            failedUploads.push(fileItem.file.name)
-            continue
-          }
-
-          fileUrls.push(fileUrl)
-        } catch (fileError: any) {
-          console.error(`Error uploading ${fileItem.file.name}:`, fileError)
+          const b64 = await convertToBase64(fileItem.file)
+          const created = await createProductGallery({
+            image: b64,
+            orders: idx,
+            product_id: Number(props.productId)
+          })
+          if (created?.id) createdIds.push(Number(created.id))
+        } catch (err) {
+          console.error(`Error creating gallery for ${fileItem.file.name}:`, err)
           failedUploads.push(fileItem.file.name)
         }
       }
-
-      if (fileUrls.length === 0 && files.value.length > 0) {
-        throw new Error('All uploads failed. Please check your connection and try again.')
-      }
-      
       if (failedUploads.length > 0) {
-        toast.warning(`${failedUploads.length} image(s) failed to upload. ${fileUrls.length} image(s) uploaded successfully.`)
+        toast.warning(`${failedUploads.length} image(s) failed to upload. ${createdIds.length} image(s) uploaded successfully.`)
       }
     }
 
-    await props.submit(fileUrls, removeIds.value)
+    // Delete marked galleries
+    if (removeIds.value.length > 0) {
+      for (const id of removeIds.value) {
+        try {
+          const ok = await deleteProductGallery(Number(id))
+          if (ok) deletedCount++
+        } catch (err) {
+          console.error(`Error deleting gallery id ${id}:`, err)
+        }
+      }
+    }
+
+    // Optional callback (backward compatibility)
+    if (props.submit) {
+      await props.submit([], removeIds.value)
+    }
     
     files.value.forEach(f => URL.revokeObjectURL(f.preview))
     files.value = []
     removeIds.value = []
     emit('close')
     
-    if (fileUrls.length > 0 && removeIds.value.length > 0) {
-      toast.success(`Successfully updated images (${fileUrls.length} added, ${removeIds.value.length} removed)`)
-    } else if (fileUrls.length > 0) {
-      toast.success(`Successfully uploaded ${fileUrls.length} image${fileUrls.length > 1 ? 's' : ''}`)
-    } else if (removeIds.value.length > 0) {
-      toast.success(`Successfully removed ${removeIds.value.length} image${removeIds.value.length > 1 ? 's' : ''}`)
+    if (createdIds.length > 0 && deletedCount > 0) {
+      toast.success(`Successfully updated images (${createdIds.length} added, ${deletedCount} removed)`)
+    } else if (createdIds.length > 0) {
+      toast.success(`Successfully uploaded ${createdIds.length} image${createdIds.length > 1 ? 's' : ''}`)
+    } else if (deletedCount > 0) {
+      toast.success(`Successfully removed ${deletedCount} image${deletedCount > 1 ? 's' : ''}`)
     }
   } catch (error: any) {
     console.error('Error during operation:', error)
@@ -183,7 +193,7 @@ async function handleSubmit() {
         <!-- Existing gallery previews -->
         <div v-if="galleries.length > 0" class="w-full grid grid-cols-3 gap-2 mb-4">
           <div v-for="gallery in galleries" :key="gallery.id" class="relative">
-            <img :src="gallery.url" alt="Gallery preview" class="w-full h-24 object-cover rounded shadow"/>
+            <img :src="gallery.image ? `${STORAGE_URL}${gallery.image}` : ''" alt="Gallery preview" class="w-full h-24 object-cover rounded shadow"/>
             <button 
               type="button" 
               @click="removeGalleryItem(gallery)"
