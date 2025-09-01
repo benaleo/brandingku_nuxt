@@ -275,10 +275,12 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             const galleryService = useProductGalleriesService()
             for (const gallery of payload.galleries) {
                 try {
-                    const hasId = gallery.id != null && `${gallery.id}`.length > 0
+                    // Only treat as existing when ID is numeric (DB-generated)
+                    const idStr = String(gallery.id ?? '')
+                    const hasId = /^\d+$/.test(idStr)
                     if (hasId) {
                         // Update existing gallery (e.g., orders)
-                        await galleryService.updateProductGallery(Number(gallery.id), {
+                        await galleryService.updateProductGallery(Number(idStr), {
                             // image can be optionally updated; omit if empty/undefined
                             ...(gallery.image ? { image: gallery.image } : {}),
                             orders: Number(gallery.orders) || 0,
