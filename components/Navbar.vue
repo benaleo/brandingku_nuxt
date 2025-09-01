@@ -1,5 +1,5 @@
 <template>
-  <nav v-if="isDesktop" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-10">
+  <nav v-if="isDesktop" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-40">
     <div class="overflow-hidden w-full md:w-[90vw] h-[60px] px-2 md:px-4 bg-yellow-50 rounded-md shadow md:sticky top-0 flex justify-between items-center">
       <div class="flex items-center justify-start">
         <NuxtLink to="/">
