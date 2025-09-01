@@ -32,8 +32,8 @@ export const useProductDetail = (initialSlug: string) => {
     error.value = null
     try {
       const query = `
-        query GetProductsForDetail {
-          getProducts {
+        query GetProductsForDetail($slug: String!) {
+          getProductDetailSlug(slug: $slug) {
             id
             name
             slug
@@ -59,9 +59,8 @@ export const useProductDetail = (initialSlug: string) => {
           }
         }
       `
-      const res = await gqlFetch<{ getProducts: any[] }>(query, undefined, { auth: true })
-      const list = res?.getProducts || []
-      const p = list.find((x: any) => x?.slug === slug.value)
+      const res = await gqlFetch<{ getProductDetailSlug: any }>(query, { slug: slug.value }, { auth: true })
+      const p = res?.getProductDetailSlug || []
       if (!p) throw new Error('Product not found')
 
       // Sort galleries
