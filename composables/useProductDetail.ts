@@ -6,6 +6,7 @@ export type ProductDetail = {
   name: string
   slug: string
   category?: string
+  description?: string
   images: string[]
   price: number
   originalPrice?: number | null
@@ -13,6 +14,16 @@ export type ProductDetail = {
   sizes: string[]
   details: { key: string; value: string }[]
   inStock: boolean
+  additionals?: Array<{
+    id: string
+    name: string
+    price: number
+    moq: number
+    stock: number
+    discount: number
+    discount_type: string
+    attributes: string
+  }>
 }
 
 export const useProductDetail = (initialSlug: string) => {
@@ -124,6 +135,7 @@ export const useProductDetail = (initialSlug: string) => {
         name: p.name,
         slug: p.slug,
         category: p?.category?.name,
+        description: p?.description,
         images,
         price: Number(minAfter.toFixed(2)),
         originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
@@ -131,6 +143,16 @@ export const useProductDetail = (initialSlug: string) => {
         sizes,
         details,
         inStock: anyStock,
+        additionals: (p.additionals || []).map((a: any) => ({
+          id: String(a.id),
+          name: a.name || '',
+          price: Number(a.price) || 0,
+          moq: Number(a.moq) || 0,
+          stock: Number(a.stock) || 0,
+          discount: Number(a.discount) || 0,
+          discount_type: String(a.discount_type || 'AMOUNT'),
+          attributes: typeof a.attributes === 'string' ? a.attributes : '[]'
+        })),
       }
     } catch (e: any) {
       error.value = e?.message || 'Failed to fetch product detail'
