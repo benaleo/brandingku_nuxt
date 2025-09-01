@@ -16,7 +16,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     const datas = ref<any>(fetchResult ? [] : null)
     const loading = ref<boolean>(false)
     const error = ref<string | null>(null)
-    const pagination = ref({ page: 0, limit: 10, total: 0 })
+    const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
+    const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
     const params = reactive<{ keyword?: string; category?: string } >({})
 
     const changePage = (newPage: number) => {
@@ -38,40 +39,56 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         error.value = null
         try {
             const query = `
-                query getProducts {
-                    getProducts {
-                        id
-                        name
-                        slug
-                        description
-                        image
-                        category {
+                query getProducts($page: Int!, $limit: Int!) {
+                    getProducts(pagination: { page: $page, limit: $limit }) {
+                        items {
                             id
                             name
+                            slug
+                            description
+                            image
+                            category { id name }
+                            is_highlight
+                            is_recommended
+                            is_upsell
+                            galleries { id image orders }
+                            additionals {
+                                id
+                                name
+                                price
+                                moq
+                                stock
+                                discount
+                                discount_type
+                                attributes
+                            }
+                            created_at
+                            updated_at
                         }
-                        is_highlight
-                        is_recommended
-                        is_upsell
-                        galleries { id image orders }
-                        additionals {
-                            id
-                            name
-                            price
-                            moq
-                            stock
-                            discount
-                            discount_type
-                            attributes
+                        page_info {
+                            current_page
+                            per_page
+                            total_items
+                            total_pages
+                            has_next_page
+                            has_previous_page
+                            start_item
+                            end_item
                         }
-                        created_at
-                        updated_at
                     }
                 }
             `
-            const res = await gqlFetch<{ getProducts: Product[] }>(query, undefined, { auth: true })
-            let list = (res?.getProducts || []) as any[]
+            // server is 1-based pages; local is 0-based
+            const serverPage = (pagination.value.page || 0) + 1
+            const serverLimit = pagination.value.limit || 10
+            const res = await gqlFetch<{ getProducts: { items: Product[]; page_info: any } }>(
+                query,
+                { page: serverPage, limit: serverLimit },
+                { auth: true }
+            )
+            let list = (res?.getProducts?.items || []) as any[]
 
-            // Apply client-side filters similar to previous implementation
+            // Apply client-side keyword filter for compatibility with useProductList
             const kw = params.keyword?.toLowerCase()?.trim()
             if (kw && kw.length >= 1) {
                 list = list.filter((x: any) =>
@@ -79,13 +96,20 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                     (x.slug || '').toLowerCase().includes(kw)
                 )
             }
-            // Category-based client filtering removed due to schema changes
 
-            // Pagination
-            pagination.value.total = list.length
-            const start = (pagination.value.page || 0) * (pagination.value.limit || 10)
-            const end = start + (pagination.value.limit || 10)
-            datas.value = list.slice(start, end)
+            // Update pagination from server; keep local page 0-based
+            pageInfo.value = res?.getProducts?.page_info || null
+            if (pageInfo.value) {
+                pagination.value.limit = Number(pageInfo.value.per_page || serverLimit)
+                pagination.value.total = Number(pageInfo.value.total_items || list.length)
+                const cp = Number(pageInfo.value.current_page || serverPage)
+                pagination.value.page = cp > 0 ? cp - 1 : 0
+            } else {
+                // Fallback
+                pagination.value.total = list.length
+            }
+
+            datas.value = list
         } catch (e: any) {
             error.value = e?.message || 'Failed to load products'
         } finally {
@@ -399,6 +423,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         changePage,
         changeLimit,
         setParams,
-        params
+        params,
+        pageInfo
     }
 }

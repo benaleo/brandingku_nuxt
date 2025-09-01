@@ -26,34 +26,46 @@ export const useFeaturedProduct = () => {
     error.value = null
     try {
       const query = `
-        query GetProductsFeatured {
-          getProducts {
-            id
-            name
-            slug
-            image
-            category { id name }
-            is_highlight
-            is_recommended
-            is_upsell
-            galleries { id image orders }
-            additionals {
+        query GetProductsFeatured($page: Int!, $limit: Int!) {
+          getProducts(pagination: { page: $page, limit: $limit }) {
+            items {
               id
               name
-              price
-              moq
-              stock
-              discount
-              discount_type
-              attributes
+              slug
+              image
+              category { id name }
+              is_highlight
+              is_recommended
+              is_upsell
+              galleries { id image orders }
+              additionals {
+                id
+                name
+                price
+                moq
+                stock
+                discount
+                discount_type
+                attributes
+              }
+              created_at
+              updated_at
             }
-            created_at
-            updated_at
+            page_info {
+              current_page
+              per_page
+              total_items
+              total_pages
+              has_next_page
+              has_previous_page
+              start_item
+              end_item
+            }
           }
         }
       `
-      const res = await gqlFetch<{ getProducts: any[] }>(query, undefined, { auth: true })
-      const list = (res?.getProducts || [])
+      const res = await gqlFetch<{ getProducts: { items: any[] } }>(query, { page: 1, limit: 20 }, { auth: true })
+      const list = (res?.getProducts?.items || [])
 
       const items: FeaturedProductItem[] = list.map((p: any) => {
         const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
