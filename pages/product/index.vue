@@ -11,6 +11,7 @@ import { ref, computed, onMounted } from 'vue'
 // Data/composables
 import { useProductService } from '~/services/product.service'
 import { useGql } from '~/composables/useGql'
+import { ChevronDown, ChevronUp } from 'lucide-vue-next'
 
 const router = useRouter()
 const config = useRuntimeConfig()
@@ -101,11 +102,12 @@ const viewProductDetail = (slug : string) => {
   router.push(`/product/${slug}`)
 }
 
+// MARK : SORT OPTIONS
 const sortOptions = [
-  { value: 'popular', label: 'Popular' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'price-low', label: 'Price: Low to High' },
-  { value: 'price-high', label: 'Price: High to Low' }
+  { value: 'is_highlight,desc', label: 'Popular' },
+  { value: 'created_at,desc', label: 'Newest' },
+  { value: 'price,asc', label: 'Price: Low to High' },
+  { value: 'price,desc', label: 'Price: High to Low' }
 ]
 
 // Pagination helpers (UI uses 1-based labels)
@@ -127,7 +129,7 @@ definePageMeta({ layout: 'page-layout' })
   <!-- Header -->
   <HeaderProduct :title="pageTitle" />
 
-  <!-- Content -->
+  <!-- MARK : SIDEBAR -->
   <main class="app-container my-12 flex gap-4">
     <div class="min-w-48 bg-slate-200 h-fit rounded-md py-4 px-2 mt-18 sticky top-30">
       <ul class="space-y-2">
@@ -142,10 +144,12 @@ definePageMeta({ layout: 'page-layout' })
         </li>
         <li v-for="parent in parentCategories" :key="parent.id" class="relative">
           <button
-            class="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            class="flex items-center gap-2 w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           @click="toggleParent(Number(parent.id))"
           >
-          {{ parent.name }}
+        <ChevronUp v-if="openParents[parent.id]" />
+        <ChevronDown v-else />
+         {{ parent.name }}
           </button>
         <ul v-if="(childrenMap[parent.id] || []).length && openParents[parent.id]" class="mt-1 ml-4 space-y-1">
           <li v-for="child in childrenMap[parent.id]" :key="child.id">

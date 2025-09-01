@@ -4,3 +4,11 @@ export type FeaturedCategory = {
     description: string,
     image: string
 }
+
+export type Client = {
+    id: string,
+    name: string,
+    logo: string,
+    orders: number
+    updated_at: string
+}
