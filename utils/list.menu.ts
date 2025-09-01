@@ -67,17 +67,17 @@ export const secretConsoleMenu: MenuGroup[] = [
 
         ]
     },
-    {
-        group_name: 'Masterdata',
-        group_icon: 'Product',
-        sub: [
-            {
-                name: 'Produk Attribute',
-                icon: 'Package',
-                href: '/console/secret/product-attributes'
-            },
-        ]
-    },
+    // {
+    //     group_name: 'Masterdata',
+    //     group_icon: 'Product',
+    //     sub: [
+    //         {
+    //             name: 'Produk Attribute',
+    //             icon: 'Package',
+    //             href: '/console/secret/product-attributes'
+    //         },
+    //     ]
+    // },
     {
         group_name: 'Administrator',
         group_icon: 'ShieldUser',
