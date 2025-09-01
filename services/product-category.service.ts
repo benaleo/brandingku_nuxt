@@ -19,8 +19,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         error.value = null
         try {
             const query = `
-                query getProductCategories {
-                    getProductCategories {
+                query getProductCategories($only_parent: Boolean) {
+                    getProductCategories(only_parent: $only_parent) {
                         id
                         name
                         slug

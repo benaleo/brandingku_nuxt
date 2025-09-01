@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -6,11 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'vue-router'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 // Data/composables
 import { useProductList } from '~/composables/useProductList'
 import { useProductCategoryService } from '~/services/product-category.service'
+import { useGql } from '~/composables/useGql'
 
 const router = useRouter()
 const config = useRuntimeConfig()
@@ -19,28 +20,87 @@ const STORAGE_URL = config.public.STORAGE_URL
 // Products with name filter
 const { products, filteredByName, keyword, setKeyword } = useProductList()
 
-// Categories for sidebar (parents)
-const { datas: categories } = useProductCategoryService({ autoFetchParents: true })
+// Categories: fetch all (parents + children)
+const { gqlFetch } = useGql()
+const categoriesAll = ref<any[]>([])
+const categoriesLoading = ref(false)
+const categoriesError = ref<string | null>(null)
 
-// Selected category id (string 'All' or numeric id)
-const selectedCategory = ref('All')
+const fetchAllCategories = async () => {
+  categoriesLoading.value = true
+  categoriesError.value = null
+  try {
+    const query = `
+      query getProductCategories($only_parent: Boolean) {
+        getProductCategories(only_parent: $only_parent) {
+          id
+          name
+          slug
+          description
+          image
+          is_landing_page
+          is_active
+          created_at
+          updated_at
+          parent_id
+        }
+      }
+    `
+    const res = await gqlFetch<{ getProductCategories: any[] }>(query, { only_parent: false }, { auth: true })
+    categoriesAll.value = res?.getProductCategories || []
+  } catch (e: any) {
+    categoriesError.value = e?.message || 'Failed to load categories'
+  } finally {
+    categoriesLoading.value = false
+  }
+}
+
+onMounted(() => { fetchAllCategories() })
+
+const parentCategories = computed(() => (categoriesAll.value || []).filter((c: any) => c?.parent_id == null))
+const childrenMap = computed<Record<number, any[]>>(() => {
+  const map: Record<number, any[]> = {}
+  for (const c of categoriesAll.value || []) {
+    if (c?.parent_id != null) {
+      const pid = Number(c.parent_id)
+      if (!map[pid]) map[pid] = []
+      map[pid].push(c)
+    }
+  }
+  return map
+})
+
+// Selection: either a specific child category or a parent (show all its children + itself)
+const selectedCategoryId = ref<number | null>(null)
+const selectedParentId = ref<number | null>(null)
 
 // Compute filtered products by category, on top of name filtering
 const filteredProducts = computed(() => {
-  const list = filteredByName.value;
-  if (selectedCategory.value === 'All') return list
-  return list.filter(p => Number(p?.category?.id) === Number(selectedCategory.value))
+  const list = filteredByName.value as any[]
+  // Child category selected
+  if (selectedCategoryId.value != null) {
+    return list.filter(p => Number(p?.category?.id) === Number(selectedCategoryId.value))
+  }
+  // Parent selected: include parent + its children
+  if (selectedParentId.value != null) {
+    const pid = Number(selectedParentId.value)
+    const children = childrenMap.value[pid] || []
+    const allowed = new Set<number>([pid, ...children.map((c: any) => Number(c.id))])
+    return list.filter(p => allowed.has(Number(p?.category?.id)))
+  }
+  // All
+  return list
 })
 
 // Helper: min price from additionals
-const productMinPrice = (p) => {
+const productMinPrice = (p : any) => {
   const adds = Array.isArray(p?.additionals) ? p.additionals : []
-  const prices = adds.map((a) => Number(a?.price) || 0)
+  const prices = adds.map((a : any) => Number(a?.price) || 0)
   if (!prices.length) return 0
   return Math.min(...prices)
 }
 
-const viewProductDetail = (slug) => {
+const viewProductDetail = (slug : string) => {
   router.push(`/product/${slug}`)
 }
 
@@ -70,20 +130,31 @@ definePageMeta({ layout: 'page-layout' })
         <li>
           <button
             class="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            :class="{ 'bg-gray-100': selectedCategory === 'All' }"
-            @click="selectedCategory = 'All'"
+            :class="{ 'bg-gray-100': selectedParentId === null && selectedCategoryId === null }"
+            @click="selectedParentId = null; selectedCategoryId = null"
           >
             All
           </button>
         </li>
-        <li v-for="cat in categories" :key="cat.id" class="relative">
+        <li v-for="parent in parentCategories" :key="parent.id" class="relative">
           <button
             class="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            :class="{ 'bg-gray-100': selectedCategory === Number(cat.id) }"
-            @click="selectedCategory = Number(cat.id)"
+            :class="{ 'bg-gray-100': selectedParentId === Number(parent.id) && selectedCategoryId === null }"
+            @click="selectedParentId = Number(parent.id); selectedCategoryId = null"
           >
-            {{ cat.name }}
+            {{ parent.name }}
           </button>
+          <ul v-if="(childrenMap[parent.id] || []).length" class="mt-1 ml-4 space-y-1">
+            <li v-for="child in childrenMap[parent.id]" :key="child.id">
+              <button
+                class="block w-full px-3 py-1.5 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded"
+                :class="{ 'bg-gray-100': selectedCategoryId === Number(child.id) }"
+                @click="selectedCategoryId = Number(child.id); selectedParentId = null"
+              >
+                {{ child.name }}
+              </button>
+            </li>
+          </ul>
         </li>
       </ul>
     </div>
