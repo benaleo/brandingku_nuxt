@@ -253,32 +253,51 @@ const handleSubmitForm = handleSubmit(async (submittedValues) => {
   }
   try {
     // Ensure boolean values are properly converted
-    submitData.is_recommended = Boolean(submitData.is_recommended);
-    submitData.is_upsell = Boolean(submitData.is_upsell);
+    submitData.is_recommended = Boolean(submitData.is_recommended)
+    submitData.is_upsell = Boolean(submitData.is_upsell)
 
     console.log('Galleries data:', submitData.galleries)
     console.debug('[submit] final additionals payload:', JSON.parse(JSON.stringify(submitData.additionals)))
-    
-    // Process galleries to ensure proper data format
+
+    // Process galleries to ensure proper data format and raw base64 for backend
     if (submitData.galleries && submitData.galleries.length > 0) {
-      submitData.galleries = submitData.galleries.map((gallery: any) => ({
-        ...gallery,
-        // Remove STORAGE_URL prefix if present
-        image: gallery.image.startsWith(STORAGE_URL) 
-          ? gallery.image.slice(STORAGE_URL.length) 
-          : gallery.image,
-        // Ensure orders is a number
-        orders: Number(gallery.orders) || 1
-      }))
+      submitData.galleries = submitData.galleries.map((gallery: any) => {
+        let img = gallery?.image || ''
+        // Prefer raw base64 captured by child form
+        if (gallery && typeof gallery._raw === 'string' && gallery._raw.length > 0) {
+          img = gallery._raw
+        } else if (typeof img === 'string' && img.startsWith('data:')) {
+          // Extract base64 from data URL
+          const comma = img.indexOf(',')
+          img = comma >= 0 ? img.slice(comma + 1) : img
+        } else if (typeof img === 'string' && img.startsWith(STORAGE_URL)) {
+          // Strip storage prefix if an absolute URL was set
+          img = img.slice(STORAGE_URL.length)
+        }
+        return { ...gallery, image: img, orders: Number(gallery.orders) || 1 }
+      })
     }
 
     // Convert main image to base64 if file selected and no value yet
     if (image_file.value && !submitData.image) {
-      const { convertToBase64 } = useFileToBase64();
-      const file = image_file.value;
-      const b64 = await convertToBase64(file);
-      submitData.image = b64;
-      image.value = b64;
+      const { convertToBase64 } = useFileToBase64()
+      const file = image_file.value
+      const b64 = await convertToBase64(file)
+      submitData.image = b64
+      image.value = b64
+    }
+
+    // Normalize main image string for backend (send raw base64 without prefix)
+    if (submitData.image && typeof submitData.image === 'string') {
+      // Remove STORAGE_URL prefix if present
+      if (submitData.image.startsWith(STORAGE_URL)) {
+        submitData.image = submitData.image.slice(STORAGE_URL.length)
+      }
+      // If it's a data URL, strip the prefix to keep only the raw base64
+      if (submitData.image.startsWith('data:')) {
+        const commaIdx = submitData.image.indexOf(',')
+        submitData.image = commaIdx >= 0 ? submitData.image.slice(commaIdx + 1) : submitData.image
+      }
     }
 
     console.log(submitData)

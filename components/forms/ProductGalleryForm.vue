@@ -5,6 +5,7 @@ import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import type { ProductGallery } from '~/types/products.type'
 import { Trash2 } from 'lucide-vue-next'
 import { useProductGalleriesService } from '~/services/product-galleries.service'
+import { useFileToBase64 } from '~/composables/useFileToBase64'
 
 const props = defineProps<{
   modelValue: ProductGallery[]
@@ -41,8 +42,26 @@ async function removeItem(idx: number) {
   list.value = list.value.map((g, i) => ({ ...g, orders: i + 1 }))
 }
 
-function onUploaded(idx: number, url: string) {
+async function onUploaded(idx: number, url: string) {
+  // url may be object URL or data URL depending on child emission.
+  // Keep preview as data URL when available.
   list.value[idx].image = url
+}
+
+async function onFileSelected(idx: number, f: File | null) {
+  try {
+    if (!f) {
+      ;(list.value[idx] as any)._raw = ''
+      return
+    }
+    const { convertToBase64 } = useFileToBase64()
+    const dataUrl = await convertToBase64(f)
+    const comma = dataUrl.indexOf(',')
+    const raw = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
+    // Store raw base64 for submit, keep image as data URL for preview
+    ;(list.value[idx] as any)._raw = raw
+    list.value[idx].image = dataUrl
+  } catch (_) {}
 }
 
 function onDelete(idx: number, payload: { url: string, path: string, bucket: string }) {
@@ -68,6 +87,7 @@ function onDelete(idx: number, payload: { url: string, path: string, bucket: str
               v-model:fileUrl="g.image"
               label="Gallery Image"
               @update:fileUrl="(url) => onUploaded(idx, url)"
+              @update:file="(f) => onFileSelected(idx, f)"
               @delete="(payload) => onDelete(idx, payload)"
             />
           </div>
