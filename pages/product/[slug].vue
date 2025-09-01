@@ -114,7 +114,7 @@ watch(slug, (val) => {
 </script>
 
 <template>
-  <div class="container px-4 py-8 md:py-12">
+  <div class="container md:pt-28 px-4 py-8 md:py-12">
     <div v-if="loading" class="flex justify-center">Loading...</div>
     <div v-else-if="error" class="flex justify-center text-red-500">{{ error }}</div>
 
