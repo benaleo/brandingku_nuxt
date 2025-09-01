@@ -9,18 +9,18 @@ import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 
 // Data/composables
-import { useProductList } from '~/composables/useProductList'
-import { useProductCategoryService } from '~/services/product-category.service'
+import { useProductService } from '~/services/product.service'
 import { useGql } from '~/composables/useGql'
 
 const router = useRouter()
 const config = useRuntimeConfig()
 const STORAGE_URL = config.public.STORAGE_URL
 
-// Products with name filter
-const { products, filteredByName, keyword, setKeyword } = useProductList()
+// Products: server-side pagination + optional category_id filter
+const productService = useProductService(true)
+const { datas: products, pageInfo, pagination, params, setParams, changePage } = productService
 
-// Categories: fetch all (parents + children)
+// Categories: fetch all (parents + children) for sidebar
 const { gqlFetch } = useGql()
 const categoriesAll = ref<any[]>([])
 const categoriesLoading = ref(false)
@@ -70,27 +70,24 @@ const childrenMap = computed<Record<number, any[]>>(() => {
   return map
 })
 
-// Selection: either a specific child category or a parent (show all its children + itself)
+// Sidebar UI state: which parents are expanded, and which child is selected
+const openParents = ref<Record<number, boolean>>({})
 const selectedCategoryId = ref<number | null>(null)
-const selectedParentId = ref<number | null>(null)
 
-// Compute filtered products by category, on top of name filtering
-const filteredProducts = computed(() => {
-  const list = filteredByName.value as any[]
-  // Child category selected
-  if (selectedCategoryId.value != null) {
-    return list.filter(p => Number(p?.category?.id) === Number(selectedCategoryId.value))
-  }
-  // Parent selected: include parent + its children
-  if (selectedParentId.value != null) {
-    const pid = Number(selectedParentId.value)
-    const children = childrenMap.value[pid] || []
-    const allowed = new Set<number>([pid, ...children.map((c: any) => Number(c.id))])
-    return list.filter(p => allowed.has(Number(p?.category?.id)))
-  }
-  // All
-  return list
-})
+const toggleParent = (parentId: number) => {
+  const pid = Number(parentId)
+  openParents.value[pid] = !openParents.value[pid]
+}
+const selectChild = (childId: number) => {
+  selectedCategoryId.value = Number(childId)
+  setParams({ category_id: Number(childId) })
+  changePage(0)
+}
+const clearCategory = () => {
+  selectedCategoryId.value = null
+  setParams({ category_id: null })
+  changePage(0)
+}
 
 // Helper: min price from additionals
 const productMinPrice = (p : any) => {
@@ -111,6 +108,13 @@ const sortOptions = [
   { value: 'price-high', label: 'Price: High to Low' }
 ]
 
+// Pagination helpers (UI uses 1-based labels)
+const totalPages = computed(() => Number(pageInfo.value?.total_pages || 1))
+const currentPageLabel = computed(() => Number(pageInfo.value?.current_page || (pagination.value.page + 1)))
+const prevPage = () => { if (pageInfo.value?.has_previous_page) changePage(Math.max(0, pagination.value.page - 1)) }
+const nextPage = () => { if (pageInfo.value?.has_next_page) changePage(pagination.value.page + 1) }
+const goToPage = (p1: number) => changePage(Math.max(0, p1 - 1))
+
 const pageTitle = computed(() => `Brandingku Products`)
 
 useHead({ title: pageTitle })
@@ -130,8 +134,8 @@ definePageMeta({ layout: 'page-layout' })
         <li>
           <button
             class="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            :class="{ 'bg-gray-100': selectedParentId === null && selectedCategoryId === null }"
-            @click="selectedParentId = null; selectedCategoryId = null"
+          :class="{ 'bg-gray-100': selectedCategoryId === null }"
+          @click="clearCategory()"
           >
             All
           </button>
@@ -139,22 +143,21 @@ definePageMeta({ layout: 'page-layout' })
         <li v-for="parent in parentCategories" :key="parent.id" class="relative">
           <button
             class="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            :class="{ 'bg-gray-100': selectedParentId === Number(parent.id) && selectedCategoryId === null }"
-            @click="selectedParentId = Number(parent.id); selectedCategoryId = null"
+          @click="toggleParent(Number(parent.id))"
           >
-            {{ parent.name }}
+          {{ parent.name }}
           </button>
-          <ul v-if="(childrenMap[parent.id] || []).length" class="mt-1 ml-4 space-y-1">
-            <li v-for="child in childrenMap[parent.id]" :key="child.id">
-              <button
-                class="block w-full px-3 py-1.5 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded"
-                :class="{ 'bg-gray-100': selectedCategoryId === Number(child.id) }"
-                @click="selectedCategoryId = Number(child.id); selectedParentId = null"
-              >
-                {{ child.name }}
-              </button>
-            </li>
-          </ul>
+        <ul v-if="(childrenMap[parent.id] || []).length && openParents[parent.id]" class="mt-1 ml-4 space-y-1">
+          <li v-for="child in childrenMap[parent.id]" :key="child.id">
+            <button
+              class="block w-full px-3 py-1.5 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded"
+              :class="{ 'bg-gray-100': selectedCategoryId === Number(child.id) }"
+              @click="selectChild(Number(child.id))"
+            >
+              {{ child.name }}
+            </button>
+          </li>
+        </ul>
         </li>
       </ul>
     </div>
@@ -163,7 +166,7 @@ definePageMeta({ layout: 'page-layout' })
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <h1 class="text-3xl font-bold">Daftar Produk</h1>
         <div class="flex items-center gap-4">
-          <Input class="w-[260px]" placeholder="Cari produk..." v-model="keyword" />
+        <Input class="w-[260px]" placeholder="Cari produk..." v-model="params.keyword" />
           <span class="text-sm text-gray-500">Sort by:</span>
           <Select>
             <SelectTrigger class="w-[180px]">
@@ -179,7 +182,7 @@ definePageMeta({ layout: 'page-layout' })
       </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      <Card v-for="product in filteredProducts" :key="product.id" class="group overflow-hidden">
+      <Card v-for="product in products" :key="product.id" class="group overflow-hidden">
         <div class="relative aspect-square overflow-hidden">
           <img :src="STORAGE_URL + product.image" :alt="product.name"
             class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />
@@ -208,11 +211,17 @@ definePageMeta({ layout: 'page-layout' })
     </div>
 
     <div class="mt-12 flex justify-center">
-      <div class="flex gap-2">
-        <Button variant="outline">1</Button>
-        <Button variant="outline">2</Button>
-        <Button variant="outline">3</Button>
-        <Button variant="outline">Next</Button>
+      <div class="flex gap-2 items-center">
+        <Button variant="outline" :disabled="!pageInfo?.has_previous_page" @click="prevPage">Prev</Button>
+        <Button
+          v-for="p in totalPages"
+          :key="p"
+          :variant="p === currentPageLabel ? 'default' : 'outline'"
+          @click="goToPage(p)"
+        >
+          {{ p }}
+        </Button>
+        <Button variant="outline" :disabled="!pageInfo?.has_next_page" @click="nextPage">Next</Button>
       </div>
     </div>
     </div>
