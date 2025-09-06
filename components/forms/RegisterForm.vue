@@ -55,7 +55,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit="onSubmit">
+  <form class="w-full space-y-6 px-6 py-4" @submit="onSubmit">
     <FormField v-slot="{ componentField }" name="name" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>
         <FormLabel>Full Name</FormLabel>
@@ -102,7 +102,7 @@ const onSubmit = handleSubmit(async (values) => {
       </FormItem>
     </FormField>
 
-    <Button type="submit" :disabled="isSubmitting">
+    <Button class="w-full" type="submit" :disabled="isSubmitting">
       {{ isSubmitting ? 'Creating account...' : 'Create account' }}
     </Button>
   </form>

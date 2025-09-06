@@ -44,7 +44,7 @@ const handleLogin = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleLogin">
+  <form class="w-full space-y-6 px-6 py-4" @submit.prevent="handleLogin">
     <FormField v-slot="{ componentField }" name="email" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>
         <FormLabel>Email</FormLabel>
@@ -69,7 +69,7 @@ const handleLogin = handleSubmit(async (values) => {
         <FormMessage/>
       </FormItem>
     </FormField>
-    <Button type="submit">
+    <Button class="w-full" type="submit">
       Login
     </Button>
   </form>

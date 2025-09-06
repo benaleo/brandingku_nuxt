@@ -25,14 +25,14 @@ const handleSwitchTab = (tabName: string) => {
 </script>
 
 <template>
-  <div class="w-full h-screen flex justify-center mt-[20vh]">
-    <Tabs v-model="activeTab" class="w-full px-4 md:px-0 md:max-w-3/4">
+  <div class="w-full h-screen flex justify-center bg-green-400 pt-[20vh]">
+    <Tabs v-model="activeTab" class="w-full px-4 md:px-0 md:max-w-3/4 h-fit">
       <TabsList class="w-full">
         <TabsTrigger v-for="(trigger, index) in tabs" :key="index" :value="trigger.name">
           {{ trigger.name.toLocaleUpperCase() }}
         </TabsTrigger>
       </TabsList>
-      <TabsContent v-for="(val, index) in tabs" :key="val.id" :value="val.name" class="transition-opacity">
+      <TabsContent v-for="(val, index) in tabs" :key="val.id" :value="val.name" :class="{ 'rounded-tl-xl rounded-br-xl': val.id === 1, 'rounded-tr-xl rounded-bl-xl': val.id === 2 }" class="transition-opacity bg-white">
         <component :is="val.element" @switch-tab="handleSwitchTab"/>
       </TabsContent>
     </Tabs>
