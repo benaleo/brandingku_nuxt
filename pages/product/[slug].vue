@@ -126,14 +126,13 @@ const variantColors = computed<string[] | null>(() => {
 });
 
 const router = useRouter();
-const lastHistory = router.options.history.state.back;
-  const currentPath = router.currentRoute.value.path;
 const handleBack = () => {
-  if (lastHistory !== currentPath) {
-    navigateTo(lastHistory as string);
-    return;
+  if (process.client) {
+    const lastHistory = localStorage.getItem('lastHistory') || '/';
+    navigateTo(lastHistory);
+  } else {
+    navigateTo('/');
   }
-  navigateTo('/products');
 }
 
 watch(
