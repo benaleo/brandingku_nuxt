@@ -3,7 +3,7 @@
   <main class="bg-white min-h-screen">
     <slot/>
   </main>
-  <Footer class="mt-12"/>
+  <Footer class=""/>
 </template>
 
 <script setup lang="ts">

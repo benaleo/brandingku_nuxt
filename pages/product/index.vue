@@ -171,7 +171,7 @@ definePageMeta({ layout: "page-layout" });
   <!-- Header -->
   <HeaderProduct :title="pageTitle" />
 
-  <div class="app-container my-12 flex flex-col md:flex-row gap-1">
+  <div class="app-container flex flex-col md:flex-row gap-1">
     <!-- MARK : SIDEBAR -->
     <button
       v-if="isMobile"
