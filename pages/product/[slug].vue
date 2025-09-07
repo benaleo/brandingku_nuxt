@@ -193,7 +193,7 @@ watch(slug, (val) => {
           <!-- Description -->
           <div v-if="detail.description" class="mt-8">
             <h3 class="font-medium mb-3">Description</h3>
-            <p class="text-gray-700 whitespace-pre-line">{{ detail.description }}</p>
+            <div v-html="detail.description" class="prose prose-stone prose-a:text-primary prose-a:no-underline prose-a:hover:underline"></div>
           </div>
 
           <!-- Details (Specifications depend on selected variant) -->

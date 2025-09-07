@@ -185,6 +185,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         const mutation = `
             mutation CreateProduct(
                 $name: String!
+                $slug: String!
                 $description: String!
                 $image: String
                 $product_category_id: Int!
@@ -195,6 +196,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             ) {
                 createProduct(
                     name: $name
+                    slug: $slug
                     description: $description
                     image: $image
                     product_category_id: $product_category_id
@@ -205,11 +207,13 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 ) {
                     id
                     name
+                    slug
                 }
             }
         `
         const variables = {
             name: payload.name,
+            slug: payload.slug ?? null,
             description: payload.description ?? null,
             image: payload.image ?? null,
             product_category_id: Number(payload.product_category_id),
@@ -257,6 +261,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             mutation UpdateProduct(
                 $id: Int!,
                 $name: String!,
+                $slug: String,
                 $description: String,
                 $image: String,
                 $product_category_id: Int!,
@@ -268,6 +273,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 updateProduct(
                     id: $id,
                     name: $name,
+                    slug: $slug,
                     description: $description,
                     image: $image,
                     product_category_id: $product_category_id,
@@ -278,12 +284,14 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 ) {
                     id
                     name
+                    slug
                 }
             }
         `
         const variables = {
             id: Number(id),
             name: payload.name,
+            slug: payload.slug ?? null,
             description: payload.description ?? null,
             image: payload.image ?? null,
             product_category_id: Number(payload.product_category_id),
@@ -292,7 +300,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             is_upsell: Boolean(payload.is_upsell),
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
-        const res = await gqlFetch<{ updateProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+        const res = await gqlFetch<{ updateProduct: { id: string; name: string; slug: string } }>(mutation, variables, { auth: true })
 
         // Handle galleries update/create if any
         if (payload.galleries?.length) {

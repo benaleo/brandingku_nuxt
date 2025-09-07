@@ -20,8 +20,9 @@
               :type="type"
               :placeholder="placeholder"
               v-model="modelValue"
-              v-bind="componentField"
-              :value="modelValue"
+              :name="name"
+              @input="(e: any) => componentField?.onInput?.(e)"
+              @blur="(e: any) => componentField?.onBlur?.(e)"
               :disabled="disabled"
               :class="inputClass"
           />

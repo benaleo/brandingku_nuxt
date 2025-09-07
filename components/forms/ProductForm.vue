@@ -113,8 +113,12 @@ const is_highlight = ref(false);
 const is_recommended = ref(false);
 const is_upsell = ref(false);
 const product_category_id = ref("");
-const disabled = currentPath.includes("/detail");
+// Page mode flags
 const isCreate = currentPath.includes("/add");
+const isDetail = currentPath.includes("/detail");
+const isEdit = currentPath.includes("/edit") || currentPath.includes("/update");
+// disable only on detail view, not on edit or create
+const disabled = isDetail && !isEdit;
 
 // Keep vee-validate form state in sync with Quill content
 watch(
@@ -264,10 +268,12 @@ const generateSlug = (str: string) => {
 watch(
   () => name.value,
   (newName) => {
+    // Only auto-generate slug when creating a new product.
+    if (!isCreate) return
     if (newName) {
-      slug.value = generateSlug(newName);
+      slug.value = generateSlug(newName)
     } else {
-      slug.value = "";
+      slug.value = ""
     }
   },
   { immediate: true }
@@ -378,6 +384,7 @@ const handleSubmitForm = handleSubmit(
       if (isCreate) {
         await useProductService().createProduct({
           name: submitData.name,
+          slug: submitData.slug,
           description: submitData.description,
           image: submitData.image,
           product_category_id: Number(submitData.product_category_id),
@@ -392,6 +399,7 @@ const handleSubmitForm = handleSubmit(
       } else {
         await useProductService().updateProductById(id, {
           name: submitData.name,
+          slug: submitData.slug,
           description: submitData.description,
           image: submitData.image,
           product_category_id: Number(submitData.product_category_id),
