@@ -115,6 +115,8 @@ const is_upsell = ref(false);
 const product_category_id = ref("");
 // Force re-render of Quill when description is set from API
 const quillKey = ref(0);
+// Quill guards to prevent initial empty content overwriting loaded HTML
+const skipEmptyNextUpdate = ref(false);
 // Page mode flags
 const isCreate = currentPath.includes("/add");
 const isDetail = currentPath.includes("/detail");
@@ -130,6 +132,22 @@ watch(
   },
   { immediate: true }
 );
+
+function onQuillReady() {
+  // After ready, the first update may emit empty content; guard is already set by watcher
+}
+
+function onQuillUpdate(val: any) {
+  const str = typeof val === 'string' ? val : String(val || '');
+  // Quill often emits an initial "<p><br></p>"; treat that as empty
+  const isEmpty = str === '' || str === '<p><br></p>';
+  if (skipEmptyNextUpdate.value && isEmpty && (description.value || '') !== '') {
+    skipEmptyNextUpdate.value = false;
+    return;
+  }
+  skipEmptyNextUpdate.value = false;
+  description.value = str;
+}
 
 // Track images that should be deleted on submit
 const imagesToDelete = ref<{ url: string; path: string; bucket: string }[]>([]);
@@ -181,15 +199,16 @@ watch(
 // Watch for API data load and set fields when available
 watch(
   [loading, datas],
-  ([loadingVal, datasVal]) => {
+  async ([loadingVal, datasVal]) => {
     if (!isCreate && !loadingVal && datasVal) {
       name.value = datasVal.name || "";
       slug.value = datasVal.slug || "";
       description.value = datasVal.description || "";
       // Ensure Quill picks up the initial content on edit
-      nextTick().then(() => {
-        quillKey.value++
-      })
+      await nextTick();
+      // Prevent Quill's first empty update from wiping description
+      skipEmptyNextUpdate.value = true;
+      quillKey.value++;
       image.value = STORAGE_URL + datasVal.image || "";
       is_highlight.value = Boolean(datasVal.is_highlight) || false;
       is_recommended.value = Boolean(datasVal.is_recommended) || false;
