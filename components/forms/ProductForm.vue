@@ -45,6 +45,7 @@ const formSchema = toTypedSchema(
     is_highlight: z.coerce.boolean(),
     is_recommended: z.coerce.boolean(),
     is_upsell: z.coerce.boolean(),
+    is_active: z.coerce.boolean(),
     product_category_id: z.string().min(1, "Category is required"),
     additionals: z
       .array(
@@ -78,6 +79,7 @@ const {
     is_highlight: false,
     is_recommended: false,
     is_upsell: false,
+    is_active: true,
     product_category_id: "",
     additionals: [
       {
@@ -112,6 +114,7 @@ const image_file = ref<File | null>(null);
 const is_highlight = ref(false);
 const is_recommended = ref(false);
 const is_upsell = ref(false);
+const is_active = ref(true);
 const product_category_id = ref("");
 // Force re-render of Quill when description is set from API
 const quillKey = ref(0);
@@ -213,6 +216,7 @@ watch(
       is_highlight.value = Boolean(datasVal.is_highlight) || false;
       is_recommended.value = Boolean(datasVal.is_recommended) || false;
       is_upsell.value = Boolean(datasVal.is_upsell) || false;
+      is_active.value = datasVal.is_active !== undefined ? Boolean(datasVal.is_active) : true;
       // Set the category ID from the nested category object if it exists
       // Convert to string since the form expects a string value
       product_category_id.value = datasVal.category?.id
@@ -237,6 +241,7 @@ watch(
         Boolean(datasVal.is_recommended) || false
       );
       setFieldValue("is_upsell", Boolean(datasVal.is_upsell) || false);
+      setFieldValue("is_active", Boolean(datasVal.is_active) || false);
       setFieldValue(
         "product_category_id",
         datasVal.category?.id ? String(datasVal.category.id) : ""
@@ -344,6 +349,7 @@ const handleSubmitForm = handleSubmit(
       // Ensure boolean values are properly converted
       submitData.is_recommended = Boolean(submitData.is_recommended);
       submitData.is_upsell = Boolean(submitData.is_upsell);
+      submitData.is_active = Boolean(submitData.is_active);
 
       console.log("Galleries data:", submitData.galleries);
       console.debug(
@@ -416,7 +422,7 @@ const handleSubmitForm = handleSubmit(
           is_highlight: Boolean(submitData.is_highlight),
           is_recommended: Boolean(submitData.is_recommended),
           is_upsell: Boolean(submitData.is_upsell),
-          is_active: true,
+          is_active: submitData.is_active,
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
         });
@@ -431,7 +437,7 @@ const handleSubmitForm = handleSubmit(
           is_highlight: Boolean(submitData.is_highlight),
           is_recommended: Boolean(submitData.is_recommended),
           is_upsell: Boolean(submitData.is_upsell),
-          is_active: true,
+          is_active: submitData.is_active,
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
         });
@@ -588,6 +594,14 @@ function handleBack() {
       v-model="is_upsell"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('is_upsell')"
+    />
+    <!-- Is Active -->
+    <FieldXCheckbox
+      name="is_active"
+      label="Is Active"
+      v-model="is_active"
+      :disabled="disabled"
+      :isFieldDirty="isFieldDirty('is_active')"
     />
 
     <!-- Form Button -->

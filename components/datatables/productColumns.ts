@@ -43,6 +43,17 @@ export const productColumns: ColumnDef<Product>[] = [
             ])
         }
     },
+     {
+        accessorKey: 'is_active',
+        header: 'Active',
+        cell: ({row}) => {
+            return h('div', {class: 'flex items-center justify-center'}, [
+                row.getValue('is_active') ?
+                    h(CircleCheck, {class: 'text-green-500'}) :
+                    h(CircleX, {class: 'text-red-500'})
+            ])
+        }
+    },
     {
         accessorKey: 'updated_at',
         header: 'Timestamp',

@@ -26,6 +26,8 @@ const STORAGE_URL = config.public.STORAGE_URL;
 
 // Products: server-side pagination + optional category_id filter
 const productService = useProductService(true);
+// Initialize with only active products
+productService.params.is_active = true;
 const {
   datas: products,
   pageInfo,
@@ -231,7 +233,7 @@ definePageMeta({ layout: "page-layout" });
 
     <div class="w-full pb-12">
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-2 md:mb-8 gap-2 md:gap-4 w-full" >
-        <h1 class="text-3xl font-bold mb-4 whitespace-nowrap">Daftar Produk</h1>
+        <h1 class="text-3xl font-bold mb-4 whitespace-nowrap">Daftar Produk Aktif</h1>
         <div class="flex flex-col-reverse md:flex-row justify-end items-end gap-1 md:gap-4 w-full" >
           <Input
             class="w-[260px]"
