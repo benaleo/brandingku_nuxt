@@ -113,6 +113,8 @@ const is_highlight = ref(false);
 const is_recommended = ref(false);
 const is_upsell = ref(false);
 const product_category_id = ref("");
+// Force re-render of Quill when description is set from API
+const quillKey = ref(0);
 // Page mode flags
 const isCreate = currentPath.includes("/add");
 const isDetail = currentPath.includes("/detail");
@@ -184,6 +186,10 @@ watch(
       name.value = datasVal.name || "";
       slug.value = datasVal.slug || "";
       description.value = datasVal.description || "";
+      // Ensure Quill picks up the initial content on edit
+      nextTick().then(() => {
+        quillKey.value++
+      })
       image.value = STORAGE_URL + datasVal.image || "";
       is_highlight.value = Boolean(datasVal.is_highlight) || false;
       is_recommended.value = Boolean(datasVal.is_recommended) || false;
@@ -487,6 +493,7 @@ function handleBack() {
       >
       <ClientOnly>
         <QuillEditor
+          :key="quillKey"
           v-model:content="description"
           content-type="html"
           theme="snow"

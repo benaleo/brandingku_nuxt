@@ -216,50 +216,42 @@ async function removeAdditional(id: number, idx: number) {
           />
           <div class="w-full px-1 col-span-2">
             <label class="block form-label mb-2">Attributes</label>
-            <div class="space-y-2">
-              <Card
-                v-for="(attr, attrIdx) in parsedAttributes[addIdx]"
-                :key="attrIdx"
-                class="relative"
-              >
-                <button
-                  type="button"
-                  class="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                  @click="removeAttribute(addIdx, attrIdx)"
-                >
-                  <X class="h-4 w-4" />
-                </button>
-                <CardContent class="pt-2">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label class="text-sm font-medium mb-1 block">Key</label>
-                      <Input
-                        v-model="attr.key"
-                        placeholder="e.g. Color"
-                      />
+            <Card>
+              <CardContent class="pt-4">
+                <div class="space-y-3">
+                  <div
+                    v-for="(attr, attrIdx) in parsedAttributes[addIdx]"
+                    :key="attrIdx"
+                    class="grid grid-cols-12 gap-3 items-end"
+                  >
+                    <div class="col-span-5">
+                      <label v-if="attrIdx === 0" class="text-sm font-medium mb-1 block">Key</label>
+                      <Input v-model="attr.key" placeholder="e.g. Color" />
                     </div>
-                    <div>
-                      <label class="text-sm font-medium mb-1 block"
-                        >Value</label
+                    <div class="col-span-5">
+                      <label v-if="attrIdx === 0" class="text-sm font-medium mb-1 block">Value</label>
+                      <Input v-model="attr.value" placeholder="e.g. Red" />
+                    </div>
+                    <div class="col-span-2 flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        class="text-muted-foreground hover:text-destructive"
+                        @click="removeAttribute(addIdx, attrIdx)"
+                        title="Remove attribute"
                       >
-                      <Input
-                        v-model="attr.value"
-                        placeholder="e.g. Red"
-                      />
+                        <X class="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                class="mt-2"
-                @click="addAttribute(addIdx)"
-              >
-                <Plus class="h-4 w-4 mr-2" /> Add Attribute
-              </Button>
-            </div>
+                  <div>
+                    <Button type="button" variant="outline" size="sm" @click="addAttribute(addIdx)">
+                      <Plus class="h-4 w-4 mr-2" /> Add Attribute
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
