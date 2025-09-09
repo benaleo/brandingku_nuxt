@@ -31,6 +31,10 @@ function parseAttributes(attributes: string): {key: string, value: string}[] {
 
 const parsedAttributes = ref<Record<number, {key: string, value: string}[]>>({})
 
+// JSON editor state per additional
+const jsonEditorOpen = ref<Record<number, boolean>>({})
+const jsonDraft = ref<Record<number, string>>({})
+
 // Sync parsedAttributes with list.attributes
 watch(list, () => {
   list.value.forEach((add, idx) => {
@@ -137,6 +141,78 @@ async function removeAdditional(id: number, idx: number) {
   }
 }
 
+function normalizeAttributes(input: any): { key: string; value: string }[] {
+  if (!Array.isArray(input)) return []
+  return input
+    .filter((it: any) => it && typeof it === 'object')
+    .map((it: any) => ({
+      key: String(it.key ?? ''),
+      value: String(it.value ?? ''),
+    }))
+}
+
+function openJsonEditor(addIdx: number) {
+  const current = parsedAttributes.value[addIdx] || []
+  jsonDraft.value[addIdx] = JSON.stringify(current, null, 2)
+  jsonEditorOpen.value[addIdx] = true
+}
+
+function cancelJson(addIdx: number) {
+  jsonEditorOpen.value[addIdx] = false
+}
+
+function formatJson(addIdx: number) {
+  try {
+    const parsed = JSON.parse(jsonDraft.value[addIdx] || '[]')
+    const normalized = normalizeAttributes(parsed)
+    jsonDraft.value[addIdx] = JSON.stringify(normalized, null, 2)
+  } catch (e) {
+    console.warn('Invalid JSON; cannot format')
+  }
+}
+
+function applyJson(addIdx: number) {
+  try {
+    const parsed = JSON.parse(jsonDraft.value[addIdx] || '[]')
+    const normalized = normalizeAttributes(parsed)
+    parsedAttributes.value[addIdx] = normalized
+    jsonEditorOpen.value[addIdx] = false
+  } catch (e) {
+    console.warn('Invalid JSON; cannot apply')
+  }
+}
+
+async function copyJson(addIdx: number) {
+  try {
+    const data = parsedAttributes.value[addIdx] || []
+    const text = JSON.stringify(data, null, 2)
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      // Fallback: open editor with content selected
+      jsonDraft.value[addIdx] = text
+      jsonEditorOpen.value[addIdx] = true
+    }
+  } catch (e) {
+    console.warn('Copy failed')
+  }
+}
+
+async function pasteJson(addIdx: number) {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
+      const text = await navigator.clipboard.readText()
+      jsonDraft.value[addIdx] = text
+      jsonEditorOpen.value[addIdx] = true
+    } else {
+      // If clipboard API is not available, keep editor open for manual paste
+      jsonEditorOpen.value[addIdx] = true
+    }
+  } catch (e) {
+    console.warn('Paste failed; opening editor for manual paste')
+    jsonEditorOpen.value[addIdx] = true
+  }
+}
 
 </script>
 
@@ -216,50 +292,68 @@ async function removeAdditional(id: number, idx: number) {
           />
           <div class="w-full px-1 col-span-2">
             <label class="block form-label mb-2">Attributes</label>
-            <div class="space-y-2">
-              <Card
-                v-for="(attr, attrIdx) in parsedAttributes[addIdx]"
-                :key="attrIdx"
-                class="relative"
-              >
-                <button
-                  type="button"
-                  class="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                  @click="removeAttribute(addIdx, attrIdx)"
-                >
-                  <X class="h-4 w-4" />
-                </button>
-                <CardContent class="pt-2">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label class="text-sm font-medium mb-1 block">Key</label>
-                      <Input
-                        v-model="attr.key"
-                        placeholder="e.g. Color"
-                      />
+            <Card class="pt-0">
+              <CardContent class="pt-4">
+                <!-- JSON toolbar -->
+                <div class="flex items-center gap-2 mb-3">
+                  <Button type="button" variant="outline" size="sm" @click="copyJson(addIdx)">Copy JSON</Button>
+                  <Button type="button" variant="outline" size="sm" @click="pasteJson(addIdx)">Paste JSON</Button>
+                  <Button type="button" variant="secondary" size="sm" @click="openJsonEditor(addIdx)">Edit JSON</Button>
+                </div>
+
+                <!-- JSON editor -->
+                <div v-if="jsonEditorOpen[addIdx]" class="mb-4">
+                  <textarea
+                    v-model="jsonDraft[addIdx]"
+                    class="w-full h-40 p-2 border rounded font-mono text-sm"
+                    placeholder='[
+  { "key": "Color", "value": "Red, Blue" }
+]'
+                  ></textarea>
+                  <div class="flex items-center gap-2 mt-2">
+                    <Button type="button" size="sm" @click="applyJson(addIdx)">Apply</Button>
+                    <Button type="button" variant="outline" size="sm" @click="formatJson(addIdx)">Format</Button>
+                    <Button type="button" variant="ghost" size="sm" @click="cancelJson(addIdx)">Cancel</Button>
+                  </div>
+                  <div class="text-xs text-muted-foreground mt-2">
+                    Tips: Masukkan array JSON berisi objek { key, value }. Contoh nilai dapat berupa "Red, Blue" untuk multiple values.
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div
+                    v-for="(attr, attrIdx) in parsedAttributes[addIdx]"
+                    :key="attrIdx"
+                    class="grid grid-cols-12 gap-3 items-end"
+                  >
+                    <div class="col-span-5">
+                      <label v-if="attrIdx === 0" class="text-sm font-medium mb-1 block">Key</label>
+                      <Input v-model="attr.key" placeholder="e.g. Color" />
                     </div>
-                    <div>
-                      <label class="text-sm font-medium mb-1 block"
-                        >Value</label
+                    <div class="col-span-5">
+                      <label v-if="attrIdx === 0" class="text-sm font-medium mb-1 block">Value</label>
+                      <Input v-model="attr.value" placeholder="e.g. Red" />
+                    </div>
+                    <div class="col-span-2 flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        class="text-muted-foreground hover:text-destructive"
+                        @click="removeAttribute(addIdx, attrIdx)"
+                        title="Remove attribute"
                       >
-                      <Input
-                        v-model="attr.value"
-                        placeholder="e.g. Red"
-                      />
+                        <X class="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                class="mt-2"
-                @click="addAttribute(addIdx)"
-              >
-                <Plus class="h-4 w-4 mr-2" /> Add Attribute
-              </Button>
-            </div>
+                  <div>
+                    <Button type="button" variant="outline" size="sm" @click="addAttribute(addIdx)">
+                      <Plus class="h-4 w-4 mr-2" /> Add Attribute
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

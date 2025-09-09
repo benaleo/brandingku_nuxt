@@ -15,9 +15,9 @@ export const productCategoryChildColumns: ColumnDef<ProductCategory>[] = [
     accessorKey: 'image',
     header: () => h('div', { class: 'text-left' }, 'Image'),
     cell: ({ row }) => {
-      const API_URL = useRuntimeConfig().public.API_URL
+      const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
       const raw: string | null = row.getValue('image')
-      const src: string = raw ? `${API_URL}${raw}` : '/images/no-image.jpg'
+      const src: string = raw ? `${STORAGE_URL}${raw}` : '/images/no-image.jpg'
       return h('div', { class: 'flex items-ceter justify-center overflow-hidden h-16' }, [
         h(DialogViewImage, { src, alt: 'Child Category Image', class: 'max-h-16 object-cover' }),
       ])

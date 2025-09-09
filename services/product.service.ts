@@ -18,7 +18,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
-    const params = reactive<{ keyword?: string; category_id?: number | null } >({})
+    const params = reactive<{ keyword?: string; category_id?: number | null; is_active?: boolean } >({})
 
     const changePage = (newPage: number) => {
         pagination.value.page = newPage
@@ -39,8 +39,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         error.value = null
         try {
             const query = `
-                query getProducts($page: Int!, $limit: Int!, $category_id: Int) {
-                    getProducts(pagination: { page: $page, limit: $limit }, category_id: $category_id) {
+                query getProducts($page: Int!, $limit: Int!, $category_id: Int, $is_active: Boolean) {
+                    getProducts(pagination: { page: $page, limit: $limit }, category_id: $category_id, is_active: $is_active) {
                         items {
                             id
                             name
@@ -51,6 +51,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                             is_highlight
                             is_recommended
                             is_upsell
+                            is_active
                             galleries { id image orders }
                             additionals {
                                 id
@@ -83,7 +84,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             const serverLimit = pagination.value.limit || 10
             const res = await gqlFetch<{ getProducts: { items: Product[]; page_info: any } }>(
                 query,
-                { page: serverPage, limit: serverLimit, ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}) },
+                { page: serverPage, limit: serverLimit, ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}), ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}) },
                 { auth: true }
             )
             let list = (res?.getProducts?.items || []) as any[]
@@ -137,6 +138,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         is_highlight
                         is_recommended
                         is_upsell
+                        is_active
                         galleries { id image orders }
                         additionals {
                             id
@@ -185,6 +187,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         const mutation = `
             mutation CreateProduct(
                 $name: String!
+                $slug: String!
                 $description: String!
                 $image: String
                 $product_category_id: Int!
@@ -195,6 +198,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             ) {
                 createProduct(
                     name: $name
+                    slug: $slug
                     description: $description
                     image: $image
                     product_category_id: $product_category_id
@@ -205,11 +209,13 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 ) {
                     id
                     name
+                    slug
                 }
             }
         `
         const variables = {
             name: payload.name,
+            slug: payload.slug ?? null,
             description: payload.description ?? null,
             image: payload.image ?? null,
             product_category_id: Number(payload.product_category_id),
@@ -257,6 +263,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             mutation UpdateProduct(
                 $id: Int!,
                 $name: String!,
+                $slug: String,
                 $description: String,
                 $image: String,
                 $product_category_id: Int!,
@@ -268,6 +275,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 updateProduct(
                     id: $id,
                     name: $name,
+                    slug: $slug,
                     description: $description,
                     image: $image,
                     product_category_id: $product_category_id,
@@ -278,12 +286,14 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                 ) {
                     id
                     name
+                    slug
                 }
             }
         `
         const variables = {
             id: Number(id),
             name: payload.name,
+            slug: payload.slug ?? null,
             description: payload.description ?? null,
             image: payload.image ?? null,
             product_category_id: Number(payload.product_category_id),
@@ -292,7 +302,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             is_upsell: Boolean(payload.is_upsell),
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
-        const res = await gqlFetch<{ updateProduct: { id: string; name: string } }>(mutation, variables, { auth: true })
+        const res = await gqlFetch<{ updateProduct: { id: string; name: string; slug: string } }>(mutation, variables, { auth: true })
 
         // Handle galleries update/create if any
         if (payload.galleries?.length) {
