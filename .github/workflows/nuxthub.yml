@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Let the action read packageManager from package.json
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
@@ -21,13 +22,13 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # Use frozen lockfile (requires you commit an updated pnpm-lock.yaml)
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Ensure NuxtHub module is installed
         run: pnpx nuxthub@latest ensure
 
-      # Build static site and produce ./dist (alias of .output/public)
       - name: Build static dist
         run: pnpm run build:dist
 
