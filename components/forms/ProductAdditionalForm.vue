@@ -3,7 +3,7 @@ import { ref, watch, computed } from "vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, X } from "lucide-vue-next";
+import { Copy, Edit, Plus, Replace, Trash2, X } from "lucide-vue-next";
 import type { ProductAdditional } from "~/types/products.type";
 import { useProductAdditionalService } from "~/services/product-additional.service";
 import FieldXSelectSimple from "./fields/FieldXSelectSimple.vue";
@@ -295,10 +295,16 @@ async function pasteJson(addIdx: number) {
             <Card class="pt-0">
               <CardContent class="pt-4">
                 <!-- JSON toolbar -->
-                <div class="flex items-center gap-2 mb-3">
-                  <Button type="button" variant="outline" size="sm" @click="copyJson(addIdx)">Copy JSON</Button>
-                  <Button type="button" variant="outline" size="sm" @click="pasteJson(addIdx)">Paste JSON</Button>
-                  <Button type="button" variant="secondary" size="sm" @click="openJsonEditor(addIdx)">Edit JSON</Button>
+                <div class="flex items-center justify-end gap-2 mb-3">
+                  <Button type="button" variant="outline" size="sm" @click="copyJson(addIdx)">
+                    <Copy class="h-4 w-4 mr-2" />
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" @click="pasteJson(addIdx)">
+                    <Replace class="h-4 w-4 mr-2" />
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" @click="openJsonEditor(addIdx)">
+                    <Edit class="h-4 w-4 mr-2" />
+                  </Button>
                 </div>
 
                 <!-- JSON editor -->

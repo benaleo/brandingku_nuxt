@@ -53,9 +53,6 @@ function removeGalleryItem(galleryItem: ProductGallery) {
   }
 }
 
-// show all galleries on json
-console.log('galleries', JSON.stringify(galleries.value))
-
 function removeFile(id: string) {
   const fileToRemove = files.value.find(f => f.id === id)
   if (fileToRemove) {

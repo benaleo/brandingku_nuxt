@@ -18,8 +18,7 @@ import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
 import ProductGalleryForm from "./ProductGalleryForm.vue";
-import { QuillEditor } from "@vueup/vue-quill";
-import "@vueup/vue-quill/dist/vue-quill.snow.css";
+import FieldXArea from "./fields/FieldXArea.vue";
 
 const router = useRouter();
 const { token } = useAuth();
@@ -95,16 +94,8 @@ const {
   },
 });
 
-// For dynamic additionals
+// For dynamic additionals (managed locally; synced to payload on submit)
 const additionals = ref([...(formValues.additionals as ProductAdditional[])]);
-// Sync local additionals changes back to the form values
-watch(
-  additionals,
-  (val) => {
-    setFieldValue("additionals", val);
-  },
-  { deep: true }
-);
 
 const name = ref("");
 const slug = ref("");
@@ -116,41 +107,16 @@ const is_recommended = ref(false);
 const is_upsell = ref(false);
 const is_active = ref(true);
 const product_category_id = ref("");
-// Force re-render of Quill when description is set from API
-const quillKey = ref(0);
-// Quill guards to prevent initial empty content overwriting loaded HTML
-const skipEmptyNextUpdate = ref(false);
 // Page mode flags
 const isCreate = currentPath.includes("/add");
 const isDetail = currentPath.includes("/detail");
 const isEdit = currentPath.includes("/edit") || currentPath.includes("/update");
 // disable only on detail view, not on edit or create
 const disabled = isDetail && !isEdit;
+// Only render form after data is populated in edit mode
+const ready = ref(isCreate);
 
-// Keep vee-validate form state in sync with Quill content
-watch(
-  () => description.value,
-  (val) => {
-    setFieldValue("description", val || "");
-  },
-  { immediate: true }
-);
-
-function onQuillReady() {
-  // After ready, the first update may emit empty content; guard is already set by watcher
-}
-
-function onQuillUpdate(val: any) {
-  const str = typeof val === 'string' ? val : String(val || '');
-  // Quill often emits an initial "<p><br></p>"; treat that as empty
-  const isEmpty = str === '' || str === '<p><br></p>';
-  if (skipEmptyNextUpdate.value && isEmpty && (description.value || '') !== '') {
-    skipEmptyNextUpdate.value = false;
-    return;
-  }
-  skipEmptyNextUpdate.value = false;
-  description.value = str;
-}
+// Removed explicit syncing of description to vee-validate to avoid feedback loops.
 
 // Track images that should be deleted on submit
 const imagesToDelete = ref<{ url: string; path: string; bucket: string }[]>([]);
@@ -184,107 +150,75 @@ if (!isCreate) {
 // Galleries with proper synchronization and image path handling
 const galleries = ref<ProductGallery[]>([]);
 
-// Sync galleries changes back to form values (similar to additionals)
-watch(
-  galleries,
-  (val) => {
-    // Convert full URLs back to relative paths for server
-    const processedGalleries = val.map((gallery) => ({
-      ...gallery,
-      image: gallery.image.startsWith(STORAGE_URL)
-        ? gallery.image.slice(STORAGE_URL.length)
-        : gallery.image,
-    }));
-  },
-  { deep: true }
-);
+// Watch for API data load and set fields ONCE when available
+const initialized = ref(false);
+const stopInitWatch = watch(
+  () => datas.value,
+  async (datasVal) => {
+    if (!isCreate && !initialized.value && datasVal) {
+      // Mark initialized early to avoid mid-execution recursive triggers
+      initialized.value = true;
+      // Defer mutations to avoid synchronous recursive updates
+      setTimeout(async () => {
+        name.value = datasVal.name || "";
+        slug.value = datasVal.slug || "";
+        description.value = datasVal.description || "";
+        await nextTick();
+        image.value = datasVal.image ? `${STORAGE_URL}${datasVal.image}` : "";
+        is_highlight.value = Boolean(datasVal.is_highlight) || false;
+        is_recommended.value = Boolean(datasVal.is_recommended) || false;
+        is_upsell.value = Boolean(datasVal.is_upsell) || false;
+        is_active.value =
+          datasVal.is_active !== undefined ? Boolean(datasVal.is_active) : true;
+        product_category_id.value = datasVal.category?.id
+          ? String(datasVal.category.id)
+          : "";
+        galleries.value = (datasVal.galleries || []).map(
+          (gallery: {
+            image?: string;
+            orders?: number;
+            [key: string]: any;
+          }) => ({
+            ...gallery,
+            image: gallery.image ? `${STORAGE_URL}${gallery.image}` : "",
+            orders: gallery.orders || 1,
+          })
+        );
 
-// Watch for API data load and set fields when available
-watch(
-  [loading, datas],
-  async ([loadingVal, datasVal]) => {
-    if (!isCreate && !loadingVal && datasVal) {
-      name.value = datasVal.name || "";
-      slug.value = datasVal.slug || "";
-      description.value = datasVal.description || "";
-      // Ensure Quill picks up the initial content on edit
-      await nextTick();
-      // Prevent Quill's first empty update from wiping description
-      skipEmptyNextUpdate.value = true;
-      quillKey.value++;
-      image.value = STORAGE_URL + datasVal.image || "";
-      is_highlight.value = Boolean(datasVal.is_highlight) || false;
-      is_recommended.value = Boolean(datasVal.is_recommended) || false;
-      is_upsell.value = Boolean(datasVal.is_upsell) || false;
-      is_active.value = datasVal.is_active !== undefined ? Boolean(datasVal.is_active) : true;
-      // Set the category ID from the nested category object if it exists
-      // Convert to string since the form expects a string value
-      product_category_id.value = datasVal.category?.id
-        ? String(datasVal.category.id)
-        : "";
-      galleries.value = (datasVal.galleries || []).map(
-        (gallery: { image?: string; orders?: number; [key: string]: any }) => ({
-          ...gallery,
-          image: gallery.image ? `${STORAGE_URL}${gallery.image}` : "",
-          orders: gallery.orders || 1, // Ensure orders has a default value
-        })
-      );
-
-      // Update form values for validation
-      setFieldValue("name", datasVal.name || "");
-      setFieldValue("slug", datasVal.slug || "");
-      setFieldValue("description", datasVal.description || "");
-      setFieldValue("image", datasVal.image || "");
-      setFieldValue("is_highlight", Boolean(datasVal.is_highlight) || false);
-      setFieldValue(
-        "is_recommended",
-        Boolean(datasVal.is_recommended) || false
-      );
-      setFieldValue("is_upsell", Boolean(datasVal.is_upsell) || false);
-      setFieldValue("is_active", Boolean(datasVal.is_active) || false);
-      setFieldValue(
-        "product_category_id",
-        datasVal.category?.id ? String(datasVal.category.id) : ""
-      );
-
-      // Process additionals array from API data
-      const processedAdditionals = (datasVal.additionals || []).map(
-        (add: any) => {
-          const rawAttr =
-            typeof add.attributes === "string" ? add.attributes : "";
-          let attributes = "[]";
-          try {
-            // If it's already a JSON array string, keep it; otherwise default to []
-            if (rawAttr && Array.isArray(JSON.parse(rawAttr))) {
-              attributes = rawAttr;
+        const processedAdditionals = (datasVal.additionals || []).map(
+          (add: any) => {
+            const rawAttr =
+              typeof add.attributes === "string" ? add.attributes : "";
+            let attributes = "[]";
+            try {
+              if (rawAttr && Array.isArray(JSON.parse(rawAttr))) {
+                attributes = rawAttr;
+              }
+            } catch (_) {
+              attributes = "[]";
             }
-          } catch (_) {
-            attributes = "[]";
+            return {
+              ...add,
+              id: add.id != null ? String(add.id) : undefined,
+              name: add.name || "",
+              price: Number(add.price) || 0,
+              moq: Number(add.moq) || 0,
+              stock: Number(add.stock) || 0,
+              discount: Number(add.discount) || 0,
+              discount_type: add.discount_type || "AMOUNT",
+              attributes,
+            };
           }
-          return {
-            ...add,
-            id: add.id != null ? String(add.id) : undefined,
-            name: add.name || "",
-            price: Number(add.price) || 0,
-            moq: Number(add.moq) || 0,
-            stock: Number(add.stock) || 0,
-            discount: Number(add.discount) || 0,
-            discount_type: add.discount_type || "AMOUNT",
-            attributes,
-          };
-        }
-      );
-
-      // Update additionals ref to trigger UI updates
-      additionals.value = processedAdditionals;
-
-      // Set form values for additionals
-      setFieldValue("additionals", processedAdditionals);
-
-      console.log("Form data loaded from API:", processedAdditionals);
+        );
+        additionals.value = processedAdditionals;
+        console.log("Form data loaded from API:", processedAdditionals);
+        ready.value = true;
+        // Stop watching after first population
+        stopInitWatch();
+      }, 0);
     }
   },
-  { immediate: true }
+  { immediate: true, flush: "post" }
 );
 
 const generateSlug = (str: string) => {
@@ -299,11 +233,11 @@ watch(
   () => name.value,
   (newName) => {
     // Only auto-generate slug when creating a new product.
-    if (!isCreate) return
+    if (!isCreate) return;
     if (newName) {
-      slug.value = generateSlug(newName)
+      slug.value = generateSlug(newName);
     } else {
-      slug.value = ""
+      slug.value = "";
     }
   },
   { immediate: true }
@@ -312,9 +246,6 @@ watch(
 const handleSubmitForm = handleSubmit(
   async (submittedValues) => {
     // Ensure v-model updates from child forms are flushed
-    await nextTick();
-    // Force-sync latest additionals into form values to avoid any staleness
-    setFieldValue("additionals", additionals.value);
     await nextTick();
     // Debug current additionals sources
     console.debug(
@@ -326,8 +257,15 @@ const handleSubmitForm = handleSubmit(
       JSON.parse(JSON.stringify(formValues.additionals))
     );
     const submitData: any = {
-      ...formValues,
+      name: name.value,
       slug: slug.value || generateSlug(name.value),
+      description: description.value,
+      image: image.value,
+      product_category_id: product_category_id.value,
+      is_highlight: Boolean(is_highlight.value),
+      is_recommended: Boolean(is_recommended.value),
+      is_upsell: Boolean(is_upsell.value),
+      is_active: Boolean(is_active.value),
       // Normalize additionals to correct types and ensure strings are present
       additionals: ((additionals.value as any[]) || []).map((add) => ({
         id:
@@ -469,7 +407,6 @@ const handleSubmitForm = handleSubmit(
 const imageUploading = ref(false);
 function onImageUploaded(url: string) {
   image.value = url;
-  setFieldValue("image", url);
 }
 function onUploading(val: boolean) {
   imageUploading.value = val;
@@ -481,6 +418,7 @@ function handleBack() {
 
 <template>
   <form
+    v-if="ready"
     class="w-full space-y-6 flex flex-wrap"
     @submit.prevent="handleSubmitForm"
   >
@@ -511,19 +449,14 @@ function handleBack() {
       :isFieldDirty="isFieldDirty('name')"
     />
 
-    <!-- Description using Vue Quill Editor -->
-    <div class="w-full mb-24">
-      <label class="block text-sm font-medium text-gray-700 mb-2"
-        >Description</label
-      >
+    <!-- Description -->
+    <div class="w-full mb-6">
       <ClientOnly>
         <QuillEditor
-          :key="quillKey"
+          :options="{ theme: 'snow', placeholder: 'Enter description' }"
+          toolbar="minimal"
+          contentType="html"
           v-model:content="description"
-          content-type="html"
-          theme="snow"
-          :read-only="disabled"
-          class="bg-white"
         />
       </ClientOnly>
     </div>

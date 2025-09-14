@@ -19,10 +19,6 @@ const valIsDelete = props.isDelete ?? true
 const valIsView = props.isView ?? true
 const valIsEdit = props.isEdit ?? true
 
-console.log('valIsDelete', valIsDelete)
-console.log('valIsView', valIsView)
-console.log('valIsEdit', valIsEdit)
-
 function copy(id: string) {
   navigator.clipboard.writeText(id)
 }
