@@ -26,16 +26,36 @@ export default defineEventHandler(async (event) => {
     if (reqAuth) headers['Authorization'] = reqAuth
     else if (token) headers['Authorization'] = `Bearer ${token}`
 
+    // Basic guard: if API_URL appears to be same-origin, log a warning to help avoid recursion/misconfig
+    try {
+      const host = getHeader(event, 'host') || ''
+      const apiHost = new URL(API_URL).host
+      if (host && apiHost && host === apiHost) {
+        console.warn('[gql.post] Warning: API_URL host equals request host. Ensure NUXT_PUBLIC_API_URL points to your backend, not this site.', {
+          host,
+          API_URL
+        })
+      }
+    } catch {}
+
     const res = await $fetch<any>(`${API_URL}/query`, {
       method: 'POST',
       headers,
       body: { query, variables },
+      // Prevent hanging the request forever in production
+      timeout: 15000,
     })
 
     // Pass through GraphQL-style response
     return res
   } catch (err: any) {
-    setResponseStatus(event, 500)
+    console.error('[gql.post] Upstream GraphQL error', {
+      message: err?.message,
+      name: err?.name,
+      stack: err?.stack,
+      cause: err?.cause,
+    })
+    setResponseStatus(event, 502)
     return { errors: [{ message: err?.message || 'GraphQL proxy error' }] }
   }
 })
