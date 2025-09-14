@@ -4,6 +4,7 @@ import { useRuntimeConfig } from '#imports'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const API_URL = config.public.API_URL
+  const GRAPHQL_PATH = String(config.public.graphqlPath || '/query')
   if (!API_URL) {
     setResponseStatus(event, 500)
     return { errors: [{ message: 'API_URL is not configured on the server' }] }
@@ -32,7 +33,15 @@ export default defineEventHandler(async (event) => {
       const normalized = new URL(API_URL)
       // Ensure no trailing slash duplication
       normalized.pathname = normalized.pathname.replace(/\/$/, '')
-      upstream = `${normalized.origin}${normalized.pathname}/query`
+      const path = (GRAPHQL_PATH || '').trim()
+      if (path.length > 0) {
+        // Ensure single leading slash
+        const ensure = path.startsWith('/') ? path : `/${path}`
+        upstream = `${normalized.origin}${normalized.pathname}${ensure}`
+      } else {
+        // When empty, treat API_URL as the full endpoint
+        upstream = `${normalized.origin}${normalized.pathname}`
+      }
 
       const host = (getHeader(event, 'host') || '').toLowerCase()
       const apiHost = normalized.host.toLowerCase()
