@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 const isCloudflarePreset = ['cloudflare_pages', 'cloudflare_module', 'cloudflare_durable'].includes(process.env.NITRO_PRESET || '')
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
   css: ['~/assets/css/tailwind.css'],
 
   vite: {
