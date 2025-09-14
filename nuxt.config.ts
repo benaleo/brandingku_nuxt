@@ -20,6 +20,10 @@ export default defineNuxtConfig({
     '@nuxthub/core'
   ],
 
+  nitro: {
+    preset: process.env.NITRO_PRESET || 'node-server',
+  },
+
   apollo: {
     clients: {
       default: {
