@@ -23,7 +23,8 @@ export default defineNuxtConfig({
   apollo: {
     clients: {
       default: {
-        httpEndpoint: process.env.NUXT_PUBLIC_API_URL + '/query'
+        // Route all GraphQL requests through our server proxy to handle auth/cookies and avoid CORS
+        httpEndpoint: '/api/gql'
       }
     },
   },
