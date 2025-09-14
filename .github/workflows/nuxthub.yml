@@ -3,7 +3,7 @@ on: push
 
 jobs:
   deploy:
-    name: "Deploy to NuxtHub"
+    name: Deploy to NuxtHub
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -14,20 +14,40 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: 'pnpm'
+          node-version: 22
+          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Build & Deploy to NuxtHub
+      - name: Ensure NuxtHub module is installed
+        run: pnpx nuxthub@latest ensure
+
+      # Option A: build dist and deploy dist
+      - name: Build static dist
+        run: pnpm run build:dist
+
+      - name: Show dist (debug)
+        run: ls -la dist | head -n 50
+
+      - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v2
-        with: 
+        with:
           project-key: brandingku-zliy
-          output-directory: dist
+          output-directory: .output
+          # directory: .   # set if your nuxt app is in a subfolder
+
+      # Option B (alternative): generate and deploy .output/public
+      # - name: Build static
+      #   run: pnpm run generate
+      # - name: Show .output/public
+      #   run: ls -la .output/public | head -n 50
+      # - name: Deploy to NuxtHub
+      #   uses: nuxt-hub/action@v2
+      #   with:
+      #     project-key: brandingku-zliy
+      #     output-directory: .output/public
