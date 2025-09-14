@@ -34,14 +34,13 @@ export default defineEventHandler(async (event) => {
       // Ensure no trailing slash duplication
       normalized.pathname = normalized.pathname.replace(/\/$/, '')
       const path = (GRAPHQL_PATH || '').trim()
-      if (path.length > 0) {
-        // Ensure single leading slash
-        const ensure = path.startsWith('/') ? path : `/${path}`
-        upstream = `${normalized.origin}${normalized.pathname}${ensure}`
-      } else {
-        // When empty, treat API_URL as the full endpoint
-        upstream = `${normalized.origin}${normalized.pathname}`
-      }
+      // Build upstream robustly to avoid double slashes regardless of inputs
+      const baseParts = [
+        normalized.origin,
+        normalized.pathname.replace(/^\/+|\/+$/g, ''),
+      ].filter(Boolean)
+      const pathPart = path.replace(/^\/+/, '')
+      upstream = [...baseParts, ...(pathPart ? [pathPart] : [])].join('/')
 
       const host = (getHeader(event, 'host') || '').toLowerCase()
       const apiHost = normalized.host.toLowerCase()
