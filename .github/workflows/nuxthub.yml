@@ -27,27 +27,14 @@ jobs:
       - name: Ensure NuxtHub module is installed
         run: pnpx nuxthub@latest ensure
 
-      # Option A: build dist and deploy dist
-      - name: Build static dist
-        run: pnpm run build:dist
+      - name: Build SSR output
+        run: pnpm run build
 
-      - name: Show dist (debug)
-        run: ls -la dist | head -n 50
+      - name: Show .output (debug)
+        run: ls -la .output | head -n 200
 
       - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v2
         with:
           project-key: brandingku-zliy
           output-directory: .output
-          # directory: .   # set if your nuxt app is in a subfolder
-
-      # Option B (alternative): generate and deploy .output/public
-      # - name: Build static
-      #   run: pnpm run generate
-      # - name: Show .output/public
-      #   run: ls -la .output/public | head -n 50
-      # - name: Deploy to NuxtHub
-      #   uses: nuxt-hub/action@v2
-      #   with:
-      #     project-key: brandingku-zliy
-      #     output-directory: .output/public
