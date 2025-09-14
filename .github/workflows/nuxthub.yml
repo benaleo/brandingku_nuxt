@@ -12,7 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Uses packageManager from package.json (no version field here)
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
@@ -22,24 +21,33 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # If your lockfile is up to date, keep --frozen-lockfile. Otherwise temporarily use --no-frozen-lockfile.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Ensure NuxtHub module is installed
         run: pnpx nuxthub@latest ensure
 
-      # Create ./dist (nuxt generate -> copy .output/public -> dist)
+      # Option A: build dist and deploy dist
       - name: Build static dist
         run: pnpm run build:dist
 
-      # Debug: confirm the folder exists
-      - name: Show dist
+      - name: Show dist (debug)
         run: ls -la dist | head -n 50
 
       - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v2
         with:
           project-key: brandingku-zliy
-          # IMPORTANT: use output-directory (not output-dir)
           output-directory: dist
+          # directory: .   # set if your nuxt app is in a subfolder
+
+      # Option B (alternative): generate and deploy .output/public
+      # - name: Build static
+      #   run: pnpm run generate
+      # - name: Show .output/public
+      #   run: ls -la .output/public | head -n 50
+      # - name: Deploy to NuxtHub
+      #   uses: nuxt-hub/action@v2
+      #   with:
+      #     project-key: brandingku-zliy
+      #     output-directory: .output/public
