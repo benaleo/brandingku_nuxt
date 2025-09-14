@@ -31,4 +31,4 @@ jobs:
         uses: nuxt-hub/action@v2
         with:
           project-key: brandingku-zliy
-          output-dir: .output
+          output-dir: .output/public
