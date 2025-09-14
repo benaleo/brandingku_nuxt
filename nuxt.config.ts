@@ -1,5 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite'
+// NuxtHub works only with Cloudflare Nitro presets. Guard its usage for non-Cloudflare builds.
+const isCloudflarePreset = ['cloudflare_pages', 'cloudflare_module', 'cloudflare_durable'].includes(process.env.NITRO_PRESET || '')
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -17,7 +19,8 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/icon',
     '@nuxtjs/apollo',
-    '@nuxthub/core'
+    // Only include NuxtHub when deploying to Cloudflare-compatible presets.
+    ...(isCloudflarePreset ? ['@nuxthub/core'] as const : [])
   ],
 
   nitro: {
