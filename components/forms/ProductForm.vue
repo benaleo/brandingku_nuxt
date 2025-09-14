@@ -18,8 +18,7 @@ import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
 import ProductGalleryForm from "./ProductGalleryForm.vue";
-import { QuillEditor } from "@vueup/vue-quill";
-import "@vueup/vue-quill/dist/vue-quill.snow.css";
+import FieldXArea from "./fields/FieldXArea.vue";
 
 const router = useRouter();
 const { token } = useAuth();
@@ -511,21 +510,18 @@ function handleBack() {
       :isFieldDirty="isFieldDirty('name')"
     />
 
-    <!-- Description using Vue Quill Editor -->
-    <div class="w-full mb-24">
-      <label class="block text-sm font-medium text-gray-700 mb-2"
-        >Description</label
-      >
-      <ClientOnly>
-        <QuillEditor
-          :key="quillKey"
-          v-model:content="description"
-          content-type="html"
-          theme="snow"
-          :read-only="disabled"
-          class="bg-white"
-        />
-      </ClientOnly>
+    <!-- Description -->
+    <div class="w-full mb-6">
+      <FieldXArea 
+        name="description" 
+        label="Description" 
+        placeholder="Enter description" 
+        :disabled="disabled"
+        v-model="description"
+        :isFieldDirty="isFieldDirty('description')"
+        :item-class="'inline-flex'"
+        :input-class="'min-h-[100px]'"
+      />
     </div>
     <!-- Image -->
     <ImageUploadField
