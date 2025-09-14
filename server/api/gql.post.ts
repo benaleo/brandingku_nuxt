@@ -26,28 +26,56 @@ export default defineEventHandler(async (event) => {
     if (reqAuth) headers['Authorization'] = reqAuth
     else if (token) headers['Authorization'] = `Bearer ${token}`
 
-    // Basic guard: if API_URL appears to be same-origin, log a warning to help avoid recursion/misconfig
+    // Normalize upstream endpoint and detect potential recursion
+    let upstream = ''
     try {
-      const host = getHeader(event, 'host') || ''
-      const apiHost = new URL(API_URL).host
+      const normalized = new URL(API_URL)
+      // Ensure no trailing slash duplication
+      normalized.pathname = normalized.pathname.replace(/\/$/, '')
+      upstream = `${normalized.origin}${normalized.pathname}/query`
+
+      const host = (getHeader(event, 'host') || '').toLowerCase()
+      const apiHost = normalized.host.toLowerCase()
       if (host && apiHost && host === apiHost) {
-        console.warn('[gql.post] Warning: API_URL host equals request host. Ensure NUXT_PUBLIC_API_URL points to your backend, not this site.', {
+        // If API_URL points to same host, it likely recurses to this Nuxt app.
+        // This often returns HTML or causes re-entrant calls in production.
+        console.warn('[gql.post] Detected API_URL host equals current host. This can cause recursion. Configure NUXT_PUBLIC_API_URL to your backend origin.', {
           host,
-          API_URL
+          API_URL,
         })
       }
-    } catch {}
+    } catch (e) {
+      setResponseStatus(event, 500)
+      return { errors: [{ message: `Invalid API_URL: ${API_URL}` }] }
+    }
 
-    const res = await $fetch<any>(`${API_URL}/query`, {
+    const res = await $fetch<any>(upstream, {
       method: 'POST',
       headers,
       body: { query, variables },
       // Prevent hanging the request forever in production
       timeout: 15000,
+      retry: 0,
+      responseType: 'json',
+    }).catch((err: any) => {
+      // Convert non-JSON or network errors into GraphQL-style error
+      const msg = err?.message || 'Upstream request failed'
+      throw new Error(msg)
     })
 
-    // Pass through GraphQL-style response
-    return res
+    // Validate shape explicitly to avoid passing HTML/invalid payloads with 200
+    if (res && typeof res === 'object') {
+      if (Array.isArray(res.errors) && res.errors.length) {
+        setResponseStatus(event, 502)
+        return { errors: res.errors }
+      }
+      if ('data' in res) {
+        return res
+      }
+    }
+
+    setResponseStatus(event, 502)
+    return { errors: [{ message: 'Upstream returned unexpected payload. Ensure your backend responds with { data, errors }.' }] }
   } catch (err: any) {
     console.error('[gql.post] Upstream GraphQL error', {
       message: err?.message,
