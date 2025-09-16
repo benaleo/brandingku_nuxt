@@ -21,6 +21,8 @@ const deletingKey = ref<string | null>(null)
 
 const list = ref<ProductAdditional[]>(props.modelValue || []);
 
+type AttrItem = { key: string; value: string; __k?: string }
+
 function parseAttributes(attributes: string): {key: string, value: string}[] {
   try {
     return JSON.parse(attributes) || [];
@@ -29,28 +31,87 @@ function parseAttributes(attributes: string): {key: string, value: string}[] {
   }
 }
 
-const parsedAttributes = ref<Record<number, {key: string, value: string}[]>>({})
+function withKeys(arr: { key: string; value: string }[]): AttrItem[] {
+  return (arr || []).map((it) => ({
+    key: String(it?.key ?? ''),
+    value: String(it?.value ?? ''),
+    __k: `${Date.now()}-${Math.random()}`,
+  }))
+}
+
+function serializeAttrs(arr: AttrItem[]): string {
+  const clean = (arr || []).map((it) => ({ key: String(it.key ?? ''), value: String(it.value ?? '') }))
+  return JSON.stringify(clean)
+}
+
+const parsedAttributes = ref<Record<number, AttrItem[]>>({})
+// Cache the last serialized attributes string per item to avoid re-parsing on
+// unrelated field changes (e.g., typing in name/price re-triggering deep watch)
+const lastAttributesStr = ref<Record<number, string>>({})
+// Guard to prevent reciprocal watchers from causing loops during manual syncs
+const isSyncing = ref(false)
+// Debounced emitter to batch updates and avoid tight deep-watch loops
+let emitTimer: number | null = null
+function queueEmit(delay = 150) {
+  if (emitTimer != null) {
+    clearTimeout(emitTimer as unknown as number)
+  }
+  emitTimer = window.setTimeout(() => {
+    emitTimer = null
+    try {
+      // Emit a cloned payload to avoid parent-child shared reference pitfalls
+      const payload = JSON.parse(JSON.stringify(list.value))
+      emit("update:modelValue", payload)
+    } catch (_) {
+      emit("update:modelValue", list.value)
+    }
+  }, delay)
+}
 
 // JSON editor state per additional
 const jsonEditorOpen = ref<Record<number, boolean>>({})
 const jsonDraft = ref<Record<number, string>>({})
 
-// Sync parsedAttributes with list.attributes
-watch(list, () => {
-  list.value.forEach((add, idx) => {
-    parsedAttributes.value[idx] = parseAttributes(add.attributes)
-  })
-}, { deep: true, immediate: true })
+// Sync parsedAttributes with list.attributes, but only react to attribute string changes
+watch(
+  () => list.value.map((it) => it?.attributes ?? '[]'),
+  (attrList) => {
+    attrList.forEach((current, idx) => {
+      if (lastAttributesStr.value[idx] !== current) {
+        const parsed = withKeys(parseAttributes(current))
+        // Only replace if content meaningfully changed to avoid triggering the other watcher unnecessarily
+        const prevStr = serializeAttrs(parsedAttributes.value[idx] ?? [])
+        const nextStr = serializeAttrs(parsed)
+        if (prevStr !== nextStr) {
+          parsedAttributes.value[idx] = parsed
+        }
+        lastAttributesStr.value[idx] = current
+      }
+    })
+  },
+  { immediate: true }
+)
 
 // Sync back to list when parsedAttributes changes
-watch(parsedAttributes, (newVal) => {
-  for (const idx in newVal) {
-    const i = Number(idx)
-    if (list.value[i]) {
-      list.value[i].attributes = JSON.stringify(newVal[i])
+watch(
+  parsedAttributes,
+  (newVal) => {
+    // Write back to list only when the serialized value is different to avoid
+    // a deep watcher feedback loop that can lock the UI in production builds.
+    if (isSyncing.value) return
+    for (const idx in newVal) {
+      const i = Number(idx)
+      if (!list.value[i]) continue
+      const nextStr = serializeAttrs(newVal[i] as AttrItem[])
+      if (list.value[i].attributes !== nextStr) {
+        list.value[i].attributes = nextStr
+        // Keep cache in sync to avoid immediate re-parse by the other watcher
+        lastAttributesStr.value[i] = nextStr
+      }
     }
-  }
-}, { deep: true })
+  },
+  { deep: true }
+)
 
 // Update attributes array back to string
 // Removed updateAttributes, now handled by watcher
@@ -59,46 +120,34 @@ watch(parsedAttributes, (newVal) => {
 watch(
   () => props.modelValue,
   (v) => {
-      list.value = (v || []).map((item, idx) => ({
-      ...item,
-      _uniqueKey: item.id ? undefined : `existing-${idx}-${Date.now()}-${Math.random()}`,
-    }));
-    },
+    try {
+      isSyncing.value = true
+      const incoming = (v || []).map((item, idx) => {
+        // preserve existing stable key if available
+        const prevKey = list.value?.[idx]?._uniqueKey
+        const stableKey = item._uniqueKey ?? prevKey ?? (item.id ? undefined : `new-${idx}`)
+        return {
+          ...item,
+          _uniqueKey: stableKey,
+        }
+      })
+      // Avoid unnecessary reassignment if meaningfully equal
+      const prevStr = JSON.stringify(list.value)
+      const nextStr = JSON.stringify(incoming)
+      if (prevStr !== nextStr) {
+        list.value = incoming
+        // Reset caches when the external model changes
+        lastAttributesStr.value = {}
+      }
+    } finally {
+      isSyncing.value = false
+    }
+  },
   { immediate: true }
 );
 
-const previousList = ref<ProductAdditional[]>([])
-
-watch(list, (v) => {
-  
-  // Log specific changes for items with IDs
-  v.forEach((item, idx) => {
-    if (item.id) {
-      const prevItem = previousList.value[idx]
-      if (prevItem) {
-        const changedFields: string[] = []
-        if (item.name !== prevItem.name) changedFields.push(`name: '${prevItem.name}' -> '${item.name}'`)
-        if (item.price !== prevItem.price) changedFields.push(`price: ${prevItem.price} -> ${item.price}`)
-        if (item.moq !== prevItem.moq) changedFields.push(`moq: ${prevItem.moq} -> ${item.moq}`)
-        if (item.stock !== prevItem.stock) changedFields.push(`stock: ${prevItem.stock} -> ${item.stock}`)
-        if (item.discount !== prevItem.discount) changedFields.push(`discount: ${prevItem.discount} -> ${item.discount}`)
-        if (item.discount_type !== prevItem.discount_type) changedFields.push(`discount_type: '${prevItem.discount_type}' -> '${item.discount_type}'`)
-        if (item.attributes !== prevItem.attributes) changedFields.push(`attributes changed`)
-        
-        if (changedFields.length > 0) {
-          // Extra log for ID 1
-          if (item.id === '1') {
-            }
-        }
-      }
-    }
-  })
-  
-  // Update previous list
-  previousList.value = v.map(item => ({ ...item }))
-  
-  emit("update:modelValue", v)
-}, { deep: true });
+// Note: Do not emit on every deep change to avoid focus loss while typing.
+// We only emit on structural operations (add/remove/apply JSON).
 
 function addAdditional() {
   list.value.push({
@@ -111,15 +160,44 @@ function addAdditional() {
     discount_type: "AMOUNT",
     attributes: "[]",
   });
+  queueEmit()
 }
 
 function addAttribute(additionalIdx: number) {
   if (!parsedAttributes.value[additionalIdx]) parsedAttributes.value[additionalIdx] = []
-  parsedAttributes.value[additionalIdx].push({ key: "", value: "" })
+  parsedAttributes.value[additionalIdx].push({ key: "", value: "", __k: `${Date.now()}-${Math.random()}` })
+  // Manually sync back to list for only this index to avoid heavy deep-watch churn
+  if (list.value[additionalIdx]) {
+    try {
+      isSyncing.value = true
+      const nextStr = serializeAttrs(parsedAttributes.value[additionalIdx])
+      if (list.value[additionalIdx].attributes !== nextStr) {
+        list.value[additionalIdx].attributes = nextStr
+        lastAttributesStr.value[additionalIdx] = nextStr
+      }
+    } finally {
+      isSyncing.value = false
+    }
+  }
+  queueEmit()
 }
 
 function removeAttribute(additionalIdx: number, attrIdx: number) {
+  const nextStr = serializeAttrs(parsedAttributes.value[additionalIdx].filter((_, i) => i !== attrIdx))
   parsedAttributes.value[additionalIdx].splice(attrIdx, 1)
+  // Manually sync back to list for only this index
+  if (list.value[additionalIdx]) {
+    try {
+      isSyncing.value = true
+      if (list.value[additionalIdx].attributes !== nextStr) {
+        list.value[additionalIdx].attributes = nextStr
+        lastAttributesStr.value[additionalIdx] = nextStr
+      }
+    } finally {
+      isSyncing.value = false
+    }
+  }
+  queueEmit()
 }
 
 async function removeAdditional(id: number, idx: number) {
@@ -139,6 +217,7 @@ async function removeAdditional(id: number, idx: number) {
     // New (unsaved) item, just remove from UI
     list.value.splice(idx, 1)
   }
+  queueEmit()
 }
 
 function normalizeAttributes(input: any): { key: string; value: string }[] {
@@ -175,8 +254,9 @@ function applyJson(addIdx: number) {
   try {
     const parsed = JSON.parse(jsonDraft.value[addIdx] || '[]')
     const normalized = normalizeAttributes(parsed)
-    parsedAttributes.value[addIdx] = normalized
+    parsedAttributes.value[addIdx] = withKeys(normalized)
     jsonEditorOpen.value[addIdx] = false
+    queueEmit()
   } catch (e) {
     console.warn('Invalid JSON; cannot apply')
   }
@@ -198,19 +278,42 @@ async function copyJson(addIdx: number) {
   }
 }
 
-async function pasteJson(addIdx: number) {
+// Read clipboard with a short timeout to avoid hanging the UI in production
+// when clipboard permissions are blocked or the promise stalls.
+async function readClipboardTextSafe(timeoutMs = 1000): Promise<string | null> {
   try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
-      const text = await navigator.clipboard.readText()
-      jsonDraft.value[addIdx] = text
-      jsonEditorOpen.value[addIdx] = true
-    } else {
-      // If clipboard API is not available, keep editor open for manual paste
-      jsonEditorOpen.value[addIdx] = true
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
+      return null
     }
-  } catch (e) {
-    console.warn('Paste failed; opening editor for manual paste')
-    jsonEditorOpen.value[addIdx] = true
+    const read = navigator.clipboard.readText()
+    const timed = new Promise<string>((_, reject) => {
+      const id = setTimeout(() => {
+        clearTimeout(id as unknown as number)
+        reject(new Error('Clipboard read timeout'))
+      }, timeoutMs)
+    })
+    // Race read vs timeout
+    return await Promise.race([read, timed])
+      .then((v) => (typeof v === 'string' ? v : null))
+      .catch(() => null)
+  } catch (_) {
+    return null
+  }
+}
+
+async function pasteJson(addIdx: number) {
+  // Open the editor immediately to keep the UI responsive
+  jsonEditorOpen.value[addIdx] = true
+  try {
+    const text = await readClipboardTextSafe(1200)
+    if (text != null) {
+      jsonDraft.value[addIdx] = text
+    } else {
+      // Leave the editor open for manual paste if clipboard read failed
+      if (!jsonDraft.value[addIdx]) jsonDraft.value[addIdx] = ''
+    }
+  } catch (_) {
+    // Fallback already open; no further action needed
   }
 }
 
@@ -329,7 +432,7 @@ async function pasteJson(addIdx: number) {
                 <div class="space-y-3">
                   <div
                     v-for="(attr, attrIdx) in parsedAttributes[addIdx]"
-                    :key="attrIdx"
+                    :key="attr.__k || attrIdx"
                     class="grid grid-cols-12 gap-3 items-end"
                   >
                     <div class="col-span-5">
