@@ -19,6 +19,7 @@ import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue"
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
 import ProductGalleryForm from "./ProductGalleryForm.vue";
 import FieldXArea from "./fields/FieldXArea.vue";
+import Label from "../ui/label/Label.vue";
 
 const router = useRouter();
 const { token } = useAuth();
@@ -213,12 +214,30 @@ const stopInitWatch = watch(
         additionals.value = processedAdditionals;
         console.log("Form data loaded from API:", processedAdditionals);
         ready.value = true;
+        // Ensure vee-validate sees the description value loaded from API
+        try { setFieldValue('description', description.value ?? ''); } catch {}
         // Stop watching after first population
         stopInitWatch();
       }, 0);
     }
   },
   { immediate: true, flush: "post" }
+);
+
+// Keep vee-validate 'description' in sync with Quill editor content without heavy loops
+let descSyncTimer: number | null = null;
+watch(
+  () => description.value,
+  (val) => {
+    if (descSyncTimer != null) {
+      clearTimeout(descSyncTimer as unknown as number);
+    }
+    descSyncTimer = window.setTimeout(() => {
+      try { setFieldValue('description', val ?? ''); } catch {}
+      descSyncTimer = null;
+    }, 120);
+  },
+  { flush: 'post' }
 );
 
 const generateSlug = (str: string) => {
@@ -451,6 +470,7 @@ function handleBack() {
 
     <!-- Description -->
     <div class="w-full mb-6">
+    <Label for="description">Description</Label>
       <ClientOnly>
         <QuillEditor
           :options="{ theme: 'snow', placeholder: 'Enter description' }"
