@@ -1,0 +1,23 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "brandingku",
+    "main": "./.output/server/index.mjs",
+    "compatibility_date": "2026-02-22",
+    "assets": {
+      "directory": "./.output/public/",
+      "binding": "ASSETS"
+    },
+    "observability": {
+      "enabled": true
+    },
+    "vars": {
+      "NITRO_PRESET": "cloudflare_pages",
+      "NUXT_PUBLIC_API_URL": "https://brandingkugo-benaleoprojects2134-1b5nr89y.apn.leapcell.dev",
+      "NUXT_PUBLIC_BASE_URL": "https://brandingku.benaleo.workers.dev",
+      "NUXT_PUBLIC_STORAGE_URL": "https://1xg7ah.leapcellobj.com/brandingku-wwlg-sww3-pysqn53v",
+      "SUPABASE_ACCESS_KEY": "5944b6c999b030dcc81c7ad49fcd0523",
+      "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhenNkYnp1dGp2ZHpvb3VtampjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyOTAwMDIsImV4cCI6MjA2MDg2NjAwMn0.xbMxzdXsinGgg_5PEpMmcevKmII-92HY6Q7L0I5fWEY",
+      "SUPABASE_SECRET_ACCESS_KEY": "54b65820150e5ebd54d7a542a872e1ea1b18c521fd5afac839691c90ac7a0f52",
+      "SUPABASE_URL": "https://uazsdbzutjvdzooumjjc.supabase.co"
+    }
+  }

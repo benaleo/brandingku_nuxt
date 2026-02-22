@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 // NuxtHub works only with Cloudflare Nitro presets. Guard its usage for non-Cloudflare builds.
 const isCloudflarePreset = ['cloudflare_pages', 'cloudflare_module', 'cloudflare_durable'].includes(process.env.NITRO_PRESET || '')
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2026-02-22',
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
   css: ['~/assets/css/tailwind.css'],
 
@@ -11,6 +11,15 @@ export default defineNuxtConfig({
     plugins: [
       tailwindcss(),
     ],
+  },
+
+  components: {
+    dirs: [
+      {
+        path: '~/components',
+        ignore: ['ui/**'],
+      },
+    ]
   },
 
   modules: [
@@ -25,6 +34,10 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: process.env.NITRO_PRESET || 'node-server',
+    cloudflare: {
+      deployConfig: true,
+      nodeCompat: true
+    }
   },
 
   apollo: {
