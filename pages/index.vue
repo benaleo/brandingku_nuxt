@@ -51,7 +51,5 @@ definePageMeta({
     <!-- Newsletter -->
     <BannerCTA />
 
-    <!-- Footer -->
-    <Footer />
   </div>
 </template>
