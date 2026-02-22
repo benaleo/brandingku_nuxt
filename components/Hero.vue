@@ -21,7 +21,7 @@
     <div class="absolute z-10 w-full top-0 h-[40vh] flex flex-col items-center justify-center">
     <div class="bg-[#0f6e2d] pt-16 w-full h-full">
       <div class="relative px-4 md:px-6 lg:px-8 container h-full flex flex-col justify-center" style="max-width: fit-content">
-        <Badge variant="outline" class="text-white bg-slate-400/20">We Are</Badge>
+        <Badge variant="outline" class="text-white bg-slate-400/20">Kami</Badge>
         <div class="text-4xl font-bold text-white">Brandingku supplier merchandise terpercaya.</div>
         <div class="text-2xl text-white">Kami menyediakan berbagai produk untuk memenuhi kebutuhan Anda.</div>
       </div>
@@ -33,7 +33,7 @@
 <style>
 .waves {
   position: absolute;
-  top: 28vh;
+  top: 25vh;
   left: 0;
   height: 35vh;
   background: #135d13;
