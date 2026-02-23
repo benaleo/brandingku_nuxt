@@ -12,7 +12,7 @@
     },
     "vars": {
       "NITRO_PRESET": "cloudflare_pages",
-      "NUXT_PUBLIC_API_URL": "https://brandingkugo-benaleoprojects2134-1b5nr89y.apn.leapcell.dev",
+      "NUXT_PUBLIC_API_URL": "https://brandingku-go.onrender.com",
       "NUXT_PUBLIC_BASE_URL": "https://brandingku.benaleo.workers.dev",
       "NUXT_PUBLIC_STORAGE_URL": "https://1xg7ah.leapcellobj.com/brandingku-wwlg-sww3-pysqn53v",
       "SUPABASE_ACCESS_KEY": "5944b6c999b030dcc81c7ad49fcd0523",
