@@ -128,6 +128,10 @@
         overscroll-behavior: none;
     }
 
+    button {
+        @apply cursor-pointer;
+    }
+
     .app-container {
         @apply px-4 md:px-12 max-w-[1440px] mx-auto
     }
