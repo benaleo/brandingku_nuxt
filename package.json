@@ -5,6 +5,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "build:cf": "NITRO_PRESET=cloudflare_durable nuxt build",
+    "deploy:cf": "pnpm run build:cf && pnpx wrangler deploy",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "start": "node .output/server/index.mjs",
