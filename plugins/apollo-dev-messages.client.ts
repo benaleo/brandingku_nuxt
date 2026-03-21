@@ -1,7 +1,7 @@
 // Loads Apollo Client dev and error messages only in development to keep prod bundles lean
 // See: https://www.apollographql.com/docs/react/v3.8/errors
 
-if (import.meta.dev) {
+if (process.env.NODE_ENV === 'development') {
   // Import inside guard to avoid bundling in production
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { loadDevMessages, loadErrorMessages } = require('@apollo/client/dev')

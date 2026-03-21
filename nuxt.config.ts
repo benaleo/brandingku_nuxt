@@ -4,12 +4,14 @@ import tailwindcss from '@tailwindcss/vite'
 const isCloudflarePreset = ['cloudflare_pages', 'cloudflare_module', 'cloudflare_durable'].includes(process.env.NITRO_PRESET || '')
 export default defineNuxtConfig({
   compatibilityDate: '2026-02-22',
-  devtools: { enabled: process.env.NODE_ENV !== 'production' },
+  devtools: {
+    enabled: false
+  },
   css: ['~/assets/css/tailwind.css'],
 
   vite: {
     plugins: [
-      tailwindcss(),
+      tailwindcss() as any,
     ],
   },
 
@@ -29,7 +31,16 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/apollo',
     // Only include NuxtHub when deploying to Cloudflare-compatible presets.
-    ...(isCloudflarePreset ? ['@nuxthub/core'] as const : [])
+    ...(isCloudflarePreset ? ['@nuxthub/core'] as const : []),
+    (_options, nuxt) => {
+      nuxt.hook('components:dirs', (dirs) => {
+        for (const dir of dirs) {
+          if (typeof dir === 'object' && 'path' in dir && typeof dir.path === 'string' && dir.path.includes('/components/ui')) {
+            dir.extensions = ['vue']
+          }
+        }
+      })
+    },
   ],
 
   nitro: {
@@ -53,7 +64,7 @@ export default defineNuxtConfig({
     /**
      * Prefix for all the imported component
      */
-    prefix: '',
+    prefix: 'Ui',
     /**
      * Directory that the component lives in.
      * @default "./components/ui"
