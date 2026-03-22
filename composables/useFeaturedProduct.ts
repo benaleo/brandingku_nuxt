@@ -26,13 +26,14 @@ export const useFeaturedProduct = () => {
     error.value = null
     try {
       const query = `
-        query GetProductsFeatured($page: Int!, $limit: Int!) {
-          getProducts(pagination: { page: $page, limit: $limit }) {
+        query GetProductsFeatured($page: Int!, $limit: Int!, $is_active: Boolean) {
+          getProducts(pagination: { page: $page, limit: $limit }, is_active: $is_active) {
             items {
               id
               name
               slug
               image
+              is_active
               category { id name }
               is_highlight
               is_recommended
@@ -64,7 +65,7 @@ export const useFeaturedProduct = () => {
           }
         }
       `
-      const res = await gqlFetch<{ getProducts: { items: any[] } }>(query, { page: 1, limit: 20 }, { auth: true })
+      const res = await gqlFetch<{ getProducts: { items: any[] } }>(query, { page: 1, limit: 20, is_active: true }, { auth: true })
       const list = (res?.getProducts?.items || [])
 
       const items: FeaturedProductItem[] = list.map((p: any) => {
