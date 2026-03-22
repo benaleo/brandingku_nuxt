@@ -35,10 +35,17 @@ function goTo(slug: string) {
     <div v-if="error" class="text-center text-red-500">{{ error }}</div>
     <div v-else>
       <Tabs default-value="popular" class="w-full">
-        <TabsList>
-          <TabsTrigger v-for="(trigger, index) in tabs" :key="index" :value="trigger.name">
-            {{ trigger.name.toLocaleUpperCase() }}
-          </TabsTrigger>
+        <TabsList class="w-full flex justify-between items-end bg-transparent">
+          <div class="flex-1 max-w-[400px]">
+            <p class="text-2xl font-bold text-black">Selected Catalogue</p>
+            <p>Temukan berbagai pilihan merchandise yang paling diminati oleh klien ternama kami.</p>
+          </div>
+          <div class="flex-shrink-0 bg-slate-100 rounded-lg p-2">
+            <TabsTrigger v-for="(trigger, index) in tabs" :key="index" :value="trigger.name">
+              {{ trigger.name.toLocaleUpperCase() }}
+            </TabsTrigger>
+          </div>
+         
         </TabsList>
         <TabsContent v-for="(val, index) in tabs" :key="val.id" :value="val.name">
           <Carousel class="relative w-full" :opts="{ align: 'start', loop: true }">
