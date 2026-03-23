@@ -1,9 +1,9 @@
 <template>
-  <section class="py-16 md:py-24 md:max-w-3/4 mx-auto">
+  <section class="md:pb-24 md:max-w-3/4 mx-auto">
     <div class="container px-4 mx-auto">
-      <div class="relative flex justify-center items-center mb-8">
+      <!-- <div class="relative flex justify-center items-center mb-8">
         <h2 class="text-2xl md:text-3xl font-bold">Shop by Category</h2>
-      </div>
+      </div> -->
       <div v-if="loading" class="text-center">
         <SkeletonFeaturedCategory/>
       </div>

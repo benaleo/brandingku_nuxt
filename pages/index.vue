@@ -20,7 +20,7 @@ definePageMeta({
     <!-- Hero Section -->
     <Hero />
 
-    <section class="app-container">
+    <!-- <section class="app-container"> -->
       <!-- Our Services -->
       <FeaturesServices />
 
@@ -29,7 +29,7 @@ definePageMeta({
 
       <!-- Featured Products -->
       <FeaturesProduct />
-    </section>
+    <!-- </section> -->
 
     <!-- Benefit FAQ -->
 

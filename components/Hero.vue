@@ -62,8 +62,8 @@
               mendukung kebutuhan korporasi Anda.
             </div>
             <div class="flex gap-2 items-center justify-start">
-              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-12 py-8 text-lg">Explore Products</Button>
-              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-12 py-8 text-lg">Consultation</Button>
+              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-12 py-8 text-lg">Cari Produk</Button>
+              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-12 py-8 text-lg">Konsultasi</Button>
             </div>
           </div>
           <div class="relative container px-4 mx-auto">

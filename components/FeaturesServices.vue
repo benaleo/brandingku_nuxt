@@ -4,21 +4,21 @@ import { Card, CardContent } from "~/components/ui/card";
 const services = [
   {
     id: 1,
-    name: "Premium Quality",
+    name: "Kualitas Premium",
     description:
       "Hanya menggunakan bahan baku terbaik untuk memastikan merchandise Anda tahan lama dan elegan.",
     image: "/icon/check-icon.svg",
   },
   {
     id: 2,
-    name: "Fast Production",
+    name: "Produksi Cepat",
     description:
       "Sistem produksi yang efisien memungkinkan pengerjaan tepat waktu sesuai deadline korporasi Anda.",
     image: "/icon/speed-icon.svg",
   },
   {
     id: 3,
-    name: "Eco-Friendly",
+    name: "Ramah Lingkungan",
     description:
       "Berbagai pilihan produk ramah lingkungan yang mendukung kampanye sustainability perusahaan.",
     image: "/icon/leaf-icon.svg",
@@ -30,7 +30,7 @@ const services = [
   <section class="py-16 md:py-24 lg:max-w-6xl mx-auto">
     <div class="container px-4 mx-auto">
       <div class="relative flex justify-center items-center mb-8">
-        <h2 class="text-2xl md:text-3xl font-bold">Our Services</h2>
+        <h2 class="text-2xl md:text-3xl font-bold">Layanan Kami</h2>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card
