@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useClientService } from '~/services/client.service'
 
 const { datas: clients, loading, reFetch } = useClientService()
+const isInitialLoad = ref(true)
 
 // Get only active clients for display
 const activeClients = computed(() => clients.value.filter(client => client.is_active))
@@ -32,8 +33,9 @@ const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
 // Fetch clients on component mount
-onMounted(() => {
-  reFetch()
+onMounted(async () => {
+  await reFetch()
+  isInitialLoad.value = false
 })
 </script>
 
@@ -45,7 +47,37 @@ onMounted(() => {
 
     <div class="container max-w-6xl mx-auto py-12 overflow-hidden">
       <div class="relative">
-        <div class="flex animate-scroll gap-12">
+        <!-- Skeleton Loading State -->
+        <div v-if="loading || isInitialLoad" class="flex gap-12">
+          <!-- Skeleton 1 -->
+          <div class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
+            <Skeleton class="w-full h-16 md:h-20 lg:h-24 rounded-lg" />
+          </div>
+          <!-- Skeleton 2 -->
+          <div class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
+            <Skeleton class="w-full h-16 md:h-20 lg:h-24 rounded-lg" />
+          </div>
+          <!-- Skeleton 3 -->
+          <div class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
+            <Skeleton class="w-full h-16 md:h-20 lg:h-24 rounded-lg" />
+          </div>
+          <!-- Skeleton 4 -->
+          <div class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
+            <Skeleton class="w-full h-16 md:h-20 lg:h-24 rounded-lg" />
+          </div>
+          <!-- Skeleton 5 -->
+          <div class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
+            <Skeleton class="w-full h-16 md:h-20 lg:h-24 rounded-lg" />
+          </div>
+          <!-- Skeleton 6 -->
+          <div class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
+            <Skeleton class="w-full h-16 md:h-20 lg:h-24 rounded-lg" />
+          </div>
+          
+        </div>
+        
+        <!-- Actual Client Display -->
+        <div v-else class="flex animate-scroll gap-12">
           <div v-for="client in duplicatedClients" :key="`${client.name}-${duplicatedClients.indexOf(client)}`" class="flex-shrink-0 w-1/4 md:w-1/5 lg:w-1/6 px-3">
             <img :src="`${STORAGE_URL}${client.logo}`" :alt="client.name" class="w-full h-16 md:h-20 lg:h-24 object-contain">
           </div>
