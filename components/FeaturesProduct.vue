@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
   CarouselPrevious,
+  CarouselNext,
 } from "@/components/ui/carousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useFeaturedProduct } from "~/composables/useFeaturedProduct";
 
 const router = useRouter();
 const { data, loading, error } = useFeaturedProduct();
+const isInitialLoad = ref(true);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
@@ -37,6 +38,21 @@ const filteredProducts = (type: string) => {
     return data.value.filter((p) => p.is_recommended);
   return [];
 };
+
+// Initialize loading state
+onMounted(() => {
+  // Simulate initial load completion after data is available
+  if (data.value && data.value.length > 0) {
+    isInitialLoad.value = false;
+  }
+});
+
+// Watch for data changes to complete initial load
+watch(data, (newData) => {
+  if (newData && newData.length > 0) {
+    isInitialLoad.value = false;
+  }
+});
 
 function goTo(slug: string) {
   if (!slug) return;
@@ -80,7 +96,32 @@ function goTo(slug: string) {
               :opts="{ align: 'start', loop: true }"
             >
               <CarouselContent>
+                <!-- Skeleton Loading State -->
                 <CarouselItem
+                  v-if="loading || isInitialLoad"
+                  v-for="n in 5"
+                  :key="`skeleton-${n}`"
+                  class="md:basis-1/2 lg:basis-1/4"
+                >
+                  <div class="p-1">
+                    <Card class="py-0">
+                      <CardHeader class="relative p-0 aspect-square overflow-hidden">
+                        <Skeleton class="w-full aspect-square rounded-t-lg" />
+                      </CardHeader>
+                      <CardContent class="p-4 space-y-3">
+                        <Skeleton class="h-5 w-3/4" />
+                        <Skeleton class="h-4 w-1/2" />
+                        <div class="flex justify-between items-center mt-4">
+                          <Skeleton class="h-5 w-20" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+                
+                <!-- Actual Product Cards -->
+                <CarouselItem
+                  v-else
                   v-for="product in filteredProducts(val.name)"
                   :key="product.id"
                   class="md:basis-1/2 lg:basis-1/4"
