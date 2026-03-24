@@ -1,19 +1,29 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useLandingFeaturedCategories } from "~/services/landing-page.service";
 import type { ProductCategory } from "~/types/products.type";
 import { Button } from "~/components/ui/button";
 import SkeletonFeaturedCategory from "~/components/skeletons/SkeletonFeaturedCategory.vue";
 
 const { data, loading, error, refetch } = useLandingFeaturedCategories();
+const isInitialLoad = ref(true);
 
 const featuredCategories = computed<ProductCategory[]>(() => data.value || []);
 
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
-onMounted(() => {
-  refetch();
+// Initialize loading state
+onMounted(async () => {
+  await refetch();
+  isInitialLoad.value = false;
+});
+
+// Watch for data changes to complete initial load
+watch(data, (newData) => {
+  if (newData && newData.length > 0) {
+    isInitialLoad.value = false;
+  }
 });
 </script>
 
@@ -23,7 +33,7 @@ onMounted(() => {
       <!-- <div class="relative flex justify-center items-center mb-8">
         <h2 class="text-2xl md:text-3xl font-bold">Shop by Category</h2>
       </div> -->
-      <div v-if="loading" class="text-center">
+      <div v-if="loading || isInitialLoad" class="text-center">
         <SkeletonFeaturedCategory />
       </div>
       <div v-else-if="error" class="text-center py-8">
