@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useTestimonialService } from '~/services/testimonial.service'
 
 const { datas: testimonials, loading, reFetch } = useTestimonialService()
+const isInitialLoad = ref(true)
 
-onMounted(() => {
-  reFetch()
+onMounted(async () => {
+  await reFetch()
+  isInitialLoad.value = false
 })
 </script>
 
@@ -14,8 +16,63 @@ onMounted(() => {
     <div class="container max-w-6xl mx-auto py-12">
       <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Apa Kata Klien Kami</h2>
       
-      <div v-if="loading" class="text-center py-8">
-        <p class="text-gray-600">Memuat testimonial...</p>
+      <div v-if="loading || isInitialLoad" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Skeleton Card 1 -->
+        <div class="bg-white rounded-lg p-6 shadow-sm relative">
+          <div class="text-green-200 text-6xl absolute top-4 right-4 font-serif">"</div>
+          <div class="space-y-3">
+            <Skeleton class="h-4 w-full mb-6" />
+            <Skeleton class="h-4 w-3/4" />
+          </div>
+          <div class="flex items-center mt-6">
+            <Skeleton class="w-12 h-12 rounded-full mr-4" />
+            <div class="space-y-2">
+              <Skeleton class="h-4 w-24" />
+              <Skeleton class="h-3 w-32" />
+              <div class="flex mt-1">
+                <Skeleton v-for="star in 5" :key="star" class="h-4 w-4 mr-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Skeleton Card 2 -->
+        <div class="bg-white rounded-lg p-6 shadow-sm relative">
+          <div class="text-green-200 text-6xl absolute top-4 right-4 font-serif">"</div>
+          <div class="space-y-3">
+            <Skeleton class="h-4 w-full mb-6" />
+            <Skeleton class="h-4 w-2/3" />
+          </div>
+          <div class="flex items-center mt-6">
+            <Skeleton class="w-12 h-12 rounded-full mr-4" />
+            <div class="space-y-2">
+              <Skeleton class="h-4 w-28" />
+              <Skeleton class="h-3 w-36" />
+              <div class="flex mt-1">
+                <Skeleton v-for="star in 5" :key="star" class="h-4 w-4 mr-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Skeleton Card 3 -->
+        <div class="bg-white rounded-lg p-6 shadow-sm relative">
+          <div class="text-green-200 text-6xl absolute top-4 right-4 font-serif">"</div>
+          <div class="space-y-3">
+            <Skeleton class="h-4 w-full mb-6" />
+            <Skeleton class="h-4 w-4/5" />
+          </div>
+          <div class="flex items-center mt-6">
+            <Skeleton class="w-12 h-12 rounded-full mr-4" />
+            <div class="space-y-2">
+              <Skeleton class="h-4 w-20" />
+              <Skeleton class="h-3 w-28" />
+              <div class="flex mt-1">
+                <Skeleton v-for="star in 5" :key="star" class="h-4 w-4 mr-1" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div v-else-if="testimonials.length === 0" class="text-center py-8">
