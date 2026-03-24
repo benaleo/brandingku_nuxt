@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FeaturesServices from "~/components/FeaturesServices.vue";
+import FeaturesClient from "~/components/FeaturesClient.vue";
 
 const pageTitle = "Brandingku - Best Merchandise Supplier";
 
@@ -29,6 +30,9 @@ definePageMeta({
 
       <!-- Featured Products -->
       <FeaturesProduct />
+
+      <!-- Clients -->
+      <FeaturesClient />
     <!-- </section> -->
 
     <!-- Benefit FAQ -->
