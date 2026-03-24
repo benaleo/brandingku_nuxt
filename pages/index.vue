@@ -33,6 +33,9 @@ definePageMeta({
 
       <!-- Clients -->
       <FeaturesClient />
+
+      <!-- Testimonials -->
+      <FeaturesTestimonial />
     <!-- </section> -->
 
     <!-- Benefit FAQ -->

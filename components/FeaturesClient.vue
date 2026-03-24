@@ -38,7 +38,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full px-4 py-12 bg-[#F2F4F7]">
+  <div class="w-full px-4 py-12">
     <div class="container max-w-6xl mx-auto py-12">
       <h2 class="text-2xl md:text-3xl font-bold text-center">Partner Kami</h2>
     </div>
