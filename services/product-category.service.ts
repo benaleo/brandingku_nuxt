@@ -1,10 +1,12 @@
 import type { ProductCategory } from "~/types/products.type";
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
-
+import { useRuntimeConfig } from '#app'
 
 export const useProductCategoryService = (opts?: { autoFetchParents?: boolean }) => {
     const { gqlFetch } = useGql()
+    const config = useRuntimeConfig()
+    const STORAGE_URL = config.public.STORAGE_URL
 
     // State for list view (client-side pagination over GraphQL results)
     const datas = ref<ProductCategory[]>([])
@@ -157,6 +159,58 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         // Sub-categories are now included in the getProductCategoryDetail response
         detail.value = detailData
         return detail.value
+    }
+
+    // Get categories with pagination and filter by is_active
+    const getProductCategoriesPage = async (pagination: { page: number; limit: number }, is_active: boolean) => {
+        const query = `
+            query GetProductCategoriesPage($pagination: PaginationInput!, $is_active: Boolean) {
+                getProductCategoriesPage(pagination: $pagination, is_active: $is_active) {
+                    items {
+                        id
+                        name
+                        image
+                        product_count
+                    }
+                    page_info {
+                        has_next_page
+                        has_previous_page
+                        start_item
+                        end_item
+                    }
+                }
+            }
+        `
+        
+        const data = await gqlFetch<{
+            getProductCategoriesPage: {
+                items: Array<{
+                    id: string
+                    name: string
+                    image: string
+                    product_count: number
+                }>
+                page_info: {
+                    has_next_page: boolean
+                    has_previous_page: boolean
+                    start_item: number
+                    end_item: number
+                }
+            }
+        }>(
+            query,
+            { pagination, is_active },
+            { auth: true }
+        )
+        
+        // Prepend STORAGE_URL to image URLs
+        const result = data.getProductCategoriesPage
+        result.items = result.items.map(item => ({
+            ...item,
+            image: item.image ? `${STORAGE_URL}${item.image}` : item.image
+        }))
+        
+        return result
     }
 
     // Children as full objects
@@ -507,6 +561,7 @@ return {
     // GraphQL APIs
     getProductCategoriesParent,
     getProductCategoryDetail,
+    getProductCategoriesPage,
     createProductCategory,
     createProductCategoryWithSubs,
     updateProductCategory,
