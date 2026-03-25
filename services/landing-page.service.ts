@@ -2,6 +2,7 @@ import { gql } from '@apollo/client'
 import { ref, computed, onMounted } from 'vue'
 import type { ProductCategory } from '~/types/products.type'
 import { useGql } from '~/composables/useGql'
+import { useRuntimeConfig } from '#app'
 
 export interface SubCategory {
   name: string
@@ -68,6 +69,8 @@ export const useLandingFeaturedCategories = () => {
 
 export const useGetProductCategoryBySlug = (slug: string) => {
   const { gqlFetch } = useGql()
+  const config = useRuntimeConfig()
+  const STORAGE_URL = config.public.STORAGE_URL
 
   const data = ref<ProductCategoryBySlug | null>(null)
   const loading = ref(false)
@@ -104,7 +107,23 @@ export const useGetProductCategoryBySlug = (slug: string) => {
         { slug },
         { auth: true }
       )
-      data.value = res.getProductCategoryBySlug || null
+      const result = res.getProductCategoryBySlug || null
+      
+      // Prepend STORAGE_URL to image URLs
+      if (result) {
+        result.cover_image = result.cover_image ? `${STORAGE_URL}${result.cover_image}` : result.cover_image
+        result.banner_image = result.banner_image ? `${STORAGE_URL}${result.banner_image}` : result.banner_image
+        
+        if (result.sub) {
+          result.sub = result.sub.map(subCategory => ({
+            ...subCategory,
+            image: subCategory.image ? `${STORAGE_URL}${subCategory.image}` : subCategory.image,
+            cover: subCategory.cover ? `${STORAGE_URL}${subCategory.cover}` : subCategory.cover
+          }))
+        }
+      }
+      
+      data.value = result
     } catch (e: any) {
       error.value = e.message || 'Failed to fetch category'
     } finally {

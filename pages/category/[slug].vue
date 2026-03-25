@@ -89,6 +89,19 @@ useHead({
   ]
 })
 
+// Handle filter click - select subcategory when filter is clicked
+const handleFilterClick = (filter: string) => {
+  selectedFilter.value = filter
+  
+  // Find the corresponding subcategory
+  if (filter === 'All') {
+    selectedSubCategory.value = null
+  } else {
+    const subCategory = subCategories.value.find(sub => sub.name === filter)
+    selectedSubCategory.value = subCategory || null
+  }
+}
+
 definePageMeta({
   layout: 'page-layout'
 })
@@ -121,13 +134,13 @@ definePageMeta({
    <div class="relative container mx-auto">
      <!-- Category Filter Navigation -->
     <div class="absolute top-[-70px] left-0 right-0 mb-8 bg-white py-4 px-2 rounded-lg">
-      <div class="flex flex-wrap gap-2 justify-center">
+      <div class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
         <button 
           v-for="filter in categoryFilters" 
           :key="filter"
-          @click="selectedFilter = filter"
+          @click="handleFilterClick(filter)"
           :class="[
-            'px-4 py-2 rounded-full font-medium transition-colors',
+            'px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap snap-start',
             selectedFilter === filter 
               ? 'bg-green-600 text-white' 
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -138,31 +151,10 @@ definePageMeta({
       </div>
     </div>
 
-    <!-- Categories List Section from sub categories -->
-    <div class="mb-12 pt-12">
-      <h2 class="text-2xl font-bold mb-6 text-center">Featured Categories</h2>
-      <div v-if="subCategories.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div 
-          v-for="(sub, index) in subCategories" 
-          :key="index"
-          class="text-center cursor-pointer group"
-          @click="selectedSubCategory = sub"
-        >
-          <div class="bg-gray-100 rounded-lg p-4 hover:shadow-lg transition-shadow">
-            <img :src="sub.image" alt="" class="w-full h-24 object-cover rounded mb-2"/>
-            <h3 class="font-semibold text-sm">{{ sub.name }}</h3>
-            <p v-if="sub.total_products" class="text-xs text-gray-500">{{ sub.total_products }} products</p>
-          </div>
-        </div>
-      </div>
-      <div v-else class="text-center text-gray-500">
-        No subcategories available
-      </div>
-    </div>
 
     <!-- Products Section -->
-    <div class="mb-12">
-      <h2 class="text-3xl font-bold mb-8 text-center">Featured Hydration</h2>
+    <div class="mb-12 pt-12">
+      <h2 class="text-3xl font-bold mb-8 text-center">{{ selectedSubCategory?.name || 'Products' }}</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div 
           v-for="product in products" 
@@ -190,52 +182,18 @@ definePageMeta({
     </div>
    </div>
 
-    <!-- Selected Sub Category Section -->
-    <div v-if="selectedSubCategory" class="mb-8">
-      <div class="bg-gray-50 rounded-lg p-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div>
-            <img :src="selectedSubCategory.cover || selectedSubCategory.image" alt="" class="w-full h-64 object-cover rounded-lg"/>
-          </div>
-          <div>
-            <h2 class="text-3xl font-bold mb-4">{{ selectedSubCategory.name }}</h2>
-            <p class="text-gray-700 mb-6">{{ selectedSubCategory.description }}</p>
-            <div v-if="selectedSubCategory.total_products" class="mb-4">
-              <span class="bg-green-100 text-green-800 px-4 py-2 rounded-lg font-semibold">
-                {{ selectedSubCategory.total_products }} Products Available
-              </span>
-            </div>
-            <a href="#" class="text-green-600 font-semibold hover:underline">Explore category →</a>
-          </div>
+    <!-- Sustainability Section - Show only when subcategory is selected -->
+    <div v-if="selectedSubCategory" class="bg-gradient-to-r from-green-50 to-green-50 rounded-lg p-8">
+      <div class="container mx-auto flex flex-col lg:flex-row gap-8 items-center py-8">
+        <div class="w-full max-w-[300px]">
+          <img :src="selectedSubCategory.cover || selectedSubCategory.image" :alt="selectedSubCategory.name" class=" object-contains rounded-lg"/>
         </div>
-      </div>
-    </div>
-
-    <!-- Sustainability Section -->
-    <div class="bg-gradient-to-r from-green-50 to-green-50 rounded-lg p-8">
-      <div class="container mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center py-8">
-        <div>
-          <img src="https://via.placeholder.com/400x300" alt="Hydration that matters" class="w-full h-64 object-cover rounded-lg"/>
-        </div>
-        <div>
-          <h2 class="text-3xl font-bold mb-4">Hydration that matters.</h2>
-          <p class="text-gray-700 mb-6">
-            Choosing the right merchandise isn't just about branding; it's about the message you send. Our tumbler collection focuses on high-quality materials that last years, not weeks. From vacuum-sealed technology to carbon-neutral shipping, we help your company make an impact without the footprint.
-          </p>
-          <div class="space-y-3 mb-6">
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>BPA-Free & Food Grade Materials</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Carbon-Neutral Manufacturing</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Custom Laser Engraving Included</span>
-            </div>
-          </div>
+        <div class="flex-1">
+          <h2 class="text-3xl font-bold mb-4">{{ selectedSubCategory.name }} that matters.</h2>
+          <div 
+            class="text-gray-700 mb-6 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-600"
+            v-html="selectedSubCategory.description || `<p>Choosing the right merchandise isn't just about branding; it's about the message you send. Our ${selectedSubCategory.name.toLowerCase()} collection focuses on high-quality materials that last years, not weeks. From vacuum-sealed technology to carbon-neutral shipping, we help your company make an impact without the footprint.</p>`"
+          ></div>
           <a href="#" class="text-green-600 font-semibold hover:underline">Learn about our sourcing →</a>
           <div class="mt-4">
             <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block font-semibold">
