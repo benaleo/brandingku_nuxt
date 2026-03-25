@@ -22,7 +22,7 @@ export const useBenefitService = () => {
     try {
       const query = `
         query GetBenefits($page: Int!, $limit: Int!, $is_active: Boolean) {
-          getBenefits(pagination: { page: $page, limit: $limit }, is_active: $is_active) {
+          getBenefits(pagination: { page: $page, limit: $limit }, sort: { column: ORDERS, direction: ASC }, is_active: $is_active) {
             items {
               id
               name
@@ -227,7 +227,7 @@ export const useBenefitService = () => {
     is_active?: boolean;
   }) => {
     const mutation = `
-      mutation UpdateBenefit($id: Int!, $name: String!, $logo: String, $orders: Int, $question: String; $answer: String; $is_active: Boolean) {
+      mutation UpdateBenefit($id: Int!, $name: String!, $logo: String, $orders: Int, $question: String, $answer: String, $is_active: Boolean) {
         updateBenefit(id: $id, name: $name, logo: $logo, orders: $orders, question: $question, answer: $answer, is_active: $is_active) {
           id
           name

@@ -25,7 +25,7 @@ useHead({
 
 <template>
   <div class="w-full px-4 py-12" style="font-family: 'Plus Jakarta Sans', sans-serif;">
-    <div class="container max-w-6xl mx-auto py-12">
+    <div class="container max-w-3xl mx-auto py-12">
       <h2 class="text-2xl font-bold text-center mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">Pertanyaan Populer</h2>
 
       <div v-if="loading" class="text-center py-4">
@@ -42,11 +42,11 @@ useHead({
           :key="benefit.id"
           :value="benefit.id"
         >
-          <AccordionTrigger class="text-left" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+          <AccordionTrigger class="hover:bg-slate-100 px-4 rounded-md text-left" style="font-family: 'Plus Jakarta Sans', sans-serif;">
             {{ benefit.question }}
           </AccordionTrigger>
           <AccordionContent>
-            <p class="text-gray-600" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ benefit.answer }}</p>
+            <p class="text-gray-600 px-6 py-4 pb-2 border-x border-gray-200" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ benefit.answer }}</p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
