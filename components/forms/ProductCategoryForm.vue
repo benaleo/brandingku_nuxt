@@ -14,6 +14,7 @@ import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
 import type { ProductCategoryRequest } from '~/types/products.type';
 import { useFileToBase64 } from '~/composables/useFileToBase64'
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form'
 
 const router = useRouter()
 const props = defineProps<{
