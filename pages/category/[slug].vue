@@ -125,7 +125,12 @@ definePageMeta({
    <div class="relative container mx-auto">
      <!-- Category Filter Navigation -->
     <div class="absolute top-[-70px] left-0 right-0 mb-8 bg-white py-4 px-2 rounded-lg">
-      <div class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
+      <!-- Loading State for Filters -->
+      <div v-if="categoryLoading" class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
+        <div v-for="n in 12" :key="n" class="h-8 bg-gray-200 rounded-full w-42 animate-pulse snap-start"></div>
+      </div>
+      <!-- Actual Filters -->
+      <div v-else class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
         <button 
           v-for="filter in categoryFilters" 
           :key="filter"
@@ -144,12 +149,12 @@ definePageMeta({
 
 
     <!-- Products Section -->
-    <div class="mb-12 pt-12">
+    <div class="mb-12 pt-12 max-w-6xl mx-auto">
       <h2 class="text-3xl font-bold mb-8 text-center">{{ selectedSubCategory?.name || 'Products' }}</h2>
       
       <!-- Initial Loading State (Skeleton) -->
-      <div v-if="productsLoading && products.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="n in 6" :key="n" class="bg-white border rounded-lg overflow-hidden animate-pulse">
+      <div v-if="productsLoading && products.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div v-for="n in 8" :key="n" class="bg-white border rounded-lg overflow-hidden animate-pulse">
           <div class="w-full h-48 bg-gray-200"></div>
           <div class="p-4">
             <div class="h-4 bg-gray-200 rounded mb-2"></div>
@@ -201,7 +206,7 @@ definePageMeta({
       </div>
       
       <!-- Products Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <NuxtLink 
           v-for="product in products" 
           :key="product.id"
@@ -215,7 +220,7 @@ definePageMeta({
             <h3 class="text-lg font-semibold mb-2 group-hover:text-green-600 transition-colors">{{ product.name }}</h3>
             <p class="text-gray-600 text-sm mb-3 line-clamp-3" v-html="product.description?.substring(0, 200) + (product.description?.length > 200 ? '...' : '')"></p>
             <div class="flex justify-between items-center">
-              <span class="text-xl font-bold text-green-600">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
+              <span class="text-xl font-bold text-green-600" :class="product.additionals?.[0]?.price ? '' : 'opacity-0'">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
               <button 
                 @click.prevent
                 class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
