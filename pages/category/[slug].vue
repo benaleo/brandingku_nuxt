@@ -2,6 +2,7 @@
 import {useRoute} from 'vue-router'
 import {computed, ref} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
+import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
 
 const route = useRoute()
 const slug = route.params.slug as string
@@ -11,9 +12,17 @@ const selectedSubCategory = ref<SubCategory | null>(null)
 
 const {
   data: category,
-  loading,
-  error
+  loading: categoryLoading,
+  error: categoryError
 } = useGetProductCategoryBySlug(slug)
+
+const {
+  products,
+  pageInfo,
+  loading: productsLoading,
+  error: productsError,
+  loadMore
+} = useGetProductsWithCategorySlug(slug)
 
 const subCategories = computed(() => category.value?.sub || [])
 
@@ -35,52 +44,6 @@ const categoryFilters = computed(() => {
   }
   return filters
 })
-
-// Hardcoded products (will be replaced with actual product fetch)
-const products = ref([
-  {
-    id: 1,
-    name: 'The Nordic Flask',
-    description: 'Minimalist design meets maximum functionality. Perfect for the modern professional.',
-    price: 34000,
-    image: 'https://via.placeholder.com/300x300'
-  },
-  {
-    id: 2,
-    name: 'Midnight Executive',
-    description: 'Sleek black finish with vacuum-sealed technology keeps drinks hot or cold for hours.',
-    price: 28500,
-    image: 'https://via.placeholder.com/300x300'
-  },
-  {
-    id: 3,
-    name: 'Ceramic Cork Mug',
-    description: 'Eco-friendly ceramic with natural cork base. Sustainable elegance for your desk.',
-    price: 22000,
-    image: 'https://via.placeholder.com/300x300'
-  },
-  {
-    id: 4,
-    name: 'Prism Hydration',
-    description: 'Geometric design with BPA-free materials. Hydration with style.',
-    price: 19500,
-    image: 'https://via.placeholder.com/300x300'
-  },
-  {
-    id: 5,
-    name: 'The Copper Duo',
-    description: 'Premium copper construction with double-wall insulation. Health benefits included.',
-    price: 42000,
-    image: 'https://via.placeholder.com/300x300'
-  },
-  {
-    id: 6,
-    name: 'Active Team Pack',
-    description: 'Set of 6 vibrant colors perfect for team events and corporate gifting.',
-    price: 15000,
-    image: 'https://via.placeholder.com/300x300'
-  }
-])
 
 useHead({
   title: pageTitle,
@@ -110,7 +73,31 @@ definePageMeta({
 <template>
   <div class="bg-gray-100">
     <!-- Header Section with dynamic banner -->
-    <div v-if="category" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
+    <!-- Loading State -->
+    <div v-if="categoryLoading" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
+      <div class="relative max-w-4xl mx-auto pt-24">
+        <div class="h-12 bg-white/20 rounded w-1/2 mb-4 animate-pulse"></div>
+        <div class="h-6 bg-white/20 rounded w-3/4 mb-6 animate-pulse"></div>
+        <div class="flex gap-4">
+          <div class="h-12 bg-white/20 rounded w-40 animate-pulse"></div>
+          <div class="h-12 bg-white/20 rounded w-40 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Error State -->
+    <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 py-16 px-8 rounded-lg mb-8">
+      <div class="relative max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl font-bold mb-4">Category Not Found</h1>
+        <p class="text-xl mb-6">{{ categoryError }}</p>
+        <button @click="$router.push('/')" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+          Back to Home
+        </button>
+      </div>
+    </div>
+    
+    <!-- Category Header -->
+    <div v-else-if="category" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
       <div v-if="category.banner_image" class="absolute inset-0 overflow-hidden rounded-lg">
         <img :src="category.banner_image" alt="" class="w-full h-full object-cover opacity-30"/>
       </div>
@@ -155,28 +142,65 @@ definePageMeta({
     <!-- Products Section -->
     <div class="mb-12 pt-12">
       <h2 class="text-3xl font-bold mb-8 text-center">{{ selectedSubCategory?.name || 'Products' }}</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div 
-          v-for="product in products" 
-          :key="product.id"
-          class="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-        >
-          <img :src="product.image" alt="" class="w-full h-48 object-cover"/>
+      
+      <!-- Loading State -->
+      <div v-if="productsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="n in 6" :key="n" class="bg-white border rounded-lg overflow-hidden animate-pulse">
+          <div class="w-full h-48 bg-gray-200"></div>
           <div class="p-4">
-            <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
-            <p class="text-gray-600 text-sm mb-3">{{ product.description }}</p>
+            <div class="h-4 bg-gray-200 rounded mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded mb-3"></div>
             <div class="flex justify-between items-center">
-              <span class="text-xl font-bold text-green-600">Rp {{ product.price.toLocaleString() }}</span>
-              <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                Add to Quote
-              </button>
+              <div class="h-4 bg-gray-200 rounded w-20"></div>
+              <div class="h-8 bg-gray-200 rounded w-24"></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="text-center mt-8">
-        <button class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
-          Load More Products
+      
+      <!-- Error State -->
+      <div v-else-if="productsError" class="text-center py-12">
+        <p class="text-red-600 mb-4">{{ productsError }}</p>
+        <button @click="loadMore" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+          Try Again
+        </button>
+      </div>
+      
+      <!-- Products Grid -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <NuxtLink 
+          v-for="product in products" 
+          :key="product.id"
+          :to="`/product/${product.slug}`"
+          class="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow block group"
+        >
+        <div class="aspect-square p-4 bg-gray-100">
+          <img :src="product.image" alt="" class="aspect-square object-cover rounded-md"/>
+        </div>
+          <div class="p-4 bg-gray-100">
+            <h3 class="text-lg font-semibold mb-2 group-hover:text-green-600 transition-colors">{{ product.name }}</h3>
+            <p class="text-gray-600 text-sm mb-3 line-clamp-3" v-html="product.description?.substring(0, 200) + (product.description?.length > 200 ? '...' : '')"></p>
+            <div class="flex justify-between items-center">
+              <span class="text-xl font-bold text-green-600">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
+              <button 
+                @click.prevent
+                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
+              >
+                Add to Quote
+              </button>
+            </div>
+          </div>
+        </NuxtLink>
+      </div>
+      
+      <!-- Load More Button -->
+      <div v-if="!productsLoading && !productsError && pageInfo?.has_next_page" class="text-center mt-8">
+        <button 
+          @click="loadMore" 
+          :disabled="productsLoading"
+          class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ productsLoading ? 'Loading...' : 'Load More Products' }}
         </button>
       </div>
     </div>
