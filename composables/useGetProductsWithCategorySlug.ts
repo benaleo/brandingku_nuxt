@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch, type Ref, type ComputedRef } from 'vue'
 import { useGql } from '~/composables/useGql'
 import type { Product } from '~/types/products.type'
 
@@ -34,7 +34,7 @@ export interface ProductsWithCategoryResponse {
     page_info: PageInfo
 }
 
-export const useGetProductsWithCategorySlug = (categorySlug: string, initialPage: number = 1, limit: number = 6) => {
+export const useGetProductsWithCategorySlug = (categorySlug: string | Ref<string> | ComputedRef<string>, initialPage: number = 1, limit: number = 6) => {
     const { gqlFetch } = useGql()
     const config = useRuntimeConfig()
     const STORAGE_URL = config.public.STORAGE_URL
@@ -44,6 +44,11 @@ export const useGetProductsWithCategorySlug = (categorySlug: string, initialPage
     const loading = ref(false)
     const error = ref<string | null>(null)
     const currentPage = ref(initialPage)
+    
+    // Get the current slug value (reactive)
+    const currentSlug = computed(() => {
+        return typeof categorySlug === 'string' ? categorySlug : categorySlug.value
+    })
 
     const fetchProducts = async (page: number = initialPage, append: boolean = false) => {
         loading.value = true
@@ -87,7 +92,7 @@ export const useGetProductsWithCategorySlug = (categorySlug: string, initialPage
             
             const response = await gqlFetch<{ getProductsWithCategorySlug: ProductsWithCategoryResponse }>(
                 query,
-                { categorySlug, page, limit }
+                { categorySlug: currentSlug.value, page, limit }
             )
             
             const newProducts = response.getProductsWithCategorySlug.items.map(product => ({
@@ -122,6 +127,11 @@ export const useGetProductsWithCategorySlug = (categorySlug: string, initialPage
             await fetchProducts(nextPage, true)
         }
     }
+
+    // Watch for slug changes and refetch products
+    watch(currentSlug, () => {
+        fetchProducts(1, false) // Reset to first page when slug changes
+    }, { immediate: false })
 
     // Auto-fetch on mount
     fetchProducts()

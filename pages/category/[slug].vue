@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useRoute} from 'vue-router'
-import {computed, ref} from 'vue'
+import {computed, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
 import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
 
@@ -16,13 +16,17 @@ const {
   error: categoryError
 } = useGetProductCategoryBySlug(slug)
 
+// Reactive category slug for product fetching
+const currentCategorySlug = computed(() => selectedSubCategory.value?.slug || slug)
+
 const {
   products,
   pageInfo,
   loading: productsLoading,
   error: productsError,
-  loadMore
-} = useGetProductsWithCategorySlug(slug)
+  loadMore,
+  fetchProducts
+} = useGetProductsWithCategorySlug(currentCategorySlug)
 
 const subCategories = computed(() => category.value?.sub || [])
 
