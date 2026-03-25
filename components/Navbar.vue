@@ -31,6 +31,19 @@
                     </a>
                   </div>
                 </div>
+                <div class="space-y-2">
+                  <h3 class="font-semibold text-gray-800 hover:text-blue-600 cursor-pointer border-b pb-2 border-slate-200">
+                    LAINNYA
+                  </h3>
+                  <div class="space-y-1">
+                    <a 
+                      href="/category"
+                      class="block text-sm text-gray-600 hover:text-green-600 hover:underline hover:bg-green-100 py-1 px-2"
+                    >
+                      Semua Kategori
+                    </a>
+                  </div>
+                </div>
               </div>
               <div v-if="categories.length === 0" class="text-gray-500 text-center py-4">
                 Loading categories...
