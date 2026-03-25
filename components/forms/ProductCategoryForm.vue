@@ -8,7 +8,7 @@ import { useProductCategoryService } from '~/services/product-category.service'
 import { getIdFromPath, getPathWithoutIdInForm } from "~/utils/global.utils";
 import { useRouter } from 'vue-router'
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
-import FieldXArea from '~/components/forms/fields/FieldXArea.vue'
+import FieldXVueEditor from '~/components/forms/fields/FieldXVueEditor.vue'
 import FormButton from "~/components/atoms/FormButton.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
@@ -303,7 +303,7 @@ const handleBack = () => {
       :isFieldDirty="isFieldDirty('name')" />
 
     <!-- Description -->
-    <FieldXArea name="description" label="Description" placeholder="Enter description" :disabled="disabled"
+    <FieldXVueEditor name="description" label="Description" placeholder="Enter description" :disabled="disabled"
       v-model="description" :validate-on-blur="!isFieldDirty('description')" />
 
     <!-- Image -->

@@ -113,26 +113,27 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="app-container">
+  <div class="">
     <!-- Header Section -->
-    <div class="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-8 rounded-lg mb-8">
-      <div class="max-w-4xl mx-auto">
+    <div class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
+      <div class="max-w-4xl mx-auto pt-24">
         <h1 class="text-4xl font-bold mb-4">Tumbler</h1>
-        <p class="text-xl mb-6 text-blue-100">
+        <p class="text-xl mb-6 text-green-100">
           Sustainable hydration meets corporate elegance. Discover our collection of premium, eco-friendly drinkware designed for the modern workplace.
         </p>
         <div class="flex gap-4">
-          <button class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+          <button class="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors">
             Explore Collection
           </button>
-          <button class="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+          <button class="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors">
             Request Catalog
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Category Filter Navigation -->
+   <div class="container mx-auto">
+     <!-- Category Filter Navigation -->
     <div class="mb-8">
       <div class="flex flex-wrap gap-2 justify-center">
         <button 
@@ -142,7 +143,7 @@ definePageMeta({
           :class="[
             'px-4 py-2 rounded-full font-medium transition-colors',
             selectedFilter === filter 
-              ? 'bg-blue-600 text-white' 
+              ? 'bg-green-600 text-white' 
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           ]"
         >
@@ -183,8 +184,8 @@ definePageMeta({
             <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
             <p class="text-gray-600 text-sm mb-3">{{ product.description }}</p>
             <div class="flex justify-between items-center">
-              <span class="text-xl font-bold text-blue-600">${{ product.price.toFixed(2) }}</span>
-              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+              <span class="text-xl font-bold text-green-600">${{ product.price.toFixed(2) }}</span>
+              <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
                 Add to Quote
               </button>
             </div>
@@ -197,6 +198,7 @@ definePageMeta({
         </button>
       </div>
     </div>
+   </div>
 
     <!-- Selected Sub Category Section -->
     <div v-if="selectedSubCategory" class="mb-8">
@@ -222,7 +224,7 @@ definePageMeta({
                 <span>Custom Laser Engraving Included</span>
               </div>
             </div>
-            <a href="#" class="text-blue-600 font-semibold hover:underline">Learn about our sourcing →</a>
+            <a href="#" class="text-green-600 font-semibold hover:underline">Learn about our sourcing →</a>
             <div class="mt-4">
               <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block font-semibold">
                 98% SUSTAINABILITY RATING
@@ -234,8 +236,8 @@ definePageMeta({
     </div>
 
     <!-- Sustainability Section -->
-    <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+    <div class="bg-gradient-to-r from-green-50 to-green-50 rounded-lg p-8">
+      <div class="container mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center py-8">
         <div>
           <img src="https://via.placeholder.com/400x300" alt="Hydration that matters" class="w-full h-64 object-cover rounded-lg"/>
         </div>
@@ -258,7 +260,7 @@ definePageMeta({
               <span>Custom Laser Engraving Included</span>
             </div>
           </div>
-          <a href="#" class="text-blue-600 font-semibold hover:underline">Learn about our sourcing →</a>
+          <a href="#" class="text-green-600 font-semibold hover:underline">Learn about our sourcing →</a>
           <div class="mt-4">
             <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block font-semibold">
               98% SUSTAINABILITY RATING
