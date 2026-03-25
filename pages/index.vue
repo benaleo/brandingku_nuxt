@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FeaturesServices from "~/components/FeaturesServices.vue";
 import FeaturesClient from "~/components/FeaturesClient.vue";
+import FeaturesBenefitFaq from "~/components/FeaturesBenefitFaq.vue";
 
 const pageTitle = "Brandingku - Best Merchandise Supplier";
 
@@ -22,23 +23,24 @@ definePageMeta({
     <Hero />
 
     <!-- <section class="app-container"> -->
-      <!-- Our Services -->
-      <FeaturesServices />
+    <!-- Our Services -->
+    <FeaturesServices />
 
-      <!-- Featured Categories -->
-      <FeaturedCategories />
+    <!-- Featured Categories -->
+    <FeaturedCategories />
 
-      <!-- Featured Products -->
-      <FeaturesProduct />
+    <!-- Featured Products -->
+    <FeaturesProduct />
 
-      <!-- Clients -->
-      <FeaturesClient />
+    <!-- Clients -->
+    <FeaturesClient />
 
-      <!-- Testimonials -->
-      <FeaturesTestimonial />
-    <!-- </section> -->
+    <!-- Testimonials -->
+    <FeaturesTestimonial />
 
     <!-- Benefit FAQ -->
+    <FeaturesBenefitFaq />
+    <!-- </section> -->
 
     <!-- Newsletter -->
     <BannerCTA />
