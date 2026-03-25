@@ -39,6 +39,7 @@ const formSchema = toTypedSchema(z.object({
   description: z.string().min(1, 'Description is required'),
   sub_categories: z.array(z.string()).optional(),
   image: z.string().optional(),
+  cover: z.string().optional(),
   is_active: z.coerce.boolean(),
   is_landing_page: z.coerce.boolean(),
 }))
@@ -56,6 +57,11 @@ const is_landing_page = ref(false)
 
 const image = ref('')
 const imageFile = ref<File | null>(null)
+const cover = ref('')
+const coverFile = ref<File | null>(null)
+
+const imageInput: Ref<HTMLInputElement | null> = ref(null)
+const coverInput: Ref<HTMLInputElement | null> = ref(null)
 
 const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
@@ -74,6 +80,7 @@ const setFieldsFromDetail = (val: any) => {
     : []
   
   image.value = val.image ? STORAGE_URL + val.image : ''
+  cover.value = val.cover ? STORAGE_URL + val.cover : ''
   is_active.value = Boolean(val.is_active) || false
   is_landing_page.value = Boolean(val.is_landing_page) || false
 
@@ -83,6 +90,7 @@ const setFieldsFromDetail = (val: any) => {
   setFieldValue('description', description.value)
   setFieldValue('sub_categories', sub_categories.value)
   setFieldValue('image', image.value)
+  setFieldValue('cover', cover.value)
   setFieldValue('is_active', is_active.value)
   setFieldValue('is_landing_page', is_landing_page.value)
   isApiUpdate = false
@@ -122,6 +130,42 @@ const onImageChange = (event: Event) => {
   }
 }
 
+const onCoverChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    coverFile.value = target.files[0]
+    cover.value = URL.createObjectURL(coverFile.value)
+  }
+}
+
+const removeImage = () => {
+  image.value = ''
+  imageFile.value = null
+}
+
+const removeCover = () => {
+  cover.value = ''
+  coverFile.value = null
+}
+
+const handleDrop = (event: DragEvent, type: 'image' | 'cover') => {
+  event.preventDefault()
+  const files = event.dataTransfer?.files
+  if (files && files[0] && files[0].type.startsWith('image/')) {
+    if (type === 'image') {
+      imageFile.value = files[0]
+      image.value = URL.createObjectURL(files[0])
+    } else {
+      coverFile.value = files[0]
+      cover.value = URL.createObjectURL(files[0])
+    }
+  }
+}
+
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault()
+}
+
 const updateSlugFromName = (nameValue: string | undefined) => {
   // Only auto-generate slug when creating a new record
   if (!isCreate || !nameValue || isApiUpdate) {
@@ -158,12 +202,22 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           console.log('[create] image base64 length:', payload.image.length)
         }
       }
+      if (coverFile.value) {
+        const { convertToBase64 } = useFileToBase64()
+        payload.cover = await convertToBase64(coverFile.value)
+        // debug: show base64 prefix and length only
+        if (payload.cover) {
+          console.log('[create] cover base64 prefix:', payload.cover.substring(0, 30))
+          console.log('[create] cover base64 length:', payload.cover.length)
+        }
+      }
       if (props.isChild && props.parentId) {
         const childPayload: any = {
           name: payload.name,
           slug: payload.slug,
           description: payload.description,
           image: payload.image,
+          cover: payload.cover,
           is_landing_page: payload.is_landing_page,
           is_active: payload.is_active,
         }
@@ -192,12 +246,24 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
       } else {
         delete payload.image
       }
+      if (coverFile.value) {
+        const { convertToBase64 } = useFileToBase64()
+        payload.cover = await convertToBase64(coverFile.value)
+        // debug: show base64 prefix and length only
+        if (payload.cover) {
+          console.log('[update] cover base64 prefix:', payload.cover.substring(0, 30))
+          console.log('[update] cover base64 length:', payload.cover.length)
+        }
+      } else {
+        delete payload.cover
+      }
       if (props.isChild && resolvedEditId.value) {
         const childPayload: any = {
           name: payload.name!,
           slug: payload.slug,
           description: payload.description!,
           image: payload.image,
+          cover: payload.cover,
           is_landing_page: payload.is_landing_page,
           is_active: payload.is_active,
           sub_categories: payload.sub_categories || [],
@@ -243,8 +309,91 @@ const handleBack = () => {
     <!-- Image -->
     <div class="space-y-2">
       <label class="text-sm font-medium">Image</label>
-      <input type="file" @change="onImageChange" accept="image/*" :disabled="disabled" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-      <img v-if="image" :src="image" alt="Preview" class="max-w-xs max-h-32 object-cover" />
+      <div 
+        class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+        :class="{ 'opacity-50 cursor-not-allowed': disabled }"
+        @drop="(e) => !disabled && handleDrop(e, 'image')"
+        @dragover="(e) => !disabled && handleDragOver(e)"
+        @click="!disabled && imageInput?.click()"
+      >
+        <input 
+          ref="imageInput"
+          type="file" 
+          @change="onImageChange" 
+          accept="image/*" 
+          :disabled="disabled" 
+          class="hidden"
+        />
+        
+        <div v-if="!image" class="space-y-2">
+          <div class="mx-auto w-12 h-12 text-gray-400">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <p class="text-sm text-gray-600">Drag and drop image here, or click to select</p>
+          <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+        </div>
+        
+        <div v-else class="relative inline-block">
+          <img :src="image" alt="Preview" class="max-w-xs max-h-48 object-cover rounded-lg" />
+          <button 
+            v-if="!disabled"
+            type="button"
+            @click.stop="removeImage"
+            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cover -->
+    <div class="space-y-2">
+      <label class="text-sm font-medium">Cover</label>
+      <div 
+        class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+        :class="{ 'opacity-50 cursor-not-allowed': disabled }"
+        @drop="(e) => !disabled && handleDrop(e, 'cover')"
+        @dragover="(e) => !disabled && handleDragOver(e)"
+        @click="!disabled && coverInput?.click()"
+      >
+        <input 
+          ref="coverInput"
+          type="file" 
+          @change="onCoverChange" 
+          accept="image/*" 
+          :disabled="disabled" 
+          class="hidden"
+        />
+        
+        <div v-if="!cover" class="space-y-2">
+          <div class="mx-auto w-12 h-12 text-gray-400">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <p class="text-sm text-gray-600">Drag and drop cover image here, or click to select</p>
+          <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+        </div>
+        
+        <div v-else class="relative inline-block">
+          <img :src="cover" alt="Cover Preview" class="max-w-xs max-h-48 object-cover rounded-lg" />
+          <button 
+            v-if="!disabled"
+            type="button"
+            @click.stop="removeCover"
+            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Sub Category -->

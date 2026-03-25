@@ -49,6 +49,7 @@ export type ProductCategory = {
     slug: string
     description: string
     image: string
+    cover?: string
     sub_categories: string[]
     is_landing_page: boolean
     is_active: boolean
@@ -60,6 +61,7 @@ export type ProductCategoryRequest = {
     slug?: string | null
     description: string
     image?: string
+    cover?: string
     sub_categories?: string[]
     is_landing_page: boolean
     is_active: boolean

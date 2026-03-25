@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-black text-white">
+  <div class="min-h-screen bg-gray-100 text-slate-700">
     <!-- Header Section -->
     <div class="text-center pt-32 pb-12 px-4">
       <h1 class="text-4xl font-bold mb-4">Kategori Premium Pilihan</h1>
@@ -25,19 +25,20 @@
 
       <!-- Categories Grid -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div 
+        <a 
           v-for="category in categories" 
+          :href="category.slug"
           :key="category.id"
-          class="bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform duration-300"
+          class="bg-white rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform duration-300"
         >
-          <div class="h-48 bg-gray-800 flex items-center justify-center">
+          <div class="aspect-[3/4] bg-gray-800 flex items-center justify-center">
             <img :src="category.image" :alt="category.name" class="w-full h-full object-cover">
           </div>
           <div class="p-4">
             <h3 class="text-xl font-semibold mb-2">{{ category.name }}</h3>
             <p class="text-gray-400 text-sm">{{ category.product_count }} Produk</p>
           </div>
-        </div>
+        </a>
       </div>
 
       <!-- Empty State -->
@@ -47,7 +48,7 @@
     </div>
 
     <!-- Featured Eco Kits Section -->
-    <div class="bg-gray-900 py-16 px-4">
+    <div class="bg-gray-200 py-16 px-4">
       <div class="container mx-auto text-center">
         <h2 class="text-3xl font-bold mb-4">Paket Eco Unggulan</h2>
         <p class="text-gray-400 mb-8 max-w-2xl mx-auto">
@@ -78,6 +79,7 @@
 // Interface untuk kategori
 interface Category {
   id: string
+  slug: string
   name: string
   image: string
   product_count: number
@@ -108,6 +110,7 @@ const fetchCategories = async () => {
     // Transform data to match our interface
     categories.value = result.items.map((item: any) => ({
       id: item.id,
+      slug: item.slug,
       name: item.name,
       image: item.image,
       product_count: item.product_count
