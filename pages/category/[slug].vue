@@ -147,8 +147,8 @@ definePageMeta({
     <div class="mb-12 pt-12">
       <h2 class="text-3xl font-bold mb-8 text-center">{{ selectedSubCategory?.name || 'Products' }}</h2>
       
-      <!-- Loading State -->
-      <div v-if="productsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Initial Loading State (Skeleton) -->
+      <div v-if="productsLoading && products.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="n in 6" :key="n" class="bg-white border rounded-lg overflow-hidden animate-pulse">
           <div class="w-full h-48 bg-gray-200"></div>
           <div class="p-4">
@@ -162,12 +162,42 @@ definePageMeta({
         </div>
       </div>
       
+      <!-- Loading More State -->
+      <div v-else-if="productsLoading && products.length > 0" class="text-center py-4">
+        <div class="inline-flex items-center space-x-2 text-green-600">
+          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Loading more products...</span>
+        </div>
+      </div>
+      
       <!-- Error State -->
       <div v-else-if="productsError" class="text-center py-12">
         <p class="text-red-600 mb-4">{{ productsError }}</p>
         <button @click="loadMore" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
           Try Again
         </button>
+      </div>
+      
+      <!-- Empty State -->
+      <div v-else-if="!productsLoading && !productsError && products.length === 0" class="flex flex-col items-center justify-center py-12">
+        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+        </div>
+        <p class="text-2xl font-semibold text-gray-800 mb-3">No products found in this category yet.</p>
+        <p class="text-gray-600 text-center mb-6 max-w-md">We're currently updating our collection with fresh, eco-friendly designs. Why not explore our other sustainable categories or check back soon?</p>
+        <div class="flex space-x-4">
+          <NuxtLink to="/products" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg">
+            Browse All Products
+          </NuxtLink>
+          <button class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors text-lg">
+            Contact Sales for Custom Requests
+          </button>
+        </div>
       </div>
       
       <!-- Products Grid -->
