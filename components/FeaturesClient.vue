@@ -1,9 +1,23 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useClientService } from '~/services/client.service'
+import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
 
 const { datas: clients, loading, reFetch } = useClientService()
 const isInitialLoad = ref(true)
+const shouldLoad = ref(false)
+
+// Set up intersection observer to trigger data loading
+const { target } = useIntersectionObserver(() => {
+  shouldLoad.value = true
+  loadClients()
+})
+
+const loadClients = async () => {
+  if (!shouldLoad.value) return
+  await reFetch()
+  isInitialLoad.value = false
+}
 
 // Get only active clients for display
 const activeClients = computed(() => clients.value.filter(client => client.is_active))
@@ -31,16 +45,10 @@ const duplicatedClients = computed(() => {
 
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
-
-// Fetch clients on component mount
-onMounted(async () => {
-  await reFetch()
-  isInitialLoad.value = false
-})
 </script>
 
 <template>
-  <div class="w-full px-4 py-12">
+  <div ref="target" class="w-full px-4 py-12">
     <div class="container max-w-6xl mx-auto py-12">
       <h2 class="text-2xl md:text-3xl font-bold text-center">Partner Kami</h2>
     </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -12,12 +12,26 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useFeaturedProduct } from "~/composables/useFeaturedProduct";
+import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
 
 const router = useRouter();
-const { data, loading, error } = useFeaturedProduct();
+const { data, loading, error, refetch } = useFeaturedProduct();
 const isInitialLoad = ref(true);
+const shouldLoad = ref(false);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+
+// Set up intersection observer to trigger data loading
+const { target } = useIntersectionObserver(() => {
+  shouldLoad.value = true
+  loadProducts()
+})
+
+const loadProducts = async () => {
+  if (!shouldLoad.value) return
+  await refetch()
+  isInitialLoad.value = false
+}
 
 const tabs = computed(() => [
   {
@@ -39,17 +53,9 @@ const filteredProducts = (type: string) => {
   return [];
 };
 
-// Initialize loading state
-onMounted(() => {
-  // Simulate initial load completion after data is available
-  if (data.value && data.value.length > 0) {
-    isInitialLoad.value = false;
-  }
-});
-
 // Watch for data changes to complete initial load
 watch(data, (newData) => {
-  if (newData && newData.length > 0) {
+  if (newData && newData.length > 0 && shouldLoad.value) {
     isInitialLoad.value = false;
   }
 });
@@ -61,7 +67,7 @@ function goTo(slug: string) {
 </script>
 
 <template>
-  <div class="w-full px-4 py-12 bg-[#F2F4F7]">
+  <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-12">
       <div v-if="error" class="text-center text-red-500">{{ error }}</div>
       <div v-else>

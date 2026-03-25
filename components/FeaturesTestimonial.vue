@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useTestimonialService } from '~/services/testimonial.service'
+import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
 
 const { datas: testimonials, loading, reFetch } = useTestimonialService()
 const isInitialLoad = ref(true)
+const shouldLoad = ref(false)
 
-onMounted(async () => {
+// Set up intersection observer to trigger data loading
+const { target } = useIntersectionObserver(() => {
+  shouldLoad.value = true
+  loadTestimonials()
+})
+
+const loadTestimonials = async () => {
+  if (!shouldLoad.value) return
   await reFetch()
   isInitialLoad.value = false
-})
+}
 </script>
 
 <template>
-  <div class="w-full px-4 py-12 bg-[#F2F4F7]">
+  <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-12">
       <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Apa Kata Klien Kami</h2>
       

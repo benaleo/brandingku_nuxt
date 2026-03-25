@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client'
+import { ref, computed, onMounted } from 'vue'
 import type { ProductCategory } from '~/types/products.type'
 import { useGql } from '~/composables/useGql'
 
@@ -32,7 +33,9 @@ export const useLandingFeaturedCategories = () => {
     }
   }
 
-  onMounted(fetchCategories)
+  onMounted(() => {
+  // Remove automatic fetching - will be called manually when component is in view
+})
 
   return {
     data: computed(() => data.value),

@@ -116,7 +116,9 @@ export const useFeaturedProduct = () => {
     }
   }
 
-  onMounted(fetchFeatured)
+  onMounted(() => {
+    // Remove automatic fetching - will be called manually when component is in view
+  })
 
   return {
     data: computed(() => data.value),

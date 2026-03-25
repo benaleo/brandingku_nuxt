@@ -1,34 +1,42 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useLandingFeaturedCategories } from "~/services/landing-page.service";
 import type { ProductCategory } from "~/types/products.type";
 import { Button } from "~/components/ui/button";
 import SkeletonFeaturedCategory from "~/components/skeletons/SkeletonFeaturedCategory.vue";
+import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
 
 const { data, loading, error, refetch } = useLandingFeaturedCategories();
 const isInitialLoad = ref(true);
+const shouldLoad = ref(false);
 
 const featuredCategories = computed<ProductCategory[]>(() => data.value || []);
 
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
-// Initialize loading state
-onMounted(async () => {
-  await refetch();
-  isInitialLoad.value = false;
-});
+// Set up intersection observer to trigger data loading
+const { target } = useIntersectionObserver(() => {
+  shouldLoad.value = true
+  loadCategories()
+})
+
+const loadCategories = async () => {
+  if (!shouldLoad.value) return
+  await refetch()
+  isInitialLoad.value = false
+}
 
 // Watch for data changes to complete initial load
 watch(data, (newData) => {
-  if (newData && newData.length > 0) {
+  if (newData && newData.length > 0 && shouldLoad.value) {
     isInitialLoad.value = false;
   }
 });
 </script>
 
 <template>
-  <section class="md:pb-24 md:max-w-3/4 mx-auto">
+  <section ref="target" class="md:pb-24 md:max-w-3/4 mx-auto">
     <div class="container px-4 mx-auto">
       <!-- <div class="relative flex justify-center items-center mb-8">
         <h2 class="text-2xl md:text-3xl font-bold">Shop by Category</h2>

@@ -1,7 +1,23 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useBenefitService } from "~/services/benefit.service";
+import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
 
-const { datas: benefits, loading, error } = useBenefitService();
+const { datas: benefits, loading, error, reFetch } = useBenefitService();
+const shouldLoad = ref(false)
+const isInitialLoad = ref(true)
+
+// Set up intersection observer to trigger data loading
+const { target } = useIntersectionObserver(() => {
+  shouldLoad.value = true
+  loadBenefits()
+})
+
+const loadBenefits = async () => {
+  if (!shouldLoad.value) return
+  await reFetch()
+  isInitialLoad.value = false
+}
 
 // Add Plus Jakarta Sans font
 useHead({
@@ -24,11 +40,11 @@ useHead({
 </script>
 
 <template>
-  <div class="w-full px-4 py-12" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+  <div ref="target" class="w-full px-4 py-12" style="font-family: 'Plus Jakarta Sans', sans-serif;">
     <div class="container max-w-3xl mx-auto py-12">
       <h2 class="text-2xl font-bold text-center mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">Pertanyaan Populer</h2>
 
-      <div v-if="loading" class="text-center py-4">
+      <div v-if="loading || isInitialLoad" class="text-center py-4">
         <p style="font-family: 'Plus Jakarta Sans', sans-serif;">Memuat pertanyaan...</p>
       </div>
 

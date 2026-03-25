@@ -124,7 +124,9 @@ export const useTestimonialService = () => {
   const reFetch = () => fetchList();
 
   watch(params, fetchList, { deep: true });
-  onMounted(fetchList);
+  onMounted(() => {
+    // Remove automatic fetching - will be called manually when component is in view
+  });
 
   // Detail
   const getTestimonialDetail = async (id: number) => {
