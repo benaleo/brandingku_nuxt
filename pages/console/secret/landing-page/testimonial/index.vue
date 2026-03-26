@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import {computed, ref, watch} from 'vue'
+import {computed, ref, watch, onMounted} from 'vue'
 import {testimonialColumns} from "~/components/datatables/testimonialColumns";
 import {useTestimonialService} from "~/services/testimonial.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
@@ -80,7 +80,7 @@ const onLimitChange = (limit: number) => {
 const handleDelete = async (id: string) => {
   try {
     await deleteTestimonialById(id)
-    // Refresh the current page
+    // Refresh current page
     reFetch()
     toast.success('Berhasil menghapus data')
   } catch (error) {
@@ -88,6 +88,12 @@ const handleDelete = async (id: string) => {
     toast.error('Gagal menghapus data')
   }
 }
+
+// Load data when component mounts
+onMounted(() => {
+  console.log('Testimonial admin page mounted, fetching data...')
+  reFetch()
+})
 
 // Watch keyword to trigger search with minimum 3 characters
 watch(keyword, (newValue: string) => {
