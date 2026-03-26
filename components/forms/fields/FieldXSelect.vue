@@ -3,11 +3,11 @@
     <FormItem :class="itemClass" v-auto-animate>
       <FormLabel v-if="label">{{ label }}</FormLabel>
       <FormControl>
-        <Combobox v-model="modelValue" :by="byField" v-bind="componentField">
+        <Combobox v-model="componentField.modelValue" :by="byField">
           <ComboboxAnchor as-child>
             <ComboboxTrigger as-child :disabled="disabled">
               <Button variant="outline" class="justify-between w-full">
-                {{(options ?? []).find(item => item[valueField] === modelValue)?.[labelField] ?? placeholder}}
+                {{(options ?? []).find(item => item[valueField] === componentField.modelValue)?.[labelField] ?? placeholder}}
                 <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </ComboboxTrigger>
