@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen">
     <!-- Hero Section -->
-    <section class="ps relative bg-green-600 text-white overflow-hidden min-h-screen">
+    <section class="ps relative bg-linear-green text-white overflow-hidden min-h-screen">
       <!-- Wave SVG at bottom -->
       <div class="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,9 +20,9 @@
               We transform your brand vision into tangible, memorable experiences through premium merchandise and strategic branding solutions that resonate with your audience.
             </p>
           </div>
-          <div class="relative">
-            <img src="/images/about/about-hero.png" alt="About Brandingku" class="rotate-3 rounded-lg shadow-2xl" />
-            <div class="absolute bg-white text-green-600 px-4 py-3 rounded-lg shadow-lg" style="left: -40px; bottom: -15px">
+          <div class="relative flex justify-center">
+            <img src="/images/about/about-hero.png" alt="About Brandingku" class="max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
+            <div class="absolute bg-white text-green-600 px-4 py-3 rounded-lg shadow-lg" style="left: 70px; bottom: -15px">
               <div class="text-2xl font-bold">5+</div>
               <div class="text-xs">Years of experience</div>
             </div>
