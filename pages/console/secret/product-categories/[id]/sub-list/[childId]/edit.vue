@@ -1,7 +1,7 @@
 <template>
   <div>
     <AppBreadcrumb />
-    <AppTableHeader :pageTitle="'Edit Child Category'" :create-path="''" />
+    <AppTableHeader :pageTitle="pageTitle" :create-path="''" />
     <div class="max-w-3xl">
       <ProductCategoryForm v-if="!loading && detail" :isChild="true" :parentId="parentId" :hideSubCategories="true" :detail="detail" />
       <div v-else-if="loading" class="text-center py-4">Loading...</div>
@@ -19,6 +19,7 @@ import { useProductCategoryService } from '~/services/product-category.service'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
+
 const route = useRoute()
 const parentId = computed(() => Number(route.params.id))
 const childId = computed(() => Number(route.params.childId))
@@ -26,6 +27,10 @@ const childId = computed(() => Number(route.params.childId))
 const { getProductCategoryDetail } = useProductCategoryService({ autoFetchParents: false })
 const detail = ref()
 const loading = ref(false)
+
+const pageTitle = computed(() => {
+  return 'Edit Sub Kategori'
+})
 
 const loadDetail = async () => {
   loading.value = true
@@ -40,7 +45,12 @@ const loadDetail = async () => {
 
 onMounted(loadDetail)
 
-useHead({ title: 'Edit Child Category' })
+useHead({
+  title: pageTitle,
+  meta: [
+    { name: 'description', content: pageTitle }
+  ]
+})
 
 definePageMeta({ layout: 'console-secret' })
 </script>

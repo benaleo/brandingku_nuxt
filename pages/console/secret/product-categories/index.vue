@@ -104,6 +104,9 @@ watch(keyword, (newValue: string) => {
 
 useHead({
   title: pageTitle,
+  meta: [
+    { name: 'description', content: pageTitle }
+  ]
 })
 
 definePageMeta({
