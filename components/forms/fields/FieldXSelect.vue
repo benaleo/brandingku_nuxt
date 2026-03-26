@@ -13,9 +13,9 @@
             </ComboboxTrigger>
           </ComboboxAnchor>
 
-          <ComboboxList>
+          <ComboboxList class="max-h-60 overflow-auto">
             <div class="relative w-full items-center">
-              <ComboboxInput class="pl-9 focus-visible:ring-0 border-0 border-b rounded-none h-10"
+              <ComboboxInput class="pl-0 focus-visible:ring-0 border-0 border-b rounded-none h-10"
                 :placeholder="searchPlaceholder" />
               <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
                 <Search class="size-4 text-muted-foreground" />

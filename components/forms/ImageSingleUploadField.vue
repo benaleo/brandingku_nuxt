@@ -243,7 +243,7 @@ async function uploadImage() {
       </div>
       <Button
         v-if="previewUrl"
-        @click="openDeleteConfirm"
+        @click.stop="openDeleteConfirm"
         class="mt-2 absolute top-2 right-2 transition opacity-0 group-hover:opacity-100"
         variant="destructive"
         size="sm"

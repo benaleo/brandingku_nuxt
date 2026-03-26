@@ -20,7 +20,7 @@ const delegatedProps = computed(() => {
   <ComboboxGroup
     data-slot="combobox-group"
     v-bind="delegatedProps"
-    :class="cn('overflow-hidden p-1 text-foreground max-h-[200px]', props.class)"
+    :class="cn('scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 overflow-y-auto p-1 text-foreground max-h-[200px]', props.class)"
   >
     <ComboboxLabel v-if="heading" class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
       {{ heading }}
