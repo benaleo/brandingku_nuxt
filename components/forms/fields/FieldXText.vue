@@ -17,12 +17,9 @@
         <FormLabel v-if="label">{{ label }}</FormLabel>
         <FormControl>
           <Input
+              v-bind="componentField"
               :type="type"
               :placeholder="placeholder"
-              v-model="modelValue"
-              :name="name"
-              @input="(e: any) => componentField?.onInput?.(e)"
-              @blur="(e: any) => componentField?.onBlur?.(e)"
               :disabled="disabled"
               :class="inputClass"
           />
