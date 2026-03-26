@@ -216,6 +216,7 @@ const stopInitWatch = watch(
         ready.value = true;
         // Ensure vee-validate sees values loaded from API
         try { setFieldValue('name', name.value ?? ''); } catch {}
+        try { setFieldValue('slug', slug.value ?? ''); } catch {}
         // Ensure vee-validate sees the description value loaded from API
         try { setFieldValue('description', description.value ?? ''); } catch {}
         try { setFieldValue('product_category_id', product_category_id.value ?? ''); } catch {}
@@ -237,6 +238,14 @@ watch(
   () => name.value,
   (val) => {
     try { setFieldValue('name', val ?? ''); } catch {}
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => slug.value,
+  (val) => {
+    try { setFieldValue('slug', val ?? ''); } catch {}
   },
   { flush: 'post' }
 );
