@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen">
     <!-- Hero Section -->
-    <section class="relative bg-green-600 text-white overflow-hidden min-h-screen">
+    <section class="ps relative bg-green-600 text-white overflow-hidden min-h-screen">
       <!-- Wave SVG at bottom -->
       <div class="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -32,7 +32,7 @@
     </section>
 
     <!-- The Brandingku Legacy Section -->
-    <section class="py-20 bg-white">
+    <section class="ps py-20 bg-white">
       <div class="container mx-auto px-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div class="space-y-4">
@@ -66,7 +66,7 @@
     </section>
 
     <!-- Vision and Mission Section -->
-    <section class="py-20 bg-gray-50">
+    <section class="ps py-20 bg-gray-50">
       <div class="container mx-auto px-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <!-- Vision Card -->
@@ -95,7 +95,7 @@
     </section>
 
     <!-- Core Values Section -->
-    <section class="py-20 bg-white">
+    <section class="ps py-20 bg-white">
       <div class="container mx-auto px-6">
         <div class="text-center mb-12">
           <h2 class="text-4xl font-bold mb-4 text-gray-800">Core Values</h2>
@@ -155,7 +155,7 @@
     </section>
 
     <!-- Meet the Visionaries Section -->
-    <section class="py-20 bg-gray-50">
+    <section class="ps py-20 bg-gray-50">
       <div class="container mx-auto px-6">
         <div class="flex justify-between items-center mb-12">
           <div>
@@ -197,7 +197,7 @@
     </section>
 
     <!-- Call to Action Section -->
-    <section class="py-20 bg-green-600 text-white">
+    <section class="ps py-20 bg-green-600 text-white">
       <div class="container mx-auto px-6 text-center">
         <h2 class="text-4xl font-bold mb-6">Ready to build your brand's physical legacy?</h2>
         <p class="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
@@ -225,9 +225,3 @@ useHead({
   ]
 })
 </script>
-
-<style lang="css">
-section{
-    padding: 6rem 0;
-}
-</style>

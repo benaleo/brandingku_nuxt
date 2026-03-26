@@ -164,4 +164,8 @@
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
     }
+
+    .ps{
+    padding: 6rem 0;
+}
 }
