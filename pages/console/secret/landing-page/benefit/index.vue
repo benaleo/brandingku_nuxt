@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
-import {computed, ref, watch} from 'vue'
+import {computed, ref, watch, onMounted} from 'vue'
 import {benefitColumns} from "~/components/datatables/benefitColumns";
 import {useBenefitService} from "~/services/benefit.service";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
@@ -89,6 +89,12 @@ const handleDelete = async (id: string) => {
     toast.error('Gagal menghapus data')
   }
 }
+
+// Load data when component mounts
+onMounted(() => {
+  console.log('Benefit admin page mounted, fetching data...')
+  reFetch()
+})
 
 // Watch keyword to trigger search with minimum 3 characters
 watch(keyword, (newValue: string) => {

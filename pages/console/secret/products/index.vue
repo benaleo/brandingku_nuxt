@@ -17,7 +17,9 @@
     <!-- Table -->
     <div class="mt-6">
       <div v-if="loading" class="text-center py-4">
-        Loading products...
+        <div class="grid grid-cols-2">
+          <Skeleton />
+        </div>
       </div>
       <div v-else-if="error" class="text-center py-4 text-red-500">
         {{ error }}
@@ -47,7 +49,6 @@ import {computed, ref, watch} from 'vue'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from "vue-sonner";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
-import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue";
 
 const {
   datas,
@@ -62,6 +63,8 @@ const {
   deleteProductById,
   updateProductGalleries,
 } = useProductService(true)
+
+console.log('loading', loading.value)
 
 const hasProducts = computed(() => {
   return Array.isArray(datas.value) && datas.value.length > 0

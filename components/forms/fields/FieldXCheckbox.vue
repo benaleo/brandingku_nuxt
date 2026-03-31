@@ -7,6 +7,7 @@
           <Checkbox
             :checked="modelValue"
             @update:checked="(val: boolean) => {
+              console.debug('[FieldXCheckbox] update:checked', { name, val, modelValue });
               const boolVal = val === true;
               emitUpdate(boolVal);
               handleChange(boolVal);
@@ -27,6 +28,7 @@
 import { FormField, FormItem, FormControl, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '~/components/ui/checkbox';
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
+import { watch } from 'vue';
 
 defineOptions({
   directives: {
@@ -44,6 +46,14 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 const emitUpdate = (val: boolean) => emit('update:modelValue', val);
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    console.debug('[FieldXCheckbox] modelValue changed', { name: props.name, val });
+  },
+  { immediate: true }
+);
 
 
 </script>

@@ -38,7 +38,7 @@ import { useProductCategoryService } from '~/services/product-category.service'
 const route = useRoute()
 const parentId = Number(route.params.id)
 const basePath = computed(() => `/console/secret/product-categories/${parentId}/sub-list`)
-const pageTitle = 'Child Categories'
+const pageTitle = 'Sub Kategori'
 
 const { getChildCategoriesByParentId, deleteProductCategoryById } = useProductCategoryService()
 
@@ -81,6 +81,9 @@ onMounted(fetchChildren)
 
 useHead({
   title: pageTitle,
+  meta: [
+    { name: 'description', content: pageTitle }
+  ]
 })
 
 definePageMeta({

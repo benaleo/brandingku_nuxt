@@ -11,11 +11,15 @@ const pageTitle = computed(() => {
   return 'Tambah Produk'
 })
 
-useHead({
-  title: pageTitle,
-})
 
 definePageMeta({
   layout: 'console-secret'
+})
+
+useHead({
+  title: pageTitle,
+  meta: [
+    { name: 'description', content: pageTitle }
+  ]
 })
 </script>

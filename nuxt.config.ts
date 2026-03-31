@@ -3,14 +3,25 @@ import tailwindcss from '@tailwindcss/vite'
 // NuxtHub works only with Cloudflare Nitro presets. Guard its usage for non-Cloudflare builds.
 const isCloudflarePreset = ['cloudflare_pages', 'cloudflare_module', 'cloudflare_durable'].includes(process.env.NITRO_PRESET || '')
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
-  devtools: { enabled: process.env.NODE_ENV !== 'production' },
+  compatibilityDate: '2026-02-22',
+  devtools: {
+    enabled: false
+  },
   css: ['~/assets/css/tailwind.css'],
 
   vite: {
     plugins: [
-      tailwindcss(),
+      tailwindcss() as any,
     ],
+  },
+
+  components: {
+    dirs: [
+      {
+        path: '~/components',
+        ignore: ['ui/**'],
+      },
+    ]
   },
 
   modules: [
@@ -20,11 +31,24 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/apollo',
     // Only include NuxtHub when deploying to Cloudflare-compatible presets.
-    ...(isCloudflarePreset ? ['@nuxthub/core'] as const : [])
+    ...(isCloudflarePreset ? ['@nuxthub/core'] as const : []),
+    (_options, nuxt) => {
+      nuxt.hook('components:dirs', (dirs) => {
+        for (const dir of dirs) {
+          if (typeof dir === 'object' && 'path' in dir && typeof dir.path === 'string' && dir.path.includes('/components/ui')) {
+            dir.extensions = ['vue']
+          }
+        }
+      })
+    },
   ],
 
   nitro: {
     preset: process.env.NITRO_PRESET || 'node-server',
+    cloudflare: {
+      deployConfig: true,
+      nodeCompat: true
+    }
   },
 
   apollo: {
@@ -40,7 +64,7 @@ export default defineNuxtConfig({
     /**
      * Prefix for all the imported component
      */
-    prefix: '',
+    prefix: 'Ui',
     /**
      * Directory that the component lives in.
      * @default "./components/ui"

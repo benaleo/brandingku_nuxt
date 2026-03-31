@@ -1,10 +1,12 @@
 import type { ProductCategory } from "~/types/products.type";
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
-
+import { useRuntimeConfig } from '#app'
 
 export const useProductCategoryService = (opts?: { autoFetchParents?: boolean }) => {
     const { gqlFetch } = useGql()
+    const config = useRuntimeConfig()
+    const STORAGE_URL = config.public.STORAGE_URL
 
     // State for list view (client-side pagination over GraphQL results)
     const datas = ref<ProductCategory[]>([])
@@ -159,6 +161,61 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         return detail.value
     }
 
+    // Get categories with pagination and filter by is_active
+    const getProductCategoriesPage = async (pagination: { page: number; limit: number }, is_active: boolean) => {
+        const query = `
+            query GetProductCategoriesPage($pagination: PaginationInput!, $is_active: Boolean) {
+                getProductCategoriesPage(pagination: $pagination, is_active: $is_active) {
+                    items {
+                        id
+                        slug
+                        name
+                        image
+                        product_count
+                    }
+                    page_info {
+                        has_next_page
+                        has_previous_page
+                        start_item
+                        end_item
+                    }
+                }
+            }
+        `
+        
+        const data = await gqlFetch<{
+            getProductCategoriesPage: {
+                items: Array<{
+                    id: string
+                    slug: string
+                    name: string
+                    image: string
+                    product_count: number
+                }>
+                page_info: {
+                    has_next_page: boolean
+                    has_previous_page: boolean
+                    start_item: number
+                    end_item: number
+                }
+            }
+        }>(
+            query,
+            { pagination, is_active },
+            { auth: true }
+        )
+        
+        // Prepend STORAGE_URL to image URLs
+        const result = data.getProductCategoriesPage
+        result.items = result.items.map(item => ({
+            ...item,
+            slug: item.slug ? '/category/' + item.slug : item.slug,
+            image: item.image ? `${STORAGE_URL}${item.image}` : item.image
+        }))
+        
+        return result
+    }
+
     // Children as full objects
     const getChildCategoriesByParentId = async (parentId: number, isAll: boolean) => {
         const query = `
@@ -239,6 +296,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         slug: string
         description?: string
         image?: string
+        cover? : string
         parent_id?: number
         is_landing_page?: boolean
     }) => {
@@ -248,6 +306,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 $slug: String!,
                 $description: String,
                 $image: String,
+                $cover: String,
                 $parent_id: Int,
                 $is_landing_page: Boolean
             ) {
@@ -256,6 +315,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     slug: $slug,
                     description: $description,
                     image: $image,
+                    cover: $cover,
                     parent_id: $parent_id,
                     is_landing_page: $is_landing_page
                 ) {
@@ -264,6 +324,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     slug
                     description
                     image
+                    cover
                     is_landing_page
                     is_active
                     created_at
@@ -290,6 +351,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         slug?: string
         description?: string
         image?: string
+        cover?: string
         parent_id?: number
         is_landing_page?: boolean
         is_active?: boolean
@@ -302,6 +364,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 $slug: String!,
                 $description: String,
                 $image: String,
+                $cover: String,
                 $parent_id: Int,
                 $is_landing_page: Boolean,
                 $is_active: Boolean
@@ -312,6 +375,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     slug: $slug,
                     description: $description,
                     image: $image,
+                    cover: $cover,
                     parent_id: $parent_id,
                     is_landing_page: $is_landing_page,
                     is_active: $is_active
@@ -321,6 +385,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     slug
                     description
                     image
+                    cover
                     is_landing_page
                     is_active
                     created_at
@@ -345,6 +410,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         slug?: string | null
         description: string
         image?: string
+        cover?: string
         sub_categories?: string[]
         is_landing_page: boolean
         is_active: boolean
@@ -359,6 +425,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             slug: parentSlug,
             description: vars.description,
             image: vars.image,
+            cover: vars.cover,
             is_landing_page: vars.is_landing_page,
             // is_active handled by backend default or separate mutation if required
         })
@@ -396,6 +463,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             slug?: string | null
             description: string
             image?: string
+            cover?: string
             sub_categories?: string[]
             is_landing_page: boolean
             is_active: boolean
@@ -407,6 +475,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             slug: vars.slug ?? undefined,
             description: vars.description,
             image: vars.image ?? undefined,
+            cover: vars.cover ?? undefined,
             is_landing_page: vars.is_landing_page,
         })
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
@@ -507,6 +576,7 @@ return {
     // GraphQL APIs
     getProductCategoriesParent,
     getProductCategoryDetail,
+    getProductCategoriesPage,
     createProductCategory,
     createProductCategoryWithSubs,
     updateProductCategory,

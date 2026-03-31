@@ -214,14 +214,85 @@ const stopInitWatch = watch(
         additionals.value = processedAdditionals;
         console.log("Form data loaded from API:", processedAdditionals);
         ready.value = true;
+        // Ensure vee-validate sees values loaded from API
+        try { setFieldValue('name', name.value ?? ''); } catch {}
+        try { setFieldValue('slug', slug.value ?? ''); } catch {}
         // Ensure vee-validate sees the description value loaded from API
         try { setFieldValue('description', description.value ?? ''); } catch {}
+        try { setFieldValue('product_category_id', product_category_id.value ?? ''); } catch {}
+        // Sync boolean flags to vee-validate
+        try { setFieldValue('is_highlight', is_highlight.value); } catch {}
+        try { setFieldValue('is_recommended', is_recommended.value); } catch {}
+        try { setFieldValue('is_upsell', is_upsell.value); } catch {}
+        try { setFieldValue('is_active', is_active.value); } catch {}
         // Stop watching after first population
         stopInitWatch();
       }, 0);
     }
   },
   { immediate: true, flush: "post" }
+);
+
+// Keep vee-validate values in sync with local refs
+watch(
+  () => name.value,
+  (val) => {
+    try { setFieldValue('name', val ?? ''); } catch {}
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => slug.value,
+  (val) => {
+    try { setFieldValue('slug', val ?? ''); } catch {}
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => product_category_id.value,
+  (val) => {
+    try { setFieldValue('product_category_id', val ?? ''); } catch {}
+  },
+  { flush: 'post' }
+);
+
+// Sync boolean flags to vee-validate on change
+watch(
+  () => is_highlight.value,
+  (val) => {
+    console.debug("[watch] is_highlight:", val);
+    try { setFieldValue('is_highlight', val); } catch {}
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => is_recommended.value,
+  (val) => {
+    console.debug("[watch] is_recommended:", val);
+    try { setFieldValue('is_recommended', val); } catch {}
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => is_upsell.value,
+  (val) => {
+    console.debug("[watch] is_upsell:", val);
+    try { setFieldValue('is_upsell', val); } catch {}
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => is_active.value,
+  (val) => {
+    console.debug("[watch] is_active:", val);
+    try { setFieldValue('is_active', val); } catch {}
+  },
+  { flush: 'post' }
 );
 
 // Keep vee-validate 'description' in sync with Quill editor content without heavy loops
@@ -275,16 +346,29 @@ const handleSubmitForm = handleSubmit(
       "[submit] additionals (formValues):",
       JSON.parse(JSON.stringify(formValues.additionals))
     );
+    // Debug boolean flags
+    console.debug("[submit] boolean refs:", {
+      is_highlight: is_highlight.value,
+      is_recommended: is_recommended.value,
+      is_upsell: is_upsell.value,
+      is_active: is_active.value,
+    });
+    console.debug("[submit] boolean vee-validate values:", {
+      is_highlight: formValues.is_highlight,
+      is_recommended: formValues.is_recommended,
+      is_upsell: formValues.is_upsell,
+      is_active: formValues.is_active,
+    });
     const submitData: any = {
       name: name.value,
       slug: slug.value || generateSlug(name.value),
       description: description.value,
       image: image.value,
       product_category_id: product_category_id.value,
-      is_highlight: Boolean(is_highlight.value),
-      is_recommended: Boolean(is_recommended.value),
-      is_upsell: Boolean(is_upsell.value),
-      is_active: Boolean(is_active.value),
+      is_highlight: Boolean(formValues.is_highlight),
+      is_recommended: Boolean(formValues.is_recommended),
+      is_upsell: Boolean(formValues.is_upsell),
+      is_active: Boolean(formValues.is_active),
       // Normalize additionals to correct types and ensure strings are present
       additionals: ((additionals.value as any[]) || []).map((add) => ({
         id:
@@ -385,6 +469,10 @@ const handleSubmitForm = handleSubmit(
         });
         toast.success("Product created successfully!");
       } else {
+        console.log('[[submit]] updateProductById', {
+          id,
+          data: submitData
+        })
         await useProductService().updateProductById(id, {
           name: submitData.name,
           slug: submitData.slug,
