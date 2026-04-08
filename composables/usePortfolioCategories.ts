@@ -15,7 +15,6 @@ export const usePortfolioCategories = () => {
       const query = `
         query getProductCategories($is_landing_page: Boolean, $only_parent: Boolean) {
           getProductCategories(is_landing_page: $is_landing_page, only_parent: $only_parent) {
-            id
             name
             slug
           }
@@ -23,7 +22,7 @@ export const usePortfolioCategories = () => {
       `
       
       const response = await gqlFetch<{
-        getProductCategories: Array<{ id: number, name: string, slug: string }>
+        getProductCategories: Array<{ name: string, slug: string }>
       }>(
         query, 
         { 
@@ -33,8 +32,8 @@ export const usePortfolioCategories = () => {
         { auth: true }
       )
       
-      options.value = (response?.getProductCategories || []).map(({ id, name }) => ({
-        id: id.toString(),
+      options.value = (response?.getProductCategories || []).map(({ name }) => ({
+        id: name,
         label: name
       }))
     } catch (e: any) {
