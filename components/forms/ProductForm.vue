@@ -568,6 +568,7 @@ function handleBack() {
         />
       </ClientOnly>
     </div>
+    <div class="w-full mb-12"> </div>
     <!-- Image -->
     <ImageUploadField
       v-model:fileUrl="image"
