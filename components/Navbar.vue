@@ -165,26 +165,18 @@ const setToLocalStorage = (key: string, data: any, expiryInHours: number = 24) =
 
 const fetchCategories = async () => {
   const cachedData = getFromLocalStorage('categories');
-  
+
   if (cachedData) {
     categories.value = cachedData;
     return;
   }
-  
+
   loading.value = true;
   try {
-    const { getProductCategoriesParent, getProductCategoryDetail } = useProductCategoryService();
-    const parentCategories = await getProductCategoriesParent();
-    
-    const categoriesWithSubs = await Promise.all(
-      parentCategories.map(async (parent) => {
-        const detail = await getProductCategoryDetail(Number(parent.id));
-        return detail;
-      })
-    );
-    
-    categories.value = categoriesWithSubs;
-    setToLocalStorage('categories', categoriesWithSubs, 24);
+    const { getProductCategoriesParentNavbar } = useProductCategoryService({ autoFetchParents: false });
+    const result = await getProductCategoriesParentNavbar();
+    categories.value = result;
+    setToLocalStorage('categories', result, 24);
   } catch (error) {
     console.error('Error fetching categories:', error);
   } finally {
