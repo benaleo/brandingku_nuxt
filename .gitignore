@@ -1,4 +1,6 @@
 .idx/*
+.omc/*
+.omx/*
 
 # Nuxt dev/build outputs
 .output
