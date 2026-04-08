@@ -134,6 +134,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         category {
                             id
                             name
+                            slug
                         }
                         is_highlight
                         is_recommended
