@@ -82,7 +82,7 @@
           </svg>
         </button>
         <!-- User Icon -->
-        <button class="text-slate-700 hover:text-black">
+        <button @click="handleUserClick" class="text-slate-700 hover:text-black">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
@@ -111,11 +111,34 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProductCategoryService } from '~/services/product-category.service';
+import { getSecureIdFromToken } from '~/utils/token.helper';
 
 const router = useRouter();
 const isDesktop = ref(false);
 const categories = ref<any[]>([]);
 const loading = ref(false);
+
+// Authentication check
+const token = useCookie<string | null>('token', { sameSite: 'lax' });
+
+// Handle user icon click
+const handleUserClick = () => {
+  if (token.value) {
+    // User is logged in, get secure_id from token using helper
+    const secureId = getSecureIdFromToken(token.value);
+    
+    if (secureId) {
+      // Redirect to profile page with secure_id
+      router.push(`/profile/${secureId}`);
+    } else {
+      // Token is invalid or doesn't contain secure_id, redirect to login
+      router.push('/console/auth');
+    }
+  } else {
+    // User is not logged in, redirect to auth login
+    router.push('/console/auth');
+  }
+};
 
 const services = [
   { name: 'Servis Terbaik', href: '#servis-terbaik' },
