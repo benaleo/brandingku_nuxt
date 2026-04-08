@@ -69,6 +69,8 @@ const handleLogin = handleSubmit(async (values) => {
         <FormMessage/>
       </FormItem>
     </FormField>
+    <!-- Forgot password -->
+    <p class="text-sm text-gray-500 pl-2">Forgot your password? <NuxtLink to="/console/auth/reset-password" class="text-blue-500 hover:underline">Reset it</NuxtLink></p>
     <Button class="w-full" type="submit">
       Login
     </Button>
