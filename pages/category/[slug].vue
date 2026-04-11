@@ -6,6 +6,7 @@ import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCa
 
 const route = useRoute()
 const slug = route.params.slug as string
+const subSlug = computed(() => route.query.sub as string | undefined)
 
 const selectedFilter = ref('All')
 const selectedSubCategory = ref<SubCategory | null>(null)
@@ -59,7 +60,7 @@ useHead({
 // Handle filter click - select subcategory when filter is clicked
 const handleFilterClick = (filter: string) => {
   selectedFilter.value = filter
-  
+
   // Find the corresponding subcategory
   if (filter === 'All') {
     selectedSubCategory.value = null
@@ -68,6 +69,17 @@ const handleFilterClick = (filter: string) => {
     selectedSubCategory.value = subCategory || null
   }
 }
+
+// Auto-select sub-category from URL query parameter
+watch([category, subSlug], ([newCategory, newSubSlug]) => {
+  if (newCategory && newSubSlug) {
+    const subCategory = subCategories.value.find(sub => sub.slug === newSubSlug)
+    if (subCategory) {
+      selectedSubCategory.value = subCategory
+      selectedFilter.value = subCategory.name
+    }
+  }
+}, { immediate: true })
 
 definePageMeta({
   layout: 'page-layout'

@@ -187,8 +187,6 @@ const setToLocalStorage = (key: string, data: any, expiryInHours: number = 24) =
 };
 
 const fetchCategories = async () => {
-  // Temporarily clear cache to force fresh data
-  localStorage.removeItem('categories');
   const cachedData = getFromLocalStorage('categories');
 
   if (cachedData) {
