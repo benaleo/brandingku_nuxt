@@ -24,7 +24,7 @@
                     <a 
                       v-for="sub in category.sub_categories" 
                       :key="sub.id"
-                      :href="`/category/${sub.slug}`"
+                      :href="`/category/${category.slug || category.id}?sub=${sub.slug}`"
                       class="block text-sm text-gray-600 hover:text-green-600 hover:underline hover:bg-green-100 py-1 px-2"
                     >
                       {{ sub.name.charAt(0).toUpperCase() + sub.name.slice(1) }}
@@ -187,6 +187,8 @@ const setToLocalStorage = (key: string, data: any, expiryInHours: number = 24) =
 };
 
 const fetchCategories = async () => {
+  // Temporarily clear cache to force fresh data
+  localStorage.removeItem('categories');
   const cachedData = getFromLocalStorage('categories');
 
   if (cachedData) {

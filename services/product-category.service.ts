@@ -112,6 +112,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             query getProductCategories {
                 getProductCategories {
                     id
+                    slug
                     name
                     parent_id
                     sub_categories {
@@ -121,7 +122,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 }
             }
         `
-        const data = await gqlFetch<{ getProductCategories: Array<{ id: string; name: string; parent_id: string | null; sub_categories: Array<{ name: string; slug: string }> }> }>(
+        const data = await gqlFetch<{ getProductCategories: Array<{ id: string; slug: string; name: string; parent_id: string | null; sub_categories: Array<{ name: string; slug: string }> }> }>(
             query,
             undefined
         )
