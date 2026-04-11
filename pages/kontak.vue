@@ -1,9 +1,51 @@
 <script lang="ts" setup>
 import { Phone, Mail, MapPin, Globe, Users, Clock, ArrowRight } from 'lucide-vue-next'
+import { useWebContactService } from '~/services/web-contact.service'
 
 useHead({
   title: "Kontak - Brandingku",
 });
+
+const { createInquiry, loading, error } = useWebContactService()
+
+const form = reactive({
+  name: '',
+  email: '',
+  subject: 'Sustainable Merchandise Inquiry',
+  message: '',
+  model: 'web-contact'
+})
+
+const submitted = ref(false)
+const submitError = ref<string | null>(null)
+
+const handleSubmit = async (e: Event) => {
+  e.preventDefault()
+  submitError.value = null
+
+  if (!form.name || !form.email || !form.message) {
+    submitError.value = 'Please fill in all required fields'
+    return
+  }
+
+  try {
+    await createInquiry({
+      name: form.name,
+      email: form.email,
+      subject: form.subject,
+      message: form.message,
+      model: form.model
+    })
+    submitted.value = true
+    // Reset form
+    form.name = ''
+    form.email = ''
+    form.message = ''
+    form.subject = 'Sustainable Merchandise Inquiry'
+  } catch (err: any) {
+    submitError.value = err?.message || 'Failed to send message. Please try again.'
+  }
+}
 </script>
 
 <template>
@@ -81,12 +123,23 @@ useHead({
           <div class="bg-white rounded-lg shadow-lg p-8">
             <h2 class="text-2xl font-bold mb-2">Send us a message</h2>
             <p class="text-gray-600 mb-6">We'll get back to you within 24 hours.</p>
-            
-            <form class="space-y-4">
+
+            <!-- Success Message -->
+            <div v-if="submitted" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p class="text-green-800 font-medium">Thank you! Your message has been sent successfully.</p>
+            </div>
+
+            <!-- Error Message -->
+            <div v-if="submitError" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-red-800 font-medium">{{ submitError }}</p>
+            </div>
+
+            <form @submit="handleSubmit" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">FULL NAME</label>
-                <input 
-                  type="text" 
+                <input
+                  v-model="form.name"
+                  type="text"
                   placeholder="John Doe"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
@@ -94,8 +147,9 @@ useHead({
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">EMAIL ADDRESS</label>
-                <input 
-                  type="email" 
+                <input
+                  v-model="form.email"
+                  type="email"
                   placeholder="john@example.com"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
@@ -103,7 +157,7 @@ useHead({
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">SUBJECT</label>
-                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <select v-model="form.subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                   <option>Sustainable Merchandise Inquiry</option>
                   <option>General Question</option>
                   <option>Partnership Opportunity</option>
@@ -113,18 +167,20 @@ useHead({
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">MESSAGE</label>
-                <textarea 
+                <textarea
+                  v-model="form.message"
                   placeholder="Tell us about your project..."
                   rows="4"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 ></textarea>
               </div>
 
-              <button 
+              <button
                 type="submit"
-                class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                :disabled="loading"
+                class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send Message
+                {{ loading ? 'Sending...' : 'Send Message' }}
               </button>
             </form>
           </div>
