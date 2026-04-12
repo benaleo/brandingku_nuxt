@@ -11,7 +11,7 @@ import { useFileToBase64 } from "~/composables/useFileToBase64";
 import { useAuth } from "~/composables/useAuth";
 import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
-import FieldXSelect from "~/components/forms/fields/FieldXSelect.vue";
+import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import FormButton from "../atoms/FormButton.vue";
 import type { ProductAdditional, ProductGallery } from "~/types/products.type";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
@@ -568,6 +568,7 @@ function handleBack() {
         />
       </ClientOnly>
     </div>
+    <div class="w-full mb-12"> </div>
     <!-- Image -->
     <ImageUploadField
       v-model:fileUrl="image"
@@ -594,7 +595,7 @@ function handleBack() {
       2. OR modify FieldXSelect to use a custom wrapper with inheritAttrs: false
       3. OR use a wrapper div with the class around the FieldXSelect
     -->
-    <FieldXSelect
+    <FieldXSelectWithGroupParent
       name="product_category_id"
       label="Kategori"
       placeholder="Select category"

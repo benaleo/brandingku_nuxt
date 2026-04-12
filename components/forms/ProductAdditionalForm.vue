@@ -326,7 +326,7 @@ async function pasteJson(addIdx: number) {
       <Button type="button" @click="addAdditional">Add Additional</Button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
       <div
         v-for="(additional, addIdx) in list"
         :key="additional.id ?? additional._uniqueKey"

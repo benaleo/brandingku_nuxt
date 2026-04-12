@@ -106,6 +106,29 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         return data.getProductCategories
     }
 
+    // Get parent categories with sub_categories for navbar (single query, no N+1)
+    const getProductCategoriesParentNavbar = async () => {
+        const query = `
+            query getProductCategories {
+                getProductCategories {
+                    id
+                    slug
+                    name
+                    parent_id
+                    sub_categories {
+                        name
+                        slug
+                    }
+                }
+            }
+        `
+        const data = await gqlFetch<{ getProductCategories: Array<{ id: string; slug: string; name: string; parent_id: string | null; sub_categories: Array<{ name: string; slug: string }> }> }>(
+            query,
+            undefined
+        )
+        return (data.getProductCategories || []).filter(cat => cat.parent_id == null)
+    }
+
     // Detail by id
     const getProductCategoryDetail = async (id: number) => {
         const query = `
@@ -575,6 +598,7 @@ return {
 
     // GraphQL APIs
     getProductCategoriesParent,
+    getProductCategoriesParentNavbar,
     getProductCategoryDetail,
     getProductCategoriesPage,
     createProductCategory,

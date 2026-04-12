@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -14,6 +14,7 @@ import HeaderProduct from "~/components/HeaderProduct.vue";
 import { ArrowLeftIcon } from "lucide-vue-next";
 
 const route = useRoute();
+const router = useRouter();
 const slug = computed(() => String(route.params.slug || ""));
 const {
   data: detail,
@@ -24,6 +25,19 @@ const {
 } = useProductDetail(slug.value);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+
+const { token, createWishlist } = useWishlist();
+
+const handleAddToWishlist = async () => {
+  if (!token.value) {
+    router.push("/console/auth");
+    return;
+  }
+
+  const productId = (detail.value as any)?.id;
+  if (!productId) return;
+  await createWishlist(Number(productId));
+};
 
 const selectedColor = ref<string>("");
 // variant is taken from additional name
@@ -125,7 +139,6 @@ const variantColors = computed<string[] | null>(() => {
   return unique.length ? unique : null;
 });
 
-const router = useRouter();
 const handleBack = () => {
   if (process.client) {
     const lastHistory = localStorage.getItem('lastHistory') || '/';
@@ -139,11 +152,11 @@ watch(
   detail,
   (v) => {
     if (!v) return;
-    if (!selectedColor.value && v.colors?.length)
-      selectedColor.value = v.colors[0];
+    if (!selectedColor.value && (v.colors?.length || 0) > 0)
+      selectedColor.value = v.colors?.[0] || "";
     // default variant: first additional name
     if (!selectedVariantName.value && (v.additionals?.length || 0) > 0) {
-      selectedVariantName.value = v.additionals![0].name;
+      selectedVariantName.value = v.additionals?.[0]?.name || "";
     }
   },
   { immediate: true }
@@ -152,7 +165,7 @@ watch(
 // when variant changes, adjust selectedColor to first variant color if available
 watch(selectedVariantName, () => {
   if (variantColors.value && variantColors.value.length) {
-    selectedColor.value = variantColors.value[0];
+    selectedColor.value = variantColors.value[0] || "";
   }
 });
 
@@ -299,12 +312,19 @@ definePageMeta({
           <!-- Add to Cart -->
           <div class="mt-8 flex items-center gap-6">
             <Button class="flex-1">Add to Cart</Button>
+            <Button variant="outline" class="border-green-200 text-green-700 hover:bg-green-50" @click="handleAddToWishlist">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+            </Button>
           </div>
 
           <!-- Stock Status -->
-          <div class="mt-6 text-sm text-gray-500">
-            <span v-if="displayedStock > 0">In stock and ready to ship</span>
-            <span v-else>Out of stock</span>
+          <div class="mt-6 text-sm text-gray-600">
+            <div class="flex items-center gap-2">
+              <span v-if="displayedStock > 0">In stock and ready to ship</span>
+              <span v-else>Out of stock</span>
+            </div>
           </div>
 
           <!-- Description -->

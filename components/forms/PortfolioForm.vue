@@ -43,6 +43,8 @@ const { options: categoryOptions, loading: categoriesLoading, error: categoriesE
 
 const isEdit = computed(() => !!id && id !== 'add');
 
+const categoryInitialized = ref(false);
+
 // Fetch categories on mount
 onMounted(() => {
   fetchCategories();
@@ -90,7 +92,7 @@ const galleries = ref<PortfolioGallery[]>([]);
 watch(loading, (isLoading) => {
   if (!isLoading && datas.value && isEdit.value) {
     const portfolio = datas.value;
-    setFieldValue("category", portfolio.category || "");
+    // category will be initialized after categories options are available
     setFieldValue("title", portfolio.title || "");
     setFieldValue("subtitle", portfolio.subtitle || "");
     setFieldValue("client", portfolio.client || "");
@@ -98,6 +100,42 @@ watch(loading, (isLoading) => {
     galleries.value = portfolio.galleries?.map((g: PortfolioGallery) => ({ ...g, id: g.id.toString() })) || [];
   }
 });
+
+// Initialize category value for edit mode after options are loaded.
+// Supports legacy stored value where category might be saved as label.
+watch(
+  [datas, categoryOptions],
+  ([datasVal, optsVal]) => {
+    if (categoryInitialized.value) return;
+    if (!isEdit.value) return;
+    if (!datasVal) return;
+    if (!optsVal?.length) return;
+
+    const raw = String(datasVal.category ?? '');
+    // Since we now store the label as value, try to match by label directly
+    const matched = optsVal.find(
+      (opt: any) => String(opt.label) === raw
+    );
+    const finalValue = matched ? String(matched.label) : raw;
+    setFieldValue('category', finalValue);
+    categoryInitialized.value = true;
+  },
+  { immediate: true }
+);
+
+// Watch for category changes to ensure form values are updated
+watch(() => formValues.category, (newValue) => {
+  if (newValue !== undefined && newValue !== null) {
+    setFieldValue('category', newValue);
+  }
+}, { deep: true });
+
+// Force reactivity for category field
+const categoryValue = computed({
+  get: () => formValues.category,
+  set: (value) => setFieldValue('category', value)
+});
+
 
 // Watch galleries changes to sync with form
 watch(galleries, (newGalleries) => {

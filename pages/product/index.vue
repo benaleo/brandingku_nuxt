@@ -19,6 +19,34 @@ import { useProductService } from "~/services/product.service";
 import { useGql } from "~/composables/useGql";
 import { ChevronDown, ChevronUp, MenuIcon } from "lucide-vue-next";
 import ElementsProductQuickView from "~/components/elements/ElementsProductQuickView.vue";
+import WhatsAppButton from "~/components/elements/WhatsAppButton.vue";
+import { toast } from "vue-sonner";
+
+const { token, createWishlist, deleteWishlist } = useWishlist();
+
+const handleWishlistToggle = async (product: any) => {
+  if (!token.value) {
+    router.push("/console/auth");
+    return;
+  }
+  const productId = product?.id;
+  if (!productId) return;
+  try {
+    if (product.is_wishlisted) {
+      await deleteWishlist(Number(productId));
+      toast.success("Produk dihapus dari wishlist");
+      // Update the product's wishlist status
+      product.is_wishlisted = false;
+    } else {
+      await createWishlist(Number(productId));
+      toast.success("Produk ditambahkan ke wishlist");
+      // Update the product's wishlist status
+      product.is_wishlisted = true;
+    }
+  } catch (e: any) {
+    toast.error(e?.message || "Gagal memperbarui wishlist");
+  }
+};
 
 const router = useRouter();
 const config = useRuntimeConfig();
@@ -131,6 +159,7 @@ const productMinPrice = (p: any) => {
 const viewProductDetail = (slug: string) => {
   router.push(`/product/${slug}`);
 };
+
 
 // Quick View modal state
 const quickViewOpen = ref(false);
@@ -297,13 +326,34 @@ definePageMeta({ layout: "page-layout" });
               </div>
               <div class="mt-4 flex flex-col md:flex-row items-between lg:items-end justify-between">
                 <div class="flex flex-col">
-                  <span class="text-sm text-gray-500 italic">From</span>
-                  <span class="font-bold">
+                  <span v-if="productMinPrice(product) > 0" class="text-sm text-gray-500 italic">From</span>
+                  <span class="font-bold" v-if="productMinPrice(product) > 0">
                     Rp. {{ productMinPrice(product) }}
                     <span class="text-sm text-gray-500">/pcs</span>
                   </span>
+                  <span class="font-bold text-green-600" v-else>
+                    Tanya Sekarang
+                  </span>
                 </div>
-                <Button variant="outline" size="sm">Add to Cart</Button>
+                <div class="flex gap-2">
+                  <WhatsAppButton :product="product" />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    @click.stop="handleWishlistToggle(product)" 
+                    :class="product.is_wishlisted ? 'border-red-200 text-red-700 hover:bg-red-50' : 'border-green-200 text-green-700 hover:bg-green-50'"
+                  >
+                    <svg 
+                      class="w-4 h-4" 
+                      :fill="product.is_wishlisted ? 'currentColor' : 'none'" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <!-- {{ product.is_wishlisted ? 'Remove Wishlist' : 'Add to Wishlist' }} -->
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

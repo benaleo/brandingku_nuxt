@@ -52,6 +52,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                             is_recommended
                             is_upsell
                             is_active
+                            is_wishlisted
                             galleries { id image orders }
                             additionals {
                                 id
@@ -134,11 +135,13 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         category {
                             id
                             name
+                            slug
                         }
                         is_highlight
                         is_recommended
                         is_upsell
                         is_active
+                        is_wishlisted
                         galleries { id image orders }
                         additionals {
                             id

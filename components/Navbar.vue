@@ -24,7 +24,7 @@
                     <a 
                       v-for="sub in category.sub_categories" 
                       :key="sub.id"
-                      :href="`/category/${sub.slug}`"
+                      :href="`/category/${category.slug || category.id}?sub=${sub.slug}`"
                       class="block text-sm text-gray-600 hover:text-green-600 hover:underline hover:bg-green-100 py-1 px-2"
                     >
                       {{ sub.name.charAt(0).toUpperCase() + sub.name.slice(1) }}
@@ -76,13 +76,13 @@
       </div>
       <div class="flex items-center space-x-4">
         <!-- Cart Icon -->
-        <button class="text-slate-700 hover:text-black">
+        <button @click="router.push('/wishlist')" class="text-slate-700 hover:text-black">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
           </svg>
         </button>
         <!-- User Icon -->
-        <button class="text-slate-700 hover:text-black">
+        <button @click="handleUserClick" class="text-slate-700 hover:text-black">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
@@ -111,11 +111,34 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProductCategoryService } from '~/services/product-category.service';
+import { getSecureIdFromToken } from '~/utils/token.helper';
 
 const router = useRouter();
 const isDesktop = ref(false);
 const categories = ref<any[]>([]);
 const loading = ref(false);
+
+// Authentication check
+const token = useCookie<string | null>('token', { sameSite: 'lax' });
+
+// Handle user icon click
+const handleUserClick = () => {
+  if (token.value) {
+    // User is logged in, get secure_id from token using helper
+    const secureId = getSecureIdFromToken(token.value);
+    
+    if (secureId) {
+      // Redirect to profile page with secure_id
+      router.push(`/profile/${secureId}`);
+    } else {
+      // Token is invalid or doesn't contain secure_id, redirect to login
+      router.push('/console/auth');
+    }
+  } else {
+    // User is not logged in, redirect to auth login
+    router.push('/console/auth');
+  }
+};
 
 const services = [
   { name: 'Servis Terbaik', href: '#servis-terbaik' },
@@ -165,26 +188,18 @@ const setToLocalStorage = (key: string, data: any, expiryInHours: number = 24) =
 
 const fetchCategories = async () => {
   const cachedData = getFromLocalStorage('categories');
-  
+
   if (cachedData) {
     categories.value = cachedData;
     return;
   }
-  
+
   loading.value = true;
   try {
-    const { getProductCategoriesParent, getProductCategoryDetail } = useProductCategoryService();
-    const parentCategories = await getProductCategoriesParent();
-    
-    const categoriesWithSubs = await Promise.all(
-      parentCategories.map(async (parent) => {
-        const detail = await getProductCategoryDetail(Number(parent.id));
-        return detail;
-      })
-    );
-    
-    categories.value = categoriesWithSubs;
-    setToLocalStorage('categories', categoriesWithSubs, 24);
+    const { getProductCategoriesParentNavbar } = useProductCategoryService({ autoFetchParents: false });
+    const result = await getProductCategoriesParentNavbar();
+    categories.value = result;
+    setToLocalStorage('categories', result, 24);
   } catch (error) {
     console.error('Error fetching categories:', error);
   } finally {

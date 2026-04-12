@@ -28,8 +28,34 @@ const {isFieldDirty, handleSubmit} = useForm({
 const handleLogin = handleSubmit(async (values) => {
   try {
     const { token } = await authService.login(values.email, values.password);
+    
+    if (!token) {
+      throw new Error('Login failed: No token received');
+    }
+    
     tokenCookie.value = token;
-    router.push('/console/secret/dashboard');
+    
+    // Decode JWT token to get user role
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      throw new Error('Invalid token format');
+    }
+    
+    const payload = tokenParts[1];
+    if (!payload) {
+      throw new Error('Invalid token: missing payload');
+    }
+    
+    const decodedToken = JSON.parse(atob(payload));
+    const userRole = decodedToken.role;
+    
+    // Route based on user role
+    if (userRole === 'user') {
+      router.push('/');
+    } else {
+      router.push('/console/secret/dashboard');
+    }
+    
     toast.success('Login successful', {
       description: 'You are now logged in',
     })
@@ -69,6 +95,8 @@ const handleLogin = handleSubmit(async (values) => {
         <FormMessage/>
       </FormItem>
     </FormField>
+    <!-- Forgot password -->
+    <p class="text-sm text-gray-500 pl-2">Forgot your password? <NuxtLink to="/console/auth/reset-password" class="text-blue-500 hover:underline">Reset it</NuxtLink></p>
     <Button class="w-full" type="submit">
       Login
     </Button>

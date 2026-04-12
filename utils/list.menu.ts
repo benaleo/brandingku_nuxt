@@ -69,6 +69,12 @@ export const secretConsoleMenu: MenuGroup[] = [
                 icon: 'Box',
                 href: '/console/secret/portfolio'
             },
+            {
+                name: 'Inquiry',
+                icon: 'Box',
+                href: '/console/secret/inquiry'
+            },
+            
 
         ]
     },
