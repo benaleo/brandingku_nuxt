@@ -23,8 +23,6 @@ const router = useRouter();
 const { token } = useAuth();
 const currentPath = router.currentRoute.value.path;
 const id = getIdFromPath(router.currentRoute.value.path);
-const config = useRuntimeConfig();
-const STORAGE_URL = config.public.STORAGE_URL;
 
 // Ensure user is authenticated
 if (!token.value) {

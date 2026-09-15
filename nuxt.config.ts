@@ -88,8 +88,6 @@ export default defineNuxtConfig({
       BASE_URL: process.env.NUXT_PUBLIC_BASE_URL || '',
       API_URL: process.env.NUXT_PUBLIC_API_URL || '',
       STORAGE_URL: process.env.NUXT_PUBLIC_STORAGE_URL || '',
-      supabaseUrl: process.env.SUPABASE_URL || '',
-      supabaseKey: process.env.SUPABASE_KEY || '',
       graphqlPath: process.env.NUXT_PUBLIC_GRAPHQL_PATH || '/query',
     }
   }

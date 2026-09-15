@@ -45,7 +45,7 @@ export const portfolioColumns: ColumnDef<Portfolio>[] = [
             const src = firstImage?.file || '/images/no-image.jpg';
             
             return h('div', {class: 'flex items-center gap-2'}, [
-                h(DialogViewImage, {src: src.startsWith('http') ? src : `${STORAGE_URL}/${src}`, alt: 'Portfolio Image', class: 'w-12 h-12 object-cover rounded'}),
+                h(DialogViewImage, {src: src.startsWith('http') ? src : `${STORAGE_URL}${src}`, alt: 'Portfolio Image', class: 'w-12 h-12 object-cover rounded'}),
                 h('span', {class: 'text-sm text-gray-600'}, `${galleries.length} image${galleries.length > 1 ? 's' : ''}`)
             ]);
         },

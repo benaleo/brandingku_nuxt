@@ -31,7 +31,7 @@ const imageUrl = computed(() => {
     return props.gallery.file;
   }
   
-  return `${STORAGE_URL}/${props.gallery.file}`;
+  return `${STORAGE_URL}${props.gallery.file}`;
 });
 
 const handleFileUpload = async (file: File) => {
