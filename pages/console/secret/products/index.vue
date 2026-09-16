@@ -49,6 +49,7 @@ import {computed, ref, watch} from 'vue'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from "vue-sonner";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
+import type { ProductGallery } from "~/types/products.type";
 
 const {
   datas,
@@ -61,7 +62,6 @@ const {
   setParams,
   params,
   deleteProductById,
-  updateProductGalleries,
 } = useProductService(true)
 
 console.log('loading', loading.value)
@@ -134,20 +134,22 @@ const handleDelete = async (id: string) => {
   }
 }
 
-const handleProductGalleries = async (id: string, fileUrl: string[], removeIds: string[]) => {
+const handleProductGalleries = async (id: string, createdGalleries: ProductGallery[], removeIds: string[]) => {
   try {
-    await updateProductGalleries(id, {
-      newFileUrl: fileUrl,
-      removeIds: removeIds
-    })
+    const removed = new Set(removeIds.map(String))
+    datas.value = (datas.value || []).map((product: any) => {
+      if (String(product.id) !== String(id)) return product
 
-    console.log("payload", {
-      newFileUrl: fileUrl,
-      removeIds: removeIds
-    })
+      const existingGalleries = (product.galleries || []).filter((gallery: ProductGallery) => !removed.has(String(gallery.id)))
+      const galleries = [...existingGalleries, ...createdGalleries].sort((a, b) => Number(a.orders) - Number(b.orders))
+      const image = product.image || galleries[0]?.image || ''
 
-    toast.success('Berhasil mengupdate gambar')
-    await reFetch()
+      return {
+        ...product,
+        image,
+        galleries,
+      }
+    })
   } catch (error) {
     console.error('Error updating product image:', error)
     toast.error('Gagal mengupdate gambar')

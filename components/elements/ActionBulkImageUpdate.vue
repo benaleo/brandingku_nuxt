@@ -4,7 +4,7 @@ import ImageBulkFormDialog from '../forms/ImageBulkFormDialog.vue';
 import type {ProductGallery} from "~/types/products.type";
 
 defineProps<{
-  handleUpdate: (fileUrl: string[], removeIds: string[]) => void | Promise<void>,
+  handleUpdate: (createdGalleries: ProductGallery[], removeIds: string[]) => void | Promise<void>,
   productId: string,
   galleries: ProductGallery[]
 }>()
