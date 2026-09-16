@@ -498,17 +498,7 @@ const handleSubmitForm = handleSubmit(
       console.error(e);
     }
   },
-  (errors) => {
-    try {
-      const firstField = Object.keys(errors || {})[0];
-      const firstMsg = firstField ? (errors as any)[firstField]?.[0] : null;
-      toast.error(firstMsg || "Please fix validation errors before submitting");
-      console.warn("Form validation errors:", errors);
-    } catch (err) {
-      toast.error("Please fix validation errors before submitting");
-      console.warn("Form validation errors:", errors);
-    }
-  }
+  notifyFormValidationError
 );
 
 const imageUploading = ref(false);

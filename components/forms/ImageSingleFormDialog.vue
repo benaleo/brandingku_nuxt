@@ -85,6 +85,7 @@ async function handleSubmit() {
 
     // Send the URL to the parent component
     await props.submit(fileUrl, file.value)
+    toast.success('Image berhasil disimpan')
 
     // Reset form
     file.value = null

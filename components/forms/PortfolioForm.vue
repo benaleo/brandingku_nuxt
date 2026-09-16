@@ -165,7 +165,7 @@ const onSubmit = handleSubmit(async (values) => {
     console.error("Error saving portfolio:", error);
     toast.error(error.message || "Failed to save portfolio");
   }
-});
+}, notifyFormValidationError);
 
 const addGallery = () => {
   galleries.value.push({

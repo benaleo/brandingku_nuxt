@@ -149,7 +149,7 @@ const handleSubmitForm = handleSubmit(async (values: BenefitRequest) => {
     toast.error('Failed to submit benefit form')
     console.error(error)
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))

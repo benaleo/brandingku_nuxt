@@ -51,7 +51,7 @@ const onSubmit = handleSubmit(async (values) => {
       description: errorMessage,
     })
   }
-})
+}, notifyFormValidationError)
 </script>
 
 <template>

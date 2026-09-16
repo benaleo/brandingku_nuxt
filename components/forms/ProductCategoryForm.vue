@@ -280,7 +280,7 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
     toast.error('Failed to create product category')
     console.error(error)
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))

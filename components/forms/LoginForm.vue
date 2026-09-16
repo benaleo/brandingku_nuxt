@@ -75,7 +75,7 @@ const handleLogin = handleSubmit(async (values) => {
     loginError.value = getErrorMessage(err);
     isErrorDialogOpen.value = true;
   }
-})
+}, notifyFormValidationError)
 
 </script>
 

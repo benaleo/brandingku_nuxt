@@ -1,5 +1,5 @@
 <template>
-  <Toaster rich-colors />
+  <UiToaster rich-colors />
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>

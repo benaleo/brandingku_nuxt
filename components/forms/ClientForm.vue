@@ -133,7 +133,7 @@ const handleSubmitForm = handleSubmit(async (values: ClientRequest) => {
     toast.error('Failed to submit client form')
     console.error(error)
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))

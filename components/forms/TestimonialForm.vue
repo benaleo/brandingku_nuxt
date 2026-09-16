@@ -139,7 +139,7 @@ const handleSubmitForm = handleSubmit(async (values: TestimonialRequest) => {
     console.error('Submit error:', error)
     console.error('Error details:', JSON.stringify(error, null, 2))
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))

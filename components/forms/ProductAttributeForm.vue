@@ -81,7 +81,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
     toast.error('Failed to create product attribute')
     console.error(error)
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))
