@@ -22,9 +22,10 @@ export const productColumns: ColumnDef<Product>[] = [
         cell: ({row}) => {
             const config = useRuntimeConfig();
             const STORAGE_URL = config.public.STORAGE_URL;
-            const src: string = row.getValue('image') ?? '/images/no-image.jpg'
-            return h('div', {class: 'flex items-ceter justify-start overflow-hidden h-16'}, [
-                h(DialogViewImage, {src: STORAGE_URL + src, alt: 'Product Image', class: 'max-h-16 object-cover'})
+            const image = row.getValue('image') as string | undefined
+            const src = image ? STORAGE_URL + image : '/images/no-image.jpg'
+            return h('div', {class: 'flex items-center justify-start overflow-hidden h-[60px]'}, [
+                h(DialogViewImage, {src, alt: 'Product Image', class: 'max-w-[150px] max-h-[60px] object-contain'})
             ])
         },
     },
@@ -80,7 +81,7 @@ export const productColumns: ColumnDef<Product>[] = [
                 h(ActionBulkImageUpdate, {
                     productId: data.id,
                     galleries: data.galleries,
-                    handleUpdate: (fileUrls, removeIds) => handleProductGalleries?.(data.id, fileUrls, removeIds)
+                    handleUpdate: (createdGalleries, removeIds) => handleProductGalleries?.(data.id, createdGalleries, removeIds)
                 })
             ]);
         }

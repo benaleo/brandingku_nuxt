@@ -22,8 +22,8 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
         cell: ({row}) => {
             const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
             const src: string = row.getValue('image') ? `${STORAGE_URL}${row.getValue('image')}` : `/images/no-image.jpg`
-            return h('div', {class: 'flex items-ceter justify-center overflow-hidden h-16'}, [
-                h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-h-16 object-cover'})
+            return h('div', {class: 'flex items-center justify-center overflow-hidden h-[60px]'}, [
+                h(DialogViewImage, {src: src, alt: 'Product Image', class: 'max-w-[150px] max-h-[60px] object-contain'})
             ])
         },
     },

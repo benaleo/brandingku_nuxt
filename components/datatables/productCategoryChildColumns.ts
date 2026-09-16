@@ -18,8 +18,8 @@ export const productCategoryChildColumns: ColumnDef<ProductCategory>[] = [
       const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
       const raw: string | null = row.getValue('image')
       const src: string = raw ? `${STORAGE_URL}${raw}` : '/images/no-image.jpg'
-      return h('div', { class: 'flex items-ceter justify-center overflow-hidden h-16' }, [
-        h(DialogViewImage, { src, alt: 'Child Category Image', class: 'max-h-16 object-cover' }),
+      return h('div', { class: 'flex items-center justify-center overflow-hidden h-[60px]' }, [
+        h(DialogViewImage, { src, alt: 'Child Category Image', class: 'max-w-[150px] max-h-[60px] object-contain' }),
       ])
     },
   },

@@ -21,8 +21,8 @@ export const benefitColumns: ColumnDef<Client>[] = [
         cell: ({row}) => {
             const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
             const src: string = row.getValue('logo') ? `${STORAGE_URL}${row.getValue('logo')}` : `/images/no-image.jpg`
-            return h('div', {class: 'flex items-ceter justify-center overflow-hidden h-16'}, [
-                h(DialogViewImage, {src: src, alt: 'Client Logo', class: 'max-h-16 object-cover'})
+            return h('div', {class: 'flex items-center justify-center overflow-hidden h-[60px]'}, [
+                h(DialogViewImage, {src: src, alt: 'Client Logo', class: 'max-w-[150px] max-h-[60px] object-contain'})
             ])
         },
     },

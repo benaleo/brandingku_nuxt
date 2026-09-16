@@ -28,6 +28,7 @@ The admin console's table layer: one generic table component plus a column defin
 - Column modules are plain `.ts` exporting a `ColumnDef[]`. They are not components and are not auto-imported as tags — import them explicitly in the page that renders the table.
 - `types/tanstack-table.d.ts` augments TanStack's `ColumnMeta`; if you add a custom `meta` field on a column, declare it there or TypeScript rejects it.
 - Row actions should reuse `GeneralColumnAction.vue` rather than each entity hand-rolling its own action cell.
+- Image/logo thumbnails rendered in datatable columns must fit inside `max-w-[150px] max-h-[60px]` and use `object-contain`; wrap the thumbnail in a fixed `h-[60px]` container so rows stay compact and consistent.
 
 ### Testing Requirements
 - `pnpm run build` for type errors in the column definitions.
