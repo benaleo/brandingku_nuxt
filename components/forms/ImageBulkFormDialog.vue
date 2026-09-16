@@ -70,7 +70,7 @@ function onFileChange(e: Event) {
 
 function addFiles(newFiles: File[]) {
   for (const file of newFiles) {
-    if (!file.type.startsWith('image/')) continue
+    if (!file.type.startsWith('image/') && !/\.hei[cf]$/i.test(file.name)) continue
     
     const preview = URL.createObjectURL(file)
     files.value.push({
@@ -214,7 +214,7 @@ async function handleSubmit() {
           <input
             ref="fileInput"
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             multiple
             class="hidden"
             @change="onFileChange"

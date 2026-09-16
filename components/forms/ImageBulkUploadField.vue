@@ -129,7 +129,7 @@ async function uploadImage() {
       <input
         ref="fileInput"
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         class="hidden"
         @change="onFileChange"
         :disabled="disabled || isUploading"

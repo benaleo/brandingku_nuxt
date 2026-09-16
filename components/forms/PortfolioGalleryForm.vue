@@ -79,7 +79,7 @@ const handleRemove = () => {
           :value="imageUrl"
           @update:value="handleFileUpload"
           :loading="isUploading"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           placeholder="Upload gallery image"
         />
       </div>

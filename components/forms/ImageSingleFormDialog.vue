@@ -126,7 +126,7 @@ async function handleSubmit() {
           <input
               ref="fileInput"
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               class="hidden"
               @change="onFileChange"
               :disabled="isUploading"

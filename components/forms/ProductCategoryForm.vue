@@ -151,7 +151,7 @@ const removeCover = () => {
 const handleDrop = (event: DragEvent, type: 'image' | 'cover') => {
   event.preventDefault()
   const files = event.dataTransfer?.files
-  if (files && files[0] && files[0].type.startsWith('image/')) {
+  if (files && files[0] && (files[0].type.startsWith('image/') || /\.hei[cf]$/i.test(files[0].name))) {
     if (type === 'image') {
       imageFile.value = files[0]
       image.value = URL.createObjectURL(files[0])
@@ -320,7 +320,7 @@ const handleBack = () => {
           ref="imageInput"
           type="file" 
           @change="onImageChange" 
-          accept="image/*" 
+          accept="image/*,.heic,.heif"
           :disabled="disabled" 
           class="hidden"
         />
@@ -365,7 +365,7 @@ const handleBack = () => {
           ref="coverInput"
           type="file" 
           @change="onCoverChange" 
-          accept="image/*" 
+          accept="image/*,.heic,.heif"
           :disabled="disabled" 
           class="hidden"
         />
