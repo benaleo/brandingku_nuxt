@@ -74,7 +74,8 @@ onMounted(async () => {
     setFieldsFromDetail(props.detail)
   } else if (!isCreate && resolvedEditId.value) {
     try {
-      await loadDetail(Number(resolvedEditId.value))
+      const client = await loadDetail(Number(resolvedEditId.value))
+      setFieldsFromDetail(client)
     } catch (e) {
       console.error('Failed to load client detail', e)
     }
