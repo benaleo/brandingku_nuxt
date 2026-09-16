@@ -14,16 +14,14 @@
 
     <!-- Data Table -->
     <div class="mt-2">
-      <div v-if="loading" class="text-center py-4">
-        Loading clients...
-      </div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">
+      <div v-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-if="!loading">
+      <div v-else>
         <DatatablesDataTable
             :columns="clientColumns"
             :data="clientList || []"
+            :loading="loading"
             :pagination="paginationData"
             :meta="{ handleDelete }"
             @page-change="onPageChange"
@@ -59,6 +57,9 @@ const {
   setParams,
   reFetch
 } = useClientService()
+
+// The initial list request starts on mount; show its skeleton during SSR too.
+loading.value = true
 
 const clientList = computed(() => {
   return datas.value || []

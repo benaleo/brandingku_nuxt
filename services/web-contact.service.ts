@@ -7,7 +7,7 @@ export const useWebContactService = (fetchResult?: boolean, dataId?: string) => 
   const { gqlFetch } = useGql();
 
   const datas = ref<Inquiry[]>([]);
-  const loading = ref<boolean>(false);
+  const loading = ref<boolean>(Boolean(fetchResult || dataId));
   const error = ref<string | null>(null);
   const pagination = ref({ page: 0, limit: 10, total: 0 });
   const pageInfo = ref<PageInfo | null>(null);

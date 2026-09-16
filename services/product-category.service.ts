@@ -10,7 +10,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
 
     // State for list view (client-side pagination over GraphQL results)
     const datas = ref<ProductCategory[]>([])
-    const loading = ref<boolean>(false)
+    const loading = ref<boolean>(opts?.autoFetchParents ?? true)
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 })
     const params = reactive<{ keyword?: string }>({})

@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   FlexRender,
   getCoreRowModel,
@@ -24,6 +25,8 @@ const props = defineProps<{
   data: TData[]
   meta?: any
   pagination?: PaginationProp
+  loading?: boolean
+  skeletonRows?: number
 }>()
 
 const emit = defineEmits<{
@@ -51,6 +54,8 @@ const totalPages = computed(() => {
   const pages = Math.ceil((total || 0) / (limit || 1))
   return pages > 0 ? pages : 1
 })
+
+const skeletonRows = computed(() => Array.from({ length: props.skeletonRows ?? 10 }))
 
 const canPrev = computed(() => (pg.value?.page ?? 0) > 0)
 const canNext = computed(() => (pg.value ? (pg.value.page + 1) < totalPages.value : false))
@@ -88,7 +93,14 @@ const onChangeLimit = (e: Event) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <template v-if="table.getRowModel().rows?.length">
+          <template v-if="props.loading">
+            <TableRow v-for="(_, rowIndex) in skeletonRows" :key="`skeleton-${rowIndex}`">
+              <TableCell v-for="column in table.getVisibleLeafColumns()" :key="column.id">
+                <Skeleton class="h-8 w-full" />
+              </TableCell>
+            </TableRow>
+          </template>
+          <template v-else-if="table.getRowModel().rows?.length">
             <TableRow
                 v-for="row in table.getRowModel().rows" :key="row.id"
                 :data-state="row.getIsSelected() ? 'selected' : undefined"
@@ -128,7 +140,7 @@ const onChangeLimit = (e: Event) => {
         <Button
             variant="outline"
             size="sm"
-            :disabled="!canPrev"
+            :disabled="props.loading || !canPrev"
             @click="onPrev"
         >
           Previous
@@ -136,7 +148,7 @@ const onChangeLimit = (e: Event) => {
         <Button
             variant="outline"
             size="sm"
-            :disabled="!canNext"
+            :disabled="props.loading || !canNext"
             @click="onNext"
         >
           Next

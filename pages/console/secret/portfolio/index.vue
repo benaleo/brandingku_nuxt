@@ -16,26 +16,19 @@
 
     <!-- Table -->
     <div class="mt-6">
-      <div v-if="loading" class="text-center py-4">
-        <div class="grid grid-cols-2">
-          <Skeleton />
-        </div>
-      </div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">
+      <div v-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-else-if="hasPortfolios">
+      <div v-else>
         <DatatablesDataTable
             :columns="portfolioColumns"
             :data="dataList || []"
+            :loading="loading"
             :meta="{ handleDelete }"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
         />
-      </div>
-      <div v-else class="text-center py-4">
-        No portfolios found
       </div>
     </div>
   </div>
@@ -64,10 +57,6 @@ const {
 } = usePortfolioService(true)
 
 console.log('loading', loading.value)
-
-const hasPortfolios = computed(() => {
-  return Array.isArray(datas.value) && datas.value.length > 0
-})
 
 const dataList = computed(() => {
   return datas.value || []

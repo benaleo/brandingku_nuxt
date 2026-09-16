@@ -13,12 +13,12 @@
 
     <!-- Data Table -->
     <div class="mt-2">
-      <div v-if="loading" class="text-center py-4">Loading child categories...</div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">{{ error }}</div>
-      <div v-if="!loading">
+      <div v-if="error" class="text-center py-4 text-red-500">{{ error }}</div>
+      <div v-else>
         <DatatablesDataTable
           :columns="productCategoryChildColumns"
           :data="filteredChildren || []"
+          :loading="loading"
           :meta="{ handleDelete }"
         />
       </div>
@@ -42,7 +42,7 @@ const pageTitle = 'Sub Kategori'
 
 const { getChildCategoriesByParentId, deleteProductCategoryById } = useProductCategoryService()
 
-const loading = ref(false)
+const loading = ref(true)
 const error = ref<string | null>(null)
 const keyword = ref('')
 const children = ref<any[]>([])

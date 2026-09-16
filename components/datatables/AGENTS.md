@@ -29,6 +29,7 @@ The admin console's table layer: one generic table component plus a column defin
 - `types/tanstack-table.d.ts` augments TanStack's `ColumnMeta`; if you add a custom `meta` field on a column, declare it there or TypeScript rejects it.
 - Row actions should reuse `GeneralColumnAction.vue` rather than each entity hand-rolling its own action cell.
 - Image/logo thumbnails rendered in datatable columns must fit inside `max-w-[150px] max-h-[60px]` and use `object-contain`; wrap the thumbnail in a fixed `h-[60px]` container so rows stay compact and consistent.
+- Console pages should pass their loading state into `DatatablesDataTable`; the shared table renders 10 skeleton rows across all columns while data is loading, then shows the empty state only after loading finishes.
 
 ### Testing Requirements
 - `pnpm run build` for type errors in the column definitions.

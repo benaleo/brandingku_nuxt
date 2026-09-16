@@ -16,26 +16,19 @@
 
     <!-- Table -->
     <div class="mt-6">
-      <div v-if="loading" class="text-center py-4">
-        <div class="grid grid-cols-2">
-          <Skeleton />
-        </div>
-      </div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">
+      <div v-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-else-if="hasProducts">
+      <div v-else>
         <DatatablesDataTable
             :columns="productColumns"
             :data="dataList || []"
+            :loading="loading"
             :meta="{ handleDelete, handleProductGalleries }"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
         />
-      </div>
-      <div v-else class="text-center py-4">
-        No products found
       </div>
     </div>
   </div>
@@ -65,10 +58,6 @@ const {
 } = useProductService(true)
 
 console.log('loading', loading.value)
-
-const hasProducts = computed(() => {
-  return Array.isArray(datas.value) && datas.value.length > 0
-})
 
 const dataList = computed(() => {
   return datas.value || []

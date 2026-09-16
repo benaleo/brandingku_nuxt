@@ -13,7 +13,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
 
     // State mimicking useApiFetch interface
     const datas = ref<any>(fetchResult ? [] : null)
-    const loading = ref<boolean>(false)
+    const loading = ref<boolean>(Boolean(fetchResult || dataId))
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
