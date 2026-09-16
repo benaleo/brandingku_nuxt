@@ -70,7 +70,11 @@ export const useAuth = () => {
                     }
                 }
             `
-            const data = await gqlFetch<{ login: { token: string } }>(query, { email, password })
+            const { loginEncryptionKey } = await gqlFetch<{ loginEncryptionKey: string }>(
+                'query LoginEncryptionKey { loginEncryptionKey }',
+            )
+            const credentials = await encryptLoginCredentials(email, password, loginEncryptionKey)
+            const data = await gqlFetch<{ login: { token: string } }>(query, credentials)
             token.value = data.login.token || null
             return { token: token.value }
         } catch (err: any) {

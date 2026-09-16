@@ -38,7 +38,7 @@ export const useGql = () => {
         } catch (err: any) {
             // Bubble up with context
             const msg = err?.message || String(err)
-            throw new Error(`[GQL] Request failed: ${msg}`)
+            throw new Error(`[GQL] Request failed: ${msg}`, { cause: err })
         }
     }
 

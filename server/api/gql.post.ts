@@ -74,8 +74,8 @@ export default defineEventHandler(async (event) => {
     // Validate shape explicitly to avoid passing HTML/invalid payloads with 200
     if (res && typeof res === 'object') {
       if (Array.isArray(res.errors) && res.errors.length) {
-        setResponseStatus(event, 502)
-        return { errors: res.errors }
+        // GraphQL application errors are not gateway failures.
+        return res
       }
       if ('data' in res) {
         return res

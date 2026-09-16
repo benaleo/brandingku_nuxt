@@ -2,6 +2,7 @@
 import {Button} from '@/components/ui/button'
 import {FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form'
 import {Input} from '@/components/ui/input'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog'
 import {vAutoAnimate} from '@formkit/auto-animate/vue'
 
 import {toTypedSchema} from '@vee-validate/zod'
@@ -15,17 +16,28 @@ import { useCookie } from '#app';
 const router = useRouter();
 const tokenCookie = useCookie('token');
 const authService = useAuthService();
+const isReady = ref(false);
+const loginError = ref('');
+const isErrorDialogOpen = ref(false);
+
+onMounted(() => {
+  isReady.value = true;
+});
 
 const formSchema = toTypedSchema(z.object({
   email: z.string().email(),
   password: z.string().min(8),
 }))
 
-const {isFieldDirty, handleSubmit} = useForm({
+const {isFieldDirty, handleSubmit, isSubmitting} = useForm({
   validationSchema: formSchema,
 })
 
 const handleLogin = handleSubmit(async (values) => {
+  if (!isReady.value || authService.loading.value) return;
+  loginError.value = '';
+  isErrorDialogOpen.value = false;
+
   try {
     const { token } = await authService.login(values.email, values.password);
     
@@ -59,18 +71,17 @@ const handleLogin = handleSubmit(async (values) => {
     toast.success('Login successful', {
       description: 'You are now logged in',
     })
-  } catch (err: any) {
-    const errorMessage = err.response?.data?.message || err.message || 'Please check your email and password';
-    toast.error('Login failed', {
-      description: errorMessage,
-    })
+  } catch (err: unknown) {
+    loginError.value = getErrorMessage(err);
+    isErrorDialogOpen.value = true;
   }
 })
 
 </script>
 
 <template>
-  <form class="w-full space-y-6 px-6 py-4" @submit.prevent="handleLogin">
+  <form method="post" class="w-full space-y-6 px-6 py-4" @submit.prevent="handleLogin">
+    <fieldset :disabled="!isReady || isSubmitting" class="space-y-6">
     <FormField v-slot="{ componentField }" name="email" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>
         <FormLabel>Email</FormLabel>
@@ -98,7 +109,20 @@ const handleLogin = handleSubmit(async (values) => {
     <!-- Forgot password -->
     <p class="text-sm text-gray-500 pl-2">Forgot your password? <NuxtLink to="/console/auth/reset-password" class="text-blue-500 hover:underline">Reset it</NuxtLink></p>
     <Button class="w-full" type="submit">
-      Login
+      {{ isSubmitting ? 'Logging in...' : 'Login' }}
     </Button>
+    </fieldset>
   </form>
+
+  <AlertDialog v-model:open="isErrorDialogOpen">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Login failed</AlertDialogTitle>
+        <AlertDialogDescription>{{ loginError }}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogAction type="button">OK</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
