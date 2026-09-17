@@ -43,7 +43,7 @@ export const inquiryColumns: ColumnDef<Inquiry>[] = [
         accessorKey: 'created_at',
         header: 'Created At',
         cell: ({row}) => {
-            return new Date(row.original.created_at).toLocaleString()
+            return formatDateTime(row.original.created_at)
         },
     },
     {

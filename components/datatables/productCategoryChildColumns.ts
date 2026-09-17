@@ -31,7 +31,7 @@ export const productCategoryChildColumns: ColumnDef<ProductCategory>[] = [
   {
     accessorKey: 'updated_at',
     header: 'Timestamp',
-    cell: ({ row }) => h('div', { class: 'text-left' }, new Date(row.original.updated_at).toLocaleString()),
+    cell: ({ row }) => h('div', { class: 'text-left' }, formatDateTime(row.original.updated_at)),
   },
   {
     id: 'actions',

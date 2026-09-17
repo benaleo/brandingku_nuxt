@@ -59,7 +59,7 @@ export const productColumns: ColumnDef<Product>[] = [
         accessorKey: 'updated_at',
         header: 'Timestamp',
         cell: ({row}) => {
-            return new Date(row.original.updated_at).toLocaleString()
+            return formatDateTime(row.original.updated_at)
         },
     },
     {
