@@ -13,6 +13,13 @@ export const ERROR_MESSAGES: Record<string, string> = {
   503: 'Layanan sementara tidak tersedia. Silakan coba lagi nanti.',
   504: 'Server terlalu lama merespons. Silakan coba lagi nanti.',
   INVALID_CREDENTIALS: 'Email atau password salah. Silakan coba lagi.',
+  FORBIDDEN: 'Anda tidak memiliki izin untuk tindakan ini.',
+  UNAUTHENTICATED: 'Sesi tidak valid. Silakan masuk kembali.',
+  ROLE_IN_USE: 'Role masih digunakan oleh user dan tidak dapat dihapus.',
+  ROLE_ALREADY_EXISTS: 'Nama role sudah digunakan. Pilih nama lain.',
+  EMAIL_ALREADY_EXISTS: 'Email sudah digunakan oleh akun lain.',
+  ROLE_UNAVAILABLE: 'Pilih role yang aktif untuk admin.',
+  SELF_ADMIN_CHANGE: 'Gunakan halaman profil untuk mengubah akun sendiri.',
   NETWORK_ERROR: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
   TIMEOUT: 'Permintaan terlalu lama. Silakan coba lagi.',
   LOGIN_ENCRYPTION_UNAVAILABLE: 'Layanan login belum tersedia. Silakan coba lagi nanti.',
@@ -32,8 +39,10 @@ export function getErrorMessage(error: unknown): string {
       message?: string
       name?: string
       cause?: unknown
+      code?: string
     }
     const status = detail.response?.status ?? detail.statusCode ?? detail.status
+    if (detail.code && ERROR_MESSAGES[detail.code]) return ERROR_MESSAGES[detail.code]!
     if (status && status >= 400) {
       return ERROR_MESSAGES[String(status)] ?? ERROR_MESSAGES.UNKNOWN!
     }

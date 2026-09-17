@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal } from 'lucide-vue-next'
 
 const router = useRouter()
+const { canAction } = useConsoleAccess()
 
 const props = defineProps<{
   data: {
@@ -15,9 +16,9 @@ const props = defineProps<{
   handleDelete: () => void | Promise<void>
 }>()
 
-const valIsDelete = props.isDelete ?? true
-const valIsView = props.isView ?? true
-const valIsEdit = props.isEdit ?? true
+const valIsDelete = computed(() => (props.isDelete ?? true) && canAction(router.currentRoute.value.path, 'delete'))
+const valIsView = computed(() => (props.isView ?? true) && canAction(router.currentRoute.value.path, 'index'))
+const valIsEdit = computed(() => (props.isEdit ?? true) && canAction(router.currentRoute.value.path, 'update'))
 
 function copy(id: string) {
   navigator.clipboard.writeText(id)

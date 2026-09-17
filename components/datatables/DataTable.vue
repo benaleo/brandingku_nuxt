@@ -37,6 +37,7 @@ const emit = defineEmits<{
 const table = useVueTable({
   get data() { return props.data },
   get columns() { return props.columns },
+  get manualPagination() { return !!props.pagination },
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
   meta: props.meta,

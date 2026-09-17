@@ -16,10 +16,10 @@ import {
   Package, ShieldCheck, ShieldUser, SlidersHorizontal, Store, Tags, UserCog,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
-import {secretConsoleMenu} from '~/utils/list.menu'
 import {useRoute} from 'vue-router'
 
 const route = useRoute()
+const { menus: secretConsoleMenu } = useConsoleAccess()
 const iconComponents: Record<string, Component> = {
   BadgeCheck,
   Building2,
@@ -41,7 +41,7 @@ const iconComponents: Record<string, Component> = {
 }
 
 const isActive = (href: string) => {
-  return route.path === href || route.path.startsWith(href)
+  return route.path === href || (href !== '/' && route.path.startsWith(href + '/'))
 }
 </script>
 

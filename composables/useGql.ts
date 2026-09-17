@@ -27,7 +27,9 @@ export const useGql = () => {
             if (res && typeof res === 'object') {
                 if (Array.isArray(res.errors) && res.errors.length) {
                     const msg = res.errors.map((e: any) => e?.message || 'GraphQL error').join(', ')
-                    throw new Error(msg)
+                    const error = new Error(msg) as Error & { code?: string }
+                    error.code = res.errors[0]?.extensions?.code
+                    throw error
                 }
                 if ('data' in res) {
                     return res.data as T

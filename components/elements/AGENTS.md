@@ -10,7 +10,7 @@ Composite widgets that sit between the shadcn primitives and full pages — cons
 
 | File | Description |
 |------|-------------|
-| `AppSidebar.vue` | Admin console sidebar, driven by `secretConsoleMenu` from `utils/list.menu.ts`. |
+| `AppSidebar.vue` | Admin console sidebar, driven by allowed permissions from `useConsoleAccess`. |
 | `AppTopBar.vue` | Console top bar. |
 | `AppBreadcrumb.vue` | Breadcrumb trail for console pages. |
 | `AppTableHeader.vue` | Shared header block above console data tables (title plus primary action). |
@@ -27,7 +27,7 @@ Composite widgets that sit between the shadcn primitives and full pages — cons
 
 ### Working In This Directory
 - These are the console's shared chrome. Changing `AppSidebar.vue` or `AppTopBar.vue` affects every page using the `console-secret` layout.
-- Sidebar entries are data, not markup — edit `utils/list.menu.ts` to add a console route rather than hardcoding a link here.
+- Sidebar entries come from `useConsoleAccess` and the backend permission seed in `brandingku_go/config/rbac.go`. Do not hardcode menu links here; keep icon names aligned with the sidebar registry.
 - Auto-import prefixes this directory with `Elements`, so `ElementsProductQuickView.vue` ends up double-prefixed; rename the file if you want the shorter tag.
 
 ### Testing Requirements
@@ -36,7 +36,7 @@ Composite widgets that sit between the shadcn primitives and full pages — cons
 ## Dependencies
 
 ### Internal
-- `utils/list.menu.ts` for the sidebar tree
+- `composables/useConsoleAccess.ts` for the sidebar tree and route permissions
 - `components/ui/sidebar/` and `components/ui/dialog/` primitives
 - `layouts/console-secret.vue`
 
