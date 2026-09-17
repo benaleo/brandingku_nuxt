@@ -6,14 +6,14 @@ import AppTopBar from "~/components/elements/AppTopBar.vue";
 
 <template>
   <SidebarProvider>
-    <div class="flex w-full min-h-screen">
+    <div class="flex h-screen w-full overflow-hidden">
       <AppSidebar/>
-      <div class="min-w-0 flex-1 overflow-auto bg-background">
+      <div class="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto bg-background">
         <AppTopBar/>
-        <div class="w-full min-w-0 px-4 py-6 pb-24 sm:px-6 lg:px-8">
+        <div class="w-full min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <slot/>
         </div>
-        <FooterConsole class="fixed bottom-0 left-0 w-full"/>
+        <FooterConsole/>
       </div>
     </div>
   </SidebarProvider>

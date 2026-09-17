@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full bg-slate-200 flex justify-center items-center">
-    <div class="font-thin text-sm opacity-70 py-1">Copyright @2025</div>
-  </div>
+  <footer class="mt-auto w-full border-t bg-background/60 px-4 py-4 sm:px-6 lg:px-8">
+    <p class="text-center text-xs font-light text-muted-foreground">Copyright &copy; 2025 Brandingku</p>
+  </footer>
 </template>

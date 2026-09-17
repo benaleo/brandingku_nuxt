@@ -28,7 +28,7 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header class="flex h-14 w-full items-center justify-end border-b bg-background/80 px-4 backdrop-blur">
+  <header class="sticky top-0 z-30 flex h-14 w-full items-center justify-end border-b bg-background/80 px-4 backdrop-blur">
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <button
