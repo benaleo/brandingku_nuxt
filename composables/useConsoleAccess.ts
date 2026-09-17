@@ -22,6 +22,7 @@ export const useConsoleAccess = () => {
   })
   const firstRoute = computed(() => menus.value.flatMap(g => g.sub).find(p => p.href.startsWith('/console/secret/'))?.href || '/')
   const canVisit = (path: string) => {
+    if (path === '/console/secret/profile') return true
     const item = (access.value?.permissions || []).filter(p => p.permission === 'index' && p.route.startsWith('/console/secret/'))
       .sort((a, b) => b.route.length - a.route.length)
       .find(p => path === p.route || path.startsWith(p.route + '/'))
