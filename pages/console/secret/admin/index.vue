@@ -55,7 +55,7 @@ const remove = async () => {
       <UiButton v-if="can('admins.create')" :disabled="loading || saving" @click="editing = null; formOpen = true">Tambah admin</UiButton>
     </div>
     <FormsAdminForm v-if="formOpen" :key="editing?.id ?? 'new'" :admin="editing" :roles="assignableRoles" :saving="saving" @submit="save" @cancel="formOpen = false" />
-    <FormsFieldsFieldXText v-model="keyword" name="search" label="Cari admin" placeholder="Nama, email, atau role" standalone />
+    <ElementsAppFilterTable v-model="keyword" placeholder="Nama, email, atau role" />
     <div v-if="error" role="alert" class="rounded-xl border border-destructive p-4 text-destructive">{{ error }} <UiButton variant="outline" @click="load">Coba lagi</UiButton></div>
     <DatatablesDataTable v-else :columns="columns" :data="rows" :loading="loading" :pagination="{ page, limit, total: matches.length }" @page-change="page = $event" @limit-change="limit = $event" />
     <UiAlertDialog :open="!!deleting" @update:open="!$event && !saving && (deleting = null)">
