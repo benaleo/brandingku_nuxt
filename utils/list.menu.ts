@@ -17,7 +17,7 @@ export const secretConsoleMenu: MenuGroup[] = [
         sub: [
             {
                 name: 'Overview',
-                icon: 'Home',
+                icon: 'ChartNoAxesCombined',
                 href: '/console/secret/dashboard'
             }
         ]
@@ -25,26 +25,26 @@ export const secretConsoleMenu: MenuGroup[] = [
 
     {
         group_name: 'Landing Page',
-        group_icon: 'Product',
+        group_icon: 'LayoutTemplate',
         sub: [
             {
                 name: 'Benefit',
-                icon: 'Package',
+                icon: 'BadgeCheck',
                 href: '/console/secret/landing-page/benefit'
             },
             {
                 name: 'Client',
-                icon: 'Box',
+                icon: 'Building2',
                 href: '/console/secret/landing-page/client'
             },
             {
                 name: 'Testimonial',
-                icon: 'Box',
+                icon: 'MessageSquareQuote',
                 href: '/console/secret/landing-page/testimonial'
             },
             {
                 name: 'Options',
-                icon: 'Box',
+                icon: 'SlidersHorizontal',
                 href: '/console/secret/landing-page/options'
             },
 
@@ -52,7 +52,7 @@ export const secretConsoleMenu: MenuGroup[] = [
     },
     {
         group_name: 'Toko',
-        group_icon: 'Product',
+        group_icon: 'Store',
         sub: [
             {
                 name: 'Produk',
@@ -61,17 +61,17 @@ export const secretConsoleMenu: MenuGroup[] = [
             },
             {
                 name: 'Produk Kategori',
-                icon: 'Box',
+                icon: 'Tags',
                 href: '/console/secret/product-categories'
             },
              {
                 name: 'Portfolio',
-                icon: 'Box',
+                icon: 'Images',
                 href: '/console/secret/portfolio'
             },
             {
                 name: 'Inquiry',
-                icon: 'Box',
+                icon: 'Inbox',
                 href: '/console/secret/inquiry'
             },
             
@@ -108,11 +108,11 @@ export const secretConsoleMenu: MenuGroup[] = [
     },
     {
         group_name: 'Website',
-        group_icon: 'ShieldUser',
+        group_icon: 'Globe',
         sub: [
             {
                 name: 'Visit Home',
-                icon: 'ShieldCheck',
+                icon: 'ExternalLink',
                 href: '/'
             },
         ]

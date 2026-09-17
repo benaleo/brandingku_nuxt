@@ -10,21 +10,34 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
-import {Box, ChevronDown, Home, Layers, LayoutDashboard, Package, ShieldCheck, ShieldUser, UserCog} from 'lucide-vue-next'
+import {
+  BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
+  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, MessageSquareQuote,
+  Package, ShieldCheck, ShieldUser, SlidersHorizontal, Store, Tags, UserCog,
+} from 'lucide-vue-next'
+import type { Component } from 'vue'
 import {secretConsoleMenu} from '~/utils/list.menu'
 import {useRoute} from 'vue-router'
 
 const route = useRoute()
-const iconComponents: Record<string, any> = {
-  Home,
+const iconComponents: Record<string, Component> = {
+  BadgeCheck,
+  Building2,
+  ChartNoAxesCombined,
+  ExternalLink,
+  Globe,
+  Images,
+  Inbox,
   LayoutDashboard,
+  LayoutTemplate,
+  MessageSquareQuote,
   ShieldUser,
   Package,
-  Box,
   ShieldCheck,
   UserCog,
-  Product: Package,
-  'Produk Kategori': Layers
+  SlidersHorizontal,
+  Store,
+  Tags,
 }
 
 const isActive = (href: string) => {
@@ -46,8 +59,9 @@ const isActive = (href: string) => {
             <CollapsibleTrigger class="w-full flex items-center gap-2">
               <component
                   v-if="group.group_icon"
-                  :is="iconComponents[group.group_icon] || iconComponents[group.group_name]"
-                  class="h-4 w-4"
+                  :is="iconComponents[group.group_icon]"
+                  class="h-4 w-4 shrink-0"
+                  aria-hidden="true"
               />
               <span>{{ group.group_name }}</span>
               <ChevronDown class="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180"/>
@@ -65,8 +79,9 @@ const isActive = (href: string) => {
                     >
                       <component
                           v-if="item.icon"
-                          :is="iconComponents[item.icon] || iconComponents[item.name]"
-                          class="h-4 w-4"
+                          :is="iconComponents[item.icon]"
+                          class="h-4 w-4 shrink-0"
+                          aria-hidden="true"
                       />
                       <span>{{ item.name }}</span>
                     </NuxtLink>
