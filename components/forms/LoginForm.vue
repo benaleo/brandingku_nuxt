@@ -80,7 +80,7 @@ const handleLogin = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <form method="post" class="w-full space-y-6 px-6 py-4" @submit.prevent="handleLogin">
+  <form method="post" class="editor-form px-4 py-6 sm:px-6" @submit.prevent="handleLogin">
     <fieldset :disabled="!isReady || isSubmitting" class="space-y-6">
     <FormField v-slot="{ componentField }" name="email" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>

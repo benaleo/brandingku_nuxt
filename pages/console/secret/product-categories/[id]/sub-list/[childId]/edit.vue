@@ -2,7 +2,7 @@
   <div>
     <AppBreadcrumb />
     <AppTableHeader :pageTitle="pageTitle" :create-path="''" />
-    <div class="max-w-3xl">
+    <div class="w-full min-w-0">
       <ProductCategoryForm v-if="!loading && detail" :isChild="true" :parentId="parentId" :hideSubCategories="true" :detail="detail" />
       <div v-else-if="loading" class="text-center py-4">Loading...</div>
       <div v-else class="text-center py-4 text-red-500">Failed to load detail</div>

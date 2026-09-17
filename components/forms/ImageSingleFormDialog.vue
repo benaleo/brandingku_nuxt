@@ -107,7 +107,7 @@ async function handleSubmit() {
         <slot/>
       </Button>
     </DialogTrigger>
-    <DialogContent class="sm:max-w-[400px]">
+    <DialogContent class="w-[calc(100%-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl sm:max-w-xl">
       <DialogHeader>
         <DialogTitle>Upload Image</DialogTitle>
         <DialogDescription>

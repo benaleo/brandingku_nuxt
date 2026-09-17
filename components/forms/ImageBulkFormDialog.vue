@@ -187,7 +187,7 @@ async function handleSubmit() {
     <DialogTrigger as-child>
       <slot />
     </DialogTrigger>
-    <DialogContent class="sm:max-w-[425px]">
+    <DialogContent class="w-[calc(100%-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Upload Images</DialogTitle>
         <DialogDescription>
@@ -196,7 +196,7 @@ async function handleSubmit() {
       </DialogHeader>
       <form @submit.prevent="handleSubmit">
         <!-- Existing gallery previews -->
-        <div v-if="galleries.length > 0" class="w-full grid grid-cols-3 gap-2 mb-4">
+        <div v-if="galleries.length > 0" class="w-full grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           <div v-for="gallery in galleries" :key="gallery.id" class="relative">
             <img :src="gallery.image ? `${STORAGE_URL}${gallery.image}` : ''" alt="Gallery preview" class="w-full h-24 object-cover rounded shadow"/>
             <button 
@@ -229,7 +229,7 @@ async function handleSubmit() {
             :disabled="isUploading"
           />
           
-          <div v-if="files.length > 0" class="w-full grid grid-cols-3 gap-2 mb-2">
+          <div v-if="files.length > 0" class="w-full grid grid-cols-2 sm:grid-cols-3 gap-3 mb-2">
             <div v-for="file in files" :key="file.id" class="relative">
               <img :src="file.preview" class="w-full h-24 object-cover rounded shadow" />
               <button
@@ -250,7 +250,7 @@ async function handleSubmit() {
           </div>
         </div>
         
-        <div class="mt-4 flex justify-between">
+        <div class="mt-6 flex flex-wrap justify-end gap-3 border-t pt-4">
           <div class="text-sm text-gray-500">
             {{ files.length + galleries.length }} image{{ files.length + galleries.length !== 1 ? 's' : '' }} selected
           </div>

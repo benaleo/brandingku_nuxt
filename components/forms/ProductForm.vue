@@ -516,10 +516,11 @@ function handleBack() {
 <template>
   <form
     v-if="ready"
-    class="w-full space-y-6 flex flex-wrap"
+    class="editor-form"
     @submit.prevent="handleSubmitForm"
   >
-    <div class="pb-4 flex items-end w-full">
+    <FormsFormSection title="Informasi produk" description="Lengkapi nama, alamat halaman, dan deskripsi produk.">
+    <div class="form-url">
       <p class="text-sm font-bold italic">
         {{ config.public.BASE_URL }} /product/
       </p>
@@ -531,8 +532,8 @@ function handleBack() {
         v-model="slug"
         :disabled="disabled"
         :isFieldDirty="isFieldDirty('slug')"
-        :item-class="'inline-flex'"
-        :input-class="'h-6'"
+        :item-class="'min-w-0 flex-1'"
+        :input-class="'h-10'"
       />
     </div>
 
@@ -547,7 +548,7 @@ function handleBack() {
     />
 
     <!-- Description -->
-    <div class="w-full mb-6">
+    <div class="min-w-0 w-full space-y-2">
     <Label for="description">Description</Label>
       <ClientOnly>
         <QuillEditor
@@ -558,7 +559,8 @@ function handleBack() {
         />
       </ClientOnly>
     </div>
-    <div class="w-full mb-12"> </div>
+    </FormsFormSection>
+    <FormsFormSection title="Foto produk" description="Pilih gambar utama dan lengkapi galeri produk.">
     <!-- Image -->
     <ImageUploadField
       v-model:fileUrl="image"
@@ -570,11 +572,15 @@ function handleBack() {
       @delete="handleImageDelete"
     />
 
-    <!-- Additionals Section -->
-    <ProductAdditionalForm v-model="additionals" />
-
     <!-- Galleries Section -->
     <ProductGalleryForm v-model="galleries" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Varian & harga" description="Kelola pilihan produk, harga, stok, dan atributnya.">
+      <ProductAdditionalForm v-model="additionals" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Kategori & visibilitas" description="Tentukan kategori dan posisi produk di website.">
 
     <!-- Product Categories -->
     <!-- 
@@ -597,9 +603,10 @@ function handleBack() {
       :error="errorCategory !== null"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('product_category_id')"
-      itemClass="w-full md:w-1/2"
+      itemClass="w-full"
     />
 
+    <div class="form-grid">
     <!-- Is Highlight -->
     <FieldXCheckbox
       name="is_highlight"
@@ -636,6 +643,8 @@ function handleBack() {
       :isFieldDirty="isFieldDirty('is_active')"
     />
 
+    </div>
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

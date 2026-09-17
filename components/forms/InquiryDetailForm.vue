@@ -5,8 +5,9 @@
   <div v-else-if="error" class="text-center py-4 text-red-500">
     {{ error }}
   </div>
-  <div v-else-if="inquiry" class="bg-white rounded-lg shadow-lg p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div v-else-if="inquiry" class="editor-form break-words">
+    <FormsFormSection title="Detail inquiry" description="Informasi pengirim dan pesan yang diterima.">
+    <div class="form-grid">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
         <p class="text-gray-900">{{ inquiry.name }}</p>
@@ -47,6 +48,7 @@
         <p class="text-gray-900">{{ inquiry.created_by || '-' }}</p>
       </div>
     </div>
+    </FormsFormSection>
   </div>
 </template>
 

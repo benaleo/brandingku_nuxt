@@ -153,8 +153,9 @@ useHead({
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <div class="grid md:grid-cols-2 gap-2">
+  <form class="editor-form" @submit.prevent="handleSubmitForm">
+    <FormsFormSection title="Informasi client" description="Kelola nama, logo, dan urutan client di halaman utama.">
+    <div class="form-grid">
     <!-- Name -->
     <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
       :isFieldDirty="isFieldDirty('name')" />
@@ -177,6 +178,7 @@ useHead({
       :isFieldDirty="isFieldDirty('is_active')" />
 
 
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

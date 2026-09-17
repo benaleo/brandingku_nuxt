@@ -1,9 +1,9 @@
 <template>
-    <div class="w-full flex justify-end items-center gap-2">
-        <Button variant="secondary" @click="handleBack" type="button">
+    <div class="form-actions">
+        <Button class="w-full sm:w-auto sm:min-w-28" variant="outline" @click="handleBack" type="button">
             {{ isDetail ? 'Kembali' : 'Batal' }}
         </Button>
-        <Button type="submit" v-if="!isDetail">
+        <Button class="w-full sm:w-auto sm:min-w-32" type="submit" v-if="!isDetail">
             Simpan
         </Button>
     </div>

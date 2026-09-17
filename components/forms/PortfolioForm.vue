@@ -198,11 +198,12 @@ useHead({
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="min-w-0 w-full">
 
     <!-- Form -->
-    <form @submit="onSubmit" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form @submit="onSubmit" class="editor-form">
+      <FormsFormSection title="Informasi portfolio" description="Ceritakan proyek dan client yang terlibat.">
+      <div class="form-grid">
         <!-- Category -->
         <FieldXSelect
           name="category"
@@ -250,9 +251,11 @@ useHead({
         />
       </div>
 
+      </FormsFormSection>
+      <FormsFormSection title="Galeri proyek" description="Tambahkan foto untuk menampilkan hasil pekerjaan.">
       <!-- Galleries Section -->
       <div class="space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <Label class="text-base font-medium">Gallery Images</Label>
           <Button type="button" variant="outline" size="sm" @click="addGallery">
             Add Image
@@ -276,17 +279,18 @@ useHead({
         </div>
       </div>
 
+      </FormsFormSection>
       <!-- Submit Buttons (Only One Set) -->
-      <div class="flex justify-end gap-3 pt-4 border-t">
+      <div class="form-actions">
         <Button
           type="button"
           variant="outline"
-          class="px-6"
+          class="w-full px-6 sm:w-auto sm:min-w-28"
           @click="() => navigateTo('/console/secret/portfolio')"
         >
           Batal
         </Button>
-        <Button type="submit" class="px-6" :disabled="loading">
+        <Button type="submit" class="w-full px-6 sm:w-auto sm:min-w-32" :disabled="loading">
           Simpan
         </Button>
       </div>

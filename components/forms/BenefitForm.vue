@@ -169,8 +169,9 @@ useHead({
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <div class="grid md:grid-cols-2 gap-2">
+  <form class="editor-form" @submit.prevent="handleSubmitForm">
+    <FormsFormSection title="Informasi benefit" description="Tampilkan manfaat layanan dengan informasi yang jelas.">
+    <div class="form-grid">
     <!-- Name -->
     <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
       :isFieldDirty="isFieldDirty('name')" />
@@ -187,6 +188,8 @@ useHead({
       <img v-if="image" :src="image" alt="Preview" class="max-w-xs max-h-32 object-cover" />
     </div>
 
+    </FormsFormSection>
+    <FormsFormSection title="Pertanyaan & jawaban" description="Lengkapi penjelasan yang akan ditampilkan kepada pengunjung.">
     <!-- Question -->
     <FieldXText name="question" label="Question" placeholder="Enter question" v-model="question" :disabled="disabled"
       :isFieldDirty="isFieldDirty('question')" />
@@ -199,6 +202,7 @@ useHead({
     <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
       :isFieldDirty="isFieldDirty('is_active')" />
 
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

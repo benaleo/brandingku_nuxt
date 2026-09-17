@@ -8,9 +8,9 @@ import AppTopBar from "~/components/elements/AppTopBar.vue";
   <SidebarProvider>
     <div class="flex w-full min-h-screen">
       <AppSidebar/>
-      <div class="flex-1 overflow-auto bg-background">
+      <div class="min-w-0 flex-1 overflow-auto bg-background">
         <AppTopBar/>
-        <div class="px-8 py-4 pb-50">
+        <div class="w-full min-w-0 px-4 py-6 pb-24 sm:px-6 lg:px-8">
           <slot/>
         </div>
         <FooterConsole class="fixed bottom-0 left-0 w-full"/>

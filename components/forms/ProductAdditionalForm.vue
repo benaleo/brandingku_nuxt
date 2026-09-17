@@ -321,16 +321,16 @@ async function pasteJson(addIdx: number) {
 
 <template>
   <div class="w-full">
-    <div class="flex justify-between items-center mb-2">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="font-bold">Additionals</h3>
       <Button type="button" @click="addAdditional">Add Additional</Button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+    <div class="grid w-full min-w-0 grid-cols-1 gap-6 2xl:grid-cols-2">
       <div
         v-for="(additional, addIdx) in list"
         :key="additional.id ?? additional._uniqueKey"
-        class="border rounded p-4 relative w-full"
+        class="relative min-w-0 w-full rounded-xl border border-border bg-muted/20 p-4 sm:p-5"
       >
         <Button
           type="button"
@@ -398,7 +398,7 @@ async function pasteJson(addIdx: number) {
             <Card class="pt-0">
               <CardContent class="pt-4">
                 <!-- JSON toolbar -->
-                <div class="flex items-center justify-end gap-2 mb-3">
+                <div class="mb-3 flex flex-wrap items-center justify-end gap-2">
                   <Button type="button" variant="outline" size="sm" @click="copyJson(addIdx)">
                     <Copy class="h-4 w-4 mr-2" />
                   </Button>

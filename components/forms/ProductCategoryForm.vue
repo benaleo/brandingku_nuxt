@@ -167,11 +167,11 @@ const handleDragOver = (event: DragEvent) => {
 }
 
 const updateSlugFromName = (nameValue: string | undefined) => {
-  // Only auto-generate slug when creating a new record
-  if (!isCreate || !nameValue || isApiUpdate) {
+  // Child slugs follow the name on both create and edit.
+  if ((!isCreate && !props.isChild) || isApiUpdate) {
     return
   }
-  const newSlug = nameValue
+  const newSlug = (nameValue || '').trim()
     .toLowerCase()
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_]/g, '')
@@ -181,7 +181,7 @@ const updateSlugFromName = (nameValue: string | undefined) => {
 
 watch(name, (newVal) => {
   if (!isApiUpdate) updateSlugFromName(newVal)
-})
+}, { flush: 'sync' })
 
 const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
   try {
@@ -288,15 +288,20 @@ const handleBack = () => {
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <div class="pb-4 flex items-end w-full">
+  <form class="editor-form" @submit.prevent="handleSubmitForm">
+    <FormsFormSection title="Informasi kategori" description="Kelola nama, alamat halaman, dan deskripsi kategori.">
+    <div class="form-url">
       <p class="text-sm font-bold italic">
         {{ config.public.BASE_URL }} /category/
       </p>
       <!-- Slug -->
-      <FieldXText name="slug" label="" placeholder="Enter slug" v-model="slug" :disabled="disabled"
-        :isFieldDirty="isFieldDirty('slug')" :item-class="'inline-flex'" :input-class="'h-6'" />
+      <FieldXText name="slug" label="" placeholder="Slug otomatis dari nama" v-model="slug" :disabled="disabled || props.isChild"
+        :isFieldDirty="isFieldDirty('slug')" :item-class="'min-w-0 flex-1'" :input-class="'h-10'" />
     </div>
+
+    <p v-if="props.isChild" class="text-sm text-muted-foreground">
+      Slug dibuat otomatis dari nama. Jika sudah digunakan, akhiran unik akan ditambahkan saat disimpan.
+    </p>
 
     <!-- Name -->
     <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
@@ -306,6 +311,9 @@ const handleBack = () => {
     <FieldXVueEditor name="description" label="Description" placeholder="Enter description" :disabled="disabled"
       v-model="description" :validate-on-blur="!isFieldDirty('description')" />
 
+    </FormsFormSection>
+    <FormsFormSection title="Media kategori" description="Tambahkan gambar dan cover untuk memperkenalkan kategori.">
+    <div class="form-grid">
     <!-- Image -->
     <div class="space-y-2">
       <label class="text-sm font-medium">Image</label>
@@ -396,6 +404,9 @@ const handleBack = () => {
       </div>
     </div>
 
+    </div>
+    </FormsFormSection>
+    <FormsFormSection title="Pengaturan kategori" description="Atur subkategori dan visibilitasnya di website.">
     <!-- Sub Category -->
     <FormField v-if="!props.hideSubCategories" v-slot="{ componentField }" name="sub_categories">
       <FormItem>
@@ -428,6 +439,7 @@ const handleBack = () => {
       :isFieldDirty="isFieldDirty('is_active')" />
 
 
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

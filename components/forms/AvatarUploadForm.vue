@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-4">
+  <div class="editor-form">
+    <FormsFormSection title="Foto profil" description="Pilih foto untuk memperbarui avatar pengguna.">
     <div>
       <label for="userId" class="block text-sm font-medium text-gray-700">User ID</label>
       <input
@@ -13,7 +14,7 @@
 
     <div>
       <label class="block text-sm font-medium text-gray-700">Avatar</label>
-      <div class="mt-1 flex items-center">
+      <div class="mt-1 flex flex-wrap items-center gap-3">
         <input
           type="file"
           ref="fileInput"
@@ -47,6 +48,7 @@
     <div v-if="message" class="mt-2 text-sm" :class="messageType === 'success' ? 'text-green-600' : 'text-red-600'">
       {{ message }}
     </div>
+    </FormsFormSection>
   </div>
 </template>
 

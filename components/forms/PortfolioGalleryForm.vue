@@ -59,7 +59,7 @@ const handleRemove = () => {
 </script>
 
 <template>
-  <div class="border rounded-lg p-4 space-y-4">
+  <div class="min-w-0 rounded-xl border border-border bg-muted/20 p-4 space-y-4">
 
     <div class="gap-4">
       <div class="flex items-center justify-between">

@@ -118,8 +118,8 @@ async function uploadImage() {
   <div class="w-full">
     <Label class="ml-1 mb-2">{{ label }}</Label>
     <div
-      class="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors"
-      :class="dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'"
+      class="min-w-0 rounded-xl border-2 border-dashed p-6 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-muted/50"
+      :class="dragActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/20'"
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop="onDrop"

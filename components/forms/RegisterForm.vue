@@ -55,7 +55,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <form class="w-full space-y-6 px-6 py-4" @submit="onSubmit">
+  <form class="editor-form px-4 py-6 sm:px-6" @submit="onSubmit">
     <FormField v-slot="{ componentField }" name="name" :validate-on-blur="!isFieldDirty">
       <FormItem v-auto-animate>
         <FormLabel>Full Name</FormLabel>
