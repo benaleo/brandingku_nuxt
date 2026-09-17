@@ -2,7 +2,7 @@ import type { AdminInput, AdminUser, ConsoleAccess, Permission, Role, RoleInput 
 
 const roleFields = 'id name description is_active is_system permission_ids'
 const permissionFields = 'id parent_id code menu icon route permission is_group orders'
-const adminFields = `id name email is_active role { ${roleFields} }`
+const adminFields = `id name email avatar address phone is_active role { ${roleFields} }`
 
 export const useAccessService = () => {
   const { gqlFetch } = useGql()

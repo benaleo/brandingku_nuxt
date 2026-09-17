@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, type PropType } from "vue";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { toast } from "vue-sonner";
 import { Trash2 } from "lucide-vue-next";
 import { useFileToBase64 } from "~/composables/useFileToBase64";
@@ -54,6 +55,10 @@ const props = defineProps({
   /**
    * Disabled state
    */
+  deleteFromStorage: {
+    type: Boolean,
+    default: true,
+  },
   disabled: {
     type: Boolean,
     default: false,
@@ -93,6 +98,7 @@ function onFileChange(e: Event) {
 }
 
 function setFile(f: File) {
+  if (props.disabled || isUploading.value) return;
   file.value = f;
   emit("update:file", f);
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
@@ -127,7 +133,17 @@ function cancelDelete() {
 }
 
 async function confirmDelete() {
+  if (props.disabled) return;
   deleteConfirmOpen.value = false;
+  if (!props.deleteFromStorage || file.value) {
+    if (previewUrl.value?.startsWith("blob:")) URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = null;
+    file.value = null;
+    emit("update:fileUrl", "");
+    emit("update:file", null);
+    emit("delete", { url: props.fileUrl, path: props.filePath, bucket: props.bucket });
+    return;
+  }
   try {
     if (props.fileUrl) {
       // Determine storage path: prefer prop.filePath, otherwise derive from STORAGE_URL + fileUrl
@@ -243,6 +259,7 @@ async function uploadImage() {
       </div>
       <Button
         v-if="previewUrl"
+        :disabled="disabled || isUploading"
         @click.stop="openDeleteConfirm"
         class="mt-2 absolute top-2 right-2 transition opacity-0 group-hover:opacity-100"
         variant="destructive"
@@ -260,8 +277,8 @@ async function uploadImage() {
             >
           </DialogHeader>
           <DialogFooter>
-            <Button @click="cancelDelete">Cancel</Button>
-            <Button variant="destructive" @click="confirmDelete">Delete</Button>
+            <Button type="button" @click="cancelDelete">Cancel</Button>
+            <Button type="button" variant="destructive" @click="confirmDelete">Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

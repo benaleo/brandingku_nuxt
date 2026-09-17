@@ -23,7 +23,7 @@ const rows = computed(() => matches.value.slice(page.value * limit.value, (page.
 watch([keyword, limit], () => { page.value = 0 })
 const mayAssign = (role: Role) => access.value?.role.name === 'superadmin' || (role.name !== 'superadmin' && role.permission_ids.every(id => access.value?.permissions.some(p => p.id === id)))
 const assignableRoles = computed(() => roles.value.filter(mayAssign))
-const editable = (u: AdminUser) => u.id !== access.value?.user_id && u.role.name !== 'superadmin' && mayAssign(u.role)
+const editable = (u: AdminUser) => u.id !== access.value?.user_id && (access.value?.role.name === 'superadmin' || u.role.name !== 'superadmin') && mayAssign(u.role)
 const columns = adminColumns(u => { editing.value = u; formOpen.value = true }, u => { deleting.value = u }, u => can('admins.update') && editable(u), u => can('admins.delete') && editable(u))
 const load = async () => {
   loading.value = true; error.value = ''
@@ -59,7 +59,7 @@ const remove = async () => {
     <div v-if="error" role="alert" class="rounded-xl border border-destructive p-4 text-destructive">{{ error }} <UiButton variant="outline" @click="load">Coba lagi</UiButton></div>
     <DatatablesDataTable v-else :columns="columns" :data="rows" :loading="loading" :pagination="{ page, limit, total: matches.length }" @page-change="page = $event" @limit-change="limit = $event" />
     <UiAlertDialog :open="!!deleting" @update:open="!$event && !saving && (deleting = null)">
-      <UiAlertDialogContent><UiAlertDialogHeader><UiAlertDialogTitle>Hapus admin?</UiAlertDialogTitle><UiAlertDialogDescription>Akses akun {{ deleting?.email }} akan dicabut.</UiAlertDialogDescription></UiAlertDialogHeader>
+      <UiAlertDialogContent><UiAlertDialogHeader><UiAlertDialogTitle>Hapus admin?</UiAlertDialogTitle><UiAlertDialogDescription>Akses akun {{ deleting?.email }} akan dicabut. Data akun tetap tersimpan sebagai arsip (soft delete).</UiAlertDialogDescription></UiAlertDialogHeader>
         <UiAlertDialogFooter><UiAlertDialogCancel :disabled="saving">Batal</UiAlertDialogCancel><UiAlertDialogAction :disabled="saving" @click.prevent="remove">{{ saving ? 'Menghapus…' : 'Hapus' }}</UiAlertDialogAction></UiAlertDialogFooter>
       </UiAlertDialogContent>
     </UiAlertDialog>
