@@ -28,23 +28,28 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="w-full h-[40px] bg-slate-200 flex items-center px-4 justify-end">
-    <p class="text-md mr-4">Hello, {{ name || 'User' }}</p>
+  <header class="flex h-14 w-full items-center justify-end border-b bg-background/80 px-4 backdrop-blur">
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
-        <Avatar>
-          <AvatarImage v-if="avatarUrl" :src="avatarUrl" :alt="name"/>
-          <AvatarFallback>{{ initials }}</AvatarFallback>
-        </Avatar>
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Avatar class="size-8">
+            <AvatarImage v-if="avatarUrl" :src="avatarUrl" :alt="name"/>
+            <AvatarFallback class="bg-muted text-xs font-medium text-muted-foreground">{{ initials }}</AvatarFallback>
+          </Avatar>
+          <span class="hidden max-w-[10rem] truncate font-medium text-foreground sm:block">{{ name || 'User' }}</span>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent class="w-56 mr-5">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <DropdownMenuContent align="end" class="w-56">
+        <DropdownMenuLabel class="font-normal">
+          <p class="truncate text-sm font-medium">{{ name || 'User' }}</p>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator/>
-        <DropdownMenuGroup>
-          <DropdownMenuItem as-child>
-            <NuxtLink to="/console/secret/profile">Profile</NuxtLink>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+        <DropdownMenuItem as-child>
+          <NuxtLink to="/console/secret/profile">Profile</NuxtLink>
+        </DropdownMenuItem>
         <DropdownMenuSeparator/>
         <DropdownMenuItem @click="handleLogout">
           <span>Log out</span>
@@ -52,6 +57,5 @@ const handleLogout = () => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-
-  </div>
+  </header>
 </template>
