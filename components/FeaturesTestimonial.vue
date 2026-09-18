@@ -23,7 +23,7 @@ const loadTestimonials = async () => {
 <template>
   <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-12">
-      <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Apa Kata Klien Kami</h2>
+      <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">{{ $t('app.testimonials.title') }}</h2>
       
       <div v-if="loading || isInitialLoad" class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- Skeleton Card 1 -->
@@ -85,7 +85,7 @@ const loadTestimonials = async () => {
       </div>
       
       <div v-else-if="testimonials.length === 0" class="text-center py-8">
-        <p class="text-gray-600">Belum ada testimonial tersedia.</p>
+        <p class="text-gray-600">{{ $t('app.testimonials.empty') }}</p>
       </div>
       
       <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-8">

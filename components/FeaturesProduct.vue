@@ -21,7 +21,7 @@ const shouldLoad = ref(false);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
-// Set up intersection observer to trigger data loading
+const { t } = useI18n();
 const { target } = useIntersectionObserver(() => {
   shouldLoad.value = true
   loadProducts()
@@ -36,12 +36,14 @@ const loadProducts = async () => {
 const tabs = computed(() => [
   {
     id: 1,
-    name: "populer",
+    key: "populer",
+    label: t("app.products.tabs.popular"),
     count: data.value.filter((p) => p.is_highlight).length,
   },
   {
     id: 2,
-    name: "rekomendasi",
+    key: "rekomendasi",
+    label: t("app.products.tabs.recommended"),
     count: data.value.filter((p) => p.is_recommended).length,
   },
 ]);
@@ -76,26 +78,25 @@ function goTo(slug: string) {
             class="w-full flex justify-between items-end bg-transparent"
           >
             <div class="flex-1 max-w-[400px]">
-              <p class="text-2xl font-bold text-black">Katalog Terpilih</p>
+              <p class="text-2xl font-bold text-black">{{ $t('app.products.title') }}</p>
               <p>
-                Temukan berbagai pilihan merchandise yang paling diminati oleh
-                klien ternama kami.
+                {{ $t('app.products.description') }}
               </p>
             </div>
             <div class="flex-shrink-0 bg-slate-100 rounded-lg p-2">
               <TabsTrigger
                 v-for="(trigger, index) in tabs"
                 :key="index"
-                :value="trigger.name"
+                :value="trigger.key"
               >
-                {{ trigger.name.toLocaleUpperCase() }}
+                {{ trigger.label.toLocaleUpperCase() }}
               </TabsTrigger>
             </div>
           </TabsList>
           <TabsContent
             v-for="(val, index) in tabs"
             :key="val.id"
-            :value="val.name"
+            :value="val.key"
           >
             <Carousel
               class="relative w-full"
@@ -128,7 +129,7 @@ function goTo(slug: string) {
                 <!-- Actual Product Cards -->
                 <CarouselItem
                   v-else
-                  v-for="product in filteredProducts(val.name)"
+                  v-for="product in filteredProducts(val.key)"
                   :key="product.id"
                   class="md:basis-1/2 lg:basis-1/4"
                 >
@@ -177,7 +178,7 @@ function goTo(slug: string) {
                             size="sm"
                             @click.stop
                           >
-                            Add to Cart
+                            {{ $t('app.products.addToCart') }}
                           </Button>
                         </div>
                       </CardHeader>
@@ -190,7 +191,7 @@ function goTo(slug: string) {
                           <span class="font-bold"
                             >Rp. {{ product.price }}
                             <span class="text-sm text-gray-500"
-                              >/pcs</span
+                              >{{ $t('app.products.perPcs') }}</span
                             ></span
                           >
                         </div>

@@ -50,20 +50,17 @@
             style="max-width: fit-content"
           >
             <Badge variant="outline" class="text-white bg-slate-400/20 border-[#9AF89F]"
-              ><li>TRUSTED SUPPLIER</li></Badge
+              ><li>{{ $t('app.hero.trustedBadge') }}</li></Badge
             >
             <div class="text-7xl font-bold text-white">
-              Brandingku supplier merchandise <span class="text-[#9AF89F]">terpercaya</span>.
+              {{ $t('app.hero.titlePrefix') }}<span class="text-[#9AF89F]">{{ $t('app.hero.titleHighlight') }}</span>{{ $t('app.hero.titleSuffix') }}
             </div>
             <div class="text-2xl text-white">
-              Kami menyediakan berbagai produk untuk memenuhi kebutuhan Anda.
-              Hadirkan identitas brand Anda melalui pilihan merchandise
-              berkualitas tinggi. Dari Tumbler hingga Fashion, kami siap
-              mendukung kebutuhan korporasi Anda.
+              {{ $t('app.hero.description') }}
             </div>
             <div class="flex gap-2 items-center justify-start">
-              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-12 py-8 text-lg">Cari Produk</Button>
-              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-12 py-8 text-lg">Konsultasi</Button>
+              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-12 py-8 text-lg">{{ $t('app.hero.ctaSearch') }}</Button>
+              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-12 py-8 text-lg">{{ $t('app.hero.ctaConsult') }}</Button>
             </div>
           </div>
           <div class="relative container px-4 mx-auto">
@@ -77,7 +74,7 @@
                 loading="lazy"
               />
               <Badge variant="secondary" class="absolute top-4 right-4"
-                >New Arrival</Badge
+                >{{ $t('app.hero.newArrival') }}</Badge
               >
             </div>
           </div>

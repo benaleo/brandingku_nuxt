@@ -1,0 +1,111 @@
+{
+  "app": {
+    "meta": {
+      "title": "Brandingku - Best Merchandise Supplier"
+    },
+    "nav": {
+      "home": "Home",
+      "category": "Categories",
+      "service": "Services",
+      "contact": "Contact",
+      "about": "About",
+      "searchProduct": "Search Product",
+      "other": "OTHER",
+      "allCategories": "All Categories",
+      "loadingCategories": "Loading categories...",
+      "cart": "Cart & Wishlist",
+      "account": "User Account"
+    },
+    "hero": {
+      "trustedBadge": "TRUSTED SUPPLIER",
+      "titlePrefix": "Brandingku ",
+      "titleHighlight": "trusted",
+      "titleSuffix": " merchandise supplier.",
+      "description": "We provide a wide range of products to meet your needs. Bring your brand identity to life through high-quality merchandise choices. From Tumblers to Fashion, we are ready to support your corporate needs.",
+      "ctaSearch": "Browse Products",
+      "ctaConsult": "Consultation",
+      "newArrival": "New Arrival"
+    },
+    "services": {
+      "title": "Our Services",
+      "items": {
+        "premiumQuality": {
+          "name": "Premium Quality",
+          "description": "Only using the finest materials to ensure your merchandise is durable and elegant."
+        },
+        "fastProduction": {
+          "name": "Fast Production",
+          "description": "Efficient production systems enable on-time delivery matching your corporate deadlines."
+        },
+        "ecoFriendly": {
+          "name": "Eco Friendly",
+          "description": "Wide selection of eco-friendly products supporting corporate sustainability campaigns."
+        }
+      },
+      "menu": {
+        "bestService": "Best Service",
+        "freeLogoDesign": "Free Logo Design",
+        "qualityCheck": "Quality Check Process",
+        "timelyProduction": "Timely Production",
+        "warranty": "Warranty"
+      }
+    },
+    "categories": {
+      "title": "Featured Categories",
+      "failed": "Failed to load categories",
+      "retry": "Retry"
+    },
+    "products": {
+      "title": "Featured Catalog",
+      "description": "Discover a curated selection of merchandise most favored by our renowned clients.",
+      "tabs": {
+        "popular": "Popular",
+        "recommended": "Recommended"
+      },
+      "addToCart": "Add to Cart",
+      "perPcs": "/pcs"
+    },
+    "clients": {
+      "title": "Our Partners"
+    },
+    "testimonials": {
+      "title": "What Our Clients Say",
+      "empty": "No testimonials available yet."
+    },
+    "faq": {
+      "title": "Popular Questions",
+      "loading": "Loading questions..."
+    },
+    "bannerCta": {
+      "title": "Start Your Custom Merchandise Now",
+      "description": "Consult your corporate branding needs with our expert team and get the best price quote.",
+      "whatsappAdmin": "WhatsApp Admin",
+      "requestQuote": "Request Quote"
+    },
+    "footer": {
+      "tagline": "Trusted corporate merchandise solutions with premium quality and professional service.",
+      "address": "Jl. Merchandise Raya No. 42 South Jakarta, Indonesia",
+      "popular": "Popular",
+      "support": "Support",
+      "quickLinks": "Quick Links",
+      "links": {
+        "usbDrive": "USB Drive",
+        "tumbler": "Tumbler",
+        "powerbank": "Powerbank",
+        "bulkOrders": "Bulk Orders",
+        "contact": "Contact",
+        "faq": "FAQ",
+        "aboutUs": "About Us",
+        "portfolio": "Portfolio",
+        "sustainability": "Sustainability",
+        "shippingPolicy": "Shipping Policy"
+      },
+      "copyright": "© 2024 Brandingku Merchandise. All rights reserved."
+    },
+    "language": {
+      "switch": "Change Language",
+      "id": "Bahasa Indonesia",
+      "en": "English"
+    }
+  }
+}

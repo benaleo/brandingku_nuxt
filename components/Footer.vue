@@ -5,12 +5,12 @@
       <div>
         <h3 class="text-xl font-bold mb-4">Brandingku</h3>
         <p class="text-gray-300 mb-4 text-sm">
-          Solusi merchandise korporasi terpercaya dengan kualitas premium dan pelayanan profesional.
+          {{ $t('app.footer.tagline') }}
         </p>
         <div class="space-y-2 text-sm text-gray-300">
           <div class="flex items-start gap-2">
             <Icon name="ic:baseline-location-on" size="16" class="mt-1 flex-shrink-0" />
-            <span>Jl. Merchandise Raya No. 42 Jakarta Selatan, Indonesia</span>
+            <span>{{ $t('app.footer.address') }}</span>
           </div>
           <div class="flex items-center gap-2">
             <Icon name="ic:sharp-phone" size="16" />
@@ -25,39 +25,61 @@
 
       <!-- Popular Section -->
       <div>
-        <h3 class="text-xl font-bold mb-4">Popular</h3>
+        <h3 class="text-xl font-bold mb-4">{{ $t('app.footer.popular') }}</h3>
         <ul class="space-y-2 text-sm text-gray-300">
-          <li><a href="#" class="hover:text-white transition-colors">USB Drive</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Tumbler</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Powerbank</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.usbDrive') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.tumbler') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.powerbank') }}</a></li>
         </ul>
       </div>
 
       <!-- Support Section -->
       <div>
-        <h3 class="text-xl font-bold mb-4">Support</h3>
+        <h3 class="text-xl font-bold mb-4">{{ $t('app.footer.support') }}</h3>
         <ul class="space-y-2 text-sm text-gray-300">
-          <li><a href="#" class="hover:text-white transition-colors">Bulk Orders</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.bulkOrders') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.contact') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.faq') }}</a></li>
         </ul>
       </div>
 
       <!-- Quick Links Section -->
       <div>
-        <h3 class="text-xl font-bold mb-4">Quick Links</h3>
+        <h3 class="text-xl font-bold mb-4">{{ $t('app.footer.quickLinks') }}</h3>
         <ul class="space-y-2 text-sm text-gray-300">
-          <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Portfolio</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Sustainability</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Shipping Policy</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.aboutUs') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.portfolio') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.sustainability') }}</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.shippingPolicy') }}</a></li>
         </ul>
       </div>
     </div>
 
-    <!-- Copyright Notice -->
-    <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-      <p>© 2024 Brandingku Merchandise. All rights reserved.</p>
+    <!-- Copyright Notice & Language Selection -->
+    <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto text-sm text-gray-400">
+      <p>{{ $t('app.footer.copyright') }}</p>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-400">{{ $t('app.language.switch') }}:</span>
+        <button
+          @click="setLocale('id')"
+          class="px-2 py-1 rounded text-xs transition-colors"
+          :class="locale === 'id' ? 'bg-green-700 text-white font-semibold' : 'text-gray-400 hover:text-white'"
+        >
+          🇮🇩 ID
+        </button>
+        <span class="text-gray-600">|</span>
+        <button
+          @click="setLocale('en')"
+          class="px-2 py-1 rounded text-xs transition-colors"
+          :class="locale === 'en' ? 'bg-green-700 text-white font-semibold' : 'text-gray-400 hover:text-white'"
+        >
+          🇬🇧 EN
+        </button>
+      </div>
     </div>
   </footer>
 </template>
+
+<script setup lang="ts">
+const { locale, setLocale } = useI18n();
+</script>

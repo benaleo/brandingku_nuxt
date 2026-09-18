@@ -6,11 +6,11 @@
           <img class="h-[50px]" src="/images/html/logo.png" alt="logo">
         </NuxtLink>
         <ul class="flex space-x-6">
-          <li><NuxtLink class="text-slate-700 hover:text-black font-medium" to="/">Home</NuxtLink></li>
+          <li><NuxtLink class="text-slate-700 hover:text-black font-medium" to="/">{{ $t('app.nav.home') }}</NuxtLink></li>
           <li 
             class="relative group"
           >
-            <button class="text-slate-700 hover:text-black font-medium">Kategori</button>
+            <button class="text-slate-700 hover:text-black font-medium">{{ $t('app.nav.category') }}</button>
             <div 
               class="absolute top-full left-0 mt-2 w-[600px] bg-white rounded-lg shadow-2xl p-6 border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
               style="z-index: 9999;"
@@ -33,27 +33,27 @@
                 </div>
                 <div class="space-y-2">
                   <h3 class="font-semibold text-gray-800 hover:text-blue-600 cursor-pointer border-b pb-2 border-slate-200">
-                    LAINNYA
+                    {{ $t('app.nav.other') }}
                   </h3>
                   <div class="space-y-1">
                     <a 
                       href="/category"
                       class="block text-sm text-gray-600 hover:text-green-600 hover:underline hover:bg-green-100 py-1 px-2"
                     >
-                      Semua Kategori
+                      {{ $t('app.nav.allCategories') }}
                     </a>
                   </div>
                 </div>
               </div>
               <div v-if="categories.length === 0" class="text-gray-500 text-center py-4">
-                Loading categories...
+                {{ $t('app.nav.loadingCategories') }}
               </div>
             </div>
           </li>
           <li 
             class="relative group"
           >
-            <button class="text-slate-700 hover:text-black font-medium">Servis</button>
+            <button class="text-slate-700 hover:text-black font-medium">{{ $t('app.nav.service') }}</button>
             <div 
               class="absolute top-full left-0 mt-2 w-[300px] bg-white rounded-lg shadow-2xl p-6 border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
               style="z-index: 9999;"
@@ -70,24 +70,26 @@
               </div>
             </div>
           </li>
-          <li><NuxtLink class="text-slate-700 hover:text-black font-medium" to="/kontak">Kontak</NuxtLink></li>
-          <li><NuxtLink class="text-slate-700 hover:text-black font-medium" to="/tentang">Tentang</NuxtLink></li>
+          <li><NuxtLink class="text-slate-700 hover:text-black font-medium" to="/kontak">{{ $t('app.nav.contact') }}</NuxtLink></li>
+          <li><NuxtLink class="text-slate-700 hover:text-black font-medium" to="/tentang">{{ $t('app.nav.about') }}</NuxtLink></li>
         </ul>
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3">
         <!-- Cart Icon -->
-        <button @click="router.push('/wishlist')" class="text-slate-700 hover:text-black">
+        <button @click="router.push('/wishlist')" class="text-slate-700 hover:text-black" :title="$t('app.nav.cart')">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
           </svg>
         </button>
         <!-- User Icon -->
-        <button @click="handleUserClick" class="text-slate-700 hover:text-black">
+        <button @click="handleUserClick" class="text-slate-700 hover:text-black" :title="$t('app.nav.account')">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
         </button>
-        <Button @click="router.push('/product')" variant="primary" class="bg-green-600 hover:bg-green-700">Cari Produk</Button>
+        <!-- Language Switcher -->
+        <LanguageSwitcher />
+        <Button @click="router.push('/product')" variant="primary" class="bg-green-600 hover:bg-green-700">{{ $t('app.nav.searchProduct') }}</Button>
       </div>
     </div>
   </nav>
@@ -97,10 +99,10 @@
         <NuxtLink to="/">
           <img class="h-[50px]" src="/images/html/logo.png" alt="logo">
         </NuxtLink>
-  
       </div>
-      <div>
-        <Button @click="router.push('/product')" variant="primary">Cari Produk</Button>
+      <div class="flex items-center space-x-2">
+        <LanguageSwitcher />
+        <Button @click="router.push('/product')" variant="primary">{{ $t('app.nav.searchProduct') }}</Button>
       </div>
     </div>
   </nav>
@@ -108,11 +110,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProductCategoryService } from '~/services/product-category.service';
 import { getSecureIdFromToken } from '~/utils/token.helper';
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue';
 
+const { t } = useI18n();
 const router = useRouter();
 const isDesktop = ref(false);
 const categories = ref<any[]>([]);
@@ -140,13 +144,13 @@ const handleUserClick = () => {
   }
 };
 
-const services = [
-  { name: 'Servis Terbaik', href: '#servis-terbaik' },
-  { name: 'Desain Logo Gratis', href: '#desain-logo' },
-  { name: 'Proses Cek Kualitas', href: '#cek-kualitas' },
-  { name: 'Produksi tepat waktu', href: '#produksi-tepat-waktu' },
-  { name: 'Garansi', href: '#garansi' }
-];
+const services = computed(() => [
+  { name: t('app.services.menu.bestService'), href: '#servis-terbaik' },
+  { name: t('app.services.menu.freeLogoDesign'), href: '#desain-logo' },
+  { name: t('app.services.menu.qualityCheck'), href: '#cek-kualitas' },
+  { name: t('app.services.menu.timelyProduction'), href: '#produksi-tepat-waktu' },
+  { name: t('app.services.menu.warranty'), href: '#garansi' }
+]);
 
 const checkScreenWidth = () => {
   isDesktop.value = window.innerWidth >= 768;

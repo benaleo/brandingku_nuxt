@@ -1,0 +1,111 @@
+{
+  "app": {
+    "meta": {
+      "title": "Brandingku - Supplier Merchandise Terbaik"
+    },
+    "nav": {
+      "home": "Home",
+      "category": "Kategori",
+      "service": "Servis",
+      "contact": "Kontak",
+      "about": "Tentang",
+      "searchProduct": "Cari Produk",
+      "other": "LAINNYA",
+      "allCategories": "Semua Kategori",
+      "loadingCategories": "Memuat kategori...",
+      "cart": "Keranjang & Wishlist",
+      "account": "Akun Pengguna"
+    },
+    "hero": {
+      "trustedBadge": "SUPPLIER TERPERCAYA",
+      "titlePrefix": "Brandingku supplier merchandise ",
+      "titleHighlight": "terpercaya",
+      "titleSuffix": ".",
+      "description": "Kami menyediakan berbagai produk untuk memenuhi kebutuhan Anda. Hadirkan identitas brand Anda melalui pilihan merchandise berkualitas tinggi. Dari Tumbler hingga Fashion, kami siap mendukung kebutuhan korporasi Anda.",
+      "ctaSearch": "Cari Produk",
+      "ctaConsult": "Konsultasi",
+      "newArrival": "Produk Baru"
+    },
+    "services": {
+      "title": "Layanan Kami",
+      "items": {
+        "premiumQuality": {
+          "name": "Kualitas Premium",
+          "description": "Hanya menggunakan bahan baku terbaik untuk memastikan merchandise Anda tahan lama dan elegan."
+        },
+        "fastProduction": {
+          "name": "Produksi Cepat",
+          "description": "Sistem produksi yang efisien memungkinkan pengerjaan tepat waktu sesuai deadline korporasi Anda."
+        },
+        "ecoFriendly": {
+          "name": "Ramah Lingkungan",
+          "description": "Berbagai pilihan produk ramah lingkungan yang mendukung kampanye sustainability perusahaan."
+        }
+      },
+      "menu": {
+        "bestService": "Servis Terbaik",
+        "freeLogoDesign": "Desain Logo Gratis",
+        "qualityCheck": "Proses Cek Kualitas",
+        "timelyProduction": "Produksi tepat waktu",
+        "warranty": "Garansi"
+      }
+    },
+    "categories": {
+      "title": "Kategori Pilihan",
+      "failed": "Gagal memuat kategori",
+      "retry": "Coba Lagi"
+    },
+    "products": {
+      "title": "Katalog Terpilih",
+      "description": "Temukan berbagai pilihan merchandise yang paling diminati oleh klien ternama kami.",
+      "tabs": {
+        "popular": "Populer",
+        "recommended": "Rekomendasi"
+      },
+      "addToCart": "Tambah ke Keranjang",
+      "perPcs": "/pcs"
+    },
+    "clients": {
+      "title": "Partner Kami"
+    },
+    "testimonials": {
+      "title": "Apa Kata Klien Kami",
+      "empty": "Belum ada testimonial tersedia."
+    },
+    "faq": {
+      "title": "Pertanyaan Populer",
+      "loading": "Memuat pertanyaan..."
+    },
+    "bannerCta": {
+      "title": "Mulai Custom Merchandise Anda Sekarang",
+      "description": "Konsultasikan kebutuhan branding perusahaan Anda bersama tim ahli kami dan dapatkan penawaran harga terbaik.",
+      "whatsappAdmin": "WhatsApp Admin",
+      "requestQuote": "Minta Penawaran"
+    },
+    "footer": {
+      "tagline": "Solusi merchandise korporasi terpercaya dengan kualitas premium dan pelayanan profesional.",
+      "address": "Jl. Merchandise Raya No. 42 Jakarta Selatan, Indonesia",
+      "popular": "Populer",
+      "support": "Bantuan",
+      "quickLinks": "Tautan Cepat",
+      "links": {
+        "usbDrive": "USB Drive",
+        "tumbler": "Tumbler",
+        "powerbank": "Powerbank",
+        "bulkOrders": "Pesanan Massal",
+        "contact": "Kontak",
+        "faq": "FAQ",
+        "aboutUs": "Tentang Kami",
+        "portfolio": "Portofolio",
+        "sustainability": "Keberlanjutan",
+        "shippingPolicy": "Kebijakan Pengiriman"
+      },
+      "copyright": "© 2024 Brandingku Merchandise. Hak cipta dilindungi."
+    },
+    "language": {
+      "switch": "Pilih Bahasa",
+      "id": "Bahasa Indonesia",
+      "en": "English"
+    }
+  }
+}

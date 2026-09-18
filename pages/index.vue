@@ -1,15 +1,15 @@
 <script setup>
-// Import shadcn-vue components
+import { computed } from "vue";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FeaturesServices from "~/components/FeaturesServices.vue";
 import FeaturesClient from "~/components/FeaturesClient.vue";
 import FeaturesBenefitFaq from "~/components/FeaturesBenefitFaq.vue";
 
-const pageTitle = "Brandingku - Best Merchandise Supplier";
+const { t } = useI18n();
 
 useHead({
-  title: pageTitle,
+  title: computed(() => t("app.meta.title")),
 });
 
 definePageMeta({

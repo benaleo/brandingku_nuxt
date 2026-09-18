@@ -45,8 +45,8 @@ watch(data, (newData) => {
         <SkeletonFeaturedCategory />
       </div>
       <div v-else-if="error" class="text-center py-8">
-        <div class="text-red-500 mb-4">Failed to load categories</div>
-        <Button @click="refetch" variant="outline"> Retry </Button>
+        <div class="text-red-500 mb-4">{{ $t('app.categories.failed') }}</div>
+        <Button @click="refetch" variant="outline"> {{ $t('app.categories.retry') }} </Button>
       </div>
       <div v-else class="flex justify-center items-center gap-4 flex-wrap">
         <Card

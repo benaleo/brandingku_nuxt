@@ -42,10 +42,10 @@ useHead({
 <template>
   <div ref="target" class="w-full px-4 py-12" style="font-family: 'Plus Jakarta Sans', sans-serif;">
     <div class="container max-w-3xl mx-auto py-12">
-      <h2 class="text-2xl font-bold text-center mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">Pertanyaan Populer</h2>
+      <h2 class="text-2xl font-bold text-center mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ $t('app.faq.title') }}</h2>
 
       <div v-if="loading || isInitialLoad" class="text-center py-4">
-        <p style="font-family: 'Plus Jakarta Sans', sans-serif;">Memuat pertanyaan...</p>
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ $t('app.faq.loading') }}</p>
       </div>
 
       <div v-else-if="error" class="text-center py-4 text-red-500">

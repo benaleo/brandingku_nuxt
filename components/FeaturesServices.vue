@@ -1,36 +1,36 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { Card, CardContent } from "~/components/ui/card";
 
-const services = [
+const { t } = useI18n();
+
+const services = computed(() => [
   {
     id: 1,
-    name: "Kualitas Premium",
-    description:
-      "Hanya menggunakan bahan baku terbaik untuk memastikan merchandise Anda tahan lama dan elegan.",
+    name: t("app.services.items.premiumQuality.name"),
+    description: t("app.services.items.premiumQuality.description"),
     image: "/icon/check-icon.svg",
   },
   {
     id: 2,
-    name: "Produksi Cepat",
-    description:
-      "Sistem produksi yang efisien memungkinkan pengerjaan tepat waktu sesuai deadline korporasi Anda.",
+    name: t("app.services.items.fastProduction.name"),
+    description: t("app.services.items.fastProduction.description"),
     image: "/icon/speed-icon.svg",
   },
   {
     id: 3,
-    name: "Ramah Lingkungan",
-    description:
-      "Berbagai pilihan produk ramah lingkungan yang mendukung kampanye sustainability perusahaan.",
+    name: t("app.services.items.ecoFriendly.name"),
+    description: t("app.services.items.ecoFriendly.description"),
     image: "/icon/leaf-icon.svg",
   },
-];
+]);
 </script>
 
 <template>
   <section class="py-16 md:py-24 lg:max-w-6xl mx-auto">
     <div class="container px-4 mx-auto">
       <div class="relative flex justify-center items-center mb-8">
-        <h2 class="text-2xl md:text-3xl font-bold">Layanan Kami</h2>
+        <h2 class="text-2xl md:text-3xl font-bold">{{ $t('app.services.title') }}</h2>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card

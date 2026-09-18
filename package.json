@@ -52,6 +52,7 @@
     "@iconify/vue": "^4.3.0",
     "@nuxtjs/apollo": "5.0.0-alpha.15",
     "@nuxtjs/color-mode": "^3.5.2",
+    "@nuxtjs/i18n": "^10.6.0",
     "@types/node": "^22.19.11",
     "cpy-cli": "^5.0.0",
     "rimraf": "^5.0.10",

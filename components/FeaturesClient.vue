@@ -50,7 +50,7 @@ const STORAGE_URL = config.public.STORAGE_URL;
 <template>
   <div ref="target" class="w-full px-4 py-12">
     <div class="container max-w-6xl mx-auto py-12">
-      <h2 class="text-2xl md:text-3xl font-bold text-center">Partner Kami</h2>
+      <h2 class="text-2xl md:text-3xl font-bold text-center">{{ $t('app.clients.title') }}</h2>
     </div>
 
     <div class="container max-w-6xl mx-auto py-12 overflow-hidden">

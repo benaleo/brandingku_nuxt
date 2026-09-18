@@ -30,6 +30,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/icon',
     '@nuxtjs/apollo',
+    '@nuxtjs/i18n',
     // Only include NuxtHub when deploying to Cloudflare-compatible presets.
     ...(isCloudflarePreset ? ['@nuxthub/core'] as const : []),
     (_options, nuxt) => {
@@ -42,6 +43,32 @@ export default defineNuxtConfig({
       })
     },
   ],
+
+  i18n: {
+    defaultLocale: 'id',
+    strategy: 'no_prefix',
+    lazy: true,
+    langDir: 'locales',
+    locales: [
+      {
+        code: 'id',
+        language: 'id-ID',
+        name: 'Bahasa Indonesia',
+        files: ['app/id.json', 'console/id.json'],
+      },
+      {
+        code: 'en',
+        language: 'en-US',
+        name: 'English',
+        files: ['app/en.json', 'console/en.json'],
+      },
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root',
+    },
+  },
 
   nitro: {
     preset: process.env.NITRO_PRESET || 'node-server',
