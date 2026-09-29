@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useRoute} from 'vue-router'
-import {computed, ref, watch} from 'vue'
+import {computed, nextTick, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
 import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
 
@@ -10,6 +10,78 @@ const subSlug = computed(() => route.query.sub as string | undefined)
 
 const selectedFilter = ref('All')
 const selectedSubCategory = ref<SubCategory | null>(null)
+
+const filterScrollRef = ref<HTMLElement | null>(null)
+let isDragging = false
+let dragStartX = 0
+let dragScrollLeft = 0
+let dragMoved = false
+
+function onFilterDragStart(e: MouseEvent) {
+  const el = filterScrollRef.value
+  if (!el) return
+  isDragging = true
+  dragMoved = false
+  dragStartX = e.pageX - el.offsetLeft
+  dragScrollLeft = el.scrollLeft
+}
+
+function onFilterDragMove(e: MouseEvent) {
+  const el = filterScrollRef.value
+  if (!isDragging || !el) return
+  e.preventDefault()
+  const x = e.pageX - el.offsetLeft
+  const walk = x - dragStartX
+  if (Math.abs(walk) > 5) dragMoved = true
+  el.scrollLeft = dragScrollLeft - walk
+  wrapFilterScroll()
+}
+
+function onFilterDragEnd() {
+  isDragging = false
+}
+
+function onFilterClickCapture(e: MouseEvent) {
+  if (dragMoved) {
+    e.stopPropagation()
+    e.preventDefault()
+  }
+}
+
+// Keep scrollLeft within the middle copy so the strip appears to loop forever
+function wrapFilterScroll() {
+  const el = filterScrollRef.value
+  if (!el) return
+  const oneSetWidth = el.scrollWidth / FILTER_LOOP_REPEAT
+  if (oneSetWidth <= 0) return
+  if (el.scrollLeft < oneSetWidth) {
+    el.scrollLeft += oneSetWidth
+    dragScrollLeft += oneSetWidth
+  } else if (el.scrollLeft >= oneSetWidth * 2) {
+    el.scrollLeft -= oneSetWidth
+    dragScrollLeft -= oneSetWidth
+  }
+}
+
+function onFilterScroll() {
+  if (isDragging) return
+  wrapFilterScroll()
+}
+
+function getMiddleFilterButton(filter: string) {
+  const el = filterScrollRef.value
+  if (!el) return null
+  const buttons = Array.from(el.querySelectorAll<HTMLButtonElement>('button[data-rep="1"]'))
+  return buttons.find(b => b.dataset.filter === filter) || null
+}
+
+async function centerSelectedFilter(filter: string) {
+  await nextTick()
+  const el = filterScrollRef.value
+  const btn = getMiddleFilterButton(filter)
+  if (!el || !btn) return
+  el.scrollLeft = btn.offsetLeft - el.clientWidth / 2 + btn.offsetWidth / 2
+}
 
 const {
   data: category,
@@ -50,6 +122,17 @@ const categoryFilters = computed(() => {
   return filters
 })
 
+// Repeat the filter list so the scroll strip can loop infinitely
+const FILTER_LOOP_REPEAT = 3
+const loopedFilters = computed(() => {
+  const filters = categoryFilters.value
+  const looped: { filter: string; rep: number; key: string }[] = []
+  for (let rep = 0; rep < FILTER_LOOP_REPEAT; rep++) {
+    filters.forEach(filter => looped.push({ filter, rep, key: `${rep}-${filter}` }))
+  }
+  return looped
+})
+
 useHead({
   title: pageTitle,
   meta: [
@@ -79,6 +162,11 @@ watch([category, subSlug], ([newCategory, newSubSlug]) => {
       selectedFilter.value = subCategory.name
     }
   }
+}, { immediate: true })
+
+// Center the active filter in the scroll strip once it's rendered
+watch([categoryLoading, selectedFilter], ([loading]) => {
+  if (!loading) centerSelectedFilter(selectedFilter.value)
 }, { immediate: true })
 
 definePageMeta({
@@ -142,19 +230,31 @@ definePageMeta({
         <div v-for="n in 12" :key="n" class="h-8 bg-gray-200 rounded-full w-42 animate-pulse snap-start"></div>
       </div>
       <!-- Actual Filters -->
-      <div v-else class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
-        <button 
-          v-for="filter in categoryFilters" 
-          :key="filter"
-          @click="handleFilterClick(filter)"
+      <div
+        v-else
+        ref="filterScrollRef"
+        class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+        @mousedown="onFilterDragStart"
+        @mousemove="onFilterDragMove"
+        @mouseup="onFilterDragEnd"
+        @mouseleave="onFilterDragEnd"
+        @click.capture="onFilterClickCapture"
+        @scroll="onFilterScroll"
+      >
+        <button
+          v-for="item in loopedFilters"
+          :key="item.key"
+          :data-rep="item.rep"
+          :data-filter="item.filter"
+          @click="handleFilterClick(item.filter)"
           :class="[
             'px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap snap-start',
-            selectedFilter === filter 
-              ? 'bg-green-600 text-white' 
+            selectedFilter === item.filter
+              ? 'bg-green-600 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           ]"
         >
-          {{ filter }}
+          {{ item.filter }}
         </button>
       </div>
     </div>
