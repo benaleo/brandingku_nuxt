@@ -106,6 +106,12 @@
       "switch": "Change Language",
       "id": "Bahasa Indonesia",
       "en": "English"
+    },
+    "chat": {
+      "title": "Help Chat",
+      "subtitle": "We're here to help",
+      "placeholder": "Type a message...",
+      "loading": "Typing..."
     }
   }
 }

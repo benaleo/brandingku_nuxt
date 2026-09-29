@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
     }
     if (reqAuth) headers['Authorization'] = reqAuth
     else if (token) headers['Authorization'] = `Bearer ${token}`
+    const guestId = getHeader(event, 'x-chat-guest-id')
+    if (guestId) headers['X-Chat-Guest-Id'] = guestId
 
     // Normalize upstream endpoint and detect potential recursion
     let upstream = ''
@@ -61,8 +63,9 @@ export default defineEventHandler(async (event) => {
       method: 'POST',
       headers,
       body: { query, variables },
-      // Prevent hanging the request forever in production
-      timeout: 15000,
+      // Prevent hanging the request forever in production; chat mutations call an LLM
+      // backend (bounded at 60s server-side), so give this more room than a typical query.
+      timeout: 65000,
       retry: 0,
       responseType: 'json',
     }).catch((err: any) => {

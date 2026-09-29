@@ -106,6 +106,12 @@
       "switch": "Pilih Bahasa",
       "id": "Bahasa Indonesia",
       "en": "English"
+    },
+    "chat": {
+      "title": "Chat Bantuan",
+      "subtitle": "Kami siap membantu Anda",
+      "placeholder": "Tulis pesan...",
+      "loading": "Sedang mengetik..."
     }
   }
 }

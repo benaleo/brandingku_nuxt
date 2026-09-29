@@ -5,10 +5,11 @@ export const useGql = () => {
     const GRAPHQL_ENDPOINT = `/api/gql`
     const token = useCookie<string | null>('token', { sameSite: 'lax' })
 
-    const gqlFetch = async <T>(query: string, variables?: Record<string, any>, opts?: { auth?: boolean }): Promise<T> => {
+    const gqlFetch = async <T>(query: string, variables?: Record<string, any>, opts?: { auth?: boolean; headers?: Record<string, string> }): Promise<T> => {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            'Accept': '*/*'
+            'Accept': '*/*',
+            ...opts?.headers,
         }
         if (opts?.auth && token.value) headers['Authorization'] = `Bearer ${token.value}`
 

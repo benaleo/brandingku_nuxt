@@ -12,14 +12,16 @@ import {
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
 import {
   BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
-  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, MessageSquareQuote,
+  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, MessageCircle, MessageSquareQuote,
   Package, ShieldCheck, ShieldUser, SlidersHorizontal, Store, Tags, UserCog,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import {useRoute} from 'vue-router'
+import {useChatUnreadCount} from '~/services/chat-admin.service'
 
 const route = useRoute()
 const { menus: secretConsoleMenu } = useConsoleAccess()
+const { unreadCount } = useChatUnreadCount()
 const iconComponents: Record<string, Component> = {
   BadgeCheck,
   Building2,
@@ -30,6 +32,7 @@ const iconComponents: Record<string, Component> = {
   Inbox,
   LayoutDashboard,
   LayoutTemplate,
+  MessageCircle,
   MessageSquareQuote,
   ShieldUser,
   Package,
@@ -84,6 +87,12 @@ const isActive = (href: string) => {
                           aria-hidden="true"
                       />
                       <span>{{ item.name }}</span>
+                      <span
+                          v-if="item.href === '/console/secret/chat' && unreadCount > 0"
+                          class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold text-white"
+                      >
+                        {{ unreadCount > 9 ? '9+' : unreadCount }}
+                      </span>
                     </NuxtLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
