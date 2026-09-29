@@ -12,6 +12,9 @@ import FormButton from "~/components/atoms/FormButton.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import type { Benefit, BenefitRequest } from '~/types/benefit.type';
 import { useFileToBase64 } from '~/composables/useFileToBase64'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '~/components/ui/tabs'
+
+type Lang = 'id' | 'en'
 
 const router = useRouter()
 const props = defineProps<{
@@ -28,24 +31,37 @@ const service = useBenefitService()
 const { detail, loadDetail, createBenefit, updateBenefit } = service
 
 const formSchema = toTypedSchema(z.object({
-  name: z.string().min(1, 'Name is required'),
   logo: z.string().optional().default(''),
-  question: z.string().optional().default(''),
-  answer: z.string().optional().default(''),
   orders: z.coerce.number().min(0, 'Orders must be a positive number'),
   is_active: z.coerce.boolean(),
 }))
 
-const { isFieldDirty, setFieldValue, handleSubmit } = useForm<BenefitRequest>({
+const { isFieldDirty, setFieldValue, handleSubmit } = useForm({
   validationSchema: formSchema,
 })
 
-const name = ref('')
+const activeLang = ref<Lang>('id')
+const nameByLang = ref<Record<Lang, string>>({ id: '', en: '' })
+const questionByLang = ref<Record<Lang, string>>({ id: '', en: '' })
+const answerByLang = ref<Record<Lang, string>>({ id: '', en: '' })
+
 const logo = ref('')
 const orders = ref(0)
-const question = ref('')
-const answer = ref('')
 const is_active = ref(false)
+
+// Existing rows may still have plain-string values instead of { id, en } json.
+const parseLangJson = (val?: string): Record<Lang, string> => {
+  if (!val) return { id: '', en: '' }
+  try {
+    const parsed = JSON.parse(val)
+    if (parsed && typeof parsed === 'object') {
+      return { id: parsed.id ?? '', en: parsed.en ?? '' }
+    }
+  } catch {
+    // not json, fall through
+  }
+  return { id: val, en: '' }
+}
 
 const image = ref('') // preview url
 const imageFile = ref<File | null>(null)
@@ -56,21 +72,18 @@ let isApiUpdate = false
 
 const setFieldsFromDetail = (val: Benefit) => {
   isApiUpdate = true
-  name.value = val.name || ''
+  nameByLang.value = parseLangJson(val.name)
+  questionByLang.value = parseLangJson(val.question)
+  answerByLang.value = parseLangJson(val.answer)
   logo.value = val.logo || ''
   orders.value = val.orders || 0
   is_active.value = Boolean(val.is_active) || false
-  question.value = val.question || ''
-  answer.value = val.answer || ''
 
   image.value = val.logo ? STORAGE_URL + val.logo : ''
 
   // Update form values
-  setFieldValue('name', name.value)
   setFieldValue('logo', logo.value)
   setFieldValue('orders', orders.value)
-  setFieldValue('question', question.value)
-  setFieldValue('answer', answer.value)
   setFieldValue('is_active', is_active.value)
   isApiUpdate = false
 }
@@ -100,14 +113,19 @@ const onImageChange = (event: Event) => {
   }
 }
 
-const handleSubmitForm = handleSubmit(async (values: BenefitRequest) => {
+const handleSubmitForm = handleSubmit(async (values) => {
+  if (!nameByLang.value.id) {
+    toast.error('Name (ID) is required')
+    return
+  }
+
   try {
     const payload: BenefitRequest = {
-      name: values.name,
+      name: JSON.stringify(nameByLang.value),
       logo: values.logo || logo.value,
       orders: Number(values.orders) || 0,
-      question: values.question || question.value,
-      answer: values.answer || answer.value,
+      question: JSON.stringify(questionByLang.value),
+      answer: JSON.stringify(answerByLang.value),
       is_active: Boolean(values.is_active),
     }
 
@@ -171,11 +189,32 @@ useHead({
 <template>
   <form class="editor-form" @submit.prevent="handleSubmitForm">
     <FormsFormSection title="Informasi benefit" description="Tampilkan manfaat layanan dengan informasi yang jelas.">
-    <div class="form-grid">
-    <!-- Name -->
-    <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
-      :isFieldDirty="isFieldDirty('name')" />
+    <Tabs v-model="activeLang">
+      <TabsList>
+        <TabsTrigger value="id">Indonesia</TabsTrigger>
+        <TabsTrigger value="en">English</TabsTrigger>
+      </TabsList>
 
+      <TabsContent value="id" class="space-y-6 pt-4">
+        <FieldXText name="name-id" label="Name" placeholder="Enter name" v-model="nameByLang.id" :disabled="disabled" standalone />
+        <FieldXText name="question-id" label="Question" placeholder="Enter question" v-model="questionByLang.id" :disabled="disabled" standalone />
+        <FieldXText name="answer-id" label="Answer" placeholder="Enter answer" v-model="answerByLang.id" :disabled="disabled" standalone />
+      </TabsContent>
+
+      <TabsContent value="en" class="space-y-6 pt-4">
+        <FieldXText name="name-en" label="Name" placeholder="Enter name" v-model="nameByLang.en" :disabled="disabled" standalone />
+        <FieldXText name="question-en" label="Question" placeholder="Enter question" v-model="questionByLang.en" :disabled="disabled" standalone />
+        <FieldXText name="answer-en" label="Answer" placeholder="Enter answer" v-model="answerByLang.en" :disabled="disabled" standalone />
+      </TabsContent>
+    </Tabs>
+
+    <!-- Is Active -->
+    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
+      :isFieldDirty="isFieldDirty('is_active')" />
+
+    </FormsFormSection>
+    <FormsFormSection title="Lainnya" description="Logo dan urutan tampilan benefit.">
+    <div class="form-grid">
     <!-- Orders -->
     <FieldXText name="orders" label="Orders" placeholder="Enter orders" type="number" v-model="orders" :disabled="disabled"
       :isFieldDirty="isFieldDirty('orders')" />
@@ -187,20 +226,6 @@ useHead({
       <input type="file" @change="onImageChange" accept="image/*,.heic,.heif" :disabled="disabled" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
       <img v-if="image" :src="image" alt="Preview" class="max-w-xs max-h-32 object-cover" />
     </div>
-
-    </FormsFormSection>
-    <FormsFormSection title="Pertanyaan & jawaban" description="Lengkapi penjelasan yang akan ditampilkan kepada pengunjung.">
-    <!-- Question -->
-    <FieldXText name="question" label="Question" placeholder="Enter question" v-model="question" :disabled="disabled"
-      :isFieldDirty="isFieldDirty('question')" />
-
-    <!-- Answer -->
-    <FieldXText name="answer" label="Answer" placeholder="Enter answer" v-model="answer" :disabled="disabled"
-      :isFieldDirty="isFieldDirty('answer')" />
-    
-    <!-- Is Active -->
-    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
-      :isFieldDirty="isFieldDirty('is_active')" />
 
     </FormsFormSection>
     <!-- Form Button -->

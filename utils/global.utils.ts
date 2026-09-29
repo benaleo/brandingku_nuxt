@@ -19,3 +19,18 @@ export function getIdFromPath(pathname: string): string {
     }
     return '';
 }
+
+// Reads a `{ id, en }` json string for the given locale; falls back to the other locale,
+// then to the raw value for legacy plain-string rows.
+export function getLangValue(val: string | undefined | null, locale: 'id' | 'en' = 'id'): string {
+    if (!val) return '';
+    try {
+        const parsed = JSON.parse(val);
+        if (parsed && typeof parsed === 'object') {
+            return parsed[locale] || parsed.id || parsed.en || '';
+        }
+    } catch {
+        // not json
+    }
+    return val;
+}

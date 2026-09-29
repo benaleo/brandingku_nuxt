@@ -3,8 +3,8 @@ import {h} from "vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
 import DialogViewImage from "~/components/elements/DialogViewImage.vue";
 import type {Client} from "~/types/client.type";
+import {getLangValue} from "~/utils/global.utils";
 // Removed Button import; using simple anchor link for navigation
-
 
 export const benefitColumns: ColumnDef<Client>[] = [
     {
@@ -30,7 +30,7 @@ export const benefitColumns: ColumnDef<Client>[] = [
         accessorKey: 'name',
         header: () => h('div', {class: 'text-left'}, 'Nama'),
         cell: ({row}) => {
-            return h('div', {class: 'text-left font-medium'}, row.getValue('name'))
+            return h('div', {class: 'text-left font-medium'}, getLangValue(row.getValue('name')))
         },
     },
     {
@@ -38,8 +38,8 @@ export const benefitColumns: ColumnDef<Client>[] = [
         header: () => h('div', {class: 'text-left'}, 'Q&A'),
         cell: ({row}) => {
             const rowData = row.original as { question?: string; answer?: string }
-            const question = rowData.question || ''
-            const answer = rowData.answer || ''
+            const question = getLangValue(rowData.question)
+            const answer = getLangValue(rowData.answer)
             return h('div', {class: 'text-left font-medium flex flex-col'}, [
                 question && h('div', {class: 'text-left font-medium'}, `Q: ${question}`),
                 answer && h('div', {class: 'text-left font-medium max-w-[350px] whitespace-pre-wrap'}, `A: ${answer}`)

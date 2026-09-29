@@ -2,7 +2,9 @@
 import { ref } from 'vue'
 import { useBenefitService } from "~/services/benefit.service";
 import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
+import { getLangValue } from '~/utils/global.utils'
 
+const { locale } = useI18n()
 const { datas: benefits, loading, error, reFetch } = useBenefitService();
 const shouldLoad = ref(false)
 const isInitialLoad = ref(true)
@@ -59,10 +61,10 @@ useHead({
           :value="benefit.id"
         >
           <AccordionTrigger class="hover:bg-slate-100 px-4 rounded-md text-left" style="font-family: 'Plus Jakarta Sans', sans-serif;">
-            {{ benefit.question }}
+            {{ getLangValue(benefit.question, locale) }}
           </AccordionTrigger>
           <AccordionContent>
-            <p class="text-gray-600 px-6 py-4 pb-2 border-x border-gray-200" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ benefit.answer }}</p>
+            <p class="text-gray-600 px-6 py-4 pb-2 border-x border-gray-200" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ getLangValue(benefit.answer, locale) }}</p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
