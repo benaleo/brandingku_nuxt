@@ -6,7 +6,7 @@ const { can } = useConsoleAccess()
 
 defineProps<{
   handleUpdate: (createdGalleries: ProductGallery[], removeIds: string[]) => void | Promise<void>,
-  productId: string,
+  productId: string | number,
   galleries: ProductGallery[]
 }>()
 

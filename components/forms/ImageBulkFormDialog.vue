@@ -27,7 +27,7 @@ const props = defineProps({
     default: 'images'
   },
   productId: {
-    type: String,
+    type: [String, Number],
     required: true
   },
   galleries: {

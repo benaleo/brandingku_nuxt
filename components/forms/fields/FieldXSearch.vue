@@ -10,8 +10,6 @@ const props = withDefaults(defineProps<{
 }>(), { placeholder: 'Cari…' })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
-
-const onInput = (event: Event) => emit('update:modelValue', (event.target as HTMLInputElement).value)
 </script>
 
 <template>
@@ -22,11 +20,11 @@ const onInput = (event: Event) => emit('update:modelValue', (event.target as HTM
       :name="name"
       type="search"
       autocomplete="off"
-      :value="props.modelValue"
+      :model-value="props.modelValue"
       :placeholder="props.placeholder"
       :disabled="props.disabled"
       class="h-10 rounded-lg bg-background pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
-      @input="onInput"
+      @update:model-value="emit('update:modelValue', String($event))"
     />
     <button
       v-if="props.modelValue"

@@ -22,9 +22,9 @@
       <div v-else>
         <DatatablesDataTable
             :columns="productColumns"
-            :data="dataList || []"
+            :data="dataList"
             :loading="loading"
-            :meta="{ handleDelete, handleProductGalleries }"
+            :meta="tableMeta"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
@@ -39,6 +39,7 @@ import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
 import {productColumns} from '~/components/datatables/productColumns'
 import {useProductService} from '~/services/product.service'
 import {computed, ref, watch} from 'vue'
+import {refDebounced} from '@vueuse/core'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from "vue-sonner";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
@@ -57,10 +58,19 @@ const {
   deleteProductById,
 } = useProductService(true)
 
-console.log('loading', loading.value)
+// Filter options
+const selectedCategory = ref<string | number | undefined>()
+const keyword = ref<string>('')
+const debouncedKeyword = refDebounced(keyword, 200)
 
+// keyword filtering is client-side on the loaded page, so typing never triggers a refetch
 const dataList = computed(() => {
-  return datas.value || []
+  const list = datas.value || []
+  const kw = debouncedKeyword.value.trim().toLowerCase()
+  if (!kw) return list
+  return list.filter((x: any) =>
+    (x.name || '').toLowerCase().includes(kw) || (x.slug || '').toLowerCase().includes(kw)
+  )
 })
 
 const paginationData = computed(() => ({
@@ -77,38 +87,13 @@ const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
 
-// Filter options
-const selectedCategory = ref<string | number | undefined>()
-const keyword = ref<string>('')
-const isFetch = ref<boolean>(false)
-
-// Watch keyword to trigger search with minimum 3 characters
-watch(keyword, (newValue: string) => {
-  console.log('index.vue keyword changed:', newValue)
-  if (newValue && newValue.length >= 3) {
-    isFetch.value = true
-    // If 3 or more characters, set keyword param
-    setParams({keyword: newValue})
-    reFetch()
-  } else {
-    // If less than 3 characters, clear keyword param
-    if (isFetch.value) {
-      setParams({keyword: undefined})
-      reFetch()
-      isFetch.value = false
-    }
-  }
-})
-
-// Watch selectedCategory and trigger server-side filter
+// Watch selectedCategory and trigger server-side filter (setParams already refetches via the service watcher)
 watch(selectedCategory, (val: any) => {
-  console.log('selectedCategory changed:', val)
   if (val === 'all' || val === undefined || val === '') {
-    setParams({category: undefined}) // Remove category param to show all
+    setParams({category: undefined})
   } else {
     setParams({category: val})
   }
-  reFetch()
 })
 
 const handleDelete = async (id: string) => {
@@ -144,6 +129,9 @@ const handleProductGalleries = async (id: string, createdGalleries: ProductGalle
     toast.error('Gagal mengupdate gambar')
   }
 }
+
+// stable reference so typing in the search box doesn't re-render every table row
+const tableMeta = { handleDelete, handleProductGalleries }
 
 const pageTitle = 'Produk';
 
