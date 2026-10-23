@@ -12,7 +12,7 @@
   },
   "vars": {
     "NITRO_PRESET": "cloudflare_pages",
-    "NUXT_PUBLIC_API_URL": "https://particular-bug-benaleoprojects-50d799e9.koyeb.app",
+    "NUXT_PUBLIC_API_URL": "https://brandingku-api-latest.onrender.com",
     "NUXT_PUBLIC_BASE_URL": "https://brandingku.benaleo.workers.dev",
     "NUXT_PUBLIC_STORAGE_URL": "https://cdn.brandingku.my.id"
   }
