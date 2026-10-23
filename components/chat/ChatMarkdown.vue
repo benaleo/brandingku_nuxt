@@ -3,9 +3,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, shallowRef } from "vue";
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
+
+// dompurify needs a DOM; load it in the browser only so SSR (Workers) never imports it
+const purify = shallowRef<{ sanitize: (html: string, cfg?: object) => string } | null>(null);
+onMounted(async () => {
+  purify.value = (await import("dompurify")).default;
+});
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const props = defineProps<{ content: string }>();
 
@@ -16,8 +24,9 @@ renderer.link = ({ href, title, text }) => {
 };
 
 const rendered = computed(() => {
+  if (!purify.value) return escapeHtml(props.content || "").replace(/\n/g, "<br>");
   const html = marked.parse(props.content || "", { breaks: true, async: false, renderer }) as string;
-  return DOMPurify.sanitize(html, { ADD_ATTR: ["target"] });
+  return purify.value.sanitize(html, { ADD_ATTR: ["target"] });
 });
 </script>
 
