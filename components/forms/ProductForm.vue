@@ -20,6 +20,7 @@ import { useOptionProductCategories } from "~/composables/useOptionProductCatego
 import ProductGalleryForm from "./ProductGalleryForm.vue";
 import FieldXArea from "./fields/FieldXArea.vue";
 import Label from "../ui/label/Label.vue";
+import QuillEditor from "~/components/editor/QuillEditor.vue";
 
 const router = useRouter();
 const { token } = useAuth();
@@ -34,7 +35,7 @@ if (!token.value) {
   navigateTo("/login");
 }
 
-const { datas, loading, error, reFetch } = useProductService(false, id);
+const { datas, loading, error, reFetch, createProduct, updateProductById } = useProductService(false, id);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -98,8 +99,6 @@ const {
 // For dynamic additionals (managed locally; synced to payload on submit)
 const additionals = ref([...(formValues.additionals as ProductAdditional[])]);
 
-const name = ref("");
-const slug = ref("");
 const description = ref("");
 const image = ref("");
 const image_file = ref<File | null>(null);
@@ -161,8 +160,6 @@ const stopInitWatch = watch(
       initialized.value = true;
       // Defer mutations to avoid synchronous recursive updates
       setTimeout(async () => {
-        name.value = datasVal.name || "";
-        slug.value = datasVal.slug || "";
         description.value = datasVal.description || "";
         await nextTick();
         image.value = datasVal.image ? `${STORAGE_URL}${datasVal.image}` : "";
@@ -215,8 +212,8 @@ const stopInitWatch = watch(
         console.log("Form data loaded from API:", processedAdditionals);
         ready.value = true;
         // Ensure vee-validate sees values loaded from API
-        try { setFieldValue('name', name.value ?? ''); } catch {}
-        try { setFieldValue('slug', slug.value ?? ''); } catch {}
+        setFieldValue('name', datasVal.name || '');
+        setFieldValue('slug', datasVal.slug || '');
         // Ensure vee-validate sees the description value loaded from API
         try { setFieldValue('description', description.value ?? ''); } catch {}
         try { setFieldValue('product_category_id', product_category_id.value ?? ''); } catch {}
@@ -233,23 +230,7 @@ const stopInitWatch = watch(
   { immediate: true, flush: "post" }
 );
 
-// Keep vee-validate values in sync with local refs
-watch(
-  () => name.value,
-  (val) => {
-    try { setFieldValue('name', val ?? ''); } catch {}
-  },
-  { flush: 'post' }
-);
-
-watch(
-  () => slug.value,
-  (val) => {
-    try { setFieldValue('slug', val ?? ''); } catch {}
-  },
-  { flush: 'post' }
-);
-
+// name and slug live only in vee-validate (FieldXText binds through componentField)
 watch(
   () => product_category_id.value,
   (val) => {
@@ -320,17 +301,12 @@ const generateSlug = (str: string) => {
 };
 
 watch(
-  () => name.value,
+  () => formValues.name,
   (newName) => {
     // Only auto-generate slug when creating a new product.
     if (!isCreate) return;
-    if (newName) {
-      slug.value = generateSlug(newName);
-    } else {
-      slug.value = "";
-    }
-  },
-  { immediate: true }
+    setFieldValue("slug", newName ? generateSlug(newName) : "");
+  }
 );
 
 const handleSubmitForm = handleSubmit(
@@ -360,8 +336,8 @@ const handleSubmitForm = handleSubmit(
       is_active: formValues.is_active,
     });
     const submitData: any = {
-      name: name.value,
-      slug: slug.value || generateSlug(name.value),
+      name: submittedValues.name,
+      slug: submittedValues.slug || generateSlug(submittedValues.name),
       description: description.value,
       image: image.value,
       product_category_id: product_category_id.value,
@@ -454,7 +430,7 @@ const handleSubmitForm = handleSubmit(
 
       // First save the form data
       if (isCreate) {
-        await useProductService().createProduct({
+        await createProduct({
           name: submitData.name,
           slug: submitData.slug,
           description: submitData.description,
@@ -473,7 +449,7 @@ const handleSubmitForm = handleSubmit(
           id,
           data: submitData
         })
-        await useProductService().updateProductById(id, {
+        await updateProductById(id, {
           name: submitData.name,
           slug: submitData.slug,
           description: submitData.description,
@@ -529,7 +505,6 @@ function handleBack() {
         name="slug"
         label=""
         placeholder="Enter slug"
-        v-model="slug"
         :disabled="disabled"
         :isFieldDirty="isFieldDirty('slug')"
         :item-class="'min-w-0 flex-1'"
@@ -542,7 +517,6 @@ function handleBack() {
       name="name"
       label="Name"
       placeholder="Enter name"
-      v-model="name"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('name')"
     />
