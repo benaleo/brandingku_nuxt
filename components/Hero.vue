@@ -58,9 +58,9 @@
             <div class="text-2xl text-white">
               {{ $t('app.hero.description') }}
             </div>
-            <div class="flex gap-2 items-center justify-start">
-              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-12 py-8 text-lg">{{ $t('app.hero.ctaSearch') }}</Button>
-              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-12 py-8 text-lg">{{ $t('app.hero.ctaConsult') }}</Button>
+            <div class="flex flex-wrap gap-2 items-center justify-start">
+              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-6 py-6 text-base md:px-12 md:py-8 md:text-lg">{{ $t('app.hero.ctaSearch') }}</Button>
+              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-6 py-6 text-base md:px-12 md:py-8 md:text-lg">{{ $t('app.hero.ctaConsult') }}</Button>
             </div>
           </div>
           <div class="relative container px-4 mx-auto">

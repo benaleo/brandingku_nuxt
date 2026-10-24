@@ -200,8 +200,9 @@ function goTo(slug: string) {
                   </div>
                 </CarouselItem>
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              <!-- keep arrows inside the carousel; the default -left/-right-12 overflows the page -->
+              <CarouselPrevious class="left-2 bg-white/90 shadow-md" />
+              <CarouselNext class="right-2 bg-white/90 shadow-md" />
             </Carousel>
           </TabsContent>
         </Tabs>
