@@ -2,8 +2,26 @@
 import { Phone, Mail, MapPin, Globe, Users, Clock, ArrowRight } from 'lucide-vue-next'
 import { useWebContactService } from '~/services/web-contact.service'
 
+// contact details are editable in the console Options menu and rendered server-side
+const { phone, email, address, hours, mapsUrl, phoneHref, emailHref } = useSiteSettings()
+const siteUrl = useRuntimeConfig().public.BASE_URL
+
 useHead({
   title: "Kontak - Brandingku",
+  script: [{
+    type: 'application/ld+json',
+    // structured data so search engines can show the business contact details
+    innerHTML: computed(() => JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Brandingku',
+      ...(siteUrl ? { url: siteUrl } : {}),
+      email: email.value,
+      telephone: phone.value,
+      address: { '@type': 'PostalAddress', streetAddress: address.value },
+      contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer service', telephone: phone.value, email: email.value }],
+    })),
+  }],
 });
 
 const { createInquiry, loading, error } = useWebContactService()
@@ -91,8 +109,8 @@ const handleSubmit = async (e: Event) => {
             <Phone class="w-6 h-6 text-green-600" />
           </div>
           <h3 class="font-semibold text-lg mb-2">Give us a call</h3>
-          <p class="text-gray-600 mb-3">Mon-Fri from 8am to 5pm.</p>
-          <p class="font-medium text-gray-900">+1 (234) 567-890</p>
+          <p class="text-gray-600 mb-3">{{ hours }}</p>
+          <a :href="phoneHref" class="font-medium text-gray-900 hover:text-green-700">{{ phone }}</a>
         </div>
 
         <!-- Email Card -->
@@ -102,7 +120,7 @@ const handleSubmit = async (e: Event) => {
           </div>
           <h3 class="font-semibold text-lg mb-2">Send us an email</h3>
           <p class="text-gray-600 mb-3">Our friendly team is here to help.</p>
-          <p class="font-medium text-gray-900">hello@brandingku.com</p>
+          <a :href="emailHref" class="font-medium text-gray-900 break-all hover:text-green-700">{{ email }}</a>
         </div>
 
         <!-- Office Card -->
@@ -112,7 +130,8 @@ const handleSubmit = async (e: Event) => {
           </div>
           <h3 class="font-semibold text-lg mb-2">Visit our office</h3>
           <p class="text-gray-600 mb-3">Come say hello at our HQ.</p>
-          <p class="font-medium text-gray-900">123 Eco Valley, Sustainable Dr. Green City, Earth 50291</p>
+          <a v-if="mapsUrl" :href="mapsUrl" target="_blank" rel="noopener" class="font-medium text-gray-900 hover:text-green-700">{{ address }}</a>
+          <p v-else class="font-medium text-gray-900">{{ address }}</p>
         </div>
       </div>
 

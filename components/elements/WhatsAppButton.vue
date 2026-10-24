@@ -6,12 +6,11 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+// number is editable in the console Options menu
+const { whatsappUrl } = useSiteSettings();
 
 const openWhatsApp = (product: any) => {
-  const phoneNumber = "6285117247345";
-  const message = `Halo admin, saya mau tanya untuk produk ${product.name}`;
-  const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-  window.open(whatsappUrl, '_blank');
+  window.open(whatsappUrl(`Halo admin, saya mau tanya untuk produk ${product.name}`), '_blank');
 };
 </script>
 

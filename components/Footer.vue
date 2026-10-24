@@ -10,15 +10,16 @@
         <div class="space-y-2 text-sm text-gray-300">
           <div class="flex items-start gap-2">
             <Icon name="ic:baseline-location-on" size="16" class="mt-1 flex-shrink-0" />
-            <span>{{ $t('app.footer.address') }}</span>
+            <a v-if="mapsUrl" :href="mapsUrl" target="_blank" rel="noopener" class="hover:text-white transition-colors">{{ address }}</a>
+            <span v-else>{{ address }}</span>
           </div>
           <div class="flex items-center gap-2">
             <Icon name="ic:sharp-phone" size="16" />
-            <span>+62 851 1724 7345</span>
+            <a :href="phoneHref" class="hover:text-white transition-colors">{{ phone }}</a>
           </div>
           <div class="flex items-center gap-2">
             <Icon name="ic:baseline-mail-outline" size="16" />
-            <span>admin@brandingku.com</span>
+            <a :href="emailHref" class="hover:text-white transition-colors">{{ email }}</a>
           </div>
         </div>
       </div>
@@ -82,4 +83,6 @@
 
 <script setup lang="ts">
 const { locale, setLocale } = useI18n();
+// contact details are editable in the console Options menu
+const { phone, email, address, mapsUrl, phoneHref, emailHref } = useSiteSettings();
 </script>
