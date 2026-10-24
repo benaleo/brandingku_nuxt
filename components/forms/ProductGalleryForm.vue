@@ -1,102 +1,184 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Button } from '@/components/ui/button'
-import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
+import { ref, watch, computed } from 'vue'
+import { ImagePlus, Loader2, Trash2 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import type { ProductGallery } from '~/types/products.type'
-import { Trash2 } from 'lucide-vue-next'
-import { useProductGalleriesService } from '~/services/product-galleries.service'
 import { useFileToBase64 } from '~/composables/useFileToBase64'
 
+type GalleryItem = ProductGallery & { _raw?: string }
+
 const props = defineProps<{
-  modelValue: ProductGallery[]
+  modelValue: GalleryItem[]
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: ProductGallery[]): void
+  (e: 'update:modelValue', v: GalleryItem[]): void
 }>()
 
-const list = ref<ProductGallery[]>(props.modelValue || [])
-watch(() => props.modelValue, (v) => { list.value = v || [] }, { immediate: true })
-watch(list, (v) => emit('update:modelValue', v), { deep: true })
+// ids of galleries that already exist in the DB and were removed here; the parent deletes them on save
+const removedIds = defineModel<string[]>('removedIds', { default: () => [] })
 
-const galleryService = useProductGalleriesService()
+const isPersisted = (g: GalleryItem) => /^\d+$/.test(String(g.id ?? ''))
 
-function addItem() {
-  const newItem: ProductGallery = {
-    id: Math.random().toString(36).slice(2),
-    product_id: 0,
-    image: '',
-    orders: list.value.length + 1,
-  }
-  list.value.push(newItem)
+// orders always mirror the position in the grid (1-based)
+const renumber = (items: GalleryItem[]) => items.map((g, i) => ({ ...g, orders: i + 1 }))
+
+const list = ref<GalleryItem[]>([])
+watch(
+  () => props.modelValue,
+  (v) => {
+    if (v === list.value) return
+    list.value = renumber([...(v || [])].sort((a, b) => Number(a.orders) - Number(b.orders)))
+  },
+  { immediate: true },
+)
+const commit = (items: GalleryItem[]) => {
+  list.value = renumber(items)
+  emit('update:modelValue', list.value)
 }
 
-async function removeItem(idx: number) {
-  const item = list.value[idx]
-  if (item && /^\d+$/.test(item.id)) {
-    // It's an existing item from DB, delete it
-    await galleryService.deleteProductGallery(Number(item.id))
-  }
-  list.value.splice(idx, 1)
-  // Reorder after removal
-  list.value = list.value.map((g, i) => ({ ...g, orders: i + 1 }))
-}
+// upload area
+const fileInput = ref<HTMLInputElement>()
+const dragOver = ref(false)
+const processing = ref(0)
 
-async function onUploaded(idx: number, url: string) {
-  // url may be object URL or data URL depending on child emission.
-  // Keep preview as data URL when available.
-  list.value[idx].image = url
-}
+async function addFiles(files: FileList | File[] | null | undefined) {
+  if (!files || props.disabled) return
+  const images = Array.from(files).filter(f => f.type.startsWith('image/'))
+  const skipped = Array.from(files).length - images.length
+  if (skipped > 0) toast.error(`${skipped} file bukan gambar dan dilewati`)
+  if (!images.length) return
 
-async function onFileSelected(idx: number, f: File | null) {
-  try {
-    if (!f) {
-      ;(list.value[idx] as any)._raw = ''
-      return
+  processing.value += images.length
+  const { convertToBase64 } = useFileToBase64()
+  const added: GalleryItem[] = []
+  for (const file of images) {
+    try {
+      const dataUrl = await convertToBase64(file)
+      const comma = dataUrl.indexOf(',')
+      added.push({
+        id: `new-${Math.random().toString(36).slice(2)}`,
+        product_id: 0,
+        image: dataUrl,
+        _raw: comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl,
+        orders: 0,
+      })
+    } catch {
+      toast.error(`Gagal membaca ${file.name}`)
+    } finally {
+      processing.value--
     }
-    const { convertToBase64 } = useFileToBase64()
-    const dataUrl = await convertToBase64(f)
-    const comma = dataUrl.indexOf(',')
-    const raw = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
-    // Store raw base64 for submit, keep image as data URL for preview
-    ;(list.value[idx] as any)._raw = raw
-    list.value[idx].image = dataUrl
-  } catch (_) {}
+  }
+  commit([...list.value, ...added])
 }
 
-function onDelete(idx: number, payload: { url: string, path: string, bucket: string }) {
-  // Optionally enqueue deletion to parent; for now, just clear the url
-  list.value[idx].image = ''
+function onDrop(e: DragEvent) {
+  dragOver.value = false
+  // tile reordering also uses drag events; only accept real files here
+  if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files)
 }
+
+function onPick(e: Event) {
+  const input = e.target as HTMLInputElement
+  addFiles(input.files)
+  input.value = ''
+}
+
+function removeItem(idx: number) {
+  const item = list.value[idx]
+  if (item && isPersisted(item) && !removedIds.value.includes(String(item.id))) {
+    removedIds.value = [...removedIds.value, String(item.id)]
+  }
+  commit(list.value.filter((_, i) => i !== idx))
+}
+
+// drag tiles to reorder
+const dragIndex = ref<number | null>(null)
+const overIndex = ref<number | null>(null)
+
+function onTileDragStart(idx: number, e: DragEvent) {
+  dragIndex.value = idx
+  e.dataTransfer?.setData('text/plain', String(idx))
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+function onTileDrop(idx: number) {
+  const from = dragIndex.value
+  dragIndex.value = null
+  overIndex.value = null
+  if (from == null || from === idx) return
+  const items = [...list.value]
+  const [moved] = items.splice(from, 1)
+  items.splice(idx, 0, moved)
+  commit(items)
+}
+
+const busy = computed(() => processing.value > 0)
 </script>
 
 <template>
-  <div class="w-full">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <div class="w-full space-y-4">
+    <div class="flex items-center justify-between gap-3">
       <h3 class="font-bold">Galleries</h3>
-      <Button type="button" @click="addItem">Add Image</Button>
+      <span class="text-xs text-muted-foreground">{{ list.length }} gambar</span>
     </div>
-    <div v-if="list.length === 0" class="text-sm text-muted-foreground">No gallery items. Click "Add Image".</div>
 
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-      <div v-for="(g, idx) in list" :key="g.id || idx" class="relative min-w-0 rounded-xl border border-border bg-muted/20 p-4">
-        <Button type="button" variant="destructive" class="absolute top-2 right-2" @click="removeItem(idx)"><Trash2 /></Button>
-        <div class="flex flex-col gap-4">
-          <div class="w-full mt-4">
-            <ImageUploadField
-              v-model:fileUrl="g.image"
-              label="Gallery Image"
-              @update:fileUrl="(url) => onUploaded(idx, url)"
-              @update:file="(f) => onFileSelected(idx, f)"
-              @delete="(payload) => onDelete(idx, payload)"
-            />
-          </div>
-          <div class="w-full">
-            <label class="form-label mb-2 block">Order</label>
-            <input type="number" min="1" class="form-input" v-model.number="g.orders" />
-            <p class="text-xs text-muted-foreground mt-1">Lower number shows earlier.</p>
-          </div>
-        </div>
+    <!-- upload area -->
+    <div
+      v-if="!disabled"
+      role="button"
+      tabindex="0"
+      class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors"
+      :class="dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60 hover:bg-muted/40'"
+      @click="fileInput?.click()"
+      @keydown.enter.prevent="fileInput?.click()"
+      @keydown.space.prevent="fileInput?.click()"
+      @dragover.prevent="dragIndex === null && (dragOver = true)"
+      @dragleave.prevent="dragOver = false"
+      @drop.prevent="onDrop"
+    >
+      <Loader2 v-if="busy" class="size-8 animate-spin text-muted-foreground" />
+      <ImagePlus v-else class="size-8 text-muted-foreground" />
+      <p class="text-sm font-medium">
+        {{ busy ? 'Memproses gambar…' : 'Tarik & lepas gambar ke sini, atau klik untuk memilih' }}
+      </p>
+      <p class="text-xs text-muted-foreground">Bisa pilih banyak sekaligus. Urutan mengikuti posisi, geser kartu untuk mengubah.</p>
+      <input ref="fileInput" type="file" accept="image/*" multiple class="hidden" @change="onPick" />
+    </div>
+
+    <p v-if="list.length === 0" class="text-sm text-muted-foreground">Belum ada gambar gallery.</p>
+
+    <!-- thumbnails, sorted by order -->
+    <div v-else class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+      <div
+        v-for="(g, idx) in list"
+        :key="g.id"
+        class="group relative aspect-square overflow-hidden rounded-lg border bg-muted/30 transition"
+        :class="[
+          !disabled && 'cursor-grab active:cursor-grabbing',
+          dragIndex === idx && 'opacity-40',
+          overIndex === idx && dragIndex !== idx && 'ring-2 ring-primary',
+        ]"
+        :draggable="!disabled"
+        @dragstart="onTileDragStart(idx, $event)"
+        @dragend="dragIndex = null; overIndex = null"
+        @dragover.prevent.stop="dragIndex !== null && (overIndex = idx)"
+        @drop.prevent.stop="onTileDrop(idx)"
+      >
+        <img :src="g.image" :alt="`Gallery ${g.orders}`" class="size-full object-cover" draggable="false" />
+        <span class="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs font-semibold text-white">
+          {{ g.orders }}
+        </span>
+        <button
+          v-if="!disabled"
+          type="button"
+          class="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-md bg-destructive text-white opacity-90 shadow hover:opacity-100"
+          :aria-label="`Hapus gambar ${g.orders}`"
+          @click.stop="removeItem(idx)"
+        >
+          <Trash2 class="size-4" />
+        </button>
       </div>
     </div>
   </div>

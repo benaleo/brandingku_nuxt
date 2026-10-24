@@ -307,6 +307,18 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         }
         const res = await gqlFetch<{ updateProduct: { id: string; name: string; slug: string } }>(mutation, variables, { auth: true })
 
+        // Delete galleries removed in the form; the backend also removes their files from storage
+        if (payload.removed_gallery_ids?.length) {
+            const galleryService = useProductGalleriesService()
+            for (const galleryId of payload.removed_gallery_ids as string[]) {
+                try {
+                    await galleryService.deleteProductGallery(Number(galleryId))
+                } catch (e) {
+                    console.error('[updateProductById] delete gallery failed:', galleryId, e)
+                }
+            }
+        }
+
         // Handle galleries update/create if any
         if (payload.galleries?.length) {
             const galleryService = useProductGalleriesService()

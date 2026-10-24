@@ -149,6 +149,8 @@ if (!isCreate) {
 
 // Galleries with proper synchronization and image path handling
 const galleries = ref<ProductGallery[]>([]);
+// existing gallery ids removed in the form; deleted (with their stored files) on save
+const removedGalleryIds = ref<string[]>([]);
 
 // Watch for API data load and set fields ONCE when available
 const initialized = ref(false);
@@ -461,6 +463,7 @@ const handleSubmitForm = handleSubmit(
           is_active: submitData.is_active,
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
+          removed_gallery_ids: removedGalleryIds.value,
         });
         toast.success("Product updated successfully!");
       }
@@ -547,7 +550,7 @@ function handleBack() {
     />
 
     <!-- Galleries Section -->
-    <ProductGalleryForm v-model="galleries" />
+    <ProductGalleryForm v-model="galleries" v-model:removedIds="removedGalleryIds" :disabled="disabled" />
     </FormsFormSection>
 
     <FormsFormSection title="Varian & harga" description="Kelola pilihan produk, harga, stok, dan atributnya.">
