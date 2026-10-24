@@ -20,10 +20,6 @@ const valIsDelete = computed(() => (props.isDelete ?? true) && canAction(router.
 const valIsView = computed(() => (props.isView ?? true) && canAction(router.currentRoute.value.path, 'index'))
 const valIsEdit = computed(() => (props.isEdit ?? true) && canAction(router.currentRoute.value.path, 'update'))
 
-function copy(id: string) {
-  navigator.clipboard.writeText(id)
-}
-
 import AppConfirmDeleteDialog from "~/components/elements/AppConfirmDeleteDialog.vue";
 </script>
 
@@ -37,9 +33,6 @@ import AppConfirmDeleteDialog from "~/components/elements/AppConfirmDeleteDialog
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-      <DropdownMenuItem @click="copy(data.id)">
-        Copy payment ID
-      </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem v-if="valIsView" @click="router.push(router.currentRoute.value.path + '/' + data.id + '/detail')">View Details</DropdownMenuItem>
       <DropdownMenuItem v-if="valIsEdit" @click="router.push(router.currentRoute.value.path + '/' + data.id + '/edit')">Edit</DropdownMenuItem>
