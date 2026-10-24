@@ -17,7 +17,7 @@ import type { ProductAdditional, ProductGallery } from "~/types/products.type";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
-import ProductGalleryForm from "./ProductGalleryForm.vue";
+import GalleryMultiUploadForm from "./GalleryMultiUploadForm.vue";
 import FieldXArea from "./fields/FieldXArea.vue";
 import Label from "../ui/label/Label.vue";
 import QuillEditor from "~/components/editor/QuillEditor.vue";
@@ -550,7 +550,7 @@ function handleBack() {
     />
 
     <!-- Galleries Section -->
-    <ProductGalleryForm v-model="galleries" v-model:removedIds="removedGalleryIds" :disabled="disabled" />
+    <GalleryMultiUploadForm v-model="galleries" v-model:removedIds="removedGalleryIds" :disabled="disabled" />
     </FormsFormSection>
 
     <FormsFormSection title="Varian & harga" description="Kelola pilihan produk, harga, stok, dan atributnya.">

@@ -15,6 +15,7 @@ export interface PortfolioGallery {
   id: number;
   portfolio_id: number;
   file: string;
+  orders: number;
   created_at: string;
 }
 

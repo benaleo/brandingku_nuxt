@@ -17,11 +17,10 @@ One form component per entity, built with vee-validate + zod on top of the `Fiel
 | `ClientForm.vue` | Create/edit a client entry. |
 | `TestimonialForm.vue` | Create/edit a testimonial. |
 | `PortfolioForm.vue` | Create/edit a portfolio item. |
-| `PortfolioGalleryForm.vue` | Manage a portfolio item's gallery images. |
 | `ProductForm.vue` | Create/edit a product. |
 | `ProductAdditionalForm.vue` | Product additional-information entries. |
 | `ProductAttributeForm.vue` | Product attribute editor. |
-| `ProductGalleryForm.vue` | Product gallery images. |
+| `GalleryMultiUploadForm.vue` | Multi-image gallery editor (drop zone, sortable square thumbnails, deferred deletes) shared by `ProductForm` (`image`) and `PortfolioForm` (`file`). |
 | `ProductCategoryForm.vue` | Create/edit a product category, including the parent/child relationship. |
 | `InquiryDetailForm.vue` | Inquiry detail view and status handling. |
 | `ImageSingleUploadField.vue` | Single-image upload field. |

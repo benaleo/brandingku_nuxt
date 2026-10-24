@@ -2,15 +2,17 @@
 import { ref, watch, computed } from 'vue'
 import { ImagePlus, Loader2, Trash2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import type { ProductGallery } from '~/types/products.type'
 import { useFileToBase64 } from '~/composables/useFileToBase64'
 
-type GalleryItem = ProductGallery & { _raw?: string }
+// shared by product galleries (`image`) and portfolio galleries (`file`); the src field must hold a displayable url
+type GalleryItem = { id: string | number; orders: number; _raw?: string; [key: string]: any }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: GalleryItem[]
   disabled?: boolean
-}>()
+  imageKey?: string
+  title?: string
+}>(), { imageKey: 'image', title: 'Galleries' })
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: GalleryItem[]): void
@@ -59,8 +61,7 @@ async function addFiles(files: FileList | File[] | null | undefined) {
       const comma = dataUrl.indexOf(',')
       added.push({
         id: `new-${Math.random().toString(36).slice(2)}`,
-        product_id: 0,
-        image: dataUrl,
+        [props.imageKey]: dataUrl,
         _raw: comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl,
         orders: 0,
       })
@@ -120,7 +121,7 @@ const busy = computed(() => processing.value > 0)
 <template>
   <div class="w-full space-y-4">
     <div class="flex items-center justify-between gap-3">
-      <h3 class="font-bold">Galleries</h3>
+      <h3 class="font-bold">{{ title }}</h3>
       <span class="text-xs text-muted-foreground">{{ list.length }} gambar</span>
     </div>
 
@@ -166,7 +167,7 @@ const busy = computed(() => processing.value > 0)
         @dragover.prevent.stop="dragIndex !== null && (overIndex = idx)"
         @drop.prevent.stop="onTileDrop(idx)"
       >
-        <img :src="g.image" :alt="`Gallery ${g.orders}`" class="size-full object-cover" draggable="false" />
+        <img :src="g[imageKey]" :alt="`Gallery ${g.orders}`" class="size-full object-cover" draggable="false" />
         <span class="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs font-semibold text-white">
           {{ g.orders }}
         </span>

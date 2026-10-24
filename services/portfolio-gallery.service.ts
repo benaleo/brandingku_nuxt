@@ -7,7 +7,7 @@ export const usePortfolioGalleryService = () => {
     const loading = ref<boolean>(false)
     const error = ref<string | null>(null)
 
-    const createPortfolioGallery = async (payload: { portfolio_id: number; file: string }) => {
+    const createPortfolioGallery = async (payload: { portfolio_id: number; file: string; orders?: number }) => {
         loading.value = true
         error.value = null
         try {
@@ -15,14 +15,17 @@ export const usePortfolioGalleryService = () => {
                 mutation CreatePortfolioGallery(
                     $portfolio_id: Int!
                     $file: String!
+                    $orders: Int
                 ) {
                     createPortfolioGallery(
                         portfolio_id: $portfolio_id
                         file: $file
+                        orders: $orders
                     ) {
                         id
                         portfolio_id
                         file
+                        orders
                         created_at
                     }
                 }
@@ -30,6 +33,7 @@ export const usePortfolioGalleryService = () => {
             const variables = {
                 portfolio_id: Number(payload.portfolio_id),
                 file: payload.file,
+                orders: payload.orders ?? 0,
             }
             const res = await gqlFetch<{ createPortfolioGallery: PortfolioGallery }>(mutation, variables, { auth: true })
             return res?.createPortfolioGallery
@@ -39,6 +43,16 @@ export const usePortfolioGalleryService = () => {
         } finally {
             loading.value = false
         }
+    }
+
+    const updatePortfolioGallery = async (id: number, orders: number) => {
+        const mutation = `
+            mutation UpdatePortfolioGallery($id: Int!, $orders: Int!) {
+                updatePortfolioGallery(id: $id, orders: $orders) { id orders }
+            }
+        `
+        const res = await gqlFetch<{ updatePortfolioGallery: Pick<PortfolioGallery, 'id' | 'orders'> }>(mutation, { id, orders }, { auth: true })
+        return res?.updatePortfolioGallery
     }
 
     const deletePortfolioGallery = async (id: number) => {
@@ -67,7 +81,7 @@ export const usePortfolioGalleryService = () => {
             const query = `
                 query getPortfolioById($id: Int!) {
                     getPortfolioById(id: $id) {
-                        galleries { id portfolio_id file created_at }
+                        galleries { id portfolio_id file orders created_at }
                     }
                 }
             `
@@ -85,6 +99,7 @@ export const usePortfolioGalleryService = () => {
         loading,
         error,
         createPortfolioGallery,
+        updatePortfolioGallery,
         deletePortfolioGallery,
         getPortfolioGalleries
     }

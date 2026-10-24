@@ -20,7 +20,6 @@ Auto-imported composables covering data fetching against the GraphQL API, auth s
 | `useFeaturedProduct.ts` | Exports the `FeaturedProductItem` type and `useFeaturedProduct`. |
 | `useGetProductsWithCategorySlug.ts` | Exports `ProductWithCategory`, `PageInfo`, `ProductsWithCategoryResponse` and `useGetProductsWithCategorySlug` for category-filtered listings. |
 | `useOptionProductCategories.ts` | Exports the `ProductCategoryOption` type and `useOptionProductCategories`, used to populate select fields. |
-| `usePortfolioCategories.ts` | Exports `usePortfolioCategories`. |
 | `useWishlist.ts` | Exports the `WishlistProduct` and `WishlistItem` types and `useWishlist`. |
 | `useDeleteCloudFile.ts` | Exports `useDeleteCloudFile` — removes an object from the S3-compatible store. |
 | `useFileToBase64.ts` | Exports `useFileToBase64`, the conversion the image upload fields rely on. |

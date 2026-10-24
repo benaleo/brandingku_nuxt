@@ -46,7 +46,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                             title
                             subtitle
                             client
-                            galleries { id portfolio_id file created_at }
+                            galleries { id portfolio_id file orders created_at }
                             is_active
                             deleted_at
                             created_at
@@ -122,7 +122,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                         title
                         subtitle
                         client
-                        galleries { id portfolio_id file created_at }
+                        galleries { id portfolio_id file orders created_at }
                         is_active
                         deleted_at
                         created_at
@@ -199,7 +199,8 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             const galleryService = usePortfolioGalleryService()
             for (const gallery of payload.galleries) {
                 await galleryService.createPortfolioGallery({
-                    ...gallery,
+                    file: gallery.file,
+                    orders: Number(gallery.orders) || 0,
                     portfolio_id: portfolioId
                 })
             }
@@ -244,6 +245,18 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
         }
         const res = await gqlFetch<{ updatePortfolio: { id: string; category: string; title: string } }>(mutation, variables, { auth: true })
 
+        // Delete galleries removed in the form; the backend also removes their files from storage
+        if (payload.removed_gallery_ids?.length) {
+            const galleryService = usePortfolioGalleryService()
+            for (const galleryId of payload.removed_gallery_ids as string[]) {
+                try {
+                    await galleryService.deletePortfolioGallery(Number(galleryId))
+                } catch (e) {
+                    console.error('[updatePortfolioById] delete gallery failed:', galleryId, e)
+                }
+            }
+        }
+
         // Handle galleries update/create if any
         if (payload.galleries?.length) {
             const galleryService = usePortfolioGalleryService()
@@ -253,17 +266,17 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                     const idStr = String(gallery.id ?? '')
                     const hasId = /^\d+$/.test(idStr)
                     if (hasId) {
-                        // Update existing gallery (if needed)
-                        // Note: GraphQL schema doesn't have updatePortfolioGallery, so we might need to handle this differently
-                        // For now, we'll skip updating existing galleries
+                        // existing gallery: only its position can change
+                        await galleryService.updatePortfolioGallery(Number(idStr), Number(gallery.orders) || 0)
                     } else {
-                        // Create new gallery for this portfolio
                         await galleryService.createPortfolioGallery({
                             file: gallery.file,
+                            orders: Number(gallery.orders) || 0,
                             portfolio_id: Number(id)
                         })
                     }
                 } catch (e) {
+                    console.error('[updatePortfolioById] save gallery failed:', gallery.id, e)
                 }
             }
         }
