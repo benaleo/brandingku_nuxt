@@ -4,19 +4,18 @@
 # plugins
 
 ## Purpose
-Nuxt plugins. All three are `.client.ts`, so they run only in the browser and are excluded from the server bundle.
+Nuxt plugins. All of them are `.client.ts`, so they run only in the browser and are excluded from the server bundle.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
-| `quill.client.ts` | Registers `@vueup/vue-quill`, which touches the DOM at import time and cannot be server-rendered. |
 | `apollo-dev-messages.client.ts` | Enables Apollo Client's verbose development error messages. |
 
 ## For AI Agents
 
 ### Working In This Directory
-- The `.client` suffix is load-bearing. Dropping it makes these run during SSR, where Quill fails.
+- The `.client` suffix is load-bearing. Dropping it makes these run during SSR.
 - Plugins run once per app instance before the first route renders — keep the work here to registration, not data fetching.
 
 ### Testing Requirements
@@ -25,9 +24,8 @@ Nuxt plugins. All three are `.client.ts`, so they run only in the browser and ar
 ## Dependencies
 
 ### Internal
-- `components/forms/fields/FieldXVueEditor.vue` depends on the Quill plugin
 
 ### External
-- `@vueup/vue-quill`, `@apollo/client`
+- `@apollo/client`
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

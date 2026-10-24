@@ -17,14 +17,14 @@ Thin `FieldX*` wrappers that pair a shadcn form primitive with vee-validate bind
 | `FieldXSelect.vue` | Select field. |
 | `FieldXSelectSimple.vue` | Reduced select variant for plain option lists. |
 | `FieldXSelectWithGroupParent.vue` | Grouped select for parent/child hierarchies — used for nested product categories. |
-| `FieldXVueEditor.vue` | Rich-text editor backed by `@vueup/vue-quill`; the Quill plugin is client-only. |
+| `FieldXVueEditor.vue` | Rich-text editor backed by `quill` (v2, via `components/editor/QuillEditor.vue`). Quill loads only in the browser (dynamic import on mount). |
 
 ## For AI Agents
 
 ### Working In This Directory
 - Keep the `FieldX` prefix. Forms rely on the naming, and it separates these from the raw `Ui*` primitives underneath.
 - Each wrapper owns its label, description and error slot wiring. Add new field types here rather than inlining the pattern into a form.
-- `FieldXVueEditor.vue` depends on `plugins/quill.client.ts` and cannot render during SSR — keep it client-guarded.
+- `FieldXVueEditor.vue` renders the editor inside `<ClientOnly>`; Quill itself is imported in `onMounted`, so keep it client-guarded.
 
 ### Testing Requirements
 - `pnpm run build`.
@@ -34,9 +34,9 @@ Thin `FieldX*` wrappers that pair a shadcn form primitive with vee-validate bind
 
 ### Internal
 - `components/ui/form/`, `components/ui/input/`, `components/ui/select/`, `components/ui/textarea/`
-- `plugins/quill.client.ts`
+- `components/editor/QuillEditor.vue`
 
 ### External
-- `@vee-validate/zod`, `@vueup/vue-quill`, `reka-ui`
+- `@vee-validate/zod`, `quill` (v2, via `components/editor/QuillEditor.vue`), `reka-ui`
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

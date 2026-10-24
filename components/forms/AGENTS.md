@@ -56,6 +56,6 @@ One form component per entity, built with vee-validate + zod on top of the `Fiel
 - `composables/useFileToBase64.ts`
 
 ### External
-- `@vee-validate/zod`, `reka-ui`, `@vueup/vue-quill`
+- `@vee-validate/zod`, `reka-ui`, `quill` (v2, via `components/editor/QuillEditor.vue`)
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

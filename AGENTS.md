@@ -66,6 +66,6 @@ Nuxt 4 frontend for Brandingku: a public storefront plus an admin console mounte
 - `nuxt` 4, `@nuxthub/core`, `@nuxtjs/apollo`, `@apollo/client`, `graphql-request`
 - `shadcn-nuxt` + `reka-ui` — component primitives; `class-variance-authority`, `clsx`, `tailwind-merge`
 - `@tailwindcss/vite` (Tailwind v4), `@nuxtjs/color-mode`, `@nuxt/image`, `@nuxt/icon`
-- `@tanstack/vue-table`, `@vee-validate/zod`, `@vueup/vue-quill`, `@vueuse/core`, `embla-carousel-vue`, `lucide-vue-next`
+- `@tanstack/vue-table`, `@vee-validate/zod`, `quill` (v2, via `components/editor/QuillEditor.vue`), `@vueuse/core`, `embla-carousel-vue`, `lucide-vue-next`
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
