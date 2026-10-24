@@ -69,7 +69,7 @@ async function submit(close: boolean) {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-4 py-12">
+  <div class="mx-auto w-full max-w-3xl px-4 pt-28 pb-16">
     <div v-if="loading" class="flex items-center justify-center gap-2 py-24 text-muted-foreground">
       <Loader2 class="size-5 animate-spin" /> Memuat percakapan…
     </div>
