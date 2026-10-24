@@ -12,7 +12,7 @@ import {
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
 import {
   BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
-  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, MessageCircle, MessageSquareQuote,
+  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, Mail, MessageCircle, MessageSquareQuote,
   Package, ShieldCheck, ShieldUser, SlidersHorizontal, Store, Tags, UserCog,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
@@ -32,6 +32,7 @@ const iconComponents: Record<string, Component> = {
   Inbox,
   LayoutDashboard,
   LayoutTemplate,
+  Mail,
   MessageCircle,
   MessageSquareQuote,
   ShieldUser,

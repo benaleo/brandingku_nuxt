@@ -5,7 +5,7 @@ export const useGql = () => {
     const GRAPHQL_ENDPOINT = `/api/gql`
     const token = useCookie<string | null>('token', { sameSite: 'lax' })
 
-    const gqlFetch = async <T>(query: string, variables?: Record<string, any>, opts?: { auth?: boolean; headers?: Record<string, string> }): Promise<T> => {
+    const gqlFetch = async <T>(query: string, variables?: Record<string, any>, opts?: { auth?: boolean; headers?: Record<string, string>; timeout?: number }): Promise<T> => {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'Accept': '*/*',
@@ -21,7 +21,7 @@ export const useGql = () => {
                 // Ensure we fail fast if server responds with non-JSON/HTML
                 responseType: 'json',
                 retry: 0,
-                timeout: 20000,
+                timeout: opts?.timeout ?? 20000,
             })
 
             // Validate GraphQL response shape
