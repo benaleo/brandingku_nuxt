@@ -30,7 +30,8 @@
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-        <p class="text-gray-900">{{ inquiry.status }}</p>
+        <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium" :class="statusMeta.class">{{ statusMeta.label }}</span>
+        <p v-if="inquiry.closed_at" class="mt-1 text-xs text-muted-foreground">Ditutup {{ new Date(inquiry.closed_at).toLocaleString() }}</p>
       </div>
 
       <div>
@@ -54,8 +55,11 @@
     <FormsFormSection
       v-if="showResponse"
       title="Kirim balasan"
-      :description="`Email akan dikirim ke ${inquiry.email} melalui akun SMTP aktif di Email List.`"
+      :description="`Email akan dikirim ke ${inquiry.email} melalui akun SMTP aktif di Email List, lengkap dengan link balasan yang berlaku 7 hari.`"
     >
+      <p v-if="inquiry.status === 'closed'" class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        Inquiry ini sudah ditutup. Mengirim balasan akan membukanya kembali.
+      </p>
       <div class="space-y-2">
         <Label for="response-subject">Subject</Label>
         <Input id="response-subject" v-model="subject" placeholder="Subject email" :disabled="sending" />
@@ -118,23 +122,36 @@
     </FormsFormSection>
 
     <!-- sent history -->
-    <FormsFormSection title="Riwayat balasan" description="Email yang sudah dikirim untuk inquiry ini.">
+    <FormsFormSection title="Riwayat percakapan" description="Email dari admin dan balasan pelanggan melalui link di email.">
       <p v-if="historyLoading" class="text-sm text-muted-foreground">Memuat riwayat…</p>
       <p v-else-if="!responses.length" class="text-sm text-muted-foreground">Belum ada balasan.</p>
       <div v-else class="space-y-4">
-        <article v-for="r in responses" :key="r.id" class="rounded-xl border p-4">
+        <article
+          v-for="r in responses"
+          :key="r.id"
+          class="rounded-xl border p-4"
+          :class="r.direction === 'inbound' ? 'border-blue-200 bg-blue-50/50' : ''"
+        >
           <header class="flex flex-wrap items-start justify-between gap-2">
             <h3 class="font-semibold">{{ r.subject }}</h3>
+            <span v-if="r.direction === 'inbound'" class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              Dari pelanggan
+            </span>
             <span
+              v-else
               class="rounded-full px-2 py-0.5 text-xs font-medium"
               :class="r.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
             >
               {{ r.status === 'sent' ? 'Terkirim' : 'Gagal' }}
             </span>
           </header>
-          <p class="mt-1 text-xs text-muted-foreground">
+          <p v-if="r.direction === 'inbound'" class="mt-1 text-xs text-muted-foreground">
+            {{ new Date(r.created_at).toLocaleString() }} · {{ r.sent_by || 'Pelanggan' }} ({{ r.from_email }})
+          </p>
+          <p v-else class="mt-1 text-xs text-muted-foreground">
             {{ new Date(r.created_at).toLocaleString() }} · dari {{ r.from_email || '-' }} ke {{ r.to_email }}
             <template v-if="r.sent_by"> · oleh {{ r.sent_by }}</template>
+            <template v-if="r.reply_expires_at"> · link balasan berlaku sampai {{ new Date(r.reply_expires_at).toLocaleString() }}</template>
           </p>
           <p v-if="r.error_message" class="mt-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{{ r.error_message }}</p>
           <div class="response-body mt-3 text-sm" v-html="sanitize(r.body)" />
@@ -200,6 +217,14 @@ const { detail, loading, error } = useWebContactService(false, props.id)
 const { getInquiryResponses, respondInquiry } = useInquiryResponseService()
 
 const inquiry = computed(() => detail.value)
+
+const STATUS_META: Record<string, { label: string; class: string }> = {
+  pending: { label: 'Baru', class: 'bg-amber-100 text-amber-800' },
+  responded: { label: 'Menunggu pelanggan', class: 'bg-sky-100 text-sky-800' },
+  replied: { label: 'Dibalas pelanggan', class: 'bg-blue-100 text-blue-800' },
+  closed: { label: 'Ditutup', class: 'bg-gray-200 text-gray-700' },
+}
+const statusMeta = computed(() => STATUS_META[inquiry.value?.status || ''] || { label: inquiry.value?.status || '-', class: 'bg-muted text-foreground' })
 const canRespond = computed(() => can('inquiries.update'))
 
 const showResponse = ref(false)
@@ -275,7 +300,7 @@ async function sendResponse() {
     })))
     await respondInquiry(props.id, subject.value.trim(), body.value, attachments)
     toast.success(`Email terkirim ke ${inquiry.value?.email}`)
-    if (detail.value) detail.value = { ...detail.value, status: 'responded' }
+    if (detail.value) detail.value = { ...detail.value, status: 'responded', closed_at: null }
     subject.value = ''
     body.value = ''
     files.value = []

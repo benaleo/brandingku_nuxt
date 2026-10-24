@@ -42,6 +42,8 @@ export type InquiryResponseAttachment = {
 export type InquiryResponse = {
     id: number
     inquiry_id: number
+    // outbound = admin email, inbound = customer reply via the emailed link
+    direction: 'outbound' | 'inbound' | string
     from_email: string
     to_email: string
     subject: string
@@ -49,8 +51,28 @@ export type InquiryResponse = {
     status: 'sent' | 'failed' | string
     error_message?: string | null
     sent_by: string
+    reply_expires_at?: string | null
     attachments: InquiryResponseAttachment[]
     created_at: string
+}
+
+export type InquiryThreadMessage = {
+    id: number
+    direction: 'outbound' | 'inbound' | string
+    subject: string
+    body: string
+    attachments: InquiryResponseAttachment[]
+    created_at: string
+}
+
+export type InquiryThread = {
+    name: string
+    subject: string
+    message: string
+    status: string
+    can_reply: boolean
+    expires_at?: string | null
+    messages: InquiryThreadMessage[]
 }
 
 export type EmailAttachmentInput = {

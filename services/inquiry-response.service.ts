@@ -1,9 +1,14 @@
 import { useGql } from '~/composables/useGql'
-import type { EmailAttachmentInput, InquiryResponse } from '~/types/admin-smtp.type'
+import type { EmailAttachmentInput, InquiryResponse, InquiryThread } from '~/types/admin-smtp.type'
 
 const RESPONSE_FIELDS = `
-    id inquiry_id from_email to_email subject body status error_message sent_by created_at
+    id inquiry_id direction from_email to_email subject body status error_message sent_by reply_expires_at created_at
     attachments { id file_name content_type size path }
+`
+
+const THREAD_FIELDS = `
+    name subject message status can_reply expires_at
+    messages { id direction subject body created_at attachments { id file_name content_type size path } }
 `
 
 export const useInquiryResponseService = () => {
@@ -31,5 +36,22 @@ export const useInquiryResponseService = () => {
         return res?.respondInquiry
     }
 
-    return { getInquiryResponses, respondInquiry }
+    // public: the customer reaches these through the reply link token, no login
+    const getInquiryThread = async (token: string) => {
+        const query = `query getInquiryThread($token: String!) { getInquiryThread(token: $token) { ${THREAD_FIELDS} } }`
+        const res = await gqlFetch<{ getInquiryThread: InquiryThread }>(query, { token })
+        return res?.getInquiryThread
+    }
+
+    const replyInquiry = async (token: string, message: string, close: boolean) => {
+        const mutation = `
+            mutation replyInquiry($token: String!, $message: String, $close: Boolean!) {
+                replyInquiry(token: $token, message: $message, close: $close) { ${THREAD_FIELDS} }
+            }
+        `
+        const res = await gqlFetch<{ replyInquiry: InquiryThread }>(mutation, { token, message, close })
+        return res?.replyInquiry
+    }
+
+    return { getInquiryResponses, respondInquiry, getInquiryThread, replyInquiry }
 }

@@ -144,6 +144,7 @@ export const useWebContactService = (fetchResult?: boolean, dataId?: string) => 
             status
             created_at
             created_by
+            closed_at
           }
         }
       `;
