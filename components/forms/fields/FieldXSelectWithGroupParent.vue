@@ -11,7 +11,7 @@
         :class="{ 'border-destructive': !!fieldError }"
         @click="toggleOpen"
       >
-        <span :class="selectedLabel ? 'text-foreground' : 'text-muted-foreground'">
+        <span class="truncate" :class="selectedLabel ? 'text-foreground' : 'text-muted-foreground'">
           {{ selectedLabel ?? placeholder }}
         </span>
         <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4 shrink-0 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -50,6 +50,16 @@
             <div class="px-4 py-2 text-sm text-muted-foreground">{{ emptyMessage }}</div>
           </template>
           <template v-else>
+            <!-- optional reset entry, e.g. "all categories" in list filters -->
+            <button
+              v-if="clearable"
+              type="button"
+              class="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              :class="{ 'bg-accent font-medium': !currentValue }"
+              @click="clearSelection"
+            >
+              <span>{{ clearLabel }}</span>
+            </button>
             <template v-for="group in filteredGroups" :key="group.parentName">
               <!-- Group header -->
               <div class="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -105,6 +115,8 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   isFieldDirty: { type: Boolean, default: false },
   itemClass: { type: String, default: 'w-full' },
+  clearable: { type: Boolean, default: false },
+  clearLabel: { type: String, default: 'Semua' },
 })
 
 const modelValue = defineModel<string>()
@@ -136,6 +148,13 @@ function toggleOpen() {
 function selectItem(item: ProductCategoryOption) {
   handleChange(item.id)
   modelValue.value = item.id
+  isOpen.value = false
+  search.value = ''
+}
+
+function clearSelection() {
+  handleChange('')
+  modelValue.value = ''
   isOpen.value = false
   search.value = ''
 }

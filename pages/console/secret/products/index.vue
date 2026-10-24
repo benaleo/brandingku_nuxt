@@ -7,9 +7,22 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex-1">
-        <!-- <FieldXSelectSimple label="Kategori" name="category" :options="categoryOptions" placeholder="Pilih Kategori" v-model="selectedCategory"/> -->
+    <AppFilterTable v-model="keyword" search-width-class="sm:w-52">
+      <div class="flex w-full flex-wrap items-center gap-3">
+        <FieldXSelectWithGroupParent
+          name="category_filter"
+          placeholder="Semua kategori"
+          searchPlaceholder="Cari kategori..."
+          emptyMessage="Kategori tidak ditemukan."
+          clearable
+          clearLabel="Semua kategori"
+          v-model="selectedCategory"
+          :options="categoryOptions"
+          :loading="categoryLoading"
+          itemClass="w-full sm:w-52"
+        />
+        <FieldXSelectSimple class="w-full sm:w-40" :options="highlightOptions" placeholder="Semua highlight" v-model="selectedHighlight"/>
+        <FieldXSelectSimple class="w-full sm:w-36" :options="activeOptions" placeholder="Semua status" v-model="selectedActive"/>
       </div>
     </AppFilterTable>
 
@@ -38,11 +51,14 @@
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
 import {productColumns} from '~/components/datatables/productColumns'
 import {useProductService} from '~/services/product.service'
-import {computed, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {refDebounced} from '@vueuse/core'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from "vue-sonner";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
+import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue";
+import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
+import {useOptionProductCategories} from "~/composables/useOptionProductCategories";
 import type { ProductGallery } from "~/types/products.type";
 
 const {
@@ -56,10 +72,37 @@ const {
   setParams,
   params,
   deleteProductById,
-} = useProductService(true)
+} = useProductService(true, undefined, { sortBy: 'updated_at,desc' })
 
-// Filter options
-const selectedCategory = ref<string | number | undefined>()
+// Filter options (empty category / 'all' clears the filter)
+const selectedCategory = ref<string>('')
+const selectedHighlight = ref<string>('all')
+const selectedActive = ref<string>('all')
+
+const { options: categoryOptions, loading: categoryLoading, fetch: fetchCategoryOptions } = useOptionProductCategories()
+onMounted(fetchCategoryOptions)
+
+const highlightOptions = [
+  { id: 'all', label: 'Semua highlight' },
+  { id: 'yes', label: 'Highlight' },
+  { id: 'no', label: 'Bukan highlight' },
+]
+const activeOptions = [
+  { id: 'all', label: 'Semua status' },
+  { id: 'yes', label: 'Aktif' },
+  { id: 'no', label: 'Nonaktif' },
+]
+const toBool = (v: string) => (v === 'yes' ? true : v === 'no' ? false : undefined)
+
+// any filter change goes back to the first page; setParams refetches via the service watcher
+watch([selectedCategory, selectedHighlight, selectedActive], ([category, highlight, active]) => {
+  pagination.value.page = 0
+  setParams({
+    category_id: category ? Number(category) : null,
+    is_highlight: toBool(highlight),
+    is_active: toBool(active),
+  })
+})
 const keyword = ref<string>('')
 const debouncedKeyword = refDebounced(keyword, 200)
 
@@ -86,15 +129,6 @@ const onPageChange = (page: number) => {
 const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
-
-// Watch selectedCategory and trigger server-side filter (setParams already refetches via the service watcher)
-watch(selectedCategory, (val: any) => {
-  if (val === 'all' || val === undefined || val === '') {
-    setParams({category: undefined})
-  } else {
-    setParams({category: val})
-  }
-})
 
 const handleDelete = async (id: string) => {
   try {

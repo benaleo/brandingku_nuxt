@@ -5,7 +5,8 @@ const props = withDefaults(defineProps<{
   modelValue: string
   placeholder?: string
   disabled?: boolean
-}>(), { placeholder: 'Cari…' })
+  searchWidthClass?: string
+}>(), { placeholder: 'Cari…', searchWidthClass: 'sm:w-72' })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 const slots = useSlots()
@@ -22,6 +23,7 @@ const slots = useSlots()
       name="search"
       :placeholder="props.placeholder"
       :disabled="props.disabled"
+      :width-class="props.searchWidthClass"
       :model-value="props.modelValue"
       @update:model-value="emit('update:modelValue', $event)"
     />
