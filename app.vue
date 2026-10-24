@@ -4,6 +4,7 @@
     <NuxtPage />
   </NuxtLayout>
   <ChatWidget />
+  <ElementsGlobalLoading />
 </template>
 
 <script setup lang="ts">
