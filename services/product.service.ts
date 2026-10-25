@@ -6,7 +6,9 @@ import { useProductGalleriesService } from '~/services/product-galleries.service
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
 
-export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string } = {}) => {
+type ProductListParams = { keyword?: string; category_id?: number | null; is_active?: boolean; is_highlight?: boolean; sortBy?: string }
+
+export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; params?: ProductListParams } = {}) => {
     const { gqlFetch } = useGql()
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
@@ -18,7 +20,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
-    const params = reactive<{ keyword?: string; category_id?: number | null; is_active?: boolean; is_highlight?: boolean } >({})
+    // initial params go in here so they do not trigger a second fetch via the watcher
+    const params = reactive<ProductListParams>({ ...options.params })
 
     const changePage = (newPage: number) => {
         pagination.value.page = newPage
@@ -32,15 +35,19 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         Object.assign(params, newParams)
     }
 
+    // ignore responses that arrive after a newer request (fast typing in search)
+    let requestSeq = 0
+
     // GraphQL queries
     const fetchProducts = async () => {
         if (!fetchResult) return
+        const seq = ++requestSeq
         loading.value = true
         error.value = null
         try {
             const query = `
-                query getProducts($page: Int!, $limit: Int!, $sortBy: String, $category_id: Int, $is_active: Boolean, $is_highlight: Boolean) {
-                    getProducts(pagination: { page: $page, limit: $limit, sortBy: $sortBy }, category_id: $category_id, is_active: $is_active, is_highlight: $is_highlight) {
+                query getProducts($page: Int!, $limit: Int!, $sortBy: String, $keyword: String, $category_id: Int, $is_active: Boolean, $is_highlight: Boolean) {
+                    getProducts(pagination: { page: $page, limit: $limit, sortBy: $sortBy }, keyword: $keyword, category_id: $category_id, is_active: $is_active, is_highlight: $is_highlight) {
                         items {
                             id
                             name
@@ -88,13 +95,15 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                 {
                     page: serverPage,
                     limit: serverLimit,
-                    ...(options.sortBy ? { sortBy: options.sortBy } : {}),
+                    ...((params.sortBy || options.sortBy) ? { sortBy: params.sortBy || options.sortBy } : {}),
+                    ...(params.keyword?.trim() ? { keyword: params.keyword.trim() } : {}),
                     ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}),
                     ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}),
                     ...(params.is_highlight != null ? { is_highlight: Boolean(params.is_highlight) } : {}),
                 },
                 { auth: true }
             )
+            if (seq !== requestSeq) return
             let list = (res?.getProducts?.items || []) as any[]
 
             // Apply client-side keyword filter for compatibility with useProductList
@@ -120,9 +129,9 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
 
             datas.value = list
         } catch (e: any) {
-            error.value = e?.message || 'Failed to load products'
+            if (seq === requestSeq) error.value = e?.message || 'Failed to load products'
         } finally {
-            loading.value = false
+            if (seq === requestSeq) loading.value = false
         }
     }
 

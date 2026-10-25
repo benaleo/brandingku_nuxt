@@ -1,23 +1,22 @@
 <script setup lang="ts">
-// UI components
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { useRouter } from "vue-router";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { refDebounced } from "@vueuse/core";
 
-// Data/composables
 import { useProductService } from "~/services/product.service";
 import { useGql } from "~/composables/useGql";
-import { ChevronDown, ChevronUp, MenuIcon } from "lucide-vue-next";
+import {
+  ArrowDownUp,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  PackageSearch,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-vue-next";
 import ElementsProductQuickView from "~/components/elements/ElementsProductQuickView.vue";
 import WhatsAppButton from "~/components/elements/WhatsAppButton.vue";
 import { toast } from "vue-sonner";
@@ -35,12 +34,10 @@ const handleWishlistToggle = async (product: any) => {
     if (product.is_wishlisted) {
       await deleteWishlist(Number(productId));
       toast.success("Produk dihapus dari wishlist");
-      // Update the product's wishlist status
       product.is_wishlisted = false;
     } else {
       await createWishlist(Number(productId));
       toast.success("Produk ditambahkan ke wishlist");
-      // Update the product's wishlist status
       product.is_wishlisted = true;
     }
   } catch (e: any) {
@@ -52,12 +49,22 @@ const router = useRouter();
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
-// Products: server-side pagination + optional category_id filter
-const productService = useProductService(true);
-// Initialize with only active products
-productService.params.is_active = true;
+// MARK : SORT OPTIONS (backend whitelist: name, created_at, updated_at)
+const sortOptions = [
+  { value: "created_at,desc", label: "Terbaru" },
+  { value: "updated_at,desc", label: "Baru diperbarui" },
+  { value: "name,asc", label: "Nama A - Z" },
+  { value: "name,desc", label: "Nama Z - A" },
+  { value: "created_at,asc", label: "Terlama" },
+];
+const DEFAULT_SORT = sortOptions[0]!.value;
+
+const productService = useProductService(true, undefined, {
+  params: { is_active: true, sortBy: DEFAULT_SORT },
+});
 const {
   datas: products,
+  loading,
   pageInfo,
   pagination,
   params,
@@ -65,21 +72,19 @@ const {
   changePage,
 } = productService;
 
-// Categories: fetch all (parents + children) for sidebar
+// filters reset to the first page; the params watcher in the service refetches
+const applyParams = (next: Record<string, any>) => {
+  pagination.value.page = 0;
+  setParams(next);
+};
+
+// MARK : CATEGORIES
 const { gqlFetch } = useGql();
 const categoriesAll = ref<any[]>([]);
 const categoriesLoading = ref(false);
-const categoriesError = ref<string | null>(null);
-const isMobileOpen = ref(false);
-
-// if resolution < 768px
-const isMobile = computed(
-  () => typeof window !== "undefined" && window.innerWidth < 768
-);
 
 const fetchAllCategories = async () => {
   categoriesLoading.value = true;
-  categoriesError.value = null;
   try {
     const query = `
       query getProductCategories($only_parent: Boolean) {
@@ -87,12 +92,7 @@ const fetchAllCategories = async () => {
           id
           name
           slug
-          description
-          image
-          is_landing_page
           is_active
-          created_at
-          updated_at
           parent_id
         }
       }
@@ -102,66 +102,136 @@ const fetchAllCategories = async () => {
       { only_parent: false },
       { auth: true }
     );
-    categoriesAll.value = res?.getProductCategories || [];
-  } catch (e: any) {
-    categoriesError.value = e?.message || "Failed to load categories";
+    categoriesAll.value = (res?.getProductCategories || []).filter(
+      (c: any) => c?.is_active !== false
+    );
+  } catch {
+    categoriesAll.value = [];
   } finally {
     categoriesLoading.value = false;
   }
 };
 
-onMounted(() => {
-  fetchAllCategories();
-});
+onMounted(fetchAllCategories);
 
 const parentCategories = computed(() =>
-  (categoriesAll.value || []).filter((c: any) => c?.parent_id == null)
+  categoriesAll.value.filter((c: any) => c?.parent_id == null)
 );
 const childrenMap = computed<Record<number, any[]>>(() => {
   const map: Record<number, any[]> = {};
-  for (const c of categoriesAll.value || []) {
-    if (c?.parent_id != null) {
-      const pid = Number(c.parent_id);
-      if (!map[pid]) map[pid] = [];
-      map[pid].push(c);
-    }
+  for (const c of categoriesAll.value) {
+    if (c?.parent_id == null) continue;
+    const pid = Number(c.parent_id);
+    (map[pid] ||= []).push(c);
   }
   return map;
 });
 
-// Sidebar UI state: which parents are expanded, and which child is selected
+const selectedCategoryId = computed(() =>
+  params.category_id != null ? Number(params.category_id) : null
+);
+const selectedCategory = computed(() =>
+  categoriesAll.value.find((c: any) => Number(c.id) === selectedCategoryId.value)
+);
+
 const openParents = ref<Record<number, boolean>>({});
-const selectedCategoryId = ref<number | null>(null);
-
-const toggleParent = (parentId: number) => {
-  const pid = Number(parentId);
-  openParents.value[pid] = !openParents.value[pid];
-};
-const selectChild = (childId: number) => {
-  selectedCategoryId.value = Number(childId);
-  setParams({ category_id: Number(childId) });
-  changePage(0);
-};
-const clearCategory = () => {
-  selectedCategoryId.value = null;
-  setParams({ category_id: null });
-  changePage(0);
+const toggleParent = (id: number) => {
+  openParents.value[id] = !openParents.value[id];
 };
 
-// Helper: min price from additionals
+const filterOpen = ref(false);
+const openFilter = () => {
+  // reveal the group that holds the current selection
+  const pid = selectedCategory.value?.parent_id;
+  if (pid != null) openParents.value[Number(pid)] = true;
+  filterOpen.value = true;
+};
+const selectCategory = (id: number | null) => {
+  applyParams({ category_id: id });
+  filterOpen.value = false;
+};
+
+// MARK : SORT
+const sortOpen = ref(false);
+const activeSort = computed(() => params.sortBy || DEFAULT_SORT);
+const activeSortLabel = computed(
+  () => sortOptions.find((o) => o.value === activeSort.value)?.label
+);
+const selectSort = (value: string) => {
+  applyParams({ sortBy: value });
+  sortOpen.value = false;
+};
+
+// MARK : SEARCH
+const searchOpen = ref(false);
+const searchInput = ref("");
+const searchInputEl = ref<HTMLInputElement | null>(null);
+const debouncedSearch = refDebounced(searchInput, 350);
+
+watch(debouncedSearch, (kw) => {
+  if ((params.keyword || "") !== kw.trim()) applyParams({ keyword: kw.trim() });
+});
+
+const openSearch = async () => {
+  searchInput.value = params.keyword || "";
+  searchOpen.value = true;
+  await nextTick();
+  searchInputEl.value?.focus();
+};
+const closeSearch = () => {
+  searchOpen.value = false;
+};
+const submitSearch = () => {
+  if ((params.keyword || "") !== searchInput.value.trim())
+    applyParams({ keyword: searchInput.value.trim() });
+  closeSearch();
+  scrollToList();
+};
+const clearSearch = () => {
+  searchInput.value = "";
+  applyParams({ keyword: "" });
+};
+const searchPreview = computed(() => (products.value || []).slice(0, 6));
+
+const onSearchKey = (e: KeyboardEvent) => {
+  if (e.key === "Escape") closeSearch();
+};
+watch(searchOpen, (v) => {
+  if (typeof document === "undefined") return;
+  document.documentElement.style.overflow = v ? "hidden" : "";
+  if (v) window.addEventListener("keydown", onSearchKey);
+  else window.removeEventListener("keydown", onSearchKey);
+});
+onBeforeUnmount(() => {
+  if (typeof document === "undefined") return;
+  if (searchOpen.value) document.documentElement.style.overflow = "";
+  window.removeEventListener("keydown", onSearchKey);
+});
+
+const hasActiveFilters = computed(
+  () => selectedCategoryId.value != null || !!params.keyword
+);
+const resetAll = () => {
+  searchInput.value = "";
+  applyParams({ category_id: null, keyword: "" });
+};
+
+// MARK : PRODUCT CARD
 const productMinPrice = (p: any) => {
-  const adds = Array.isArray(p?.additionals) ? p.additionals : [];
-  const prices = adds.map((a: any) => Number(a?.price) || 0);
-  if (!prices.length) return 0;
-  return Math.min(...prices);
+  const prices = (Array.isArray(p?.additionals) ? p.additionals : [])
+    .map((a: any) => Number(a?.price) || 0)
+    .filter((n: number) => n > 0);
+  return prices.length ? Math.min(...prices) : 0;
 };
+const formatPrice = (n: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
 
-const viewProductDetail = (slug: string) => {
-  router.push(`/product/${slug}`);
-};
+const brokenImages = ref<Record<string, boolean>>({});
 
-
-// Quick View modal state
 const quickViewOpen = ref(false);
 const selectedProduct = ref<any | null>(null);
 const openQuickView = (product: any) => {
@@ -169,27 +239,35 @@ const openQuickView = (product: any) => {
   quickViewOpen.value = true;
 };
 
-// MARK : SORT OPTIONS
-const sortOptions = [
-  { value: "is_highlight,desc", label: "Popular" },
-  { value: "created_at,desc", label: "Newest" },
-  { value: "price,asc", label: "Price: Low to High" },
-  { value: "price,desc", label: "Price: High to Low" },
-];
+// MARK : PAGINATION (UI uses 1-based labels)
+const listTop = ref<HTMLElement | null>(null);
+const scrollToList = () => {
+  listTop.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
-// Pagination helpers (UI uses 1-based labels)
+const totalItems = computed(() => Number(pageInfo.value?.total_items || 0));
 const totalPages = computed(() => Number(pageInfo.value?.total_pages || 1));
 const currentPageLabel = computed(() =>
   Number(pageInfo.value?.current_page || pagination.value.page + 1)
 );
-const prevPage = () => {
-  if (pageInfo.value?.has_previous_page)
-    changePage(Math.max(0, pagination.value.page - 1));
+// current page with one neighbour each side, plus first and last
+const pageItems = computed<(number | "…")[]>(() => {
+  const total = totalPages.value;
+  const cur = currentPageLabel.value;
+  const pages = new Set([1, total, cur - 1, cur, cur + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  sorted.forEach((p, i) => {
+    if (i && p - sorted[i - 1]! > 1) out.push("…");
+    out.push(p);
+  });
+  return out;
+});
+const goToPage = (p1: number) => {
+  if (p1 < 1 || p1 > totalPages.value || p1 === currentPageLabel.value) return;
+  changePage(p1 - 1);
+  scrollToList();
 };
-const nextPage = () => {
-  if (pageInfo.value?.has_next_page) changePage(pagination.value.page + 1);
-};
-const goToPage = (p1: number) => changePage(Math.max(0, p1 - 1));
 
 const pageTitle = computed(() => `Brandingku Products`);
 
@@ -199,195 +277,443 @@ definePageMeta({ layout: "page-layout" });
 </script>
 
 <template>
-  <!-- Header -->
   <HeaderProduct :title="pageTitle" />
 
-  <div class="app-container flex flex-col md:flex-row gap-1">
-    <!-- MARK : SIDEBAR -->
-    <button
-      v-if="isMobile"
-      @click="isMobileOpen = !isMobileOpen"
-      class="fixed right-5 top-24 z-20 bg-green-200 rounded-xl p-2 hover:bg-green-400 flex gap-2"
-    >
-      Category <MenuIcon class="w-6 h-6" />
-    </button>
-    <div
-      v-if="isMobileOpen"
-      class="min-w-48 bg-slate-200 h-fit rounded-md py-4 px-2 mt-18 sticky top-36 md:top-30 z-20"
-    >
-      <ul class="space-y-2">
-        <li>
-          <button
-            class="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            :class="{ 'bg-gray-100': selectedCategoryId === null }"
-            @click="clearCategory()"
-          >
-            All
-          </button>
-        </li>
-        <li
-          v-for="parent in parentCategories"
-          :key="parent.id"
-          class="relative"
+  <section class="app-container pb-16">
+    <div ref="listTop" class="scroll-mt-28">
+      <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Daftar Produk Aktif</h1>
+      <p class="mt-1 text-sm text-gray-500">
+        <template v-if="loading && !totalItems">Memuat produk...</template>
+        <template v-else>{{ totalItems }} produk ditemukan</template>
+      </p>
+
+      <!-- MARK : TOOLBAR -->
+      <div class="mt-4 flex items-center gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 min-w-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors"
+          :class="
+            selectedCategoryId != null
+              ? 'border-green-600 bg-green-50 text-green-800'
+              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          "
+          @click="openFilter"
         >
+          <SlidersHorizontal class="h-4 w-4 shrink-0" />
+          <span class="truncate">{{ selectedCategory?.name || "Filter" }}</span>
+          <span
+            v-if="selectedCategoryId != null"
+            class="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-xs text-white"
+            >1</span
+          >
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:px-4"
+          aria-label="Urutkan"
+          @click="sortOpen = true"
+        >
+          <ArrowDownUp class="h-4 w-4" />
+          <span class="hidden sm:inline">{{ activeSortLabel }}</span>
+        </button>
+        <button
+          type="button"
+          class="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
+          :class="
+            params.keyword
+              ? 'border-green-600 bg-green-50 text-green-800'
+              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          "
+          aria-label="Cari produk"
+          @click="openSearch"
+        >
+          <Search class="h-4 w-4" />
+        </button>
+      </div>
+
+      <!-- MARK : ACTIVE FILTERS -->
+      <div v-if="hasActiveFilters" class="mt-3 flex flex-wrap items-center gap-2">
+        <span
+          v-if="params.keyword"
+          class="inline-flex max-w-full items-center gap-1 rounded-full bg-gray-100 py-1 pl-3 pr-1 text-xs text-gray-700"
+        >
+          <span class="truncate">"{{ params.keyword }}"</span>
           <button
-            class="flex items-center gap-2 w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            @click="toggleParent(Number(parent.id))"
+            type="button"
+            class="rounded-full p-1 hover:bg-gray-200"
+            aria-label="Hapus pencarian"
+            @click="clearSearch"
           >
-            <ChevronUp v-if="openParents[parent.id]" />
-            <ChevronDown v-else />
-            {{ parent.name }}
+            <X class="h-3 w-3" />
           </button>
-          <ul
-            v-if="
-              (childrenMap[parent.id] || []).length && openParents[parent.id]
-            "
-            class="mt-1 ml-4 space-y-1"
+        </span>
+        <span
+          v-if="selectedCategory"
+          class="inline-flex max-w-full items-center gap-1 rounded-full bg-gray-100 py-1 pl-3 pr-1 text-xs text-gray-700"
+        >
+          <span class="truncate">{{ selectedCategory.name }}</span>
+          <button
+            type="button"
+            class="rounded-full p-1 hover:bg-gray-200"
+            aria-label="Hapus kategori"
+            @click="applyParams({ category_id: null })"
           >
-            <li v-for="child in childrenMap[parent.id]" :key="child.id">
-              <button
-                class="block w-full px-3 py-1.5 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded"
-                :class="{
-                  'bg-gray-100': selectedCategoryId === Number(child.id),
-                }"
-                @click="selectChild(Number(child.id))"
-              >
-                {{ child.name }}
-              </button>
-            </li>
-          </ul>
-        </li>
-      </ul>
+            <X class="h-3 w-3" />
+          </button>
+        </span>
+        <button
+          type="button"
+          class="text-xs font-medium text-green-700 hover:underline"
+          @click="resetAll"
+        >
+          Reset semua
+        </button>
+      </div>
     </div>
 
-    <div class="w-full pb-12">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-2 md:mb-8 gap-2 md:gap-4 w-full" >
-        <h1 class="text-3xl font-bold mb-4 whitespace-nowrap">Daftar Produk Aktif</h1>
-        <div class="flex flex-col-reverse md:flex-row justify-end items-end gap-1 md:gap-4 w-full" >
-          <Input
-            class="w-[260px]"
-            placeholder="Cari produk..."
-            v-model="params.keyword"
+    <!-- MARK : GRID -->
+    <div
+      v-if="loading && !(products || []).length"
+      class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6"
+    >
+      <div v-for="i in 8" :key="i" class="overflow-hidden rounded-2xl border bg-white">
+        <div class="aspect-square animate-pulse bg-gray-100" />
+        <div class="space-y-2 p-3 sm:p-4">
+          <div class="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+          <div class="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+          <div class="h-4 w-1/3 animate-pulse rounded bg-gray-100" />
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-else-if="(products || []).length"
+      class="mt-6 grid grid-cols-2 gap-3 transition-opacity sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6"
+      :class="{ 'opacity-60': loading }"
+    >
+      <article
+        v-for="product in products"
+        :key="product.id"
+        class="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-lg"
+      >
+        <NuxtLink :to="`/product/${product.slug}`" class="flex flex-1 flex-col">
+          <div class="relative aspect-square overflow-hidden bg-gray-50">
+            <img
+              v-if="product.image && !brokenImages[product.id]"
+              :src="STORAGE_URL + product.image"
+              :alt="product.name"
+              loading="lazy"
+              class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              @error="brokenImages[product.id] = true"
+            />
+            <div
+              v-else
+              class="flex h-full w-full items-center justify-center text-4xl font-bold uppercase text-green-700/40"
+            >
+              {{ product.name?.charAt(0) }}
+            </div>
+            <button
+              type="button"
+              class="absolute inset-x-3 bottom-3 hidden translate-y-2 rounded-full bg-white/95 py-2 text-sm font-medium text-gray-900 opacity-0 shadow transition-all group-hover:translate-y-0 group-hover:opacity-100 lg:block"
+              @click.prevent.stop="openQuickView(product)"
+            >
+              Quick View
+            </button>
+          </div>
+          <div class="flex flex-1 flex-col p-3 sm:p-4">
+            <p
+              v-if="product.category?.name"
+              class="truncate text-[11px] font-medium uppercase tracking-wide text-green-700 sm:text-xs"
+            >
+              {{ product.category.name }}
+            </p>
+            <h3 class="mt-0.5 line-clamp-2 text-sm font-semibold text-gray-900 sm:text-base">
+              {{ product.name }}
+            </h3>
+            <div class="mt-auto pt-2">
+              <template v-if="productMinPrice(product) > 0">
+                <span class="block text-[11px] text-gray-500">Mulai dari</span>
+                <span class="text-sm font-bold text-gray-900 sm:text-base">
+                  {{ formatPrice(productMinPrice(product)) }}
+                </span>
+                <span class="text-xs text-gray-500">/pcs</span>
+              </template>
+              <span v-else class="text-sm font-bold text-green-600">Tanya Sekarang</span>
+            </div>
+          </div>
+        </NuxtLink>
+        <div class="flex gap-2 px-3 pb-3 sm:px-4 sm:pb-4">
+          <WhatsAppButton :product="product" class="flex-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            :aria-label="product.is_wishlisted ? 'Hapus dari wishlist' : 'Tambah ke wishlist'"
+            :class="
+              product.is_wishlisted
+                ? 'border-red-200 text-red-700 hover:bg-red-50'
+                : 'border-green-200 text-green-700 hover:bg-green-50'
+            "
+            @click.stop="handleWishlistToggle(product)"
+          >
+            <svg
+              class="h-4 w-4"
+              :fill="product.is_wishlisted ? 'currentColor' : 'none'"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+          </Button>
+        </div>
+      </article>
+    </div>
+
+    <div
+      v-else
+      class="mt-6 flex flex-col items-center rounded-2xl border border-dashed px-6 py-16 text-center"
+    >
+      <PackageSearch class="h-10 w-10 text-gray-400" />
+      <p class="mt-3 font-semibold text-gray-900">Produk tidak ditemukan</p>
+      <p class="mt-1 max-w-sm text-sm text-gray-500">
+        Coba kata kunci lain atau pilih kategori yang berbeda.
+      </p>
+      <Button v-if="hasActiveFilters" variant="outline" class="mt-4" @click="resetAll">
+        Reset filter
+      </Button>
+    </div>
+
+    <!-- MARK : PAGINATION -->
+    <nav
+      v-if="totalPages > 1"
+      class="mt-10 flex items-center justify-center gap-1 sm:gap-2"
+      aria-label="Halaman produk"
+    >
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="Halaman sebelumnya"
+        :disabled="!pageInfo?.has_previous_page"
+        @click="goToPage(currentPageLabel - 1)"
+      >
+        <ChevronLeft class="h-4 w-4" />
+      </Button>
+      <template v-for="(p, i) in pageItems" :key="`${p}-${i}`">
+        <span v-if="p === '…'" class="px-1 text-gray-400">…</span>
+        <Button
+          v-else
+          size="icon"
+          :variant="p === currentPageLabel ? 'default' : 'outline'"
+          :aria-current="p === currentPageLabel ? 'page' : undefined"
+          @click="goToPage(p)"
+        >
+          {{ p }}
+        </Button>
+      </template>
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="Halaman berikutnya"
+        :disabled="!pageInfo?.has_next_page"
+        @click="goToPage(currentPageLabel + 1)"
+      >
+        <ChevronRight class="h-4 w-4" />
+      </Button>
+    </nav>
+  </section>
+
+  <!-- MARK : FILTER SHEET -->
+  <ElementsInsetSheet v-model:open="filterOpen" title="Filter" description="Pilih kategori produk">
+    <div v-if="categoriesLoading" class="space-y-2">
+      <div v-for="i in 5" :key="i" class="h-10 animate-pulse rounded-lg bg-gray-100" />
+    </div>
+    <ul v-else class="space-y-1">
+      <li>
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-gray-50"
+          :class="selectedCategoryId === null ? 'bg-green-50 text-green-800' : 'text-gray-800'"
+          @click="selectCategory(null)"
+        >
+          Semua produk
+          <Check v-if="selectedCategoryId === null" class="h-4 w-4" />
+        </button>
+      </li>
+      <li v-for="parent in parentCategories" :key="parent.id">
+        <button
+          v-if="(childrenMap[parent.id] || []).length"
+          type="button"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-800 hover:bg-gray-50"
+          :aria-expanded="!!openParents[parent.id]"
+          @click="toggleParent(Number(parent.id))"
+        >
+          <span class="capitalize">{{ parent.name }}</span>
+          <ChevronDown
+            class="h-4 w-4 text-gray-400 transition-transform"
+            :class="{ 'rotate-180': openParents[parent.id] }"
           />
-          <div class="flex gap-2 items-center">
-            <span class="text-sm text-gray-500">Sort by:</span>
-            <Select>
-              <SelectTrigger class="w-[180px]">
-                <SelectValue placeholder="Popular" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="option in sortOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+        </button>
+        <button
+          v-else
+          type="button"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-gray-50"
+          :class="
+            selectedCategoryId === Number(parent.id) ? 'bg-green-50 text-green-800' : 'text-gray-800'
+          "
+          @click="selectCategory(Number(parent.id))"
+        >
+          <span class="capitalize">{{ parent.name }}</span>
+          <Check v-if="selectedCategoryId === Number(parent.id)" class="h-4 w-4" />
+        </button>
+        <ul
+          v-if="(childrenMap[parent.id] || []).length && openParents[parent.id]"
+          class="mb-1 ml-3 space-y-0.5 border-l pl-2"
+        >
+          <li v-for="child in childrenMap[parent.id]" :key="child.id">
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+              :class="
+                selectedCategoryId === Number(child.id)
+                  ? 'bg-green-50 font-medium text-green-800'
+                  : 'text-gray-600'
+              "
+              @click="selectCategory(Number(child.id))"
+            >
+              <span class="capitalize">{{ child.name }}</span>
+              <Check v-if="selectedCategoryId === Number(child.id)" class="h-4 w-4" />
+            </button>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </ElementsInsetSheet>
+
+  <!-- MARK : SORT SHEET -->
+  <ElementsInsetSheet v-model:open="sortOpen" title="Urutkan">
+    <ul class="space-y-1">
+      <li v-for="option in sortOptions" :key="option.value">
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-sm font-medium hover:bg-gray-50"
+          :class="activeSort === option.value ? 'bg-green-50 text-green-800' : 'text-gray-800'"
+          @click="selectSort(option.value)"
+        >
+          {{ option.label }}
+          <Check v-if="activeSort === option.value" class="h-4 w-4" />
+        </button>
+      </li>
+    </ul>
+  </ElementsInsetSheet>
+
+  <!-- MARK : SEARCH OVERLAY -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      leave-active-class="transition duration-200 ease-in"
+      enter-from-class="opacity-0 -translate-y-full"
+      leave-to-class="opacity-0 -translate-y-full"
+    >
+      <div
+        v-if="searchOpen"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cari produk"
+        class="fixed inset-0 z-[80] flex flex-col bg-white"
+      >
+        <form
+          class="app-container flex w-full items-center gap-2 border-b py-4"
+          @submit.prevent="submitSearch"
+        >
+          <div class="relative flex-1">
+            <Search class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              ref="searchInputEl"
+              v-model="searchInput"
+              type="text"
+              inputmode="search"
+              enterkeyhint="search"
+              autocomplete="off"
+              placeholder="Cari produk..."
+              class="h-12 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-base outline-none focus:border-green-600 focus:bg-white"
+            />
+            <button
+              v-if="searchInput"
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-gray-400 hover:bg-gray-200"
+              aria-label="Kosongkan"
+              @click="clearSearch"
+            >
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            class="shrink-0 rounded-full px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+            @click="closeSearch"
+          >
+            Tutup
+          </button>
+        </form>
+
+        <div class="flex-1 overflow-y-auto overscroll-contain">
+          <div class="app-container py-4">
+            <p v-if="!searchInput.trim()" class="py-10 text-center text-sm text-gray-500">
+              Ketik nama produk untuk mulai mencari.
+            </p>
+            <template v-else>
+              <p class="mb-3 text-sm text-gray-500">
+                <template v-if="loading">Mencari...</template>
+                <template v-else>{{ totalItems }} hasil untuk "{{ params.keyword }}"</template>
+              </p>
+              <ul
+                v-if="searchPreview.length"
+                class="grid gap-2 sm:grid-cols-2"
+                :class="{ 'opacity-60': loading }"
+              >
+                <li v-for="product in searchPreview" :key="product.id">
+                  <NuxtLink
+                    :to="`/product/${product.slug}`"
+                    class="flex items-center gap-3 rounded-xl p-2 hover:bg-gray-50"
+                    @click="closeSearch"
+                  >
+                    <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                      <img
+                        v-if="product.image && !brokenImages[product.id]"
+                        :src="STORAGE_URL + product.image"
+                        :alt="product.name"
+                        class="h-full w-full object-cover"
+                        @error="brokenImages[product.id] = true"
+                      />
+                    </div>
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-medium text-gray-900">{{ product.name }}</p>
+                      <p class="truncate text-xs text-gray-500">{{ product.category?.name }}</p>
+                    </div>
+                  </NuxtLink>
+                </li>
+              </ul>
+              <p v-else-if="!loading" class="py-10 text-center text-sm text-gray-500">
+                Tidak ada produk yang cocok.
+              </p>
+              <Button
+                v-if="totalItems > searchPreview.length && !loading"
+                class="mt-4 w-full sm:w-auto"
+                @click="submitSearch"
+              >
+                Lihat semua {{ totalItems }} hasil
+              </Button>
+            </template>
           </div>
         </div>
       </div>
+    </Transition>
+  </Teleport>
 
-      <div
-        class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 lg:gap-6"
-      >
-        <div v-for="product in products" :key="product.id">
-          <Card
-            @click="viewProductDetail(product.slug)"
-            class="group overflow-hidden cursor-pointer p-0 gap-2 md:gap-4 lg:gap-6"
-          >
-            <div class="relative aspect-square overflow-hidden">
-              <img
-                :src="STORAGE_URL + product.image"
-                :alt="product.name"
-                class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-              />
-              <div
-                class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-              >
-                <Button
-                  variant="outline"
-                  class="opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all"
-                  @click.stop="openQuickView(product)"
-                >
-                  Quick View
-                </Button>
-              </div>
-            </div>
-            <CardContent class="p-4">
-              <div class="flex justify-between items-start">
-                <div>
-                  <h3 class="font-medium">{{ product.name }}</h3>
-                  <p class="text-sm text-gray-500">
-                    {{ product.category?.name }}
-                  </p>
-                </div>
-              </div>
-              <div class="mt-4 flex flex-col md:flex-row items-between lg:items-end justify-between">
-                <div class="flex flex-col">
-                  <span v-if="productMinPrice(product) > 0" class="text-sm text-gray-500 italic">From</span>
-                  <span class="font-bold" v-if="productMinPrice(product) > 0">
-                    Rp. {{ productMinPrice(product) }}
-                    <span class="text-sm text-gray-500">/pcs</span>
-                  </span>
-                  <span class="font-bold text-green-600" v-else>
-                    Tanya Sekarang
-                  </span>
-                </div>
-                <div class="flex gap-2">
-                  <WhatsAppButton :product="product" />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    @click.stop="handleWishlistToggle(product)" 
-                    :class="product.is_wishlisted ? 'border-red-200 text-red-700 hover:bg-red-50' : 'border-green-200 text-green-700 hover:bg-green-50'"
-                  >
-                    <svg 
-                      class="w-4 h-4" 
-                      :fill="product.is_wishlisted ? 'currentColor' : 'none'" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                    </svg>
-                    <!-- {{ product.is_wishlisted ? 'Remove Wishlist' : 'Add to Wishlist' }} -->
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <div class="mt-12 flex justify-center">
-        <div class="flex gap-2 items-center">
-          <Button
-            variant="outline"
-            :disabled="!pageInfo?.has_previous_page"
-            @click="prevPage"
-            >Prev</Button
-          >
-          <Button
-            v-for="p in totalPages"
-            :key="p"
-            :variant="p === currentPageLabel ? 'default' : 'outline'"
-            @click="goToPage(p)"
-          >
-            {{ p }}
-          </Button>
-          <Button
-            variant="outline"
-            :disabled="!pageInfo?.has_next_page"
-            @click="nextPage"
-            >Next</Button
-          >
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick View Modal -->
   <ElementsProductQuickView
     v-model="quickViewOpen"
     :product="selectedProduct"
@@ -395,6 +721,5 @@ definePageMeta({ layout: "page-layout" });
     :storage-url="STORAGE_URL"
   />
 
-  <!-- footer -->
   <ElementsFooter />
 </template>
