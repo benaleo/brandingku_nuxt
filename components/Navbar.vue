@@ -105,57 +105,203 @@
       </div>
     </div>
 
-    <!-- Mobile / tablet menu -->
-    <div
-      v-show="mobileOpen"
-      id="mobile-menu"
-      class="lg:hidden mt-2 max-h-[calc(100svh-6rem)] overflow-y-auto rounded-md bg-white p-4 shadow-xl"
-    >
-      <ul class="space-y-1 text-slate-700">
-        <li><NuxtLink to="/" class="block rounded px-3 py-2 font-medium hover:bg-green-50">{{ $t('app.nav.home') }}</NuxtLink></li>
-        <li>
-          <NuxtLink to="/category" class="block rounded px-3 py-2 font-medium hover:bg-green-50">{{ $t('app.nav.category') }}</NuxtLink>
-          <div v-if="categories.length" class="ml-3 grid grid-cols-2 gap-x-2 border-l pl-2 sm:grid-cols-3">
-            <NuxtLink
-              v-for="category in categories"
-              :key="category.id"
-              :to="`/category/${category.slug || category.id}`"
-              class="block truncate rounded px-3 py-1.5 text-sm text-slate-600 hover:bg-green-50 hover:text-green-700"
-            >
-              {{ category.name.charAt(0).toUpperCase() + category.name.slice(1) }}
-            </NuxtLink>
-          </div>
-        </li>
-        <li>
-          <p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{{ $t('app.nav.service') }}</p>
-          <a v-for="service in services" :key="service.name" :href="service.href" class="block rounded px-3 py-1.5 text-sm hover:bg-green-50" @click="mobileOpen = false">{{ service.name }}</a>
-        </li>
-        <li><NuxtLink to="/kontak" class="block rounded px-3 py-2 font-medium hover:bg-green-50">{{ $t('app.nav.contact') }}</NuxtLink></li>
-        <li><NuxtLink to="/tentang" class="block rounded px-3 py-2 font-medium hover:bg-green-50">{{ $t('app.nav.about') }}</NuxtLink></li>
-      </ul>
-      <div class="mt-3 grid grid-cols-2 gap-2 border-t pt-3">
-        <button type="button" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-green-50" @click="router.push('/wishlist')">{{ $t('app.nav.cart') }}</button>
-        <button type="button" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-green-50" @click="handleUserClick">{{ $t('app.nav.account') }}</button>
-        <Button class="col-span-2 sm:hidden bg-green-600 hover:bg-green-700" @click="router.push('/product')">{{ $t('app.nav.searchProduct') }}</Button>
-      </div>
-    </div>
   </nav>
+
+  <!-- Mobile / tablet menu: full-screen panel sliding in from the right.
+       Teleported to <body> because the nav's transform would otherwise trap position:fixed. -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-transform duration-300 ease-out"
+      leave-active-class="transition-transform duration-200 ease-in"
+      enter-from-class="translate-x-full"
+      leave-to-class="translate-x-full"
+    >
+      <div
+        v-if="mobileOpen"
+        id="mobile-menu"
+        class="fixed inset-0 z-[70] flex flex-col bg-white lg:hidden"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="$t('app.nav.home')"
+      >
+        <div class="flex h-[72px] shrink-0 items-center justify-between border-b px-4">
+          <NuxtLink to="/" @click="mobileOpen = false">
+            <img class="h-[44px] w-auto" src="/images/html/logo.png" alt="Brandingku">
+          </NuxtLink>
+          <div class="flex items-center gap-2">
+            <!-- plain toggle: the LanguageSwitcher dropdown would open behind this full-screen layer -->
+            <div class="flex rounded-lg border p-0.5 text-sm font-medium">
+              <button
+                v-for="code in ['id', 'en']"
+                :key="code"
+                type="button"
+                class="rounded-md px-2.5 py-1 uppercase"
+                :class="locale === code ? 'bg-green-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                :aria-pressed="locale === code"
+                @click="setLocale(code as 'id' | 'en')"
+              >
+                {{ code }}
+              </button>
+            </div>
+            <button
+              type="button"
+              class="inline-flex size-10 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
+              aria-label="Close menu"
+              @click="mobileOpen = false"
+            >
+              <X class="size-6" />
+            </button>
+          </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto px-2 py-3 text-slate-800">
+          <ul>
+            <li>
+              <NuxtLink to="/" class="flex items-center rounded-lg px-3 py-3 text-base font-medium hover:bg-green-50">{{ $t('app.nav.home') }}</NuxtLink>
+            </li>
+
+            <!-- categories: expandable, each parent expands to its sub categories -->
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-center justify-between rounded-lg px-3 py-3 text-base font-medium hover:bg-green-50"
+                :aria-expanded="openSection === 'categories'"
+                @click="toggleSection('categories')"
+              >
+                {{ $t('app.nav.category') }}
+                <ChevronDown class="size-5 text-slate-400 transition-transform duration-200" :class="openSection === 'categories' && 'rotate-180'" />
+              </button>
+              <!-- inert keeps collapsed links out of the tab order -->
+              <div class="grid transition-[grid-template-rows] duration-200" :class="openSection === 'categories' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'" :inert="openSection !== 'categories'">
+                <ul class="overflow-hidden pl-3">
+                  <li v-for="category in categories" :key="category.id">
+                    <!-- with sub categories the whole row toggles; the parent page is the first child link -->
+                    <button
+                      v-if="category.sub_categories?.length"
+                      type="button"
+                      class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[15px] hover:bg-green-50"
+                      :aria-expanded="openCategory === category.id"
+                      @click="openCategory = openCategory === category.id ? null : category.id"
+                    >
+                      <span class="truncate">{{ category.name.charAt(0).toUpperCase() + category.name.slice(1) }}</span>
+                      <ChevronDown class="size-4 shrink-0 text-slate-400 transition-transform duration-200" :class="openCategory === category.id && 'rotate-180'" />
+                    </button>
+                    <NuxtLink
+                      v-else
+                      :to="`/category/${category.slug || category.id}`"
+                      class="block truncate rounded-lg px-3 py-2.5 text-[15px] hover:bg-green-50"
+                    >
+                      {{ category.name.charAt(0).toUpperCase() + category.name.slice(1) }}
+                    </NuxtLink>
+                    <div
+                      v-if="category.sub_categories?.length"
+                      class="grid transition-[grid-template-rows] duration-200"
+                      :class="openCategory === category.id ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
+                      :inert="openCategory !== category.id"
+                    >
+                      <ul class="ml-3 overflow-hidden border-l border-slate-200 pl-2">
+                        <li>
+                          <NuxtLink
+                            :to="`/category/${category.slug || category.id}`"
+                            class="block rounded-lg px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+                          >
+                            {{ $t('app.nav.allInCategory', { name: category.name.charAt(0).toUpperCase() + category.name.slice(1) }) }}
+                          </NuxtLink>
+                        </li>
+                        <li v-for="sub in category.sub_categories" :key="sub.id">
+                          <NuxtLink
+                            :to="`/category/${category.slug || category.id}?sub=${sub.slug}`"
+                            class="block rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-green-50 hover:text-green-700"
+                          >
+                            {{ sub.name.charAt(0).toUpperCase() + sub.name.slice(1) }}
+                          </NuxtLink>
+                        </li>
+                      </ul>
+                    </div>
+                  </li>
+                  <li>
+                    <NuxtLink to="/category" class="block rounded-lg px-3 py-2.5 text-[15px] font-medium text-green-700 hover:bg-green-50">{{ $t('app.nav.allCategories') }}</NuxtLink>
+                  </li>
+                </ul>
+              </div>
+            </li>
+
+            <!-- services: expandable -->
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-center justify-between rounded-lg px-3 py-3 text-base font-medium hover:bg-green-50"
+                :aria-expanded="openSection === 'services'"
+                @click="toggleSection('services')"
+              >
+                {{ $t('app.nav.service') }}
+                <ChevronDown class="size-5 text-slate-400 transition-transform duration-200" :class="openSection === 'services' && 'rotate-180'" />
+              </button>
+              <div class="grid transition-[grid-template-rows] duration-200" :class="openSection === 'services' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'" :inert="openSection !== 'services'">
+                <ul class="overflow-hidden pl-3">
+                  <li v-for="service in services" :key="service.name">
+                    <a :href="service.href" class="block rounded-lg px-3 py-2.5 text-[15px] hover:bg-green-50" @click="mobileOpen = false">{{ service.name }}</a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+
+            <li>
+              <NuxtLink to="/kontak" class="flex items-center rounded-lg px-3 py-3 text-base font-medium hover:bg-green-50">{{ $t('app.nav.contact') }}</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/tentang" class="flex items-center rounded-lg px-3 py-3 text-base font-medium hover:bg-green-50">{{ $t('app.nav.about') }}</NuxtLink>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="shrink-0 space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/wishlist')">
+              <Heart class="size-4" /> {{ $t('app.nav.cart') }}
+            </button>
+            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="handleUserClick">
+              <User class="size-4" /> {{ $t('app.nav.account') }}
+            </button>
+          </div>
+          <Button class="h-11 w-full bg-green-600 hover:bg-green-700" @click="router.push('/product')">{{ $t('app.nav.searchProduct') }}</Button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
-import { Menu as MenuIcon, X } from 'lucide-vue-next';
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
+import { ChevronDown, Heart, Menu as MenuIcon, User, X } from 'lucide-vue-next';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductCategoryService } from '~/services/product-category.service';
 import { getSecureIdFromToken } from '~/utils/token.helper';
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue';
 
-const { t } = useI18n();
+const { t, locale, setLocale } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const mobileOpen = ref(false);
+// mobile menu accordions start collapsed
+const openSection = ref<'categories' | 'services' | null>(null);
+const openCategory = ref<number | string | null>(null);
+const toggleSection = (key: 'categories' | 'services') => {
+  openSection.value = openSection.value === key ? null : key;
+};
 // close the mobile menu after navigating
 watch(() => route.fullPath, () => { mobileOpen.value = false; });
+// lock page scroll behind the full-screen menu and reset accordions when it closes
+watch(mobileOpen, (open) => {
+  if (typeof document !== 'undefined') document.documentElement.style.overflow = open ? 'hidden' : '';
+  if (!open) {
+    openSection.value = null;
+    openCategory.value = null;
+  }
+});
+const onKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') mobileOpen.value = false;
+};
 const categories = ref<any[]>([]);
 const loading = ref(false);
 
@@ -246,5 +392,11 @@ const fetchCategories = async () => {
 
 onMounted(() => {
   fetchCategories();
+  window.addEventListener('keydown', onKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown);
+  document.documentElement.style.overflow = '';
 });
 </script>

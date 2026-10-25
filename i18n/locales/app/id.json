@@ -12,6 +12,7 @@
       "searchProduct": "Cari Produk",
       "other": "LAINNYA",
       "allCategories": "Semua Kategori",
+      "allInCategory": "Semua {name}",
       "loadingCategories": "Memuat kategori...",
       "cart": "Keranjang & Wishlist",
       "account": "Akun Pengguna"

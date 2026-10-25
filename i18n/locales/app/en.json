@@ -12,6 +12,7 @@
       "searchProduct": "Search Product",
       "other": "OTHER",
       "allCategories": "All Categories",
+      "allInCategory": "All {name}",
       "loadingCategories": "Loading categories...",
       "cart": "Cart & Wishlist",
       "account": "User Account"
