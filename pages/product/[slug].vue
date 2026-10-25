@@ -198,7 +198,7 @@ definePageMeta({
     <ArrowLeftIcon class="w-6 h-6" />
   </button>
 
-  <div class="bg-white app-container md:pt-28 px-4 py-8 md:py-12">
+  <div class="bg-white app-container px-4 py-8 md:py-10">
     <div v-if="loading" class="flex justify-center">Loading...</div>
     <div v-else-if="error" class="flex justify-center text-red-500">
       {{ error }}

@@ -277,11 +277,11 @@ definePageMeta({ layout: "page-layout" });
 </script>
 
 <template>
-  <HeaderProduct :title="pageTitle" />
+  <HeaderProduct :title="pageTitle" tag="h1" />
 
-  <section class="app-container pb-16">
+  <section class="app-container px-4 pb-16 pt-6 sm:px-6 md:pt-4 lg:px-8">
     <div ref="listTop" class="scroll-mt-28">
-      <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Daftar Produk Aktif</h1>
+      <h2 class="text-2xl font-bold text-gray-900 sm:text-3xl">Daftar Produk Aktif</h2>
       <p class="mt-1 text-sm text-gray-500">
         <template v-if="loading && !totalItems">Memuat produk...</template>
         <template v-else>{{ totalItems }} produk ditemukan</template>
@@ -443,7 +443,7 @@ definePageMeta({ layout: "page-layout" });
           </div>
         </NuxtLink>
         <div class="flex gap-2 px-3 pb-3 sm:px-4 sm:pb-4">
-          <WhatsAppButton :product="product" class="flex-1" />
+          <WhatsAppButton :product="product" class="min-w-0 flex-1" />
           <Button
             variant="outline"
             size="sm"
@@ -721,5 +721,4 @@ definePageMeta({ layout: "page-layout" });
     :storage-url="STORAGE_URL"
   />
 
-  <ElementsFooter />
 </template>
