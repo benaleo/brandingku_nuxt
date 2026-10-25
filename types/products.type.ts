@@ -50,10 +50,15 @@ export type ProductCategory = {
     description: string
     image: string
     cover?: string
+    landing_image?: string
     sub_categories: string[]
     is_landing_page: boolean
     is_active: boolean
     parent_id?: number | null
+    // downloadable catalog (pdf/word/excel), empty when none
+    catalog_file?: string
+    catalog_file_name?: string
+    catalog_file_size?: number
 }
 
 export type ProductCategoryRequest = {
@@ -62,6 +67,7 @@ export type ProductCategoryRequest = {
     description: string
     image?: string
     cover?: string
+    landing_image?: string
     sub_categories?: string[]
     is_landing_page: boolean
     is_active: boolean

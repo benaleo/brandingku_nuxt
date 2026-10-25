@@ -12,6 +12,8 @@ export interface SubCategory {
   slug: string
   total_products: number
   is_active: boolean
+  catalog_file: string
+  catalog_file_name: string
 }
 
 export interface ProductCategoryBySlug {
@@ -22,6 +24,8 @@ export interface ProductCategoryBySlug {
   banner_image: string
   meta_title: string
   meta_description: string
+  catalog_file: string
+  catalog_file_name: string
   sub: SubCategory[]
 }
 
@@ -42,6 +46,7 @@ export const useLandingFeaturedCategories = () => {
             id
             name
             image
+            landing_image
             slug
           }
         }
@@ -90,6 +95,8 @@ export const useGetProductCategoryBySlug = (slug: string) => {
             banner_image
             meta_title
             meta_description
+            catalog_file
+            catalog_file_name
             sub {
               name
               description
@@ -98,6 +105,8 @@ export const useGetProductCategoryBySlug = (slug: string) => {
               slug
               total_products
               is_active
+              catalog_file
+              catalog_file_name
             }
           }
         }
@@ -113,12 +122,14 @@ export const useGetProductCategoryBySlug = (slug: string) => {
       if (result) {
         result.cover_image = result.cover_image ? `${STORAGE_URL}${result.cover_image}` : result.cover_image
         result.banner_image = result.banner_image ? `${STORAGE_URL}${result.banner_image}` : result.banner_image
+        result.catalog_file = result.catalog_file ? `${STORAGE_URL}${result.catalog_file}` : ''
         
         if (result.sub) {
           result.sub = result.sub.map(subCategory => ({
             ...subCategory,
             image: subCategory.image ? `${STORAGE_URL}${subCategory.image}` : subCategory.image,
-            cover: subCategory.cover ? `${STORAGE_URL}${subCategory.cover}` : subCategory.cover
+            cover: subCategory.cover ? `${STORAGE_URL}${subCategory.cover}` : subCategory.cover,
+            catalog_file: subCategory.catalog_file ? `${STORAGE_URL}${subCategory.catalog_file}` : '',
           }))
         }
       }

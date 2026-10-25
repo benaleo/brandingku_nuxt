@@ -59,8 +59,10 @@ watch(data, (newData) => {
               <div
                 class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"
               >
+                <!-- landing image set in the category form; falls back to the list image -->
                 <nuxt-img
-                  :src="`${STORAGE_URL}${category.image}`"
+                  :src="`${STORAGE_URL}${category.landing_image || category.image}`"
+                  :alt="category.name"
                   width="100"
                   height="100"
                 />

@@ -3,6 +3,7 @@ import {useRoute} from 'vue-router'
 import {computed, nextTick, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
 import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
+import {Download} from 'lucide-vue-next'
 
 const route = useRoute()
 const slug = route.params.slug as string
@@ -91,6 +92,17 @@ const {
 
 // Reactive category slug for product fetching
 const currentCategorySlug = computed(() => selectedSubCategory.value?.slug || slug)
+
+// "Request Catalog": the selected sub category's catalog, else the parent's; without one, ask via WhatsApp
+const { whatsappUrl } = useSiteSettings()
+const activeCatalog = computed(() => {
+  const sub = selectedSubCategory.value
+  if (sub?.catalog_file) return { url: sub.catalog_file, name: sub.catalog_file_name }
+  if (category.value?.catalog_file) return { url: category.value.catalog_file, name: category.value.catalog_file_name }
+  return null
+})
+const catalogRequestUrl = computed(() =>
+  whatsappUrl(`Halo admin, saya ingin request katalog ${selectedSubCategory.value?.name || category.value?.name || ''}`.trim()))
 
 const {
   products,
@@ -202,8 +214,9 @@ definePageMeta({
     
     <!-- Category Header -->
     <div v-else-if="category" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
-      <div v-if="category.banner_image" class="absolute inset-0 overflow-hidden rounded-lg">
-        <img :src="category.banner_image" alt="" class="w-full h-full object-cover opacity-30"/>
+      <!-- hero uses the category cover; older categories without one keep the list image -->
+      <div v-if="category.cover_image || category.banner_image" class="absolute inset-0 overflow-hidden rounded-lg">
+        <img :src="category.cover_image || category.banner_image" alt="" class="w-full h-full object-cover opacity-30"/>
       </div>
       <div class="relative max-w-4xl mx-auto pt-24">
         <h1 class="text-4xl font-bold mb-4">{{ category.name }}</h1>
@@ -215,9 +228,17 @@ definePageMeta({
           <button class="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors">
             Explore Collection
           </button>
-          <button class="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors">
+          <a
+            :href="activeCatalog ? activeCatalog.url : catalogRequestUrl"
+            target="_blank"
+            rel="noopener"
+            :download="activeCatalog ? activeCatalog.name : undefined"
+            :title="activeCatalog ? activeCatalog.name : undefined"
+            class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
+          >
+            <Download v-if="activeCatalog" class="size-5 shrink-0" />
             Request Catalog
-          </button>
+          </a>
         </div>
       </div>
     </div>

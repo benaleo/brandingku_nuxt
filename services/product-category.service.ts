@@ -139,8 +139,13 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     slug
                     description
                     image
+                    cover
+                    landing_image
                     is_landing_page
                     is_active
+                    catalog_file
+                    catalog_file_name
+                    catalog_file_size
                     sub_categories {
                         id
                         name
@@ -272,6 +277,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         slug?: string | null
         description: string
         image?: string
+        cover?: string
+        landing_image?: string
         is_landing_page?: boolean
         is_active?: boolean
     }) => {
@@ -286,6 +293,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             slug,
             description: payload.description,
             image: payload.image,
+            cover: payload.cover,
+            landing_image: payload.landing_image,
             parent_id: parentId,
             is_landing_page: payload.is_landing_page,
         })
@@ -297,6 +306,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         slug?: string | null
         description: string
         image?: string
+        cover?: string
+        landing_image?: string
         is_landing_page?: boolean
         is_active?: boolean
     }) => {
@@ -308,6 +319,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             slug: payload.slug ?? current.slug,
             description: payload.description,
             image: payload.image,
+            cover: payload.cover,
+            landing_image: payload.landing_image,
             is_landing_page: payload.is_landing_page,
             is_active: payload.is_active,
         })
@@ -320,6 +333,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         description?: string
         image?: string
         cover? : string
+        landing_image?: string
         parent_id?: number
         is_landing_page?: boolean
     }) => {
@@ -330,6 +344,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 $description: String,
                 $image: String,
                 $cover: String,
+                $landing_image: String,
                 $parent_id: Int,
                 $is_landing_page: Boolean
             ) {
@@ -339,6 +354,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     description: $description,
                     image: $image,
                     cover: $cover,
+                    landing_image: $landing_image,
                     parent_id: $parent_id,
                     is_landing_page: $is_landing_page
                 ) {
@@ -348,6 +364,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     description
                     image
                     cover
+                    landing_image
                     is_landing_page
                     is_active
                     created_at
@@ -375,6 +392,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         description?: string
         image?: string
         cover?: string
+        landing_image?: string
         parent_id?: number
         is_landing_page?: boolean
         is_active?: boolean
@@ -388,6 +406,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                 $description: String,
                 $image: String,
                 $cover: String,
+                $landing_image: String,
                 $parent_id: Int,
                 $is_landing_page: Boolean,
                 $is_active: Boolean
@@ -399,6 +418,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     description: $description,
                     image: $image,
                     cover: $cover,
+                    landing_image: $landing_image,
                     parent_id: $parent_id,
                     is_landing_page: $is_landing_page,
                     is_active: $is_active
@@ -409,6 +429,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     description
                     image
                     cover
+                    landing_image
                     is_landing_page
                     is_active
                     created_at
@@ -434,6 +455,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
         description: string
         image?: string
         cover?: string
+        landing_image?: string
         sub_categories?: string[]
         is_landing_page: boolean
         is_active: boolean
@@ -449,6 +471,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             description: vars.description,
             image: vars.image,
             cover: vars.cover,
+            landing_image: vars.landing_image,
             is_landing_page: vars.is_landing_page,
             // is_active handled by backend default or separate mutation if required
         })
@@ -487,6 +510,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             description: string
             image?: string
             cover?: string
+            landing_image?: string
             sub_categories?: string[]
             is_landing_page: boolean
             is_active: boolean
@@ -499,13 +523,17 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
             description: vars.description,
             image: vars.image ?? undefined,
             cover: vars.cover ?? undefined,
+            landing_image: vars.landing_image ?? undefined,
             is_landing_page: vars.is_landing_page,
+            is_active: vars.is_active,
         })
         if (Array.isArray(vars.sub_categories) && vars.sub_categories.length) {
             // get parent detail and existing children to avoid duplicates and prefix slug
             const parentDetail = await getProductCategoryDetail(Number(id))
             const existingChildren = await getChildCategoriesByParentId(Number(id), false)
             const existingSlugs = new Set(existingChildren.map(c => c.slug))
+            // match by name too: existing children may have a different slug (renamed, or a -2 suffix)
+            const existingNames = new Set(existingChildren.map(c => String(c.name).trim().toLowerCase()))
             
             for (const sub of vars.sub_categories) {
                 const subName = String(sub).trim()
@@ -518,8 +546,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     .replace(/[^a-z0-9_]/g, '')
                 const fullSlug = `${parentDetail.slug}-${subSlug}`
                 
-                // Skip if a category with this slug already exists
-                if (existingSlugs.has(fullSlug)) continue
+                // Skip if a sub category with this name or slug already exists
+                if (existingSlugs.has(fullSlug) || existingNames.has(subName.toLowerCase())) continue
                 
                 try {
                     await createProductCategory({
@@ -530,6 +558,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     })
                     // Add to existing slugs to prevent duplicates in the same batch
                     existingSlugs.add(fullSlug)
+                    existingNames.add(subName.toLowerCase())
                 } catch (error) {
                     console.error(`Failed to create sub-category "${subName}":`, error)
                     // Continue with next sub-category even if one fails
@@ -578,6 +607,34 @@ const deleteProductCategoryById = async (id: string) => {
     return deleted
 }
 
+// Catalog files can be up to 50 MB, beyond the GraphQL proxy limit, so they go straight to the
+// API's multipart endpoint. XMLHttpRequest is used because fetch has no upload progress.
+const uploadCategoryCatalog = (id: number | string, file: File, onProgress?: (percent: number) => void) => {
+    const apiUrl = String(useRuntimeConfig().public.API_URL || '').replace(/\/$/, '')
+    const token = useCookie<string | null>('token').value
+    return new Promise<{ catalog_file: string; catalog_file_name: string; catalog_file_size: number }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', `${apiUrl}/upload/category-catalog?id=${encodeURIComponent(String(id))}`)
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100)) }
+        xhr.onload = () => {
+            let body: any = null
+            try { body = JSON.parse(xhr.responseText) } catch { /* non-json error page */ }
+            if (xhr.status >= 200 && xhr.status < 300 && body) resolve(body)
+            else reject(new Error(body?.error || `Upload katalog gagal (HTTP ${xhr.status})`))
+        }
+        xhr.onerror = () => reject(new Error('Upload katalog gagal: koneksi ke server terputus'))
+        const form = new FormData()
+        form.append('file', file)
+        xhr.send(form)
+    })
+}
+
+const deleteCategoryCatalog = async (id: number | string) => {
+    const mutation = `mutation deleteProductCategoryCatalog($id: Int!) { deleteProductCategoryCatalog(id: $id) { id } }`
+    await gqlFetch(mutation, { id: Number(id) }, { auth: true })
+}
+
 return {
     // GraphQL list state (backward-compatible shape for the page)
     datas,
@@ -601,6 +658,8 @@ return {
     getProductCategoriesParentNavbar,
     getProductCategoryDetail,
     getProductCategoriesPage,
+    uploadCategoryCatalog,
+    deleteCategoryCatalog,
     createProductCategory,
     createProductCategoryWithSubs,
     updateProductCategory,
