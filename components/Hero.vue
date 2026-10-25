@@ -1,185 +1,90 @@
 <template>
-  <div class="w-full relative h-screen overflow-hidden">
-    <div class="waves back">
-      <svg
-        viewBox="0 24 150 28"
-        preserveAspectRatio="none"
-        style="transform: scaleY(-1); width: 100vw; height: 200px"
-      >
-        <defs>
-          <path
-            id="gentle-wave"
-            d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
-          ></path>
-        </defs>
-        <g class="wave">
-          <use href="#gentle-wave" xlink:href="#gentle-wave" x="48" y="5"></use>
-        </g>
-        <g class="wave">
-          <use href="#gentle-wave" xlink:href="#gentle-wave" x="48" y="7"></use>
-        </g>
-      </svg>
-    </div>
-    <div class="waves front">
-      <svg
-        viewBox="0 24 150 28"
-        preserveAspectRatio="none"
-        style="transform: scaleY(-1); width: 100vw; height: 200px"
-      >
-        <defs>
-          <path
-            id="gentle-wave"
-            d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
-          ></path>
-        </defs>
-        <g class="wave">
-          <use href="#gentle-wave" xlink:href="#gentle-wave" x="48" y="0"></use>
-        </g>
-        <g class="wave">
-          <use href="#gentle-wave" xlink:href="#gentle-wave" x="48" y="3"></use>
-        </g>
-      </svg>
-    </div>
-    <div
-      class="relative z-10 w-full top-0 h-[80vh] flex flex-col items-center justify-center"
-    >
-      <div class="bg-[#0f6e2d] pt-16 w-full h-full">
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 container grid grid-cols-1 lg:grid-cols-2">
-          <div
-            class="relative mt-12 px-4 md:px-6 lg:px-8 container mx-auto h-full flex flex-col justify-center gap-4"
-            style="max-width: fit-content"
-          >
-            <Badge variant="outline" class="text-white bg-slate-400/20 border-[#9AF89F]"
-              ><li>{{ $t('app.hero.trustedBadge') }}</li></Badge
-            >
-            <div class="text-7xl font-bold text-white">
-              {{ $t('app.hero.titlePrefix') }}<span class="text-[#9AF89F]">{{ $t('app.hero.titleHighlight') }}</span>{{ $t('app.hero.titleSuffix') }}
-            </div>
-            <div class="text-2xl text-white">
-              {{ $t('app.hero.description') }}
-            </div>
-            <div class="flex flex-wrap gap-2 items-center justify-start">
-              <Button class="bg-[#9AF89F] text-[#0f6e2d] hover:bg-[#9AF89F]/90 px-6 py-6 text-base md:px-12 md:py-8 md:text-lg">{{ $t('app.hero.ctaSearch') }}</Button>
-              <Button class="bg-transparent text-white border-white hover:bg-white/10 border-2 border-white/20 px-6 py-6 text-base md:px-12 md:py-8 md:text-lg">{{ $t('app.hero.ctaConsult') }}</Button>
-            </div>
+  <section class="relative w-full overflow-hidden bg-white">
+    <div class="relative bg-[#0f6e2d]">
+      <!-- content flows normally so text never gets clipped; top padding clears the fixed navbar -->
+      <div class="app-container relative z-10 grid items-center gap-10 px-4 pt-28 pb-10 md:px-6 md:pt-36 md:pb-14 lg:min-h-[calc(100svh-120px)] lg:grid-cols-2 lg:px-8 lg:pt-32">
+        <div class="flex min-w-0 flex-col gap-5">
+          <Badge variant="outline" class="w-fit border-[#9AF89F] bg-slate-400/20 text-white">
+            {{ $t('app.hero.trustedBadge') }}
+          </Badge>
+          <h1 class="text-4xl font-bold leading-tight text-white text-balance break-words sm:text-5xl lg:text-6xl xl:text-7xl">
+            {{ $t('app.hero.titlePrefix') }}<span class="text-[#9AF89F]">{{ $t('app.hero.titleHighlight') }}</span>{{ $t('app.hero.titleSuffix') }}
+          </h1>
+          <p class="max-w-2xl text-base text-white/90 sm:text-lg lg:text-xl">
+            {{ $t('app.hero.description') }}
+          </p>
+          <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button as-child class="h-auto bg-[#9AF89F] px-8 py-4 text-base text-[#0f6e2d] hover:bg-[#9AF89F]/90 md:px-10 md:py-5 md:text-lg">
+              <NuxtLink to="/product">{{ $t('app.hero.ctaSearch') }}</NuxtLink>
+            </Button>
+            <Button as-child class="h-auto border-2 border-white/30 bg-transparent px-8 py-4 text-base text-white hover:bg-white/10 md:px-10 md:py-5 md:text-lg">
+              <NuxtLink to="/kontak">{{ $t('app.hero.ctaConsult') }}</NuxtLink>
+            </Button>
           </div>
-          <div class="relative container px-4 mx-auto">
-            <div
-              class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 aspect-square overflow-hidden rounded-lg max-w-md mx-auto rotate-3 shadow-lg"
-            >
-              <img
-                src="https://picsum.photos/800/600?random=1"
-                alt="Hero product image"
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <Badge variant="secondary" class="absolute top-4 right-4"
-                >{{ $t('app.hero.newArrival') }}</Badge
-              >
-            </div>
+        </div>
+
+        <!-- decorative product image: only where there is room beside the text -->
+        <div class="relative hidden justify-center lg:flex">
+          <div class="relative aspect-square w-full max-w-md rotate-3 overflow-hidden rounded-lg shadow-lg">
+            <img
+              src="https://picsum.photos/800/800?random=1"
+              alt="Brandingku merchandise"
+              width="800"
+              height="800"
+              class="h-full w-full object-cover"
+              fetchpriority="high"
+            />
+            <Badge variant="secondary" class="absolute top-4 right-4">{{ $t('app.hero.newArrival') }}</Badge>
           </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- animated waves: green fills hang from the hero into the white section below -->
+    <div class="hero-waves relative h-16 sm:h-24 md:h-32 lg:h-40" aria-hidden="true">
+      <svg class="absolute inset-0 h-full w-full" viewBox="0 24 150 28" preserveAspectRatio="none">
+        <defs>
+          <path id="hero-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+        </defs>
+        <g class="wave back"><use href="#hero-wave" x="48" y="5" /></g>
+        <g class="wave back"><use href="#hero-wave" x="48" y="7" /></g>
+        <g class="wave front"><use href="#hero-wave" x="48" y="0" /></g>
+        <g class="wave front"><use href="#hero-wave" x="48" y="3" /></g>
+      </svg>
+    </div>
+  </section>
 </template>
 
-<style>
-.waves {
-  position: absolute;
-  top: 25vh;
-  left: 0;
-  height: 75vh;
-  background: #135d13;
+<style scoped>
+.hero-waves svg {
+  transform: scaleY(-1);
 }
-
-.waves svg {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-
-.waves .wave {
-  animation: wavewave 5s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+.hero-waves .wave {
+  animation: hero-wave 5s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
   transform-box: fill-box;
   transform-origin: center;
   will-change: transform;
 }
-.waves .wave use {
+.hero-waves .wave use {
   opacity: 0.8;
 }
-.waves.back .wave use {
+.hero-waves .wave.back use {
   fill: #16a34a;
 }
-.waves.front .wave use {
+.hero-waves .wave.front use {
   fill: #0f6e2d;
 }
+.hero-waves .wave:nth-of-type(1) { animation-delay: -4s; animation-duration: 13s; }
+.hero-waves .wave:nth-of-type(2) { animation-delay: -5s; animation-duration: 20s; }
+.hero-waves .wave:nth-of-type(3) { animation-delay: -2s; animation-duration: 7s; }
+.hero-waves .wave:nth-of-type(4) { animation-delay: -3s; animation-duration: 10s; }
 
-.waves.back {
-  z-index: 1;
-}
-.waves.back svg > .wave:nth-of-type(1) {
-  animation-delay: -4s;
-  animation-duration: 13s;
-}
-.waves.back svg > .wave:nth-of-type(2) {
-  animation-delay: -5s;
-  animation-duration: 20s;
+@keyframes hero-wave {
+  0% { transform: translateX(-90px); }
+  100% { transform: translateX(85px); }
 }
 
-.waves.front {
-  z-index: 3;
-}
-.waves.front svg > .wave:nth-of-type(1) {
-  animation-delay: -2s;
-  animation-duration: 7s;
-}
-.waves.front svg > .wave:nth-of-type(2) {
-  animation-delay: -3s;
-  animation-duration: 10s;
-}
-
-@keyframes wavewave {
-  0% {
-    transform: translateX(-90px);
-  }
-  100% {
-    transform: translateX(85px);
-  }
-}
-
-@keyframes bob {
-  0% {
-    transform: rotate(-10deg) translateY(0vh);
-  }
-  100% {
-    transform: rotate(8deg) translateY(-20vh);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #1a202c;
-  }
-  .waves::after {
-    background-image: linear-gradient(to bottom right, #34d399, #34d399);
-    top: 0;
-    height: 85vh;
-    content: "";
-    position: absolute;
-    width: 100%;
-    left: 0;
-  }
-  .waves .wave use {
-    fill: #34d399;
-  }
-  .boat .hull {
-    background: darkred;
-    border-top-color: #600000;
-  }
-  .boat .sail1,
-  .boat .sail2 {
-    border-bottom-color: whitesmoke;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .hero-waves .wave { animation: none; }
 }
 </style>

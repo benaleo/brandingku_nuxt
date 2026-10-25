@@ -69,30 +69,30 @@ function goTo(slug: string) {
 </script>
 
 <template>
-  <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
-    <div class="container max-w-6xl mx-auto py-12">
+  <div ref="target" class="w-full px-4 py-12 md:py-16 bg-[#F2F4F7]">
+    <div class="container max-w-6xl mx-auto py-4 md:py-8">
       <div v-if="error" class="text-center text-red-500">{{ error }}</div>
       <div v-else>
         <Tabs default-value="populer" class="w-full">
-          <TabsList
-            class="w-full flex justify-between items-end bg-transparent"
-          >
-            <div class="flex-1 max-w-[400px]">
-              <p class="text-2xl font-bold text-black">{{ $t('app.products.title') }}</p>
-              <p>
+          <!-- heading stacks above the tabs on small screens -->
+          <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div class="max-w-xl">
+              <h2 class="text-2xl md:text-3xl font-bold text-black">{{ $t('app.products.title') }}</h2>
+              <p class="mt-1 text-gray-600">
                 {{ $t('app.products.description') }}
               </p>
             </div>
-            <div class="flex-shrink-0 bg-slate-100 rounded-lg p-2">
+            <TabsList class="h-auto w-fit shrink-0 bg-slate-100 p-1.5">
               <TabsTrigger
                 v-for="(trigger, index) in tabs"
                 :key="index"
                 :value="trigger.key"
+                class="px-3 py-1.5"
               >
                 {{ trigger.label.toLocaleUpperCase() }}
               </TabsTrigger>
-            </div>
-          </TabsList>
+            </TabsList>
+          </div>
           <TabsContent
             v-for="(val, index) in tabs"
             :key="val.id"
@@ -108,7 +108,7 @@ function goTo(slug: string) {
                   v-if="loading || isInitialLoad"
                   v-for="n in 5"
                   :key="`skeleton-${n}`"
-                  class="md:basis-1/2 lg:basis-1/4"
+                  class="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
                   <div class="p-1">
                     <Card class="py-0">
@@ -131,7 +131,7 @@ function goTo(slug: string) {
                   v-else
                   v-for="product in filteredProducts(val.key)"
                   :key="product.id"
-                  class="md:basis-1/2 lg:basis-1/4"
+                  class="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
                   <div class="p-1">
                     <Card
