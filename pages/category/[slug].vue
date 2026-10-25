@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useRoute} from 'vue-router'
-import {computed, nextTick, ref, watch} from 'vue'
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
 import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
 import {Download} from 'lucide-vue-next'
@@ -52,7 +52,7 @@ function onFilterClickCapture(e: MouseEvent) {
 // Keep scrollLeft within the middle copy so the strip appears to loop forever
 function wrapFilterScroll() {
   const el = filterScrollRef.value
-  if (!el) return
+  if (!el || !filterOverflows.value) return
   const oneSetWidth = el.scrollWidth / FILTER_LOOP_REPEAT
   if (oneSetWidth <= 0) return
   if (el.scrollLeft < oneSetWidth) {
@@ -134,16 +134,32 @@ const categoryFilters = computed(() => {
   return filters
 })
 
-// Repeat the filter list so the scroll strip can loop infinitely
+// Repeat the filter list so the scroll strip can loop infinitely, but only when one set
+// is wider than the strip; otherwise the chips would visibly appear three times.
 const FILTER_LOOP_REPEAT = 3
+const filterOverflows = ref(false)
 const loopedFilters = computed(() => {
   const filters = categoryFilters.value
+  const reps = filterOverflows.value ? FILTER_LOOP_REPEAT : 1
   const looped: { filter: string; rep: number; key: string }[] = []
-  for (let rep = 0; rep < FILTER_LOOP_REPEAT; rep++) {
-    filters.forEach(filter => looped.push({ filter, rep, key: `${rep}-${filter}` }))
+  for (let rep = 0; rep < reps; rep++) {
+    filters.forEach(filter => looped.push({ filter, rep: reps === 1 ? 1 : rep, key: `${rep}-${filter}` }))
   }
   return looped
 })
+
+// measure one set (rendered unlooped first) against the strip width
+const measureFilterOverflow = async () => {
+  filterOverflows.value = false
+  await nextTick()
+  const el = filterScrollRef.value
+  if (!el) return
+  filterOverflows.value = el.scrollWidth > el.clientWidth + 4
+  if (filterOverflows.value) centerSelectedFilter(selectedFilter.value)
+}
+watch([categoryFilters, categoryLoading], () => { if (!categoryLoading.value) measureFilterOverflow() })
+onMounted(() => window.addEventListener('resize', measureFilterOverflow))
+onBeforeUnmount(() => window.removeEventListener('resize', measureFilterOverflow))
 
 useHead({
   title: pageTitle,
@@ -190,22 +206,22 @@ definePageMeta({
   <div class="bg-gray-100">
     <!-- Header Section with dynamic banner -->
     <!-- Loading State -->
-    <div v-if="categoryLoading" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
-      <div class="relative max-w-4xl mx-auto pt-24">
+    <div v-if="categoryLoading" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white px-4 pt-28 pb-24 sm:px-8 md:pt-36 md:pb-28">
+      <div class="relative max-w-4xl mx-auto">
         <div class="h-12 bg-white/20 rounded w-1/2 mb-4 animate-pulse"></div>
         <div class="h-6 bg-white/20 rounded w-3/4 mb-6 animate-pulse"></div>
-        <div class="flex gap-4">
-          <div class="h-12 bg-white/20 rounded w-40 animate-pulse"></div>
-          <div class="h-12 bg-white/20 rounded w-40 animate-pulse"></div>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <div class="h-12 bg-white/20 rounded sm:w-44 animate-pulse"></div>
+          <div class="h-12 bg-white/20 rounded sm:w-44 animate-pulse"></div>
         </div>
       </div>
     </div>
     
     <!-- Error State -->
-    <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 py-16 px-8 rounded-lg mb-8">
+    <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 px-4 pt-28 pb-16 sm:px-8 md:pt-36">
       <div class="relative max-w-4xl mx-auto text-center">
-        <h1 class="text-4xl font-bold mb-4">Category Not Found</h1>
-        <p class="text-xl mb-6">{{ categoryError }}</p>
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">Category Not Found</h1>
+        <p class="text-lg md:text-xl mb-6 break-words">{{ categoryError }}</p>
         <button @click="$router.push('/')" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
           Back to Home
         </button>
@@ -213,21 +229,25 @@ definePageMeta({
     </div>
     
     <!-- Category Header -->
-    <div v-else-if="category" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
+    <!-- top padding clears the fixed navbar; bottom padding leaves room for the overlapping filter strip -->
+    <div v-else-if="category" class="relative overflow-hidden bg-gradient-to-r from-green-600 to-green-800 text-white px-4 pt-28 pb-24 sm:px-8 md:pt-36 md:pb-28">
       <!-- hero uses the category cover; older categories without one keep the list image -->
-      <div v-if="category.cover_image || category.banner_image" class="absolute inset-0 overflow-hidden rounded-lg">
+      <div v-if="category.cover_image || category.banner_image" class="absolute inset-0">
         <img :src="category.cover_image || category.banner_image" alt="" class="w-full h-full object-cover opacity-30"/>
       </div>
-      <div class="relative max-w-4xl mx-auto pt-24">
-        <h1 class="text-4xl font-bold mb-4">{{ category.name }}</h1>
+      <div class="relative max-w-4xl mx-auto">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 break-words">{{ category.name }}</h1>
         <div
-          class="text-xl mb-6 text-green-100 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-200"
+          class="text-base sm:text-lg md:text-xl mb-6 text-green-100 break-words [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-200"
           v-html="category.description"
         ></div>
-        <div class="flex gap-4">
-          <button class="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors">
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <a
+            href="#products"
+            class="inline-flex items-center justify-center bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+          >
             Explore Collection
-          </button>
+          </a>
           <a
             :href="activeCatalog ? activeCatalog.url : catalogRequestUrl"
             target="_blank"
@@ -243,18 +263,19 @@ definePageMeta({
       </div>
     </div>
 
-   <div class="relative container mx-auto">
-     <!-- Category Filter Navigation -->
-    <div class="absolute top-[-70px] left-0 right-0 mb-8 bg-white py-4 px-2 rounded-lg">
+   <div class="relative app-container px-4 md:px-6">
+     <!-- Category Filter Navigation: overlaps the bottom of the hero -->
+    <div class="relative z-10 -mt-14 md:-mt-16 rounded-xl bg-white py-3 px-2 shadow-sm">
       <!-- Loading State for Filters -->
-      <div v-if="categoryLoading" class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
-        <div v-for="n in 12" :key="n" class="h-8 bg-gray-200 rounded-full w-42 animate-pulse snap-start"></div>
+      <div v-if="categoryLoading" class="flex gap-2 justify-start overflow-hidden px-2">
+        <div v-for="n in 6" :key="n" class="h-9 bg-gray-200 rounded-full w-24 shrink-0 animate-pulse"></div>
       </div>
       <!-- Actual Filters -->
       <div
         v-else
         ref="filterScrollRef"
-        class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+        class="flex gap-2 overflow-x-auto scrollbar-hide px-2 select-none"
+        :class="filterOverflows ? 'justify-start cursor-grab active:cursor-grabbing' : 'justify-center flex-wrap'"
         @mousedown="onFilterDragStart"
         @mousemove="onFilterDragMove"
         @mouseup="onFilterDragEnd"
@@ -269,7 +290,7 @@ definePageMeta({
           :data-filter="item.filter"
           @click="handleFilterClick(item.filter)"
           :class="[
-            'px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap snap-start',
+            'px-4 py-2 rounded-full text-sm md:text-base font-medium capitalize transition-colors whitespace-nowrap',
             selectedFilter === item.filter
               ? 'bg-green-600 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -282,11 +303,11 @@ definePageMeta({
 
 
     <!-- Products Section -->
-    <div class="mb-12 pt-12 max-w-6xl mx-auto">
-      <h2 class="text-3xl font-bold mb-8 text-center">{{ selectedSubCategory?.name || 'Products' }}</h2>
+    <div id="products" class="mb-12 pt-10 md:pt-12 max-w-6xl mx-auto scroll-mt-24">
+      <h2 class="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center capitalize">{{ selectedSubCategory?.name || 'Products' }}</h2>
       
       <!-- Initial Loading State (Skeleton) -->
-      <div v-if="productsLoading && products.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div v-if="productsLoading && products.length === 0" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         <div v-for="n in 8" :key="n" class="bg-white border rounded-lg overflow-hidden animate-pulse">
           <div class="w-full h-48 bg-gray-200"></div>
           <div class="p-4">
@@ -320,43 +341,44 @@ definePageMeta({
       </div>
       
       <!-- Empty State -->
-      <div v-else-if="!productsLoading && !productsError && products.length === 0" class="flex flex-col items-center justify-center py-12">
+      <div v-else-if="!productsLoading && !productsError && products.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
         </div>
-        <p class="text-2xl font-semibold text-gray-800 mb-3">No products found in this category yet.</p>
-        <p class="text-gray-600 text-center mb-6 max-w-md">We're currently updating our collection with fresh, eco-friendly designs. Why not explore our other sustainable categories or check back soon?</p>
-        <div class="flex space-x-4">
-          <NuxtLink to="/products" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg">
+        <p class="text-xl md:text-2xl font-semibold text-gray-800 mb-3">No products found in this category yet.</p>
+        <p class="text-gray-600 mb-6 max-w-md">We're currently updating our collection with fresh, eco-friendly designs. Why not explore our other sustainable categories or check back soon?</p>
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <NuxtLink to="/product" class="inline-flex items-center justify-center bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
             Browse All Products
           </NuxtLink>
-          <button class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors text-lg">
+          <NuxtLink to="/kontak" class="inline-flex items-center justify-center bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors">
             Contact Sales for Custom Requests
-          </button>
+          </NuxtLink>
         </div>
       </div>
       
       <!-- Products Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <NuxtLink 
-          v-for="product in products" 
+      <!-- 2 columns on phones, 3 on laptops, 4 on wide screens -->
+      <div v-else class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+        <NuxtLink
+          v-for="product in products"
           :key="product.id"
           :to="`/product/${product.slug}`"
-          class="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow block group"
+          class="flex min-w-0 flex-col bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow group"
         >
-        <div class="aspect-square p-4 bg-gray-100">
-          <img :src="product.image" alt="" class="aspect-square object-cover rounded-md"/>
-        </div>
-          <div class="p-4 bg-gray-100">
-            <h3 class="text-lg font-semibold mb-2 group-hover:text-green-600 transition-colors">{{ product.name }}</h3>
-            <p class="text-gray-600 text-sm mb-3 line-clamp-3" v-html="product.description?.substring(0, 200) + (product.description?.length > 200 ? '...' : '')"></p>
-            <div class="flex justify-between items-center">
-              <span class="text-xl font-bold text-green-600" :class="product.additionals?.[0]?.price ? '' : 'opacity-0'">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
-              <button 
+          <div class="aspect-square bg-gray-100 p-2 sm:p-4">
+            <img :src="product.image" :alt="product.name" loading="lazy" class="size-full object-cover rounded-md"/>
+          </div>
+          <div class="flex flex-1 flex-col p-3 sm:p-4 bg-gray-100">
+            <h3 class="text-sm sm:text-lg font-semibold mb-1 sm:mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">{{ product.name }}</h3>
+            <p class="hidden sm:block text-gray-600 text-sm mb-3 line-clamp-3" v-html="product.description?.substring(0, 200) + (product.description?.length > 200 ? '...' : '')"></p>
+            <div class="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-base sm:text-xl font-bold text-green-600" :class="product.additionals?.[0]?.price ? '' : 'invisible'">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
+              <button
                 @click.prevent
-                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
+                class="w-full sm:w-auto bg-green-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm hover:bg-green-700 transition-colors"
               >
                 Add to Quote
               </button>
