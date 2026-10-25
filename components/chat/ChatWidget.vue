@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showWidget" class="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+  <div v-if="showWidget" class="fixed bottom-5 right-5 z-50 [.has-bottom-bar_&]:bottom-24 lg:[.has-bottom-bar_&]:bottom-5 flex flex-col items-end gap-3">
     <div
       v-if="open"
       class="flex h-[520px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl"

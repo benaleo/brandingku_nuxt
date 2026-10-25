@@ -36,33 +36,29 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
 </script>
 
 <template>
-  <div class="w-full sm:w-auto px-12">
+  <div class="w-full">
     <Carousel
       class="relative w-full"
       @init-api="(val) => emblaMainApi = val"
     >
-      <CarouselContent class="shadow-lg">
+      <CarouselContent>
         <CarouselItem v-for="(image, index) in images" :key="index">
-          <div class="p-1">
-            <Card class="py-0 overflow-hidden rounded-lg shadow">
-              <CardContent class="flex aspect-square items-center justify-center px-0 overflow-hidden">
-                <img :src="image" :alt="`Product image ${index + 1}`" class="w-full h-full object-cover px-0" />
-              </CardContent>
-            </Card>
+          <div class="aspect-square overflow-hidden bg-gray-50 sm:rounded-xl sm:border">
+            <img :src="image" :alt="`Product image ${index + 1}`" class="h-full w-full object-cover" />
           </div>
         </CarouselItem>
       </CarouselContent>
       <!-- keep arrows inside the carousel; the default -left/-right-12 overflows the page -->
-      <CarouselPrevious class="left-2 bg-white/90 shadow-md" />
-      <CarouselNext class="right-2 bg-white/90 shadow-md" />
+      <CarouselPrevious v-if="images.length > 1" class="left-3 bg-white/90 shadow-md" />
+      <CarouselNext v-if="images.length > 1" class="right-3 bg-white/90 shadow-md" />
     </Carousel>
 
     <Carousel
-      class="relative w-full"
+      class="relative mt-2 w-full px-4 sm:px-0"
       @init-api="(val) => emblaThumbnailApi = val"
     >
       <CarouselContent class="flex gap-1 ml-0">
-        <CarouselItem v-for="(image, index) in images" :key="index" class="pl-0 basis-1/4 cursor-pointer" @click="onThumbClick(index)">
+        <CarouselItem v-for="(image, index) in images" :key="index" class="pl-0 basis-1/5 cursor-pointer sm:basis-1/4" @click="onThumbClick(index)">
           <div class="p-1" :class="index === selectedIndex ? '' : 'opacity-50'">
             <Card class="flex items-center justify-center py-0 overflow-hidden rounded-lg">
               <CardContent class="flex items-center justify-center p-0 aspect-square overflow-hidden">

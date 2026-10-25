@@ -170,6 +170,8 @@ watch(selectedVariantName, () => {
 });
 
 useHead(() => ({
+  // lifts the chat widget above the mobile action bar
+  htmlAttrs: { class: "has-bottom-bar" },
   title: detail.value?.name
     ? `${detail.value.name} - Brandingku`
     : "Product - Brandingku",
@@ -198,7 +200,7 @@ definePageMeta({
     <ArrowLeftIcon class="w-6 h-6" />
   </button>
 
-  <div class="bg-white app-container px-4 py-8 md:py-10">
+  <div class="bg-white app-container px-4 pt-8 pb-28 md:pt-10 lg:pb-12">
     <div v-if="loading" class="flex justify-center">Loading...</div>
     <div v-else-if="error" class="flex justify-center text-red-500">
       {{ error }}
@@ -219,10 +221,10 @@ definePageMeta({
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <!-- Gallery -->
-        <div>
+        <div class="-mx-4 sm:mx-0">
           <AtomsProductThumbnail
             :images="detail.images.map((img: string) => `${STORAGE_URL}${img}`)"
-            :class="'sticky top-20'"
+            class="lg:sticky lg:top-24"
           />
         </div>
 
@@ -310,9 +312,12 @@ definePageMeta({
           </div>
 
           <!-- Add to Cart -->
-          <div class="mt-8 flex items-center gap-6">
-            <Button class="flex-1">Add to Cart</Button>
-            <Button variant="outline" class="border-green-200 text-green-700 hover:bg-green-50" @click="handleAddToWishlist">
+          <!-- fixed action bar on mobile, inline from lg -->
+          <div
+            class="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur lg:static lg:z-auto lg:mt-8 lg:gap-6 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
+          >
+            <Button class="h-11 flex-1 lg:h-9">Add to Cart</Button>
+            <Button variant="outline" aria-label="Tambah ke wishlist" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
               </svg>
