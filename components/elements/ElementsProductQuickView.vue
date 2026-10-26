@@ -42,11 +42,11 @@ const productUrl = computed(() => {
   return `${baseUrl}/product/${slug}`
 })
 
-const whatsappHref = computed(() => {
-  const name = product.value?.name || 'Product inquiry'
-  const text = encodeURIComponent(`Halo, saya tertarik dengan ${name}.\n${productUrl.value}`)
-  return `https://wa.me/?text=${text}`
-})
+const { openChat } = useChatWidget()
+const chatAboutProduct = () => {
+  open.value = false
+  openChat(`Halo admin, saya tertarik dengan ${product.value?.name || 'produk ini'}.\n${productUrl.value}`)
+}
 </script>
 
 <template>
@@ -96,9 +96,7 @@ const whatsappHref = computed(() => {
         </div>
         <div class="px-4 py-3 border-t flex items-center justify-between">
           <a :href="productUrl" target="_blank" rel="noopener" class="text-sm text-gray-600 hover:underline">Lihat detail</a>
-          <a :href="whatsappHref" target="_blank" rel="noopener">
-            <Button variant="default">Chat via WhatsApp</Button>
-          </a>
+          <Button variant="default" @click="chatAboutProduct">Chat dengan Admin</Button>
         </div>
       </div>
     </div>

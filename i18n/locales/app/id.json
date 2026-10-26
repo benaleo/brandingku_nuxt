@@ -80,7 +80,7 @@
     "bannerCta": {
       "title": "Mulai Custom Merchandise Anda Sekarang",
       "description": "Konsultasikan kebutuhan branding perusahaan Anda bersama tim ahli kami dan dapatkan penawaran harga terbaik.",
-      "whatsappAdmin": "WhatsApp Admin",
+      "chatAdmin": "Chat dengan Admin",
       "requestQuote": "Minta Penawaran"
     },
     "footer": {
@@ -112,7 +112,11 @@
       "title": "Chat Bantuan",
       "subtitle": "Kami siap membantu Anda",
       "placeholder": "Tulis pesan...",
-      "loading": "Sedang mengetik..."
+      "loading": "Sedang mengetik...",
+      "contactPrompt": "Pilih cara kami menghubungi Anda",
+      "contactEmail": "Email",
+      "contactPhone": "Telepon / WA",
+      "contactSubmit": "Pilih"
     }
   }
 }

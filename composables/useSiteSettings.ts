@@ -39,8 +39,6 @@ export const useSiteSettings = () => {
 
     const phoneHref = computed(() => `tel:${phone.value.replace(/[^0-9+]/g, '')}`)
     const emailHref = computed(() => `mailto:${email.value}`)
-    const whatsappUrl = (text = '') =>
-        `https://api.whatsapp.com/send?phone=${whatsapp.value}${text ? `&text=${encodeURIComponent(text)}` : ''}`
 
-    return { phone, whatsapp, email, address, hours, mapsUrl, phoneHref, emailHref, whatsappUrl }
+    return { phone, whatsapp, email, address, hours, mapsUrl, phoneHref, emailHref }
 }

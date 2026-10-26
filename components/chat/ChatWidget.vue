@@ -9,7 +9,7 @@
           <span class="font-semibold">{{ t("app.chat.title") }}</span>
           <span class="text-xs opacity-80">{{ t("app.chat.subtitle") }}</span>
         </div>
-        <button class="text-primary-foreground/80 hover:text-primary-foreground" @click="open = false">
+        <button class="text-primary-foreground/80 hover:text-primary-foreground" @click="toggleOpen">
           <X class="h-5 w-5" />
         </button>
       </div>
@@ -44,9 +44,41 @@
         </div>
       </div>
 
-      <form class="flex items-center gap-2 border-t p-3" @submit.prevent="handleSend">
+      <!-- contact method is a fixed choice, so it is picked instead of typed -->
+      <form
+        v-if="choosingContact"
+        class="space-y-2 border-t p-3"
+        @submit.prevent="handleContactChoice"
+      >
+        <p class="text-xs text-muted-foreground">{{ t("app.chat.contactPrompt") }}</p>
+        <div role="radiogroup" class="grid grid-cols-2 gap-2">
+          <label
+            v-for="opt in contactOptions"
+            :key="opt.value"
+            class="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+            :class="contactChoice === opt.value ? 'border-primary bg-primary/5 font-medium' : 'hover:bg-muted'"
+          >
+            <input
+              v-model="contactChoice"
+              type="radio"
+              name="chat-contact-method"
+              :value="opt.value"
+              class="accent-primary"
+            />
+            <component :is="opt.icon" class="h-4 w-4 shrink-0" />
+            {{ opt.label }}
+          </label>
+        </div>
+        <Button type="submit" class="w-full" :disabled="sending || !contactChoice">
+          {{ t("app.chat.contactSubmit") }}
+        </Button>
+      </form>
+      <form v-else class="flex items-center gap-2 border-t p-3" @submit.prevent="handleSend">
         <Input
+          ref="inputEl"
           v-model="draft"
+          :type="valueInputType"
+          :inputmode="valueInputType === 'tel' ? 'tel' : undefined"
           :placeholder="t('app.chat.placeholder')"
           :disabled="sending"
           class="flex-1"
@@ -73,10 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { MessageCircle, Send, X } from "lucide-vue-next";
+import { Mail, MessageCircle, Phone, Send, X } from "lucide-vue-next";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { useChatService } from "~/services/chat.service";
@@ -92,16 +124,15 @@ const {
   sending,
   startSession,
   sendMessage,
-  pollMessages,
   fetchMySession,
+  startRealtime,
 } = useChatService();
 
-const open = ref(false);
+const { open, pendingTopic } = useChatWidget();
 const draft = ref("");
 const unreadCount = ref(0);
 const scrollEl = ref<HTMLElement | null>(null);
-
-let pollTimer: ReturnType<typeof setInterval> | null = null;
+const inputEl = ref<InstanceType<typeof Input> | null>(null);
 
 const isOwnMessage = (msg: ChatMessage) =>
   msg.sender_type === "guest" || msg.sender_type === "user";
@@ -111,21 +142,59 @@ const scrollToBottom = async () => {
   if (scrollEl.value) scrollEl.value.scrollTop = scrollEl.value.scrollHeight;
 };
 
+const onNewMessages = (added: ChatMessage[]) => {
+  if (!open.value) unreadCount.value += added.filter((m) => !isOwnMessage(m)).length;
+};
+
 const ensureSession = async () => {
   if (session.value) return;
   const existing = await fetchMySession();
   if (!existing) {
     await startSession(locale.value || "id");
   }
+  startRealtime(onNewMessages);
 };
 
-const toggleOpen = async () => {
+// a topic from "ask admin" buttons waits until the name/contact steps are done
+const applyPendingTopic = () => {
+  if (!pendingTopic.value || session.value?.stage !== "active" || draft.value.trim()) return;
+  draft.value = pendingTopic.value;
+  pendingTopic.value = "";
+};
+
+const toggleOpen = () => {
   open.value = !open.value;
-  if (open.value) {
-    unreadCount.value = 0;
-    await ensureSession();
-    await scrollToBottom();
-  }
+};
+
+watch(open, async (isOpen) => {
+  if (!isOpen) return;
+  unreadCount.value = 0;
+  await ensureSession();
+  applyPendingTopic();
+  await scrollToBottom();
+  (inputEl.value?.$el as HTMLInputElement | undefined)?.focus?.();
+});
+
+watch(() => [session.value?.stage, pendingTopic.value], applyPendingTopic);
+
+const choosingContact = computed(() => session.value?.stage === "awaiting_contact_method");
+const contactChoice = ref<"email" | "phone" | "">("");
+const contactOptions = computed(() => [
+  { value: "email" as const, label: t("app.chat.contactEmail"), icon: Mail },
+  { value: "phone" as const, label: t("app.chat.contactPhone"), icon: Phone },
+]);
+// the next answer is the address or number for the chosen method
+const valueInputType = computed(() => {
+  if (session.value?.stage !== "awaiting_contact_value") return "text";
+  return session.value?.contact_method === "phone" ? "tel" : session.value?.contact_method === "email" ? "email" : "text";
+});
+
+const handleContactChoice = async () => {
+  if (!contactChoice.value) return;
+  const choice = contactChoice.value;
+  contactChoice.value = "";
+  await sendMessage(choice);
+  await scrollToBottom();
 };
 
 const handleSend = async () => {
@@ -143,19 +212,10 @@ watch(
   }
 );
 
-onMounted(() => {
-  pollTimer = setInterval(async () => {
-    if (!session.value) return;
-    const before = messages.value.length;
-    await pollMessages();
-    const added = messages.value.length - before;
-    if (added > 0 && !open.value) {
-      unreadCount.value += added;
-    }
-  }, 4000);
-});
-
-onBeforeUnmount(() => {
-  if (pollTimer) clearInterval(pollTimer);
+// returning visitors get admin replies live even before they reopen the widget
+onMounted(async () => {
+  if (!showWidget.value || open.value) return;
+  const existing = await fetchMySession();
+  if (existing) startRealtime(onNewMessages);
 });
 </script>

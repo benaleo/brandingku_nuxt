@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Send } from "lucide-vue-next";
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue";
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
@@ -111,7 +111,6 @@ const {
   loading,
   error,
   sending,
-  pollDetail,
   adminSendMessage,
   toggleTakeover,
   markRead,
@@ -151,18 +150,9 @@ watch(
   () => scrollToBottom()
 );
 
-let pollTimer: ReturnType<typeof setInterval> | null = null;
-
 onMounted(() => {
   markRead(id.value);
   scrollToBottom();
-  pollTimer = setInterval(() => {
-    pollDetail(id.value);
-  }, 4000);
-});
-
-onBeforeUnmount(() => {
-  if (pollTimer) clearInterval(pollTimer);
 });
 
 const pageTitle = computed(() => "Chat Session Detail");

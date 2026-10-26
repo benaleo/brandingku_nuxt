@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-vue-next";
 import ElementsProductQuickView from "~/components/elements/ElementsProductQuickView.vue";
-import WhatsAppButton from "~/components/elements/WhatsAppButton.vue";
+import ChatProductButton from "~/components/elements/ChatProductButton.vue";
 import { toast } from "vue-sonner";
 
 const { token, createWishlist, deleteWishlist } = useWishlist();
@@ -443,7 +443,7 @@ definePageMeta({ layout: "page-layout" });
           </div>
         </NuxtLink>
         <div class="flex gap-2 px-3 pb-3 sm:px-4 sm:pb-4">
-          <WhatsAppButton :product="product" class="min-w-0 flex-1" />
+          <ChatProductButton :product="product" class="min-w-0 flex-1" />
           <Button
             variant="outline"
             size="sm"

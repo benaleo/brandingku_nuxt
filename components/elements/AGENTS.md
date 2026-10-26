@@ -21,7 +21,7 @@ Composite widgets that sit between the shadcn primitives and full pages — cons
 | `DialogViewImage.vue` | Image lightbox dialog. |
 | `BenefitFaq.vue` | Accordion rendering of benefit/FAQ entries. |
 | `ElementsProductQuickView.vue` | Product quick-view overlay for the storefront. Note the redundant `Elements` prefix in the filename — auto-import resolves this to `<ElementsElementsProductQuickView>`. |
-| `WhatsAppButton.vue` | Floating WhatsApp contact button. |
+| `ChatProductButton.vue` | Product card button that opens the live chat with the product as the topic. |
 
 ## For AI Agents
 

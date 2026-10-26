@@ -3,7 +3,7 @@ import {useRoute} from 'vue-router'
 import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
 import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
-import {Download} from 'lucide-vue-next'
+import {Download, MessageCircle} from 'lucide-vue-next'
 
 const route = useRoute()
 const slug = route.params.slug as string
@@ -93,16 +93,16 @@ const {
 // Reactive category slug for product fetching
 const currentCategorySlug = computed(() => selectedSubCategory.value?.slug || slug)
 
-// "Request Catalog": the selected sub category's catalog, else the parent's; without one, ask via WhatsApp
-const { whatsappUrl } = useSiteSettings()
+// "Request Catalog": the selected sub category's catalog, else the parent's; without one, ask in live chat
+const { openChat } = useChatWidget()
 const activeCatalog = computed(() => {
   const sub = selectedSubCategory.value
   if (sub?.catalog_file) return { url: sub.catalog_file, name: sub.catalog_file_name }
   if (category.value?.catalog_file) return { url: category.value.catalog_file, name: category.value.catalog_file_name }
   return null
 })
-const catalogRequestUrl = computed(() =>
-  whatsappUrl(`Halo admin, saya ingin request katalog ${selectedSubCategory.value?.name || category.value?.name || ''}`.trim()))
+const requestCatalog = () =>
+  openChat(`Halo admin, saya ingin request katalog ${selectedSubCategory.value?.name || category.value?.name || ''}`.trim())
 
 const {
   products,
@@ -249,16 +249,26 @@ definePageMeta({
             Explore Collection
           </a>
           <a
-            :href="activeCatalog ? activeCatalog.url : catalogRequestUrl"
+            v-if="activeCatalog"
+            :href="activeCatalog.url"
             target="_blank"
             rel="noopener"
-            :download="activeCatalog ? activeCatalog.name : undefined"
-            :title="activeCatalog ? activeCatalog.name : undefined"
+            :download="activeCatalog.name"
+            :title="activeCatalog.name"
             class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
           >
-            <Download v-if="activeCatalog" class="size-5 shrink-0" />
+            <Download class="size-5 shrink-0" />
             Request Catalog
           </a>
+          <button
+            v-else
+            type="button"
+            class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
+            @click="requestCatalog"
+          >
+            <MessageCircle class="size-5 shrink-0" />
+            Request Catalog
+          </button>
         </div>
       </div>
     </div>

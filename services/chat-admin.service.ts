@@ -31,6 +31,21 @@ const CHAT_MESSAGE_FIELDS = `
   created_at
 `;
 
+const SESSION_UPDATED_SUBSCRIPTION = `
+  subscription chatSessionUpdated {
+    chatSessionUpdated { ${CHAT_SESSION_FIELDS} }
+  }
+`;
+
+// coalesces bursts of realtime events (guest message + bot reply) into one call
+const debounce = (fn: () => void, ms: number) => {
+  let t: ReturnType<typeof setTimeout> | null = null;
+  return () => {
+    if (t) clearTimeout(t);
+    t = setTimeout(fn, ms);
+  };
+};
+
 export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) => {
   const { gqlFetch } = useGql();
 
@@ -45,9 +60,10 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
   const messages = ref<ChatMessage[]>([]);
   const sending = ref(false);
 
-  const fetchList = async () => {
+  // silent refreshes come from realtime events and skip the table loading state
+  const fetchList = async (silent = false) => {
     if (!fetchResult) return;
-    loading.value = true;
+    if (!silent) loading.value = true;
     error.value = null;
     try {
       const query = `
@@ -144,16 +160,21 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
   };
 
   const pushMessages = (incoming: ChatMessage[]) => {
-    if (!incoming?.length) return;
+    const added: ChatMessage[] = [];
+    if (!incoming?.length) return added;
     const seen = new Set(messages.value.map((m) => m.id));
     for (const m of incoming) {
       if (seen.has(m.id)) continue;
       seen.add(m.id);
-      messages.value.push(m);
+      added.push(m);
     }
+    if (added.length) {
+      messages.value = [...messages.value, ...added].sort((a, b) => a.id - b.id);
+    }
+    return added;
   };
 
-  const pollDetail = async (id: number) => {
+  const pollDetail = async (id: number): Promise<ChatMessage[]> => {
     try {
       const afterId = messages.value.length
         ? Math.max(...messages.value.map((m) => m.id))
@@ -168,9 +189,10 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
         { sessionId: id, afterId },
         { auth: true }
       );
-      pushMessages(res.getChatMessages || []);
+      return pushMessages(res.getChatMessages || []);
     } catch {
-      // silent — polling should never surface transient errors to the user
+      // silent — a catch-up fetch should never surface transient errors to the user
+      return [];
     }
   };
 
@@ -231,10 +253,51 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
     }
   };
 
+  // realtime: the list follows session activity, the detail view follows its own messages
+  const { subscribe, onReconnect } = useChatSocket();
+  const stops: (() => void)[] = [];
+  const markReadSoon = debounce(() => sessionId && markRead(sessionId), 800);
+
+  const startRealtime = () => {
+    if (fetchResult) {
+      const refreshList = debounce(() => fetchList(true), 400);
+      stops.push(subscribe(SESSION_UPDATED_SUBSCRIPTION, {}, { next: refreshList }));
+      stops.push(onReconnect(refreshList));
+    }
+    if (sessionId) {
+      const onNew = (added: ChatMessage[]) => {
+        // the admin is looking at this chat, so visitor messages count as read
+        if (added.some((m) => m.sender_type === "guest" || m.sender_type === "user")) markReadSoon();
+      };
+      stops.push(
+        subscribe(
+          `subscription chatMessageAdded($sessionId: Int!) {
+            chatMessageAdded(sessionId: $sessionId) { ${CHAT_MESSAGE_FIELDS} }
+          }`,
+          { sessionId },
+          { next: (data) => onNew(pushMessages(data?.chatMessageAdded ? [data.chatMessageAdded] : [])) }
+        )
+      );
+      // takeover changes made by another admin
+      stops.push(
+        subscribe(SESSION_UPDATED_SUBSCRIPTION, {}, {
+          next: (data) => {
+            const s = data?.chatSessionUpdated as ChatSession | undefined;
+            if (s && s.id === sessionId && detail.value) detail.value = { ...detail.value, ...s, messages: detail.value.messages };
+          },
+        })
+      );
+      stops.push(onReconnect(async () => onNew(await pollDetail(sessionId))));
+    }
+  };
+
   onMounted(() => {
     if (fetchResult) fetchList();
     if (sessionId) loadDetail(sessionId);
+    startRealtime();
   });
+
+  onBeforeUnmount(() => stops.splice(0).forEach((stop) => stop()));
 
   return {
     // list state
@@ -264,7 +327,8 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
 export const useChatUnreadCount = () => {
   const { gqlFetch } = useGql();
   const unreadCount = ref(0);
-  let timer: ReturnType<typeof setInterval> | null = null;
+  const { subscribe, onReconnect } = useChatSocket();
+  const stops: (() => void)[] = [];
 
   const fetchUnreadCount = async () => {
     try {
@@ -278,12 +342,12 @@ export const useChatUnreadCount = () => {
 
   onMounted(() => {
     fetchUnreadCount();
-    timer = setInterval(fetchUnreadCount, 15000);
+    const refresh = debounce(fetchUnreadCount, 300);
+    stops.push(subscribe(SESSION_UPDATED_SUBSCRIPTION, {}, { next: refresh }));
+    stops.push(onReconnect(refresh));
   });
 
-  onBeforeUnmount(() => {
-    if (timer) clearInterval(timer);
-  });
+  onBeforeUnmount(() => stops.splice(0).forEach((stop) => stop()));
 
   return { unreadCount, fetchUnreadCount };
 };

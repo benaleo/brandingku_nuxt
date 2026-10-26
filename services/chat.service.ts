@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeUnmount } from "vue";
 import { useGql } from "~/composables/useGql";
 import type { ChatMessage, ChatSession } from "~/types/chat.type";
 
@@ -61,14 +61,20 @@ export const useChatService = () => {
     if (s?.messages) messages.value = s.messages;
   };
 
+  // appends unseen messages in id order and returns the ones that were new
   const pushMessages = (incoming: ChatMessage[]) => {
-    if (!incoming?.length) return;
+    const added: ChatMessage[] = [];
+    if (!incoming?.length) return added;
     const seen = new Set(messages.value.map((m) => m.id));
     for (const m of incoming) {
       if (seen.has(m.id)) continue;
       seen.add(m.id);
-      messages.value.push(m);
+      added.push(m);
     }
+    if (added.length) {
+      messages.value = [...messages.value, ...added].sort((a, b) => a.id - b.id);
+    }
+    return added;
   };
 
   const startSession = async (lang: string) => {
@@ -116,6 +122,8 @@ export const useChatService = () => {
         { auth: true, headers: chatHeaders() }
       );
       pushMessages(res.sendChatMessage || []);
+      // onboarding replies move the stage forward on the server; pick it up
+      if (session.value.stage !== "active") await fetchMySession();
       return res.sendChatMessage;
     } catch (err: any) {
       error.value = err?.message || "Failed to send message";
@@ -125,8 +133,8 @@ export const useChatService = () => {
     }
   };
 
-  const pollMessages = async () => {
-    if (!session.value) return;
+  const pollMessages = async (): Promise<ChatMessage[]> => {
+    if (!session.value) return [];
     try {
       const afterId = messages.value.length
         ? Math.max(...messages.value.map((m) => m.id))
@@ -143,11 +151,44 @@ export const useChatService = () => {
         { sessionId: session.value.id, afterId },
         { auth: true, headers: chatHeaders() }
       );
-      pushMessages(res.getChatMessages || []);
+      return pushMessages(res.getChatMessages || []);
     } catch {
-      // silent — polling should never surface transient errors to the user
+      // silent — a catch-up fetch should never surface transient errors to the user
+      return [];
     }
   };
+
+  // realtime: new messages for the current session arrive over the shared websocket
+  const { subscribe, onReconnect } = useChatSocket();
+  let stopRealtime: (() => void) | null = null;
+
+  const startRealtime = (onNew?: (added: ChatMessage[]) => void) => {
+    stopRealtime?.();
+    if (!session.value) return;
+    const unsubscribe = subscribe(
+      `subscription chatMessageAdded($sessionId: Int!) {
+        chatMessageAdded(sessionId: $sessionId) { ${CHAT_MESSAGE_FIELDS} }
+      }`,
+      { sessionId: session.value.id },
+      {
+        next: (data) => {
+          const added = pushMessages(data?.chatMessageAdded ? [data.chatMessageAdded] : []);
+          if (added.length) onNew?.(added);
+        },
+      }
+    );
+    const offReconnect = onReconnect(async () => {
+      const added = await pollMessages();
+      if (added.length) onNew?.(added);
+    });
+    stopRealtime = () => {
+      unsubscribe();
+      offReconnect();
+      stopRealtime = null;
+    };
+  };
+
+  onBeforeUnmount(() => stopRealtime?.());
 
   const fetchMySession = async () => {
     try {
@@ -182,5 +223,6 @@ export const useChatService = () => {
     sendMessage,
     pollMessages,
     fetchMySession,
+    startRealtime,
   };
 };
