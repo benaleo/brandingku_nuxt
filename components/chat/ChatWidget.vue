@@ -73,15 +73,18 @@
           {{ t("app.chat.contactSubmit") }}
         </Button>
       </form>
-      <form v-else class="flex items-center gap-2 border-t p-3" @submit.prevent="handleSend">
-        <Input
+      <form v-else class="flex items-end gap-2 border-t p-3" @submit.prevent="handleSend">
+        <!-- Enter sends, Shift+Enter adds a line; grows up to 4 lines then scrolls -->
+        <textarea
           ref="inputEl"
           v-model="draft"
-          :type="valueInputType"
-          :inputmode="valueInputType === 'tel' ? 'tel' : undefined"
+          rows="1"
+          :inputmode="valueInputType"
           :placeholder="t('app.chat.placeholder')"
           :disabled="sending"
-          class="flex-1"
+          class="min-h-9 flex-1 resize-none overflow-y-hidden rounded-md border border-input bg-transparent px-3 py-1.5 text-base leading-6 shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
+          @input="resizeInput"
+          @keydown.enter="onEnter"
         />
         <Button type="submit" size="icon" :disabled="sending || !draft.trim()">
           <Send class="h-4 w-4" />
@@ -110,7 +113,6 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { Mail, MessageCircle, Phone, Send, X } from "lucide-vue-next";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { useChatService } from "~/services/chat.service";
 import type { ChatMessage } from "~/types/chat.type";
 
@@ -132,7 +134,29 @@ const { open, pendingTopic } = useChatWidget();
 const draft = ref("");
 const unreadCount = ref(0);
 const scrollEl = ref<HTMLElement | null>(null);
-const inputEl = ref<InstanceType<typeof Input> | null>(null);
+const inputEl = ref<HTMLTextAreaElement | null>(null);
+const MAX_INPUT_LINES = 4;
+
+// fit the textarea to its content, capped at MAX_INPUT_LINES; beyond that it scrolls
+const resizeInput = () => {
+  const el = inputEl.value;
+  if (!el) return;
+  const style = getComputedStyle(el);
+  const lineHeight = parseFloat(style.lineHeight) || 24;
+  const borders = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+  const max = lineHeight * MAX_INPUT_LINES + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + borders;
+  el.style.height = "auto";
+  const content = el.scrollHeight + borders;
+  el.style.height = `${Math.min(content, max)}px`;
+  el.style.overflowY = content > max ? "auto" : "hidden";
+};
+
+const onEnter = (e: KeyboardEvent) => {
+  // Shift+Enter and IME composition keep the default newline/compose behaviour
+  if (e.shiftKey || e.isComposing) return;
+  e.preventDefault();
+  handleSend();
+};
 
 const isOwnMessage = (msg: ChatMessage) =>
   msg.sender_type === "guest" || msg.sender_type === "user";
@@ -172,7 +196,7 @@ watch(open, async (isOpen) => {
   await ensureSession();
   applyPendingTopic();
   await scrollToBottom();
-  (inputEl.value?.$el as HTMLInputElement | undefined)?.focus?.();
+  inputEl.value?.focus();
 });
 
 watch(() => [session.value?.stage, pendingTopic.value], applyPendingTopic);
@@ -188,6 +212,9 @@ const valueInputType = computed(() => {
   if (session.value?.stage !== "awaiting_contact_value") return "text";
   return session.value?.contact_method === "phone" ? "tel" : session.value?.contact_method === "email" ? "email" : "text";
 });
+
+// programmatic changes (send clears it, a product topic fills it) need a resize too
+watch(draft, () => nextTick(resizeInput));
 
 const handleContactChoice = async () => {
   if (!contactChoice.value) return;
