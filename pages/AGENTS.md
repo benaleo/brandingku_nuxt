@@ -11,10 +11,10 @@ File-based routes. Nuxt derives every URL from this tree, so a filename here is 
 | File | Description |
 |------|-------------|
 | `index.vue` | `/` — the landing page. |
-| `kontak.vue` | `/kontak` — contact page with the inquiry form (240 lines). |
-| `tentang.vue` | `/tentang` — about page. Sets the head title `About Us - Brandingku`. |
-| `tnc.vue` | `/tnc` — terms and conditions. Head title `Terms & Conditions - BrandinKu` (note the inconsistent capitalisation against `tentang.vue`). |
-| `wishlist.vue` | `/wishlist` — the saved-products view, backed by `useWishlist`. |
+| `kontak.vue` | `/kontak` — contact page with the inquiry form. Copy lives under `app.contactPage`; the submitted subject stays in English. |
+| `tentang.vue` | `/tentang` — about page. Copy and head title live under `app.aboutPage`. |
+| `tnc.vue` | `/tnc` — terms and conditions. Copy and head title live under `app.tncPage`. |
+| `wishlist.vue` | `/wishlist` — the saved-products view, backed by `useWishlist`. Copy lives under `app.wishlistPage`. |
 
 ## Subdirectories
 
@@ -29,6 +29,7 @@ File-based routes. Nuxt derives every URL from this tree, so a filename here is 
 ## For AI Agents
 
 ### Working In This Directory
+- Public page copy is translated: put user-facing text in `i18n/locales/app/{id,en}.json` and render it with `$t` (names and brand terms can stay literal). Escape `@` as `{'@'}` in messages.
 - Adding a file here publishes a route. There is no route allow-list to update and nothing warns you — check whether the page should be public before creating it.
 - Public pages use `default` or `page-layout`; console pages must set `console-secret`. Auth pages opt out with `layout: false`.
 - Route names are Indonesian (`kontak`, `tentang`) while component and variable names are English. Keep new public routes Indonesian to match the existing URLs.

@@ -10,7 +10,7 @@ Public category browsing. Two routes: the index of all categories and a slug-add
 
 | File | Description |
 |------|-------------|
-| `index.vue` | `/category` (141 lines). Head title `Kategori - Koleksi Produk Premium`. |
+| `index.vue` | `/category` — the category grid. Copy and head title live under `app.categoryPage`. |
 | `[slug].vue` | `/category/:slug` (283 lines). The only page in the tree using `layout: 'page-layout'`. Resolves the category by slug and lists its products via `useGetProductsWithCategorySlug`. |
 
 ## For AI Agents
