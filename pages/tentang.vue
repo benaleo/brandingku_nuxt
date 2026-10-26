@@ -13,18 +13,18 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <div class="inline-block px-4 py-2 bg-white/20 rounded-full mb-6">
-              <span class="text-sm font-semibold">OUR JOURNEY</span>
+              <span class="text-sm font-semibold">{{ $t('app.aboutPage.eyebrow') }}</span>
             </div>
-            <h1 class="text-5xl font-bold mb-6">Crafting Identity Through Quality.</h1>
+            <h1 class="text-5xl font-bold mb-6">{{ $t('app.aboutPage.title') }}</h1>
             <p class="text-xl leading-relaxed opacity-90">
-              We transform your brand vision into tangible, memorable experiences through premium merchandise and strategic branding solutions that resonate with your audience.
+              {{ $t('app.aboutPage.subtitle') }}
             </p>
           </div>
           <div class="relative flex justify-center">
-            <img src="/images/about/about-hero.png" alt="About Brandingku" class="max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
+            <img src="/images/about/about-hero.png" :alt="$t('app.aboutPage.heroImageAlt')" class="max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
             <div class="absolute bg-white text-green-600 px-4 py-3 rounded-lg shadow-lg" style="left: 70px; bottom: -15px">
               <div class="text-2xl font-bold">5+</div>
-              <div class="text-xs">Years of experience</div>
+              <div class="text-xs">{{ $t('app.aboutPage.yearsLabel') }}</div>
             </div>
           </div>
         </div>
@@ -37,27 +37,27 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4 items-end">
-            <img src="/images/about/legacy-1.png" alt="Legacy 1" class="rounded-lg shadow-md" />
-            <img src="/images/about/legacy-2.png" alt="Legacy 2" class="rounded-lg shadow-md" />
+            <img src="/images/about/legacy-1.png" :alt="$t('app.aboutPage.legacyImageAlt', { n: 1 })" class="rounded-lg shadow-md" />
+            <img src="/images/about/legacy-2.png" :alt="$t('app.aboutPage.legacyImageAlt', { n: 2 })" class="rounded-lg shadow-md" />
           </div>
           <div class="grid grid-cols-2 gap-4 items-start">
-            <img src="/images/about/legacy-3.png" alt="Legacy 3" class="rounded-lg shadow-md" />
-            <img src="/images/about/legacy-4.png" alt="Legacy 4" class="rounded-lg shadow-md" />
+            <img src="/images/about/legacy-3.png" :alt="$t('app.aboutPage.legacyImageAlt', { n: 3 })" class="rounded-lg shadow-md" />
+            <img src="/images/about/legacy-4.png" :alt="$t('app.aboutPage.legacyImageAlt', { n: 4 })" class="rounded-lg shadow-md" />
           </div>
           </div>
           <div>
-            <h2 class="text-4xl font-bold mb-6 text-gray-800">The Brandingku Legacy</h2>
+            <h2 class="text-4xl font-bold mb-6 text-gray-800">{{ $t('app.aboutPage.legacyTitle') }}</h2>
             <p class="text-lg text-gray-600 mb-8 leading-relaxed">
-              For over a decade, we've been the trusted partner for businesses seeking to make their mark. From startups to enterprises, we've helped thousands of brands create lasting impressions through thoughtful design and quality merchandise.
+              {{ $t('app.aboutPage.legacyText') }}
             </p>
             <div class="flex gap-8">
               <div>
                 <div class="text-4xl font-bold text-green-600">100+</div>
-                <div class="text-gray-600">Happy Clients</div>
+                <div class="text-gray-600">{{ $t('app.aboutPage.happyClients') }}</div>
               </div>
               <div>
                 <div class="text-4xl font-bold text-green-600">100K+</div>
-                <div class="text-gray-600">Products Delivered</div>
+                <div class="text-gray-600">{{ $t('app.aboutPage.productsDelivered') }}</div>
               </div>
             </div>
           </div>
@@ -74,9 +74,9 @@
             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-6">
               <Icon name="lucide:eye" class="w-6 h-6 text-green-600" />
             </div>
-            <h3 class="text-2xl font-bold mb-4 text-gray-800">Our Vision</h3>
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">{{ $t('app.aboutPage.visionTitle') }}</h3>
             <p class="text-gray-600 leading-relaxed">
-              To be the leading catalyst for brand transformation, empowering businesses to create meaningful connections through exceptional merchandise and innovative branding strategies.
+              {{ $t('app.aboutPage.visionText') }}
             </p>
           </div>
 
@@ -85,9 +85,9 @@
             <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-6">
               <Icon name="lucide:target" class="w-6 h-6 text-white" />
             </div>
-            <h3 class="text-2xl font-bold mb-4">Our Mission</h3>
+            <h3 class="text-2xl font-bold mb-4">{{ $t('app.aboutPage.missionTitle') }}</h3>
             <p class="leading-relaxed opacity-90">
-              We deliver premium branding solutions that combine creativity, quality, and strategic thinking to help our clients stand out in competitive markets and build lasting brand equity.
+              {{ $t('app.aboutPage.missionText') }}
             </p>
           </div>
         </div>
@@ -98,8 +98,8 @@
     <section class="ps py-20 bg-white">
       <div class="container mx-auto px-6">
         <div class="text-center mb-12">
-          <h2 class="text-4xl font-bold mb-4 text-gray-800">Core Values</h2>
-          <p class="text-lg text-gray-600">The principles that guide everything we do</p>
+          <h2 class="text-4xl font-bold mb-4 text-gray-800">{{ $t('app.aboutPage.valuesTitle') }}</h2>
+          <p class="text-lg text-gray-600">{{ $t('app.aboutPage.valuesSubtitle') }}</p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -108,13 +108,13 @@
             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <Icon name="lucide:leaf" class="w-6 h-6 text-green-600" />
             </div>
-            <h4 class="text-xl font-semibold mb-3 text-gray-800">Sustainable Impact</h4>
+            <h4 class="text-xl font-semibold mb-3 text-gray-800">{{ $t('app.aboutPage.values.sustainableTitle') }}</h4>
             <p class="text-gray-600 mb-4">
-              We prioritize eco-friendly materials and sustainable practices in all our production processes.
+              {{ $t('app.aboutPage.values.sustainableText') }}
             </p>
             <div class="flex gap-2">
-              <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">Eco-Friendly</span>
-              <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">Green</span>
+              <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">{{ $t('app.aboutPage.values.ecoFriendly') }}</span>
+              <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">{{ $t('app.aboutPage.values.green') }}</span>
             </div>
           </div>
 
@@ -123,9 +123,9 @@
             <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-4">
               <Icon name="lucide:award" class="w-6 h-6 text-white" />
             </div>
-            <h4 class="text-xl font-semibold mb-3">Uncompromising Quality</h4>
+            <h4 class="text-xl font-semibold mb-3">{{ $t('app.aboutPage.values.qualityTitle') }}</h4>
             <p class="opacity-90">
-              Every product we create meets the highest standards of craftsmanship and durability.
+              {{ $t('app.aboutPage.values.qualityText') }}
             </p>
           </div>
 
@@ -134,9 +134,9 @@
             <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-4">
               <Icon name="lucide:refresh-cw" class="w-6 h-6 text-slate-700" />
             </div>
-            <h4 class="text-xl font-semibold mb-3">Circular Innovation</h4>
+            <h4 class="text-xl font-semibold mb-3">{{ $t('app.aboutPage.values.circularTitle') }}</h4>
             <p class="opacity-90">
-              We embrace circular economy principles to minimize waste and maximize resource efficiency.
+              {{ $t('app.aboutPage.values.circularText') }}
             </p>
           </div>
 
@@ -145,9 +145,9 @@
             <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-4">
               <Icon name="lucide:users" class="w-6 h-6 text-white" />
             </div>
-            <h4 class="text-xl font-semibold mb-3">Holistic Partnership</h4>
+            <h4 class="text-xl font-semibold mb-3">{{ $t('app.aboutPage.values.partnershipTitle') }}</h4>
             <p class="opacity-90">
-              We work closely with clients as strategic partners, ensuring their brand vision is fully realized.
+              {{ $t('app.aboutPage.values.partnershipText') }}
             </p>
           </div>
         </div>
@@ -159,38 +159,38 @@
       <div class="container mx-auto px-6">
         <div class="flex justify-between items-center mb-12">
           <div>
-            <h2 class="text-4xl font-bold mb-4 text-gray-800">Meet the Visionaries</h2>
-            <p class="text-lg text-gray-600">The creative minds behind Brandingku's success</p>
+            <h2 class="text-4xl font-bold mb-4 text-gray-800">{{ $t('app.aboutPage.teamTitle') }}</h2>
+            <p class="text-lg text-gray-600">{{ $t('app.aboutPage.teamSubtitle') }}</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- Team Member 1 -->
           <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-1.png" alt="Team Member" class="w-full rounded-md mx-auto mb-4 object-cover" />
+            <img src="/images/about/person-1.png" alt="Sarah Johnson" class="w-full rounded-md mx-auto mb-4 object-cover" />
             <h4 class="text-lg font-semibold text-gray-800">Sarah Johnson</h4>
-            <p class="text-gray-600">Creative Director</p>
+            <p class="text-gray-600">{{ $t('app.aboutPage.roles.creativeDirector') }}</p>
           </div>
 
           <!-- Team Member 2 -->
           <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-2.png" alt="Team Member" class="w-full rounded-md mx-auto mb-4 object-cover" />
+            <img src="/images/about/person-2.png" alt="Michael Chen" class="w-full rounded-md mx-auto mb-4 object-cover" />
             <h4 class="text-lg font-semibold text-gray-800">Michael Chen</h4>
-            <p class="text-gray-600">Brand Strategist</p>
+            <p class="text-gray-600">{{ $t('app.aboutPage.roles.brandStrategist') }}</p>
           </div>
 
           <!-- Team Member 3 -->
           <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-3.png" alt="Team Member" class="w-full rounded-md mx-auto mb-4 object-cover" />
+            <img src="/images/about/person-3.png" alt="Emily Rodriguez" class="w-full rounded-md mx-auto mb-4 object-cover" />
             <h4 class="text-lg font-semibold text-gray-800">Emily Rodriguez</h4>
-            <p class="text-gray-600">Design Lead</p>
+            <p class="text-gray-600">{{ $t('app.aboutPage.roles.designLead') }}</p>
           </div>
 
           <!-- Team Member 4 -->
           <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-4.png" alt="Team Member" class="w-full rounded-md mx-auto mb-4 object-cover" />
+            <img src="/images/about/person-4.png" alt="David Kim" class="w-full rounded-md mx-auto mb-4 object-cover" />
             <h4 class="text-lg font-semibold text-gray-800">David Kim</h4>
-            <p class="text-gray-600">Operations Manager</p>
+            <p class="text-gray-600">{{ $t('app.aboutPage.roles.operationsManager') }}</p>
           </div>
         </div>
       </div>
@@ -199,16 +199,16 @@
     <!-- Call to Action Section -->
     <section class="ps py-20 bg-green-600 text-white">
       <div class="container mx-auto px-6 text-center">
-        <h2 class="text-4xl font-bold mb-6">Ready to build your brand's physical legacy?</h2>
+        <h2 class="text-4xl font-bold mb-6">{{ $t('app.aboutPage.ctaTitle') }}</h2>
         <p class="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-          Let's collaborate to create exceptional merchandise and branding solutions that will make your business unforgettable.
+          {{ $t('app.aboutPage.ctaText') }}
         </p>
         <div class="flex gap-4 justify-center">
           <button class="px-8 py-4 bg-black/80 text-white rounded-lg hover:bg-green-800 transition-colors font-semibold">
-            Start Your Project
+            {{ $t('app.aboutPage.ctaStart') }}
           </button>
           <button class="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
-            Download Catalog
+            {{ $t('app.aboutPage.ctaCatalog') }}
           </button>
         </div>
       </div>
@@ -217,11 +217,12 @@
 </template>
 
 <script setup lang="ts">
-// Page setup
-useHead({
-  title: 'About Us - Brandingku',
+const { t } = useI18n()
+
+useHead(() => ({
+  title: t('app.aboutPage.metaTitle'),
   meta: [
-    { name: 'description', content: 'Learn about Brandingku - Your trusted partner for premium branding solutions and merchandise.' }
+    { name: 'description', content: t('app.aboutPage.metaDescription') }
   ]
-})
+}))
 </script>

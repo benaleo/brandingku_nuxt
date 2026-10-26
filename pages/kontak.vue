@@ -5,9 +5,10 @@ import { useWebContactService } from '~/services/web-contact.service'
 // contact details are editable in the console Options menu and rendered server-side
 const { phone, email, address, hours, mapsUrl, phoneHref, emailHref } = useSiteSettings()
 const siteUrl = useRuntimeConfig().public.BASE_URL
+const { t } = useI18n()
 
 useHead({
-  title: "Kontak - Brandingku",
+  title: computed(() => t('app.contactPage.metaTitle')),
   script: [{
     type: 'application/ld+json',
     // structured data so search engines can show the business contact details
@@ -26,10 +27,19 @@ useHead({
 
 const { createInquiry, loading, error } = useWebContactService()
 
+// the stored subject stays in English so inquiries read the same in the console whatever the visitor's language
+const subjectOptions = [
+  { value: 'Sustainable Merchandise Inquiry', key: 'merchandise' },
+  { value: 'General Question', key: 'general' },
+  { value: 'Partnership Opportunity', key: 'partnership' },
+  { value: 'Support Request', key: 'support' },
+]
+const DEFAULT_SUBJECT = subjectOptions[0]!.value
+
 const form = reactive({
   name: '',
   email: '',
-  subject: 'Sustainable Merchandise Inquiry',
+  subject: DEFAULT_SUBJECT,
   message: '',
   model: 'web-contact'
 })
@@ -42,7 +52,7 @@ const handleSubmit = async (e: Event) => {
   submitError.value = null
 
   if (!form.name || !form.email || !form.message) {
-    submitError.value = 'Please fill in all required fields'
+    submitError.value = t('app.contactPage.requiredError')
     return
   }
 
@@ -59,9 +69,9 @@ const handleSubmit = async (e: Event) => {
     form.name = ''
     form.email = ''
     form.message = ''
-    form.subject = 'Sustainable Merchandise Inquiry'
+    form.subject = DEFAULT_SUBJECT
   } catch (err: any) {
-    submitError.value = err?.message || 'Failed to send message. Please try again.'
+    submitError.value = err?.message || t('app.contactPage.sendFailed')
   }
 }
 </script>
@@ -81,19 +91,18 @@ const handleSubmit = async (e: Event) => {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <div class="inline-block px-4 py-2 bg-white/20 rounded-full mb-6">
-              <span class="text-sm font-semibold">CONTACT US</span>
+              <span class="text-sm font-semibold">{{ $t('app.contactPage.eyebrow') }}</span>
             </div>
-            <h1 class="text-5xl font-bold mb-6">Get in touch with us.</h1>
+            <h1 class="text-5xl font-bold mb-6">{{ $t('app.contactPage.title') }}</h1>
             <p class="text-xl leading-relaxed opacity-90">
-              We're here to help you start your next sustainable merchandise project. 
-              Let's create something meaningful for the planet together.
+              {{ $t('app.contactPage.subtitle') }}
             </p>
           </div>
           <div class="relative flex justify-center">
-            <img src="/public/images/no-image.jpg" alt="Contact Brandingku" class="max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
+            <img src="/public/images/no-image.jpg" :alt="$t('app.contactPage.heroImageAlt')" class="max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
             <div class="absolute bg-white text-green-600 px-4 py-3 rounded-lg shadow-lg" style="left: 70px; bottom: -15px">
               <div class="text-2xl font-bold">24/7</div>
-              <div class="text-xs">Support Available</div>
+              <div class="text-xs">{{ $t('app.contactPage.supportBadge') }}</div>
             </div>
           </div>
         </div>
@@ -108,7 +117,7 @@ const handleSubmit = async (e: Event) => {
           <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Phone class="w-6 h-6 text-green-600" />
           </div>
-          <h3 class="font-semibold text-lg mb-2">Give us a call</h3>
+          <h3 class="font-semibold text-lg mb-2">{{ $t('app.contactPage.callTitle') }}</h3>
           <p class="text-gray-600 mb-3">{{ hours }}</p>
           <a :href="phoneHref" class="font-medium text-gray-900 hover:text-green-700">{{ phone }}</a>
         </div>
@@ -118,8 +127,8 @@ const handleSubmit = async (e: Event) => {
           <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail class="w-6 h-6 text-green-600" />
           </div>
-          <h3 class="font-semibold text-lg mb-2">Send us an email</h3>
-          <p class="text-gray-600 mb-3">Our friendly team is here to help.</p>
+          <h3 class="font-semibold text-lg mb-2">{{ $t('app.contactPage.emailTitle') }}</h3>
+          <p class="text-gray-600 mb-3">{{ $t('app.contactPage.emailText') }}</p>
           <a :href="emailHref" class="font-medium text-gray-900 break-all hover:text-green-700">{{ email }}</a>
         </div>
 
@@ -128,8 +137,8 @@ const handleSubmit = async (e: Event) => {
           <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <MapPin class="w-6 h-6 text-green-600" />
           </div>
-          <h3 class="font-semibold text-lg mb-2">Visit our office</h3>
-          <p class="text-gray-600 mb-3">Come say hello at our HQ.</p>
+          <h3 class="font-semibold text-lg mb-2">{{ $t('app.contactPage.officeTitle') }}</h3>
+          <p class="text-gray-600 mb-3">{{ $t('app.contactPage.officeText') }}</p>
           <a v-if="mapsUrl" :href="mapsUrl" target="_blank" rel="noopener" class="font-medium text-gray-900 hover:text-green-700">{{ address }}</a>
           <p v-else class="font-medium text-gray-900">{{ address }}</p>
         </div>
@@ -140,12 +149,12 @@ const handleSubmit = async (e: Event) => {
         <!-- Contact Form -->
         <div class="lg:col-span-2">
           <div class="bg-white rounded-lg shadow-lg p-8">
-            <h2 class="text-2xl font-bold mb-2">Send us a message</h2>
-            <p class="text-gray-600 mb-6">We'll get back to you within 24 hours.</p>
+            <h2 class="text-2xl font-bold mb-2">{{ $t('app.contactPage.formTitle') }}</h2>
+            <p class="text-gray-600 mb-6">{{ $t('app.contactPage.formSubtitle') }}</p>
 
             <!-- Success Message -->
             <div v-if="submitted" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p class="text-green-800 font-medium">Thank you! Your message has been sent successfully.</p>
+              <p class="text-green-800 font-medium">{{ $t('app.contactPage.success') }}</p>
             </div>
 
             <!-- Error Message -->
@@ -155,40 +164,39 @@ const handleSubmit = async (e: Event) => {
 
             <form @submit="handleSubmit" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">FULL NAME</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('app.contactPage.nameLabel') }}</label>
                 <input
                   v-model="form.name"
                   type="text"
-                  placeholder="John Doe"
+                  :placeholder="$t('app.contactPage.namePlaceholder')"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">EMAIL ADDRESS</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('app.contactPage.emailLabel') }}</label>
                 <input
                   v-model="form.email"
                   type="email"
-                  placeholder="john@example.com"
+                  :placeholder="$t('app.contactPage.emailPlaceholder')"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">SUBJECT</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('app.contactPage.subjectLabel') }}</label>
                 <select v-model="form.subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  <option>Sustainable Merchandise Inquiry</option>
-                  <option>General Question</option>
-                  <option>Partnership Opportunity</option>
-                  <option>Support Request</option>
+                  <option v-for="opt in subjectOptions" :key="opt.value" :value="opt.value">
+                    {{ $t(`app.contactPage.subjects.${opt.key}`) }}
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">MESSAGE</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('app.contactPage.messageLabel') }}</label>
                 <textarea
                   v-model="form.message"
-                  placeholder="Tell us about your project..."
+                  :placeholder="$t('app.contactPage.messagePlaceholder')"
                   rows="4"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 ></textarea>
@@ -199,7 +207,7 @@ const handleSubmit = async (e: Event) => {
                 :disabled="loading"
                 class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {{ loading ? 'Sending...' : 'Send Message' }}
+                {{ loading ? $t('app.contactPage.sending') : $t('app.contactPage.send') }}
               </button>
             </form>
           </div>
@@ -212,7 +220,7 @@ const handleSubmit = async (e: Event) => {
             <div class="relative h-48 bg-gradient-to-br from-green-400 to-green-600">
               <div class="absolute inset-0 flex items-center justify-center text-white">
                 <div class="text-center">
-                  <div class="text-xs font-semibold mb-1">OUR STUDIO</div>
+                  <div class="text-xs font-semibold mb-1">{{ $t('app.contactPage.studioLabel') }}</div>
                   <div class="text-lg font-bold">The Greenhouse HQ</div>
                 </div>
               </div>
@@ -221,34 +229,34 @@ const handleSubmit = async (e: Event) => {
 
           <!-- Global Support -->
           <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-bold mb-3">Global Support</h3>
+            <h3 class="text-lg font-bold mb-3">{{ $t('app.contactPage.globalTitle') }}</h3>
             <p class="text-gray-600 text-sm mb-4">
-              Operating from the heart of the sustainable tech hub, we coordinate with eco-certified manufacturers worldwide to ensure your branding leaves a mark on the world, not the environment.
+              {{ $t('app.contactPage.globalText') }}
             </p>
             <div class="flex justify-around">
               <div class="text-center">
                 <Globe class="w-8 h-8 text-green-600 mx-auto mb-1" />
-                <div class="text-xs text-gray-600">Worldwide</div>
+                <div class="text-xs text-gray-600">{{ $t('app.contactPage.worldwide') }}</div>
               </div>
               <div class="text-center">
                 <Users class="w-8 h-8 text-green-600 mx-auto mb-1" />
-                <div class="text-xs text-gray-600">Expert Team</div>
+                <div class="text-xs text-gray-600">{{ $t('app.contactPage.expertTeam') }}</div>
               </div>
               <div class="text-center">
                 <Clock class="w-8 h-8 text-green-600 mx-auto mb-1" />
-                <div class="text-xs text-gray-600">24/7 Support</div>
+                <div class="text-xs text-gray-600">{{ $t('app.contactPage.support247') }}</div>
               </div>
             </div>
           </div>
 
           <!-- Sustainable Report -->
           <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-bold mb-3">Sustainable Report 2024</h3>
+            <h3 class="text-lg font-bold mb-3">{{ $t('app.contactPage.reportTitle') }}</h3>
             <p class="text-gray-600 text-sm mb-4">
-              Read about how we helped 500+ brands reduce their plastic waste by 40%.
+              {{ $t('app.contactPage.reportText') }}
             </p>
             <a href="#" class="inline-flex items-center text-green-600 font-semibold hover:text-green-700">
-              View Report
+              {{ $t('app.contactPage.viewReport') }}
               <ArrowRight class="w-4 h-4 ml-1" />
             </a>
           </div>
