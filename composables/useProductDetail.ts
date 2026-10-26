@@ -71,7 +71,8 @@ export const useProductDetail = (initialSlug: string) => {
         }
       `
       const res = await gqlFetch<{ getProductDetailSlug: any }>(query, { slug: slug.value }, { auth: true })
-      const p = res?.getProductDetailSlug || []
+      // the API answers an unknown slug with null
+      const p = res?.getProductDetailSlug
       if (!p) throw new Error('Product not found')
 
       // Sort galleries
