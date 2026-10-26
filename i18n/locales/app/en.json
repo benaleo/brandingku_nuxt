@@ -328,6 +328,66 @@
       "ctaText": "Let's collaborate to create exceptional merchandise and branding solutions that will make your business unforgettable.",
       "ctaStart": "Start Your Project",
       "ctaCatalog": "Download Catalog"
+    },
+    "wishlistPage": {
+      "metaTitle": "Wishlist - Brandingku",
+      "title": "Wishlist",
+      "subtitle": "Your favorite products, neatly saved.",
+      "count": "{count} item | {count} items",
+      "emptyTitle": "Your wishlist is still empty",
+      "emptyText": "Find some products and add them to your wishlist.",
+      "browse": "Browse Products",
+      "remove": "Remove from wishlist",
+      "productFallback": "Product",
+      "viewDetail": "View Details"
+    },
+    "tncPage": {
+      "metaTitle": "Terms & Conditions - Brandingku",
+      "metaDescription": "Read Brandingku's Terms and Conditions to understand your rights and responsibilities when using our platform.",
+      "eyebrow": "LEGAL INFORMATION",
+      "title": "Terms & Conditions",
+      "intro": "Please read these terms and conditions carefully before using our service. By using our service, you agree to be bound by these terms.",
+      "toc": "Table of Contents",
+      "sections": {
+        "terms": "Terms of Use",
+        "privacy": "Privacy Policy",
+        "shipping": "Shipping & Returns",
+        "ip": "Intellectual Property"
+      },
+      "terms": {
+        "p1": "Welcome to Brandingku. These Terms and Conditions govern your use of our website and services. By accessing or using our platform, you agree to be bound by these terms.",
+        "p2": "Brandingku provides a platform for users to discover, purchase, and manage branding products and services. We are committed to ensuring a safe and transparent environment for all our users.",
+        "accountTitle": "1. Account Registration",
+        "accountText": "To access certain features of our platform, you must register for an account. You agree to provide accurate, current, and complete information during registration and to update such information to keep it accurate, current, and complete.",
+        "responsibilitiesTitle": "2. User Responsibilities",
+        "responsibilitiesText": "You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account."
+      },
+      "privacy": {
+        "p1": "Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our services.",
+        "collectTitle": "Information We Collect",
+        "collectText": "We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us for support. This may include your name, email address, payment information, and other personal details.",
+        "useTitle": "How We Use Your Information",
+        "useText": "We use the information we collect to provide, maintain, and improve our services, process transactions, send you technical notices and support messages, and communicate with you about products, services, and promotional offers."
+      },
+      "shipping": {
+        "p1": "We want you to be completely satisfied with your purchase. If you're not happy with your order, we offer a straightforward return and refund policy.",
+        "shippingTitle": "Shipping Policy",
+        "shippingText": "Orders are typically processed within 1-2 business days. Standard shipping takes 5-7 business days, while express shipping takes 2-3 business days. Shipping costs are calculated at checkout based on your location and selected shipping method.",
+        "returnTitle": "Return Policy",
+        "returnText": "You may return unused items in their original packaging within 30 days of delivery for a full refund. Please contact our customer service team to initiate a return. Refunds are processed within 5-7 business days after we receive the returned items."
+      },
+      "ip": {
+        "p1": "All content, features, and functionality of the Brandingku platform are owned by Brandingku and are protected by copyright, trademark, and other intellectual property laws.",
+        "trademarksTitle": "Content and Trademarks",
+        "trademarksText": "The Brandingku name, logos, and all related graphics are trademarks of Brandingku. You may not use our trademarks without our prior written consent.",
+        "ugcTitle": "User-Generated Content",
+        "ugcText": "By submitting content to our platform, you grant us a non-exclusive, royalty-free license to use, reproduce, and display such content for the purpose of operating and improving our services."
+      },
+      "helpTitle": "Need help?",
+      "helpText": "Have questions about our terms? We're here to help.",
+      "contactSupport": "Contact Support",
+      "lastUpdated": "Last updated: March 26, 2026",
+      "downloadPdf": "Download PDF"
     }
   }
 }

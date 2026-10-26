@@ -328,6 +328,66 @@
       "ctaText": "Mari berkolaborasi menciptakan merchandise dan solusi branding istimewa yang membuat bisnis Anda tak terlupakan.",
       "ctaStart": "Mulai Proyek Anda",
       "ctaCatalog": "Unduh Katalog"
+    },
+    "wishlistPage": {
+      "metaTitle": "Wishlist - Brandingku",
+      "title": "Wishlist",
+      "subtitle": "Produk favorit kamu, tersimpan rapi.",
+      "count": "{count} item",
+      "emptyTitle": "Wishlist kamu masih kosong",
+      "emptyText": "Yuk cari produk dan tambahkan ke wishlist.",
+      "browse": "Cari Produk",
+      "remove": "Hapus dari wishlist",
+      "productFallback": "Produk",
+      "viewDetail": "Lihat Detail"
+    },
+    "tncPage": {
+      "metaTitle": "Syarat & Ketentuan - Brandingku",
+      "metaDescription": "Baca Syarat dan Ketentuan Brandingku untuk memahami hak dan tanggung jawab Anda saat menggunakan platform kami.",
+      "eyebrow": "INFORMASI HUKUM",
+      "title": "Syarat & Ketentuan",
+      "intro": "Harap baca syarat dan ketentuan ini dengan saksama sebelum menggunakan layanan kami. Dengan menggunakan layanan kami, Anda setuju untuk terikat oleh ketentuan ini.",
+      "toc": "Daftar Isi",
+      "sections": {
+        "terms": "Ketentuan Penggunaan",
+        "privacy": "Kebijakan Privasi",
+        "shipping": "Pengiriman & Pengembalian",
+        "ip": "Hak Kekayaan Intelektual"
+      },
+      "terms": {
+        "p1": "Selamat datang di Brandingku. Syarat dan Ketentuan ini mengatur penggunaan Anda atas situs web dan layanan kami. Dengan mengakses atau menggunakan platform kami, Anda setuju untuk terikat oleh ketentuan ini.",
+        "p2": "Brandingku menyediakan platform bagi pengguna untuk menemukan, membeli, dan mengelola produk serta layanan branding. Kami berkomitmen menjaga lingkungan yang aman dan transparan bagi semua pengguna.",
+        "accountTitle": "1. Pendaftaran Akun",
+        "accountText": "Untuk mengakses fitur tertentu di platform kami, Anda harus mendaftar akun. Anda setuju untuk memberikan informasi yang akurat, terkini, dan lengkap saat pendaftaran, serta memperbaruinya agar tetap akurat, terkini, dan lengkap.",
+        "responsibilitiesTitle": "2. Tanggung Jawab Pengguna",
+        "responsibilitiesText": "Anda bertanggung jawab menjaga kerahasiaan kredensial akun Anda dan atas semua aktivitas yang terjadi di akun Anda. Anda setuju untuk segera memberi tahu kami jika ada penggunaan akun Anda tanpa izin."
+      },
+      "privacy": {
+        "p1": "Privasi Anda penting bagi kami. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi Anda saat Anda menggunakan layanan kami.",
+        "collectTitle": "Informasi yang Kami Kumpulkan",
+        "collectText": "Kami mengumpulkan informasi yang Anda berikan langsung kepada kami, misalnya saat Anda membuat akun, melakukan pembelian, atau menghubungi kami untuk meminta bantuan. Informasi ini dapat mencakup nama, alamat email, informasi pembayaran, dan data pribadi lainnya.",
+        "useTitle": "Cara Kami Menggunakan Informasi Anda",
+        "useText": "Kami menggunakan informasi yang kami kumpulkan untuk menyediakan, memelihara, dan meningkatkan layanan kami, memproses transaksi, mengirimkan pemberitahuan teknis dan pesan dukungan, serta berkomunikasi dengan Anda mengenai produk, layanan, dan penawaran promosi."
+      },
+      "shipping": {
+        "p1": "Kami ingin Anda benar-benar puas dengan pembelian Anda. Jika Anda tidak puas dengan pesanan Anda, kami menyediakan kebijakan pengembalian barang dan dana yang mudah.",
+        "shippingTitle": "Kebijakan Pengiriman",
+        "shippingText": "Pesanan biasanya diproses dalam 1-2 hari kerja. Pengiriman reguler memakan waktu 5-7 hari kerja, sedangkan pengiriman ekspres memakan waktu 2-3 hari kerja. Biaya pengiriman dihitung saat checkout berdasarkan lokasi Anda dan metode pengiriman yang dipilih.",
+        "returnTitle": "Kebijakan Pengembalian",
+        "returnText": "Anda dapat mengembalikan barang yang belum digunakan dalam kemasan aslinya dalam waktu 30 hari sejak barang diterima untuk mendapatkan pengembalian dana penuh. Silakan hubungi tim layanan pelanggan kami untuk memulai pengembalian. Pengembalian dana diproses dalam 5-7 hari kerja setelah kami menerima barang yang dikembalikan."
+      },
+      "ip": {
+        "p1": "Seluruh konten, fitur, dan fungsi platform Brandingku dimiliki oleh Brandingku dan dilindungi oleh undang-undang hak cipta, merek dagang, dan hak kekayaan intelektual lainnya.",
+        "trademarksTitle": "Konten dan Merek Dagang",
+        "trademarksText": "Nama, logo, dan seluruh grafis terkait Brandingku adalah merek dagang Brandingku. Anda tidak boleh menggunakan merek dagang kami tanpa persetujuan tertulis dari kami sebelumnya.",
+        "ugcTitle": "Konten Buatan Pengguna",
+        "ugcText": "Dengan mengirimkan konten ke platform kami, Anda memberi kami lisensi non-eksklusif dan bebas royalti untuk menggunakan, mereproduksi, dan menampilkan konten tersebut guna mengoperasikan dan meningkatkan layanan kami."
+      },
+      "helpTitle": "Butuh bantuan?",
+      "helpText": "Ada pertanyaan tentang syarat kami? Kami siap membantu.",
+      "contactSupport": "Hubungi Dukungan",
+      "lastUpdated": "Terakhir diperbarui: 26 Maret 2026",
+      "downloadPdf": "Unduh PDF"
     }
   }
 }
