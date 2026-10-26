@@ -10,9 +10,9 @@ const { openChat } = useChatWidget();
   <Button
     variant="outline"
     size="sm"
-    :aria-label="`Tanya admin tentang ${props.product?.name}`"
+    :aria-label="$t('app.productPage.askAbout', { name: props.product?.name })"
     class="border-green-200 text-green-700 hover:bg-green-50"
-    @click.stop="openChat(`Halo admin, saya mau tanya produk ${props.product?.name}`)"
+    @click.stop="openChat($t('app.productPage.askAboutMessage', { name: props.product?.name }))"
   >
     <MessageCircle class="w-4 h-4" />
   </Button>

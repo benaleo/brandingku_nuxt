@@ -15,6 +15,7 @@ import { ArrowLeftIcon, MessageCircle } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const slug = computed(() => String(route.params.slug || ""));
 const {
   data: detail,
@@ -78,7 +79,7 @@ const { openChat } = useChatWidget();
 const askAdmin = () => {
   const name = detail.value?.name || "";
   const variant = selectedVariantName.value ? ` (${selectedVariantName.value})` : "";
-  openChat(`Halo admin, saya mau tanya harga untuk produk ${name}${variant}`);
+  openChat(t("app.productPage.detail.askPriceMessage", { name, variant }));
 };
 
 const displayedOriginal = computed(() => {
@@ -182,8 +183,8 @@ useHead(() => ({
   // lifts the chat widget above the mobile action bar
   htmlAttrs: { class: "has-bottom-bar" },
   title: detail.value?.name
-    ? `${detail.value.name} - Brandingku`
-    : "Product - Brandingku",
+    ? t("app.productPage.detail.metaTitle", { name: detail.value.name })
+    : t("app.productPage.detail.metaFallback"),
 }));
 
 // Handle same-route param changes
@@ -205,24 +206,32 @@ definePageMeta({
     class="group fixed right-5 lg:right-20 top-24 z-50 p-4 bg-green-200 hover:bg-green-400 rounded-full flex gap-2"
     @click="handleBack"
   >
-    <span class="group-hover:block hidden">Back</span>
+    <span class="group-hover:block hidden">{{ $t('app.productPage.detail.back') }}</span>
     <ArrowLeftIcon class="w-6 h-6" />
   </button>
 
   <div class="bg-white app-container px-4 pt-8 pb-28 md:pt-10 lg:pb-12">
-    <div v-if="loading" class="flex justify-center">Loading...</div>
-    <div v-else-if="error" class="flex justify-center text-red-500">
-      {{ error }}
+    <div v-if="loading" class="flex justify-center">{{ $t('app.productPage.detail.loading') }}</div>
+    <div v-else-if="error" class="flex flex-col items-center gap-4 py-10 text-center">
+      <p class="text-lg font-semibold text-gray-900">
+        {{ error === "Product not found" ? $t('app.productPage.detail.notFound') : $t('app.productPage.detail.loadFailed') }}
+      </p>
+      <NuxtLink
+        to="/product"
+        class="inline-flex items-center justify-center rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
+      >
+        {{ $t('app.productPage.detail.browseAll') }}
+      </NuxtLink>
     </div>
 
     <div v-else-if="detail" class="space-y-8">
       
     <!-- Breadcrumb -->
     <div class="app-container mx-auto text-sm text-gray-500">
-      <NuxtLink to="/" class="hover:text-primary">Home</NuxtLink>
+      <NuxtLink to="/" class="hover:text-primary">{{ $t('app.productPage.detail.home') }}</NuxtLink>
       <span class="mx-1">/</span>
       <span class="hover:text-primary">{{
-        detail.category || "Product"
+        detail.category || $t('app.productPage.detail.product')
       }}</span>
       <span class="mx-1">/</span>
       <span class="text-primary">{{ detail.name }}</span>
@@ -249,7 +258,7 @@ definePageMeta({
           <!-- Price -->
           <div class="mt-6 flex items-center gap-3">
             <span v-if="isAskAdmin" class="text-2xl font-bold text-green-600 md:text-3xl">
-              Tanya Admin
+              {{ $t('app.productPage.detail.priceAskAdmin') }}
             </span>
             <span v-else class="text-3xl font-bold">
               {{ formatIDR(displayedPrice) }}
@@ -269,7 +278,7 @@ definePageMeta({
             "
             class="mt-8"
           >
-            <h3 class="text-sm font-medium mb-2">Color</h3>
+            <h3 class="text-sm font-medium mb-2">{{ $t('app.productPage.detail.color') }}</h3>
             <div class="flex gap-2 flex-wrap">
               <button
                 v-for="color in variantColors && variantColors.length
@@ -292,10 +301,10 @@ definePageMeta({
 
           <!-- Variant (from additional name) -->
           <div v-if="detail.additionals?.length" class="mt-6">
-            <h3 class="text-sm font-medium mb-2">Variant</h3>
+            <h3 class="text-sm font-medium mb-2">{{ $t('app.productPage.detail.variant') }}</h3>
             <Select v-model="selectedVariantName">
               <SelectTrigger class="w-[220px]">
-                <SelectValue placeholder="Select a variant" />
+                <SelectValue :placeholder="$t('app.productPage.detail.selectVariant')" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem
@@ -309,15 +318,15 @@ definePageMeta({
             </Select>
             <div class="mt-3 text-sm text-gray-700 space-y-1">
               <div>
-                <span class="text-gray-500">Stock:</span>
+                <span class="text-gray-500">{{ $t('app.productPage.detail.stock') }}</span>
                 <span class="font-medium">{{ displayedStock }}</span>
               </div>
               <div v-if="displayedMoq != null">
-                <span class="text-gray-500">MOQ:</span>
+                <span class="text-gray-500">{{ $t('app.productPage.detail.moq') }}</span>
                 <span class="font-medium">{{ displayedMoq }}</span>
               </div>
               <div v-if="displayedDiscountInfo">
-                <span class="text-gray-500">Discount:</span>
+                <span class="text-gray-500">{{ $t('app.productPage.detail.discount') }}</span>
                 <span class="font-medium">{{ displayedDiscountInfo }}</span>
               </div>
             </div>
@@ -330,10 +339,10 @@ definePageMeta({
           >
             <Button v-if="isAskAdmin" class="h-11 flex-1 gap-2 bg-green-600 text-white hover:bg-green-700 lg:h-9" @click="askAdmin">
               <MessageCircle class="h-4 w-4" />
-              Ask to Admin
+              {{ $t('app.productPage.detail.askAdmin') }}
             </Button>
-            <Button v-else class="h-11 flex-1 lg:h-9">Add to Cart</Button>
-            <Button variant="outline" aria-label="Tambah ke wishlist" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
+            <Button v-else class="h-11 flex-1 lg:h-9">{{ $t('app.productPage.detail.addToCart') }}</Button>
+            <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
               </svg>
@@ -343,14 +352,14 @@ definePageMeta({
           <!-- Stock Status -->
           <div v-if="!isAskAdmin" class="mt-6 text-sm text-gray-600">
             <div class="flex items-center gap-2">
-              <span v-if="displayedStock > 0">In stock and ready to ship</span>
-              <span v-else>Out of stock</span>
+              <span v-if="displayedStock > 0">{{ $t('app.productPage.detail.inStock') }}</span>
+              <span v-else>{{ $t('app.productPage.detail.outOfStock') }}</span>
             </div>
           </div>
 
           <!-- Description -->
           <div v-if="detail.description" class="mt-8">
-            <h3 class="font-medium mb-3">Description</h3>
+            <h3 class="font-medium mb-3">{{ $t('app.productPage.detail.description') }}</h3>
             <div
               v-html="detail.description"
               class="prose prose-stone prose-a:text-primary prose-a:no-underline prose-a:hover:underline"
@@ -365,7 +374,7 @@ definePageMeta({
             "
             class="mt-8 pt-6 border-t"
           >
-            <h3 class="font-medium mb-3">Specifications</h3>
+            <h3 class="font-medium mb-3">{{ $t('app.productPage.detail.specifications') }}</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
               <div
                 v-for="(kv, idx) in variantAttributes &&

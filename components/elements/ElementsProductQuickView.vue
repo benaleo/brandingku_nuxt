@@ -42,10 +42,11 @@ const productUrl = computed(() => {
   return `${baseUrl}/product/${slug}`
 })
 
+const { t } = useI18n()
 const { openChat } = useChatWidget()
 const chatAboutProduct = () => {
   open.value = false
-  openChat(`Halo admin, saya tertarik dengan ${product.value?.name || 'produk ini'}.\n${productUrl.value}`)
+  openChat(t("app.productPage.quickViewDialog.interestedMessage", { name: product.value?.name || t("app.productPage.quickViewDialog.thisProduct"), url: productUrl.value }))
 }
 </script>
 
@@ -58,7 +59,7 @@ const chatAboutProduct = () => {
       <div class="relative bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 overflow-hidden">
         <div class="flex items-center justify-between px-4 py-3 border-b">
           <h3 class="text-lg font-semibold">{{ product?.name }}</h3>
-          <button class="text-gray-500 hover:text-gray-700" @click="open = false">✕</button>
+          <button class="text-gray-500 hover:text-gray-700" :aria-label="$t('app.common.close')" @click="open = false">✕</button>
         </div>
         <div class="p-4 space-y-4 max-h-[70vh] overflow-auto">
           <div class="flex flex-col md:flex-row gap-4 w-full items-center">
@@ -70,14 +71,14 @@ const chatAboutProduct = () => {
             />
             <div class="flex-1">
               <p class="text-sm text-gray-600" v-if="product?.category?.name">
-                Kategori: <span class="font-medium">{{ product?.category?.name }}</span>
+                {{ $t('app.productPage.quickViewDialog.category') }} <span class="font-medium">{{ product?.category?.name }}</span>
               </p>
-              <div class="prose max-w-none mt-2" v-html="product?.description || 'Tidak ada deskripsi.'" />
+              <div class="prose max-w-none mt-2" v-html="product?.description || $t('app.productPage.quickViewDialog.noDescription')" />
             </div>
           </div>
 
           <div>
-            <h4 class="font-semibold mb-2">Pilihan (Additionals)</h4>
+            <h4 class="font-semibold mb-2">{{ $t('app.productPage.quickViewDialog.options') }}</h4>
             <div v-if="(product?.additionals || []).length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div
                 v-for="(add, idx) in product?.additionals"
@@ -85,18 +86,18 @@ const chatAboutProduct = () => {
                 class="border rounded p-2 text-sm flex justify-between items-center"
               >
                 <div>
-                  <div class="font-medium">{{ add?.name || 'Varian' }}</div>
-                  <div class="text-gray-500">MOQ: {{ add?.moq ?? 0 }}</div>
+                  <div class="font-medium">{{ add?.name || $t('app.productPage.quickViewDialog.variantFallback') }}</div>
+                  <div class="text-gray-500">{{ $t('app.productPage.detail.moq') }} {{ add?.moq ?? 0 }}</div>
                 </div>
                 <div class="font-semibold">Rp. {{ Number(add?.price || 0) }}</div>
               </div>
             </div>
-            <p v-else class="text-sm text-gray-500">Tidak ada pilihan tambahan.</p>
+            <p v-else class="text-sm text-gray-500">{{ $t('app.productPage.quickViewDialog.noOptions') }}</p>
           </div>
         </div>
         <div class="px-4 py-3 border-t flex items-center justify-between">
-          <a :href="productUrl" target="_blank" rel="noopener" class="text-sm text-gray-600 hover:underline">Lihat detail</a>
-          <Button variant="default" @click="chatAboutProduct">Chat dengan Admin</Button>
+          <a :href="productUrl" target="_blank" rel="noopener" class="text-sm text-gray-600 hover:underline">{{ $t('app.productPage.quickViewDialog.viewDetail') }}</a>
+          <Button variant="default" @click="chatAboutProduct">{{ $t('app.productPage.quickViewDialog.chatAdmin') }}</Button>
         </div>
       </div>
     </div>

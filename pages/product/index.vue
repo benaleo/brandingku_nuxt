@@ -21,6 +21,7 @@ import ElementsProductQuickView from "~/components/elements/ElementsProductQuick
 import ChatProductButton from "~/components/elements/ChatProductButton.vue";
 import { toast } from "vue-sonner";
 
+const { t } = useI18n();
 const { token, createWishlist, deleteWishlist } = useWishlist();
 
 const handleWishlistToggle = async (product: any) => {
@@ -33,15 +34,15 @@ const handleWishlistToggle = async (product: any) => {
   try {
     if (product.is_wishlisted) {
       await deleteWishlist(Number(productId));
-      toast.success("Produk dihapus dari wishlist");
+      toast.success(t("app.productPage.wishlistRemoved"));
       product.is_wishlisted = false;
     } else {
       await createWishlist(Number(productId));
-      toast.success("Produk ditambahkan ke wishlist");
+      toast.success(t("app.productPage.wishlistAdded"));
       product.is_wishlisted = true;
     }
   } catch (e: any) {
-    toast.error(e?.message || "Gagal memperbarui wishlist");
+    toast.error(e?.message || t("app.productPage.wishlistFailed"));
   }
 };
 
@@ -51,12 +52,13 @@ const STORAGE_URL = config.public.STORAGE_URL;
 
 // MARK : SORT OPTIONS (backend whitelist: name, created_at, updated_at)
 const sortOptions = [
-  { value: "created_at,desc", label: "Terbaru" },
-  { value: "updated_at,desc", label: "Baru diperbarui" },
-  { value: "name,asc", label: "Nama A - Z" },
-  { value: "name,desc", label: "Nama Z - A" },
-  { value: "created_at,asc", label: "Terlama" },
+  { value: "created_at,desc", labelKey: "newest" },
+  { value: "updated_at,desc", labelKey: "updated" },
+  { value: "name,asc", labelKey: "nameAsc" },
+  { value: "name,desc", labelKey: "nameDesc" },
+  { value: "created_at,asc", labelKey: "oldest" },
 ];
+const sortLabel = (labelKey: string) => t(`app.productPage.sortOptions.${labelKey}`);
 const DEFAULT_SORT = sortOptions[0]!.value;
 
 const productService = useProductService(true, undefined, {
@@ -154,9 +156,10 @@ const selectCategory = (id: number | null) => {
 // MARK : SORT
 const sortOpen = ref(false);
 const activeSort = computed(() => params.sortBy || DEFAULT_SORT);
-const activeSortLabel = computed(
-  () => sortOptions.find((o) => o.value === activeSort.value)?.label
-);
+const activeSortLabel = computed(() => {
+  const option = sortOptions.find((o) => o.value === activeSort.value);
+  return option ? sortLabel(option.labelKey) : "";
+});
 const selectSort = (value: string) => {
   applyParams({ sortBy: value });
   sortOpen.value = false;
@@ -269,7 +272,7 @@ const goToPage = (p1: number) => {
   scrollToList();
 };
 
-const pageTitle = computed(() => `Brandingku Products`);
+const pageTitle = computed(() => t("app.productPage.title"));
 
 useHead({ title: pageTitle });
 
@@ -281,10 +284,10 @@ definePageMeta({ layout: "page-layout" });
 
   <section class="app-container px-4 pb-16 pt-6 sm:px-6 md:pt-4 lg:px-8">
     <div ref="listTop" class="scroll-mt-28">
-      <h2 class="text-2xl font-bold text-gray-900 sm:text-3xl">Daftar Produk Aktif</h2>
+      <h2 class="text-2xl font-bold text-gray-900 sm:text-3xl">{{ $t('app.productPage.listTitle') }}</h2>
       <p class="mt-1 text-sm text-gray-500">
-        <template v-if="loading && !totalItems">Memuat produk...</template>
-        <template v-else>{{ totalItems }} produk ditemukan</template>
+        <template v-if="loading && !totalItems">{{ $t('app.productPage.loading') }}</template>
+        <template v-else>{{ $t('app.productPage.found', { count: totalItems }, totalItems) }}</template>
       </p>
 
       <!-- MARK : TOOLBAR -->
@@ -300,7 +303,7 @@ definePageMeta({ layout: "page-layout" });
           @click="openFilter"
         >
           <SlidersHorizontal class="h-4 w-4 shrink-0" />
-          <span class="truncate">{{ selectedCategory?.name || "Filter" }}</span>
+          <span class="truncate">{{ selectedCategory?.name || $t('app.productPage.filter') }}</span>
           <span
             v-if="selectedCategoryId != null"
             class="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-xs text-white"
@@ -310,7 +313,7 @@ definePageMeta({ layout: "page-layout" });
         <button
           type="button"
           class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:px-4"
-          aria-label="Urutkan"
+          :aria-label="$t('app.productPage.sort')"
           @click="sortOpen = true"
         >
           <ArrowDownUp class="h-4 w-4" />
@@ -324,7 +327,7 @@ definePageMeta({ layout: "page-layout" });
               ? 'border-green-600 bg-green-50 text-green-800'
               : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
           "
-          aria-label="Cari produk"
+          :aria-label="$t('app.productPage.search')"
           @click="openSearch"
         >
           <Search class="h-4 w-4" />
@@ -341,7 +344,7 @@ definePageMeta({ layout: "page-layout" });
           <button
             type="button"
             class="rounded-full p-1 hover:bg-gray-200"
-            aria-label="Hapus pencarian"
+            :aria-label="$t('app.productPage.clearSearch')"
             @click="clearSearch"
           >
             <X class="h-3 w-3" />
@@ -355,7 +358,7 @@ definePageMeta({ layout: "page-layout" });
           <button
             type="button"
             class="rounded-full p-1 hover:bg-gray-200"
-            aria-label="Hapus kategori"
+            :aria-label="$t('app.productPage.clearCategory')"
             @click="applyParams({ category_id: null })"
           >
             <X class="h-3 w-3" />
@@ -366,7 +369,7 @@ definePageMeta({ layout: "page-layout" });
           class="text-xs font-medium text-green-700 hover:underline"
           @click="resetAll"
         >
-          Reset semua
+          {{ $t('app.productPage.resetAll') }}
         </button>
       </div>
     </div>
@@ -417,7 +420,7 @@ definePageMeta({ layout: "page-layout" });
               class="absolute inset-x-3 bottom-3 hidden translate-y-2 rounded-full bg-white/95 py-2 text-sm font-medium text-gray-900 opacity-0 shadow transition-all group-hover:translate-y-0 group-hover:opacity-100 lg:block"
               @click.prevent.stop="openQuickView(product)"
             >
-              Quick View
+              {{ $t('app.productPage.quickView') }}
             </button>
           </div>
           <div class="flex flex-1 flex-col p-3 sm:p-4">
@@ -432,13 +435,13 @@ definePageMeta({ layout: "page-layout" });
             </h3>
             <div class="mt-auto pt-2">
               <template v-if="productMinPrice(product) > 0">
-                <span class="block text-[11px] text-gray-500">Mulai dari</span>
+                <span class="block text-[11px] text-gray-500">{{ $t('app.productPage.startingFrom') }}</span>
                 <span class="text-sm font-bold text-gray-900 sm:text-base">
                   {{ formatPrice(productMinPrice(product)) }}
                 </span>
-                <span class="text-xs text-gray-500">/pcs</span>
+                <span class="text-xs text-gray-500">{{ $t('app.productPage.perPcs') }}</span>
               </template>
-              <span v-else class="text-sm font-bold text-green-600">Tanya Sekarang</span>
+              <span v-else class="text-sm font-bold text-green-600">{{ $t('app.productPage.askNow') }}</span>
             </div>
           </div>
         </NuxtLink>
@@ -447,7 +450,7 @@ definePageMeta({ layout: "page-layout" });
           <Button
             variant="outline"
             size="sm"
-            :aria-label="product.is_wishlisted ? 'Hapus dari wishlist' : 'Tambah ke wishlist'"
+            :aria-label="product.is_wishlisted ? $t('app.productPage.wishlistRemove') : $t('app.productPage.wishlistAdd')"
             :class="
               product.is_wishlisted
                 ? 'border-red-200 text-red-700 hover:bg-red-50'
@@ -478,12 +481,12 @@ definePageMeta({ layout: "page-layout" });
       class="mt-6 flex flex-col items-center rounded-2xl border border-dashed px-6 py-16 text-center"
     >
       <PackageSearch class="h-10 w-10 text-gray-400" />
-      <p class="mt-3 font-semibold text-gray-900">Produk tidak ditemukan</p>
+      <p class="mt-3 font-semibold text-gray-900">{{ $t('app.productPage.emptyTitle') }}</p>
       <p class="mt-1 max-w-sm text-sm text-gray-500">
-        Coba kata kunci lain atau pilih kategori yang berbeda.
+        {{ $t('app.productPage.emptyDescription') }}
       </p>
       <Button v-if="hasActiveFilters" variant="outline" class="mt-4" @click="resetAll">
-        Reset filter
+        {{ $t('app.productPage.resetFilter') }}
       </Button>
     </div>
 
@@ -491,12 +494,12 @@ definePageMeta({ layout: "page-layout" });
     <nav
       v-if="totalPages > 1"
       class="mt-10 flex items-center justify-center gap-1 sm:gap-2"
-      aria-label="Halaman produk"
+      :aria-label="$t('app.productPage.pagination')"
     >
       <Button
         variant="outline"
         size="icon"
-        aria-label="Halaman sebelumnya"
+        :aria-label="$t('app.productPage.prevPage')"
         :disabled="!pageInfo?.has_previous_page"
         @click="goToPage(currentPageLabel - 1)"
       >
@@ -517,7 +520,7 @@ definePageMeta({ layout: "page-layout" });
       <Button
         variant="outline"
         size="icon"
-        aria-label="Halaman berikutnya"
+        :aria-label="$t('app.productPage.nextPage')"
         :disabled="!pageInfo?.has_next_page"
         @click="goToPage(currentPageLabel + 1)"
       >
@@ -527,7 +530,11 @@ definePageMeta({ layout: "page-layout" });
   </section>
 
   <!-- MARK : FILTER SHEET -->
-  <ElementsInsetSheet v-model:open="filterOpen" title="Filter" description="Pilih kategori produk">
+  <ElementsInsetSheet
+    v-model:open="filterOpen"
+    :title="$t('app.productPage.filter')"
+    :description="$t('app.productPage.filterDescription')"
+  >
     <div v-if="categoriesLoading" class="space-y-2">
       <div v-for="i in 5" :key="i" class="h-10 animate-pulse rounded-lg bg-gray-100" />
     </div>
@@ -539,7 +546,7 @@ definePageMeta({ layout: "page-layout" });
           :class="selectedCategoryId === null ? 'bg-green-50 text-green-800' : 'text-gray-800'"
           @click="selectCategory(null)"
         >
-          Semua produk
+          {{ $t('app.productPage.allProducts') }}
           <Check v-if="selectedCategoryId === null" class="h-4 w-4" />
         </button>
       </li>
@@ -594,7 +601,7 @@ definePageMeta({ layout: "page-layout" });
   </ElementsInsetSheet>
 
   <!-- MARK : SORT SHEET -->
-  <ElementsInsetSheet v-model:open="sortOpen" title="Urutkan">
+  <ElementsInsetSheet v-model:open="sortOpen" :title="$t('app.productPage.sort')">
     <ul class="space-y-1">
       <li v-for="option in sortOptions" :key="option.value">
         <button
@@ -603,7 +610,7 @@ definePageMeta({ layout: "page-layout" });
           :class="activeSort === option.value ? 'bg-green-50 text-green-800' : 'text-gray-800'"
           @click="selectSort(option.value)"
         >
-          {{ option.label }}
+          {{ sortLabel(option.labelKey) }}
           <Check v-if="activeSort === option.value" class="h-4 w-4" />
         </button>
       </li>
@@ -622,7 +629,7 @@ definePageMeta({ layout: "page-layout" });
         v-if="searchOpen"
         role="dialog"
         aria-modal="true"
-        aria-label="Cari produk"
+        :aria-label="$t('app.productPage.search')"
         class="fixed inset-0 z-[80] flex flex-col bg-white"
       >
         <form
@@ -638,14 +645,14 @@ definePageMeta({ layout: "page-layout" });
               inputmode="search"
               enterkeyhint="search"
               autocomplete="off"
-              placeholder="Cari produk..."
+              :placeholder="$t('app.productPage.searchPlaceholder')"
               class="h-12 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-base outline-none focus:border-green-600 focus:bg-white"
             />
             <button
               v-if="searchInput"
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-gray-400 hover:bg-gray-200"
-              aria-label="Kosongkan"
+              :aria-label="$t('app.common.clear')"
               @click="clearSearch"
             >
               <X class="h-4 w-4" />
@@ -656,19 +663,19 @@ definePageMeta({ layout: "page-layout" });
             class="shrink-0 rounded-full px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             @click="closeSearch"
           >
-            Tutup
+            {{ $t('app.common.close') }}
           </button>
         </form>
 
         <div class="flex-1 overflow-y-auto overscroll-contain">
           <div class="app-container py-4">
             <p v-if="!searchInput.trim()" class="py-10 text-center text-sm text-gray-500">
-              Ketik nama produk untuk mulai mencari.
+              {{ $t('app.productPage.searchHint') }}
             </p>
             <template v-else>
               <p class="mb-3 text-sm text-gray-500">
-                <template v-if="loading">Mencari...</template>
-                <template v-else>{{ totalItems }} hasil untuk "{{ params.keyword }}"</template>
+                <template v-if="loading">{{ $t('app.productPage.searching') }}</template>
+                <template v-else>{{ $t('app.productPage.searchResults', { count: totalItems, keyword: params.keyword }, totalItems) }}</template>
               </p>
               <ul
                 v-if="searchPreview.length"
@@ -698,14 +705,14 @@ definePageMeta({ layout: "page-layout" });
                 </li>
               </ul>
               <p v-else-if="!loading" class="py-10 text-center text-sm text-gray-500">
-                Tidak ada produk yang cocok.
+                {{ $t('app.productPage.noMatch') }}
               </p>
               <Button
                 v-if="totalItems > searchPreview.length && !loading"
                 class="mt-4 w-full sm:w-auto"
                 @click="submitSearch"
               >
-                Lihat semua {{ totalItems }} hasil
+                {{ $t('app.productPage.seeAll', { count: totalItems }) }}
               </Button>
             </template>
           </div>

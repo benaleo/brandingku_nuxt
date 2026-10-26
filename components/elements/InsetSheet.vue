@@ -64,7 +64,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="-mr-2 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-              aria-label="Tutup"
+              :aria-label="$t('app.common.close')"
               @click="close"
             >
               <X class="h-5 w-5" />
