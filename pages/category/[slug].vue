@@ -6,6 +6,7 @@ import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCa
 import {Download, MessageCircle} from 'lucide-vue-next'
 
 const route = useRoute()
+const { t } = useI18n()
 const slug = route.params.slug as string
 const subSlug = computed(() => route.query.sub as string | undefined)
 
@@ -102,7 +103,7 @@ const activeCatalog = computed(() => {
   return null
 })
 const requestCatalog = () =>
-  openChat(`Halo admin, saya ingin request katalog ${selectedSubCategory.value?.name || category.value?.name || ''}`.trim())
+  openChat(t('app.categoryPage.detail.requestCatalogMessage', { name: selectedSubCategory.value?.name || category.value?.name || '' }).trim())
 
 const {
   products,
@@ -116,7 +117,7 @@ const {
 const subCategories = computed(() => category.value?.sub || [])
 
 const pageTitle = computed(() => {
-  return category.value?.meta_title || category.value?.name || 'Category'
+  return category.value?.meta_title || category.value?.name || t('app.categoryPage.detail.fallbackTitle')
 })
 
 const pageDescription = computed(() => {
@@ -220,10 +221,10 @@ definePageMeta({
     <!-- Error State -->
     <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 px-4 pt-28 pb-16 sm:px-8 md:pt-36">
       <div class="relative max-w-4xl mx-auto text-center">
-        <h1 class="text-3xl md:text-4xl font-bold mb-4">Category Not Found</h1>
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">{{ $t('app.categoryPage.detail.notFound') }}</h1>
         <p class="text-lg md:text-xl mb-6 break-words">{{ categoryError }}</p>
         <button @click="$router.push('/')" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
-          Back to Home
+          {{ $t('app.categoryPage.detail.backHome') }}
         </button>
       </div>
     </div>
@@ -246,7 +247,7 @@ definePageMeta({
             href="#products"
             class="inline-flex items-center justify-center bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
           >
-            Explore Collection
+            {{ $t('app.categoryPage.detail.explore') }}
           </a>
           <a
             v-if="activeCatalog"
@@ -258,7 +259,7 @@ definePageMeta({
             class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
           >
             <Download class="size-5 shrink-0" />
-            Request Catalog
+            {{ $t('app.categoryPage.detail.requestCatalog') }}
           </a>
           <button
             v-else
@@ -267,7 +268,7 @@ definePageMeta({
             @click="requestCatalog"
           >
             <MessageCircle class="size-5 shrink-0" />
-            Request Catalog
+            {{ $t('app.categoryPage.detail.requestCatalog') }}
           </button>
         </div>
       </div>
@@ -306,7 +307,7 @@ definePageMeta({
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           ]"
         >
-          {{ item.filter }}
+          {{ item.filter === 'All' ? $t('app.categoryPage.detail.all') : item.filter }}
         </button>
       </div>
     </div>
@@ -314,7 +315,7 @@ definePageMeta({
 
     <!-- Products Section -->
     <div id="products" class="mb-12 pt-10 md:pt-12 max-w-6xl mx-auto scroll-mt-24">
-      <h2 class="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center capitalize">{{ selectedSubCategory?.name || 'Products' }}</h2>
+      <h2 class="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center capitalize">{{ selectedSubCategory?.name || $t('app.categoryPage.detail.products') }}</h2>
       
       <!-- Initial Loading State (Skeleton) -->
       <div v-if="productsLoading && products.length === 0" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
@@ -338,7 +339,7 @@ definePageMeta({
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span>Loading more products...</span>
+          <span>{{ $t('app.categoryPage.detail.loadingMore') }}</span>
         </div>
       </div>
       
@@ -346,7 +347,7 @@ definePageMeta({
       <div v-else-if="productsError" class="text-center py-12">
         <p class="text-red-600 mb-4">{{ productsError }}</p>
         <button @click="loadMore" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
-          Try Again
+          {{ $t('app.categoryPage.detail.tryAgain') }}
         </button>
       </div>
       
@@ -357,14 +358,14 @@ definePageMeta({
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
         </div>
-        <p class="text-xl md:text-2xl font-semibold text-gray-800 mb-3">No products found in this category yet.</p>
-        <p class="text-gray-600 mb-6 max-w-md">We're currently updating our collection with fresh, eco-friendly designs. Why not explore our other sustainable categories or check back soon?</p>
+        <p class="text-xl md:text-2xl font-semibold text-gray-800 mb-3">{{ $t('app.categoryPage.detail.emptyTitle') }}</p>
+        <p class="text-gray-600 mb-6 max-w-md">{{ $t('app.categoryPage.detail.emptyDescription') }}</p>
         <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <NuxtLink to="/product" class="inline-flex items-center justify-center bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
-            Browse All Products
+            {{ $t('app.categoryPage.detail.browseAll') }}
           </NuxtLink>
           <NuxtLink to="/kontak" class="inline-flex items-center justify-center bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors">
-            Contact Sales for Custom Requests
+            {{ $t('app.categoryPage.detail.contactSales') }}
           </NuxtLink>
         </div>
       </div>
@@ -385,12 +386,12 @@ definePageMeta({
             <h3 class="text-sm sm:text-lg font-semibold mb-1 sm:mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">{{ product.name }}</h3>
             <p class="hidden sm:block text-gray-600 text-sm mb-3 line-clamp-3" v-html="product.description?.substring(0, 200) + (product.description?.length > 200 ? '...' : '')"></p>
             <div class="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <span class="text-base sm:text-xl font-bold text-green-600" :class="product.additionals?.[0]?.price ? '' : 'invisible'">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
+              <span class="text-base sm:text-xl font-bold text-green-600" :class="product.additionals?.[0]?.price ? '' : 'invisible'">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString('id-ID') }}</span>
               <button
                 @click.prevent
                 class="w-full sm:w-auto bg-green-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm hover:bg-green-700 transition-colors"
               >
-                Add to Quote
+                {{ $t('app.categoryPage.detail.addToQuote') }}
               </button>
             </div>
           </div>
@@ -404,7 +405,7 @@ definePageMeta({
           :disabled="productsLoading"
           class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {{ productsLoading ? 'Loading...' : 'Load More Products' }}
+          {{ productsLoading ? $t('app.categoryPage.detail.loading') : $t('app.categoryPage.detail.loadMore') }}
         </button>
       </div>
     </div>
@@ -417,15 +418,15 @@ definePageMeta({
           <img :src="selectedSubCategory.cover || selectedSubCategory.image" :alt="selectedSubCategory.name" class=" object-contains rounded-lg"/>
         </div>
         <div class="flex-1">
-          <h2 class="text-3xl font-bold mb-4">{{ selectedSubCategory.name }} that matters.</h2>
+          <h2 class="text-3xl font-bold mb-4">{{ $t('app.categoryPage.detail.subTitle', { name: selectedSubCategory.name }) }}</h2>
           <div 
             class="text-gray-700 mb-6 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-600"
-            v-html="selectedSubCategory.description || `<p>Choosing the right merchandise isn't just about branding; it's about the message you send. Our ${selectedSubCategory.name.toLowerCase()} collection focuses on high-quality materials that last years, not weeks. From vacuum-sealed technology to carbon-neutral shipping, we help your company make an impact without the footprint.</p>`"
+            v-html="selectedSubCategory.description || `<p>${$t('app.categoryPage.detail.subFallback', { name: selectedSubCategory.name.toLowerCase() })}</p>`"
           ></div>
-          <a href="#" class="text-green-600 font-semibold hover:underline">Learn about our sourcing →</a>
+          <a href="#" class="text-green-600 font-semibold hover:underline">{{ $t('app.categoryPage.detail.sourcing') }}</a>
           <div class="mt-4">
             <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block font-semibold">
-              98% SUSTAINABILITY RATING
+              {{ $t('app.categoryPage.detail.sustainability') }}
             </div>
           </div>
         </div>

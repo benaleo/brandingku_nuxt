@@ -117,6 +117,46 @@
       "contactEmail": "Email",
       "contactPhone": "Telepon / WA",
       "contactSubmit": "Pilih"
+    },
+    "categoryPage": {
+      "eyebrow": "KATALOG {year}",
+      "title": "Kategori Premium Pilihan",
+      "subtitle": "Jelajahi koleksi eksklusif produk berkualitas tinggi kami",
+      "retry": "Coba Lagi",
+      "loadFailed": "Gagal memuat data kategori",
+      "productCount": "{count} Produk",
+      "empty": "Belum ada kategori tersedia",
+      "ecoTitle": "Paket Eco Unggulan",
+      "ecoDescription": "Bundel produk yang berkelanjutan dan ramah lingkungan, sempurna untuk hadiah korporat dan acara promosi",
+      "ecoCta": "Jelajahi Paket",
+      "giftTitle": "Hadiah Kustom",
+      "giftDescription": "Solusi hadiah yang dirancang khusus sesuai dengan merek dan kebutuhan Anda",
+      "giftCta": "Hubungi Spesialis",
+      "metaTitle": "Kategori - Koleksi Produk Premium",
+      "metaDescription": "Jelajahi kategori premium pilihan produk berkualitas tinggi kami",
+      "detail": {
+        "fallbackTitle": "Kategori",
+        "notFound": "Kategori Tidak Ditemukan",
+        "backHome": "Kembali ke Beranda",
+        "explore": "Jelajahi Koleksi",
+        "requestCatalog": "Minta Katalog",
+        "requestCatalogMessage": "Halo admin, saya ingin request katalog {name}",
+        "all": "Semua",
+        "products": "Produk",
+        "loadingMore": "Memuat produk lainnya...",
+        "tryAgain": "Coba Lagi",
+        "emptyTitle": "Belum ada produk di kategori ini.",
+        "emptyDescription": "Koleksi kami sedang diperbarui dengan desain baru yang ramah lingkungan. Jelajahi kategori lain atau cek kembali nanti.",
+        "browseAll": "Lihat Semua Produk",
+        "contactSales": "Hubungi Sales untuk Permintaan Khusus",
+        "addToQuote": "Tambah ke Penawaran",
+        "loading": "Memuat...",
+        "loadMore": "Muat Produk Lainnya",
+        "subTitle": "{name} yang bermakna.",
+        "subFallback": "Memilih merchandise yang tepat bukan hanya soal branding, tetapi juga pesan yang Anda sampaikan. Koleksi {name} kami berfokus pada material berkualitas yang awet bertahun-tahun, bukan hanya hitungan minggu. Dari teknologi vakum hingga pengiriman netral karbon, kami membantu perusahaan Anda memberi dampak tanpa meninggalkan jejak.",
+        "sourcing": "Pelajari sumber material kami →",
+        "sustainability": "98% RATING KEBERLANJUTAN"
+      }
     }
   }
 }

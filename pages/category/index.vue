@@ -2,9 +2,9 @@
   <div class="min-h-screen bg-gray-100 text-slate-700">
     <!-- Header Section: top padding clears the fixed navbar -->
     <div class="text-center px-4 pt-28 pb-8 md:pt-36 md:pb-12">
-      <span class="text-green-600 text-xs md:text-sm font-semibold tracking-wide">KATALOG {{ new Date().getFullYear() }}</span>
-      <h1 class="mt-2 text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800">Kategori Premium Pilihan</h1>
-      <p class="mt-3 text-sm md:text-base text-gray-500 max-w-xl mx-auto">Jelajahi koleksi eksklusif produk berkualitas tinggi kami</p>
+      <span class="text-green-600 text-xs md:text-sm font-semibold tracking-wide">{{ $t('app.categoryPage.eyebrow', { year: new Date().getFullYear() }) }}</span>
+      <h1 class="mt-2 text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800">{{ $t('app.categoryPage.title') }}</h1>
+      <p class="mt-3 text-sm md:text-base text-gray-500 max-w-xl mx-auto">{{ $t('app.categoryPage.subtitle') }}</p>
     </div>
 
     <!-- Category Grid -->
@@ -24,7 +24,7 @@
       <div v-else-if="error" class="text-center py-12">
         <p class="text-red-500 mb-4">{{ error }}</p>
         <button @click="fetchCategories" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
-          Coba Lagi
+          {{ $t('app.categoryPage.retry') }}
         </button>
       </div>
 
@@ -51,7 +51,7 @@
           <div class="flex flex-1 items-center justify-between gap-2 p-3 sm:p-4">
             <div class="min-w-0">
               <h3 class="truncate text-sm sm:text-base lg:text-lg font-semibold capitalize text-slate-800 group-hover:text-green-700">{{ category.name }}</h3>
-              <p class="text-xs sm:text-sm text-gray-500">{{ category.product_count }} Produk</p>
+              <p class="text-xs sm:text-sm text-gray-500">{{ $t('app.categoryPage.productCount', { count: category.product_count }, category.product_count) }}</p>
             </div>
             <ArrowRight class="size-4 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5 group-hover:text-green-700" />
           </div>
@@ -60,19 +60,19 @@
 
       <!-- Empty State -->
       <div v-if="!loading && !error && categories.length === 0" class="text-center py-12">
-        <p class="text-gray-400">Belum ada kategori tersedia</p>
+        <p class="text-gray-400">{{ $t('app.categoryPage.empty') }}</p>
       </div>
     </div>
 
     <!-- Featured Eco Kits Section -->
     <div class="bg-gray-200 py-12 md:py-16 px-4">
       <div class="app-container text-center">
-        <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-slate-800">Paket Eco Unggulan</h2>
+        <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-slate-800">{{ $t('app.categoryPage.ecoTitle') }}</h2>
         <p class="text-sm md:text-base text-gray-500 mb-6 md:mb-8 max-w-2xl mx-auto">
-          Bundel produk yang berkelanjutan dan ramah lingkungan, sempurna untuk hadiah korporat dan acara promosi
+          {{ $t('app.categoryPage.ecoDescription') }}
         </p>
         <NuxtLink to="/product" class="inline-flex w-full sm:w-auto items-center justify-center bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-300">
-          Jelajahi Paket
+          {{ $t('app.categoryPage.ecoCta') }}
         </NuxtLink>
       </div>
     </div>
@@ -80,12 +80,12 @@
     <!-- Bespoke Gifting Section -->
     <div class="py-12 md:py-16 px-4">
       <div class="app-container text-center">
-        <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-slate-800">Hadiah Kustom</h2>
+        <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-slate-800">{{ $t('app.categoryPage.giftTitle') }}</h2>
         <p class="text-sm md:text-base text-gray-500 mb-6 md:mb-8 max-w-2xl mx-auto">
-          Solusi hadiah yang dirancang khusus sesuai dengan merek dan kebutuhan Anda
+          {{ $t('app.categoryPage.giftDescription') }}
         </p>
         <NuxtLink to="/kontak" class="text-green-600 hover:text-green-500 font-semibold underline transition-colors duration-300">
-          Hubungi Spesialis
+          {{ $t('app.categoryPage.giftCta') }}
         </NuxtLink>
       </div>
     </div>
@@ -105,6 +105,8 @@ interface Category {
 // Import service
 import { useProductCategoryService } from '~/services/product-category.service'
 import { ArrowRight } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 // State
 const categories = ref<Category[]>([])
@@ -135,7 +137,7 @@ const fetchCategories = async () => {
     }))
   } catch (err: any) {
     console.error('Error fetching categories:', err)
-    error.value = err?.message || 'Gagal memuat data kategori'
+    error.value = err?.message || t('app.categoryPage.loadFailed')
   } finally {
     loading.value = false
   }
@@ -147,12 +149,12 @@ onMounted(() => {
 })
 
 // Page metadata
-useHead({
-  title: 'Kategori - Koleksi Produk Premium',
+useHead(() => ({
+  title: t('app.categoryPage.metaTitle'),
   meta: [
-    { name: 'description', content: 'Jelajahi kategori premium pilihan produk berkualitas tinggi kami' }
+    { name: 'description', content: t('app.categoryPage.metaDescription') }
   ]
-})
+}))
 </script>
 
 <style scoped>

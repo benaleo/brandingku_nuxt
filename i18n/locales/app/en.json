@@ -117,6 +117,46 @@
       "contactEmail": "Email",
       "contactPhone": "Phone / WA",
       "contactSubmit": "Choose"
+    },
+    "categoryPage": {
+      "eyebrow": "CATALOG {year}",
+      "title": "Premium Curated Categories",
+      "subtitle": "Explore our exclusive collection of high-quality products",
+      "retry": "Try Again",
+      "loadFailed": "Failed to load categories",
+      "productCount": "{count} Product | {count} Products",
+      "empty": "No categories available yet",
+      "ecoTitle": "Featured Eco Kits",
+      "ecoDescription": "Sustainable, eco-friendly product bundles, perfect for corporate gifts and promotional events",
+      "ecoCta": "Explore Kits",
+      "giftTitle": "Bespoke Gifting",
+      "giftDescription": "Gifting solutions tailored to your brand and needs",
+      "giftCta": "Contact a Specialist",
+      "metaTitle": "Categories - Premium Product Collection",
+      "metaDescription": "Explore our premium curated categories of high-quality products",
+      "detail": {
+        "fallbackTitle": "Category",
+        "notFound": "Category Not Found",
+        "backHome": "Back to Home",
+        "explore": "Explore Collection",
+        "requestCatalog": "Request Catalog",
+        "requestCatalogMessage": "Hi admin, I would like to request the {name} catalog",
+        "all": "All",
+        "products": "Products",
+        "loadingMore": "Loading more products...",
+        "tryAgain": "Try Again",
+        "emptyTitle": "No products found in this category yet.",
+        "emptyDescription": "We're currently updating our collection with fresh, eco-friendly designs. Why not explore our other sustainable categories or check back soon?",
+        "browseAll": "Browse All Products",
+        "contactSales": "Contact Sales for Custom Requests",
+        "addToQuote": "Add to Quote",
+        "loading": "Loading...",
+        "loadMore": "Load More Products",
+        "subTitle": "{name} that matters.",
+        "subFallback": "Choosing the right merchandise isn't just about branding; it's about the message you send. Our {name} collection focuses on high-quality materials that last years, not weeks. From vacuum-sealed technology to carbon-neutral shipping, we help your company make an impact without the footprint.",
+        "sourcing": "Learn about our sourcing →",
+        "sustainability": "98% SUSTAINABILITY RATING"
+      }
     }
   }
 }
