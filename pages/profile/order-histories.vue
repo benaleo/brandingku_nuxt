@@ -20,11 +20,10 @@ definePageMeta({
   layout: "default",
 });
 
-watchEffect(() => {
-  useHead({
-    title: "Order History",
-  });
-});
+const { t, locale } = useI18n();
+const dateLocale = computed(() => (locale.value === "en" ? "en-US" : "id-ID"));
+
+useHead(() => ({ title: t("app.orderHistoryPage.metaTitle") }));
 
 const router = useRouter();
 
@@ -169,7 +168,7 @@ const inProcessing = computed(
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(dateLocale.value, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -177,7 +176,7 @@ const formatDate = (iso: string) => {
 };
 
 const formatCurrency = (amount: number) => {
-  return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return amount.toLocaleString(dateLocale.value, { style: "currency", currency: "USD" });
 };
 
 const statusVariant = (status: OrderStatus) => {
@@ -189,17 +188,17 @@ const statusVariant = (status: OrderStatus) => {
 const columns: ColumnDef<Order, any>[] = [
   {
     accessorKey: "id",
-    header: () => "Order ID",
+    header: () => t("app.orderHistoryPage.columns.orderId"),
     cell: ({ row }) => row.original.id,
   },
   {
     accessorKey: "date",
-    header: () => "Date",
+    header: () => t("app.orderHistoryPage.columns.date"),
     cell: ({ row }) => formatDate(row.original.date),
   },
   {
     accessorKey: "status",
-    header: () => "Status",
+    header: () => t("app.orderHistoryPage.columns.status"),
     cell: ({ row }) => {
       const status = row.original.status;
       return h(
@@ -211,18 +210,18 @@ const columns: ColumnDef<Order, any>[] = [
               ? "bg-green-100 text-green-700 hover:bg-green-100"
               : "bg-gray-100 text-gray-700 hover:bg-gray-100",
         },
-        () => status,
+        () => t(`app.orderHistoryPage.statuses.${status}`),
       );
     },
   },
   {
     accessorKey: "total",
-    header: () => "Total",
+    header: () => t("app.orderHistoryPage.columns.total"),
     cell: ({ row }) => formatCurrency(row.original.total),
   },
   {
     id: "action",
-    header: () => "Action",
+    header: () => t("app.orderHistoryPage.columns.action"),
     cell: ({ row }) => {
       const url = row.original.invoiceUrl || "#";
       return h(
@@ -232,11 +231,19 @@ const columns: ColumnDef<Order, any>[] = [
           class: "text-green-700 hover:text-green-800",
           onClick: () => window.open(url, "_blank"),
         },
-        () => "Invoice",
+        () => t("app.orderHistoryPage.invoice"),
       );
     },
   },
 ];
+
+const tableLabels = computed(() => ({
+  noResults: t("app.common.table.noResults"),
+  summary: (page: number, pages: number, total: number) => t("app.common.table.summary", { page, pages, total }),
+  rowsPerPage: t("app.common.table.rowsPerPage"),
+  previous: t("app.common.table.previous"),
+  next: t("app.common.table.next"),
+}));
 
 const onPageChange = (next: number) => {
   page.value = next;
@@ -271,26 +278,25 @@ const onGoHome = () => router.push("/");
       <div class="pt-24">
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
           <button class="hover:text-primary" type="button" @click="onGoHome">
-            Home
+            {{ $t('app.orderHistoryPage.home') }}
           </button>
           <span>/</span>
-          <span class="text-primary">Order History</span>
+          <span class="text-primary">{{ $t('app.orderHistoryPage.title') }}</span>
         </div>
 
         <div class="mt-6">
           <h1 class="text-4xl font-bold tracking-tight text-gray-900">
-            Order History
+            {{ $t('app.orderHistoryPage.title') }}
           </h1>
           <p class="mt-2 text-gray-600 max-w-2xl">
-            Manage your recent merchandise orders, track shipments, and download
-            invoices for your corporate records.
+            {{ $t('app.orderHistoryPage.subtitle') }}
           </p>
         </div>
 
         <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardContent class="p-6">
-              <p class="text-xs tracking-wide text-gray-500">TOTAL ORDERS</p>
+              <p class="text-xs tracking-wide text-gray-500">{{ $t('app.orderHistoryPage.totalOrders') }}</p>
               <p class="mt-2 text-3xl font-bold text-green-700">
                 {{ totalOrders }}
               </p>
@@ -299,7 +305,7 @@ const onGoHome = () => router.push("/");
 
           <Card>
             <CardContent class="p-6">
-              <p class="text-xs tracking-wide text-gray-500">IN PROCESSING</p>
+              <p class="text-xs tracking-wide text-gray-500">{{ $t('app.orderHistoryPage.inProcessing') }}</p>
               <p class="mt-2 text-3xl font-bold text-rose-700">
                 {{ inProcessing }}
               </p>
@@ -309,7 +315,7 @@ const onGoHome = () => router.push("/");
           <Card>
             <CardContent class="p-6">
               <p class="text-xs tracking-wide text-gray-500">
-                SHIPPED THIS MONTH
+                {{ $t('app.orderHistoryPage.shippedThisMonth') }}
               </p>
               <p class="mt-2 text-3xl font-bold text-green-700">
                 {{ shippedThisMonth }}
@@ -325,7 +331,7 @@ const onGoHome = () => router.push("/");
             >
               <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
                 <div class="grid gap-2">
-                  <label class="text-sm text-gray-600">From</label>
+                  <label class="text-sm text-gray-600">{{ $t('app.orderHistoryPage.from') }}</label>
                   <Input
                     v-model="dateFrom"
                     type="date"
@@ -333,7 +339,7 @@ const onGoHome = () => router.push("/");
                   />
                 </div>
                 <div class="grid gap-2">
-                  <label class="text-sm text-gray-600">To</label>
+                  <label class="text-sm text-gray-600">{{ $t('app.orderHistoryPage.to') }}</label>
                   <Input
                     v-model="dateTo"
                     type="date"
@@ -343,18 +349,18 @@ const onGoHome = () => router.push("/");
               </div>
 
               <div class="grid gap-2">
-                <label class="text-sm text-gray-600">Search Order ID</label>
+                <label class="text-sm text-gray-600">{{ $t('app.orderHistoryPage.searchLabel') }}</label>
                 <Input
                   v-model="searchOrderId"
-                  placeholder="e.g. #BK-90231"
+                  :placeholder="$t('app.orderHistoryPage.searchPlaceholder')"
                   class="w-full lg:w-[260px]"
                 />
               </div>
 
               <div class="mt-4 flex justify-end">
-                <Button variant="outline" type="button" @click="onResetFilters"
-                  >Reset Filter</Button
-                >
+                <Button variant="outline" type="button" @click="onResetFilters">
+                  {{ $t('app.orderHistoryPage.resetFilter') }}
+                </Button>
               </div>
             </div>
 
@@ -363,6 +369,7 @@ const onGoHome = () => router.push("/");
                 :columns="columns"
                 :data="pagedOrders"
                 :pagination="pagination"
+                :labels="tableLabels"
                 @page-change="onPageChange"
                 @limit-change="onLimitChange"
               />
@@ -373,13 +380,12 @@ const onGoHome = () => router.push("/");
         <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card class="bg-green-800 text-white overflow-hidden">
             <CardContent class="p-6 flex flex-col h-full">
-              <h3 class="text-2xl font-bold">Need help with an order?</h3>
+              <h3 class="text-2xl font-bold">{{ $t('app.orderHistoryPage.helpTitle') }}</h3>
               <p class="mt-2 text-white/90 max-w-md">
-                Our concierge team is available 24/7 to assist with tracking,
-                returns, or volume adjustments.
+                {{ $t('app.orderHistoryPage.helpText') }}
               </p>
               <div class="mt-6">
-                <Button variant="secondary">Contact Support</Button>
+                <Button variant="secondary">{{ $t('app.orderHistoryPage.contactSupport') }}</Button>
               </div>
             </CardContent>
           </Card>
@@ -387,14 +393,13 @@ const onGoHome = () => router.push("/");
           <Card class="bg-green-50 overflow-hidden">
             <CardContent class="p-6 flex flex-col h-full">
               <h3 class="text-2xl font-bold text-gray-900">
-                Sustainability Impact
+                {{ $t('app.orderHistoryPage.impactTitle') }}
               </h3>
               <p class="mt-2 text-gray-600 max-w-md">
-                Your orders this year have contributed to planting 12 trees and
-                reducing 45kg of carbon emissions.
+                {{ $t('app.orderHistoryPage.impactText') }}
               </p>
               <div class="mt-6">
-                <Button variant="outline">View Eco-Report</Button>
+                <Button variant="outline">{{ $t('app.orderHistoryPage.ecoReport') }}</Button>
               </div>
             </CardContent>
           </Card>

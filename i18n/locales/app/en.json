@@ -160,7 +160,14 @@
     },
     "common": {
       "close": "Close",
-      "clear": "Clear"
+      "clear": "Clear",
+      "table": {
+        "noResults": "No results.",
+        "summary": "Page {page} of {pages} • Total {total} items",
+        "rowsPerPage": "Rows per page",
+        "previous": "Previous",
+        "next": "Next"
+      }
     },
     "productPage": {
       "title": "Brandingku Products",
@@ -460,6 +467,76 @@
       "ctaChat": "Chat with Admin",
       "ctaProducts": "Browse Products",
       "generalTopic": "Hi admin, I'd like to discuss a merchandise project"
+    },
+    "profilePage": {
+      "metaTitle": "Profile - {name}",
+      "loading": "Loading profile...",
+      "tryAgain": "Try Again",
+      "greeting": "Hello, {name}.",
+      "welcome": "Welcome back to your sustainability dashboard",
+      "memberSince": "Member Since",
+      "itemsSaved": "Items Saved",
+      "thisMonth": "This month",
+      "landfillDiverted": "Landfill Diverted",
+      "totalImpact": "Total impact",
+      "goalProgress": "Goal Progress",
+      "activeOrders": "Active Orders",
+      "activeCount": "{count} Active",
+      "quantity": "Quantity: {count}",
+      "estDelivery": "Est. delivery: {date}",
+      "statuses": {
+        "inProduction": "In Production",
+        "processing": "Processing"
+      },
+      "viewAllOrders": "View All Orders",
+      "proTitle": "Pro Member",
+      "proText": "Enjoy exclusive benefits and priority support",
+      "perks": {
+        "freeShipping": "Free shipping on all orders",
+        "discount": "15% discount on eco-products",
+        "prioritySupport": "Priority customer support"
+      },
+      "recommended": "Recommended Eco-Swag",
+      "badges": {
+        "new": "New",
+        "bestSeller": "Best Seller",
+        "ecoTech": "Eco Tech",
+        "popular": "Popular"
+      },
+      "addToCart": "Add to cart"
+    },
+    "orderHistoryPage": {
+      "metaTitle": "Order History - Brandingku",
+      "home": "Home",
+      "title": "Order History",
+      "subtitle": "Manage your recent merchandise orders, track shipments, and download invoices for your corporate records.",
+      "totalOrders": "TOTAL ORDERS",
+      "inProcessing": "IN PROCESSING",
+      "shippedThisMonth": "SHIPPED THIS MONTH",
+      "from": "From",
+      "to": "To",
+      "searchLabel": "Search Order ID",
+      "searchPlaceholder": "e.g. #BK-90231",
+      "resetFilter": "Reset Filter",
+      "columns": {
+        "orderId": "Order ID",
+        "date": "Date",
+        "status": "Status",
+        "total": "Total",
+        "action": "Action"
+      },
+      "invoice": "Invoice",
+      "statuses": {
+        "SHIPPED": "Shipped",
+        "PROCESSING": "Processing",
+        "DELIVERED": "Delivered"
+      },
+      "helpTitle": "Need help with an order?",
+      "helpText": "Our concierge team is available 24/7 to assist with tracking, returns, or volume adjustments.",
+      "contactSupport": "Contact Support",
+      "impactTitle": "Sustainability Impact",
+      "impactText": "Your orders this year have contributed to planting 12 trees and reducing 45kg of carbon emissions.",
+      "ecoReport": "View Eco-Report"
     }
   }
 }

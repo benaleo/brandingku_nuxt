@@ -4,6 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const route = useRoute();
+const { t, locale } = useI18n();
+const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'));
+const formatDate = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString(dateLocale.value, { day: 'numeric', month: 'short', year: 'numeric' });
 const uuid = Array.isArray(route.params.uuid) ? route.params.uuid[0] : route.params.uuid;
 const { profile, loading, error, getUserProfile } = useUserProfile();
 
@@ -40,14 +44,14 @@ const profileData = computed(() => ({
       id: "ORD-001",
       productName: "Eco-Friendly Tote Bag",
       quantity: 50,
-      status: "In Production",
+      statusKey: "inProduction",
       estimatedDelivery: "2024-04-15"
     },
     {
       id: "ORD-002", 
       productName: "Bamboo Water Bottle",
       quantity: 100,
-      status: "Processing",
+      statusKey: "processing",
       estimatedDelivery: "2024-04-20"
     }
   ],
@@ -58,28 +62,28 @@ const profileData = computed(() => ({
       name: "Recycled Notebook Set",
       price: 45000,
       image: "/images/products/notebook-set.jpg",
-      badge: "New"
+      badgeKey: "new"
     },
     {
       id: 2,
       name: "Organic Cotton T-Shirt",
       price: 120000,
       image: "/images/products/cotton-shirt.jpg",
-      badge: "Best Seller"
+      badgeKey: "bestSeller"
     },
     {
       id: 3,
       name: "Solar Power Bank",
       price: 250000,
       image: "/images/products/solar-bank.jpg",
-      badge: "Eco Tech"
+      badgeKey: "ecoTech"
     },
     {
       id: 4,
       name: "Biodegradable Phone Case",
       price: 75000,
       image: "/images/products/phone-case.jpg",
-      badge: "Popular"
+      badgeKey: "popular"
     }
   ]
 }));
@@ -88,12 +92,14 @@ definePageMeta({
   layout: "default",
 });
 
-// Update head title when profile data changes
-watchEffect(() => {
-  useHead({
-    title: `Profile - ${profileData.value.name}`,
-  });
-});
+// placeholder join date until the API exposes one
+const memberSince = computed(() =>
+  new Date(2024, 2, 1).toLocaleDateString(dateLocale.value, { month: 'long', year: 'numeric' })
+);
+
+useHead(() => ({
+  title: t('app.profilePage.metaTitle', { name: profileData.value.name }),
+}));
 </script>
 
 <template>
@@ -102,7 +108,7 @@ watchEffect(() => {
     <div v-if="loading" class="min-h-screen flex items-center justify-center">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Loading profile...</p>
+        <p class="text-gray-600">{{ $t('app.profilePage.loading') }}</p>
       </div>
     </div>
 
@@ -115,7 +121,7 @@ watchEffect(() => {
           </svg>
         </div>
         <p class="text-gray-600 mb-2">{{ error }}</p>
-        <Button @click="uuid && getUserProfile(uuid)" variant="outline">Try Again</Button>
+        <Button @click="uuid && getUserProfile(uuid)" variant="outline">{{ $t('app.profilePage.tryAgain') }}</Button>
       </div>
     </div>
 
@@ -126,13 +132,13 @@ watchEffect(() => {
       <div class="app-container py-6">
         <div class="pt-24 flex items-center justify-between">
           <div class="">
-            <h1 class="text-2xl font-bold text-gray-900">Hello, {{ profileData.name }}.</h1>
-            <p class="text-gray-600 mt-1">Welcome back to your sustainability dashboard</p>
+            <h1 class="text-2xl font-bold text-gray-900">{{ $t('app.profilePage.greeting', { name: profileData.name }) }}</h1>
+            <p class="text-gray-600 mt-1">{{ $t('app.profilePage.welcome') }}</p>
           </div>
           <div class="flex items-center space-x-4">
             <div class="text-right">
-              <p class="text-sm text-gray-500">Member Since</p>
-              <p class="font-semibold">March 2024</p>
+              <p class="text-sm text-gray-500">{{ $t('app.profilePage.memberSince') }}</p>
+              <p class="font-semibold">{{ memberSince }}</p>
             </div>
             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
               <span class="text-purple-600 font-bold">{{ profileData.name.charAt(0) }}</span>
@@ -149,9 +155,9 @@ watchEffect(() => {
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-gray-500">Items Saved</p>
+                <p class="text-sm text-gray-500">{{ $t('app.profilePage.itemsSaved') }}</p>
                 <p class="text-3xl font-bold text-green-600">{{ profileData.sustainabilityMetrics.itemsSaved }}</p>
-                <p class="text-sm text-gray-600 mt-1">This month</p>
+                <p class="text-sm text-gray-600 mt-1">{{ $t('app.profilePage.thisMonth') }}</p>
               </div>
               <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,9 +172,9 @@ watchEffect(() => {
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-gray-500">Landfill Diverted</p>
+                <p class="text-sm text-gray-500">{{ $t('app.profilePage.landfillDiverted') }}</p>
                 <p class="text-3xl font-bold text-blue-600">{{ profileData.sustainabilityMetrics.landfillDiverted }}kg</p>
-                <p class="text-sm text-gray-600 mt-1">Total impact</p>
+                <p class="text-sm text-gray-600 mt-1">{{ $t('app.profilePage.totalImpact') }}</p>
               </div>
               <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +189,7 @@ watchEffect(() => {
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-gray-500">Goal Progress</p>
+                <p class="text-sm text-gray-500">{{ $t('app.profilePage.goalProgress') }}</p>
                 <p class="text-3xl font-bold text-purple-600">{{ profileData.sustainabilityMetrics.goalProgress }}%</p>
                 <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
                   <div class="bg-purple-600 h-2 rounded-full" :style="`width: ${profileData.sustainabilityMetrics.goalProgress}%`"></div>
@@ -205,8 +211,8 @@ watchEffect(() => {
           <Card>
             <CardHeader>
               <CardTitle class="flex items-center justify-between">
-                <span>Active Orders</span>
-                <Badge variant="secondary">{{ profileData.activeOrders.length }} Active</Badge>
+                <span>{{ $t('app.profilePage.activeOrders') }}</span>
+                <Badge variant="secondary">{{ $t('app.profilePage.activeCount', { count: profileData.activeOrders.length }) }}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -215,19 +221,19 @@ watchEffect(() => {
                   <div class="flex items-center justify-between">
                     <div>
                       <p class="font-semibold">{{ order.productName }}</p>
-                      <p class="text-sm text-gray-500">{{ order.id }} - Quantity: {{ order.quantity }}</p>
-                      <p class="text-sm text-gray-600">Est. Delivery: {{ order.estimatedDelivery }}</p>
+                      <p class="text-sm text-gray-500">{{ order.id }} - {{ $t('app.profilePage.quantity', { count: order.quantity }) }}</p>
+                      <p class="text-sm text-gray-600">{{ $t('app.profilePage.estDelivery', { date: formatDate(order.estimatedDelivery) }) }}</p>
                     </div>
                     <div class="text-right">
-                      <Badge :variant="order.status === 'In Production' ? 'default' : 'secondary'">
-                        {{ order.status }}
+                      <Badge :variant="order.statusKey === 'inProduction' ? 'default' : 'secondary'">
+                        {{ $t(`app.profilePage.statuses.${order.statusKey}`) }}
                       </Badge>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="mt-4">
-                <Button variant="outline" class="w-full" @click="router.push('/profile/order-histories')">View All Orders</Button>
+                <Button variant="outline" class="w-full" @click="router.push('/profile/order-histories')">{{ $t('app.profilePage.viewAllOrders') }}</Button>
               </div>
             </CardContent>
           </Card>
@@ -245,26 +251,26 @@ watchEffect(() => {
                 </div>
                 <Badge variant="secondary" class="bg-white/20 text-white">PRO</Badge>
               </div>
-              <h3 class="text-xl font-bold mb-2">Pro Member</h3>
-              <p class="text-sm opacity-90 mb-4">Enjoy exclusive benefits and priority support</p>
+              <h3 class="text-xl font-bold mb-2">{{ $t('app.profilePage.proTitle') }}</h3>
+              <p class="text-sm opacity-90 mb-4">{{ $t('app.profilePage.proText') }}</p>
               <div class="space-y-2 text-sm">
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
                   </svg>
-                  Free shipping on all orders
+                  {{ $t('app.profilePage.perks.freeShipping') }}
                 </div>
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
                   </svg>
-                  15% discount on eco-products
+                  {{ $t('app.profilePage.perks.discount') }}
                 </div>
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
                   </svg>
-                  Priority customer support
+                  {{ $t('app.profilePage.perks.prioritySupport') }}
                 </div>
               </div>
             </CardContent>
@@ -276,7 +282,7 @@ watchEffect(() => {
       <div class="mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Recommended Eco-Swag</CardTitle>
+            <CardTitle>{{ $t('app.profilePage.recommended') }}</CardTitle>
           </CardHeader>
           <CardContent>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -290,14 +296,14 @@ watchEffect(() => {
                       onerror="this.src='/images/no-image.jpg'"
                     />
                     <Badge class="absolute top-2 left-2" variant="secondary">
-                      {{ product.badge }}
+                      {{ $t(`app.profilePage.badges.${product.badgeKey}`) }}
                     </Badge>
                   </div>
                   <div class="p-4">
                     <h3 class="font-semibold text-sm mb-2 line-clamp-2">{{ product.name }}</h3>
                     <div class="flex items-center justify-between">
-                      <p class="text-lg font-bold text-green-600">Rp {{ product.price.toLocaleString() }}</p>
-                      <Button size="sm" variant="outline">
+                      <p class="text-lg font-bold text-green-600">Rp {{ product.price.toLocaleString('id-ID') }}</p>
+                      <Button size="sm" variant="outline" :aria-label="$t('app.profilePage.addToCart')">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>

@@ -160,7 +160,14 @@
     },
     "common": {
       "close": "Tutup",
-      "clear": "Kosongkan"
+      "clear": "Kosongkan",
+      "table": {
+        "noResults": "Tidak ada data.",
+        "summary": "Halaman {page} dari {pages} • Total {total} item",
+        "rowsPerPage": "Baris per halaman",
+        "previous": "Sebelumnya",
+        "next": "Berikutnya"
+      }
     },
     "productPage": {
       "title": "Produk Brandingku",
@@ -460,6 +467,76 @@
       "ctaChat": "Chat dengan Admin",
       "ctaProducts": "Lihat Produk",
       "generalTopic": "Halo admin, saya ingin konsultasi proyek merchandise"
+    },
+    "profilePage": {
+      "metaTitle": "Profil - {name}",
+      "loading": "Memuat profil...",
+      "tryAgain": "Coba Lagi",
+      "greeting": "Halo, {name}.",
+      "welcome": "Selamat datang kembali di dashboard keberlanjutan Anda",
+      "memberSince": "Member Sejak",
+      "itemsSaved": "Barang Diselamatkan",
+      "thisMonth": "Bulan ini",
+      "landfillDiverted": "Limbah Tidak ke TPA",
+      "totalImpact": "Total dampak",
+      "goalProgress": "Progres Target",
+      "activeOrders": "Pesanan Aktif",
+      "activeCount": "{count} Aktif",
+      "quantity": "Jumlah: {count}",
+      "estDelivery": "Estimasi tiba: {date}",
+      "statuses": {
+        "inProduction": "Dalam Produksi",
+        "processing": "Diproses"
+      },
+      "viewAllOrders": "Lihat Semua Pesanan",
+      "proTitle": "Member Pro",
+      "proText": "Nikmati keuntungan eksklusif dan dukungan prioritas",
+      "perks": {
+        "freeShipping": "Gratis ongkir untuk semua pesanan",
+        "discount": "Diskon 15% untuk produk ramah lingkungan",
+        "prioritySupport": "Dukungan pelanggan prioritas"
+      },
+      "recommended": "Rekomendasi Eco-Swag",
+      "badges": {
+        "new": "Baru",
+        "bestSeller": "Terlaris",
+        "ecoTech": "Eco Tech",
+        "popular": "Populer"
+      },
+      "addToCart": "Tambah ke keranjang"
+    },
+    "orderHistoryPage": {
+      "metaTitle": "Riwayat Pesanan - Brandingku",
+      "home": "Beranda",
+      "title": "Riwayat Pesanan",
+      "subtitle": "Kelola pesanan merchandise terbaru Anda, lacak pengiriman, dan unduh invoice untuk arsip perusahaan Anda.",
+      "totalOrders": "TOTAL PESANAN",
+      "inProcessing": "SEDANG DIPROSES",
+      "shippedThisMonth": "DIKIRIM BULAN INI",
+      "from": "Dari",
+      "to": "Sampai",
+      "searchLabel": "Cari ID Pesanan",
+      "searchPlaceholder": "mis. #BK-90231",
+      "resetFilter": "Reset Filter",
+      "columns": {
+        "orderId": "ID Pesanan",
+        "date": "Tanggal",
+        "status": "Status",
+        "total": "Total",
+        "action": "Aksi"
+      },
+      "invoice": "Invoice",
+      "statuses": {
+        "SHIPPED": "Dikirim",
+        "PROCESSING": "Diproses",
+        "DELIVERED": "Diterima"
+      },
+      "helpTitle": "Butuh bantuan dengan pesanan?",
+      "helpText": "Tim concierge kami siap 24/7 membantu pelacakan, pengembalian, atau penyesuaian jumlah pesanan.",
+      "contactSupport": "Hubungi Dukungan",
+      "impactTitle": "Dampak Keberlanjutan",
+      "impactText": "Pesanan Anda tahun ini telah berkontribusi menanam 12 pohon dan mengurangi 45kg emisi karbon.",
+      "ecoReport": "Lihat Laporan Eco"
     }
   }
 }

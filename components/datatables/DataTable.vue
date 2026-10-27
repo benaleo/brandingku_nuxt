@@ -19,6 +19,14 @@ import {
 import { computed } from 'vue'
 
 type PaginationProp = { page: number; limit: number; total: number }
+// overrides for the built-in English copy, e.g. translated labels on public pages
+type TableLabels = {
+  noResults?: string
+  summary?: (page: number, pages: number, total: number) => string
+  rowsPerPage?: string
+  previous?: string
+  next?: string
+}
 
 const props = defineProps<{
   columns: ColumnDef<TData, TValue>[]
@@ -27,6 +35,7 @@ const props = defineProps<{
   pagination?: PaginationProp
   loading?: boolean
   skeletonRows?: number
+  labels?: TableLabels
 }>()
 
 const emit = defineEmits<{
@@ -114,7 +123,7 @@ const onChangeLimit = (e: Event) => {
           <template v-else>
             <TableRow>
               <TableCell :colspan="props.columns.length" class="h-24 text-center">
-                No results.
+                {{ props.labels?.noResults ?? 'No results.' }}
               </TableCell>
             </TableRow>
           </template>
@@ -122,7 +131,10 @@ const onChangeLimit = (e: Event) => {
       </Table>
     </div>
     <div class="flex items-center justify-between py-4 gap-4">
-      <div class="text-sm text-muted-foreground">
+      <div v-if="props.labels?.summary" class="text-sm text-muted-foreground">
+        {{ props.labels.summary((pg?.page ?? 0) + 1, totalPages, pg?.total ?? 0) }}
+      </div>
+      <div v-else class="text-sm text-muted-foreground">
         Page
         <span class="font-medium">{{ (pg?.page ?? 0) + 1 }}</span>
         of
@@ -133,7 +145,7 @@ const onChangeLimit = (e: Event) => {
       </div>
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-2">
-          <label class="text-sm">Rows per page</label>
+          <label class="text-sm">{{ props.labels?.rowsPerPage ?? 'Rows per page' }}</label>
           <select class="border rounded px-2 py-1 text-sm" :value="pg?.limit" @change="onChangeLimit">
             <option v-for="opt in limits" :key="opt" :value="opt">{{ opt }}</option>
           </select>
@@ -144,7 +156,7 @@ const onChangeLimit = (e: Event) => {
             :disabled="props.loading || !canPrev"
             @click="onPrev"
         >
-          Previous
+          {{ props.labels?.previous ?? 'Previous' }}
         </Button>
         <Button
             variant="outline"
@@ -152,7 +164,7 @@ const onChangeLimit = (e: Event) => {
             :disabled="props.loading || !canNext"
             @click="onNext"
         >
-          Next
+          {{ props.labels?.next ?? 'Next' }}
         </Button>
       </div>
     </div>
