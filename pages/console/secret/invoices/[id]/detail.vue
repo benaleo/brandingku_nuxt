@@ -261,7 +261,7 @@ import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import {invoiceErrorMessage, useInvoiceService} from '~/services/invoice.service'
 import type {Invoice} from '~/types/invoice.type'
 
-const PAYMENT_METHODS: Record<string, string> = {bank_transfer: 'Transfer bank', cash: 'Tunai', other: 'Lainnya'}
+const PAYMENT_METHODS: Record<string, string> = {bank_transfer: 'Transfer bank', cash: 'Tunai', other: 'Lainnya', midtrans: 'Midtrans'}
 const PAYMENT_STATUS: Record<string, [string, string]> = {
   pending: ['Menunggu verifikasi', 'bg-orange-100 text-orange-800'],
   verified: ['Terverifikasi', 'bg-green-100 text-green-800'],
@@ -271,6 +271,7 @@ const EVENT_LABELS: Record<string, string> = {
   created: 'Dibuat', updated: 'Diubah', sent: 'Dikirim', voided: 'Di-void', paid: 'Lunas',
   payment_recorded: 'Pembayaran dicatat', deal_created: 'Deal dibuat', dp_created: 'DP dibuat', final_created: 'Final dibuat',
   payment_submitted: 'Bukti transfer dikirim', payment_rejected: 'Bukti transfer ditolak',
+  online_payment_unapplied: 'Pembayaran online tidak dibukukan, perlu refund',
 }
 const MAX_PROOF_BYTES = 10 * 1024 * 1024
 

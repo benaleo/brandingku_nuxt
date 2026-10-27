@@ -10,7 +10,7 @@ const ORDER_FIELDS = `
   customer_name customer_email customer_phone customer_company
   delivery_method shipping_name shipping_phone shipping_address shipping_city shipping_postal_code
   shipping_fee shipping_note tracking_number notes subtotal discount_total voucher_code
-  expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment can_respond_quotation
+  expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment can_respond_quotation can_pay_online
   design_file_path design_file_name created_at updated_at
   documents { ${DOC_FIELDS} }
   payable_documents { ${DOC_FIELDS} }
@@ -116,6 +116,18 @@ export const useOrderService = () => {
     return res.submitPaymentProof
   }
 
+  // opens the Midtrans payment page for what is left on one invoice of the order
+  const startOnlinePayment = async (code: string, invoiceId?: number) => {
+    const res = await gqlFetch<{ startOnlinePayment: { redirect_url: string; expires_at: string; amount: number } }>(
+      `mutation startOnlinePayment($code: String!, $invoice: Int) {
+        startOnlinePayment(code: $code, invoice_id: $invoice) { redirect_url expires_at amount }
+      }`,
+      { code, invoice: invoiceId ?? null },
+      { auth: true, timeout: 30000 },
+    )
+    return res.startOnlinePayment
+  }
+
   // console
   const getOrders = async (page: number, limit: number, filters: { status?: string; type?: string; keyword?: string }) => {
     const res = await gqlFetch<{ getOrders: OrderPage }>(
@@ -185,7 +197,7 @@ export const useOrderService = () => {
   }
 
   return {
-    previewCheckout, placeOrder, requestQuotation, respondQuotation, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
+    previewCheckout, placeOrder, requestQuotation, respondQuotation, startOnlinePayment, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
     getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, createQuotationFromOrder, verifyPayment, rejectPayment,
   }
 }

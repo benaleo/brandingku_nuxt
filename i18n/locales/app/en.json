@@ -610,7 +610,8 @@
       "payment_rejected": "Transfer proof rejected",
       "shipping_fee_set": "Shipping fee set",
       "invoice_sent": "Invoice sent",
-      "created": "Order placed"
+      "created": "Order placed",
+      "online_payment_unapplied": "Online payment to be refunded"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -732,7 +733,12 @@
         "deal": "Deal",
         "dp": "Down payment invoice",
         "final": "Final invoice"
-      }
+      },
+      "payOnline": "Pay online {amount}",
+      "payOnlineHint": "Virtual account, QRIS, e-wallet or card via Midtrans. Marked paid automatically once paid.",
+      "onlineReturned": "Your payment is being confirmed. Refresh in a moment.",
+      "refreshStatus": "Refresh status",
+      "onlineFailed": "Could not open the payment page"
     },
     "orderHistory": {
       "empty": "No orders yet.",

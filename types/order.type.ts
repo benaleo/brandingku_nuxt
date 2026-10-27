@@ -106,6 +106,7 @@ export type Order = {
   can_cancel: boolean
   can_submit_payment: boolean
   can_respond_quotation: boolean
+  can_pay_online: boolean
   design_file_path: string
   design_file_name: string
   documents: OrderDocument[]

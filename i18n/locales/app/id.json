@@ -610,7 +610,8 @@
       "payment_rejected": "Bukti transfer ditolak",
       "shipping_fee_set": "Ongkir ditetapkan",
       "invoice_sent": "Invoice dikirim",
-      "created": "Pesanan dibuat"
+      "created": "Pesanan dibuat",
+      "online_payment_unapplied": "Pembayaran online perlu refund"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -732,7 +733,12 @@
         "deal": "Deal",
         "dp": "Invoice DP",
         "final": "Invoice pelunasan"
-      }
+      },
+      "payOnline": "Bayar online {amount}",
+      "payOnlineHint": "Virtual account, QRIS, e-wallet atau kartu lewat Midtrans. Status lunas otomatis setelah pembayaran.",
+      "onlineReturned": "Pembayaran sedang dikonfirmasi. Muat ulang beberapa saat lagi.",
+      "refreshStatus": "Muat ulang status",
+      "onlineFailed": "Gagal membuka halaman pembayaran"
     },
     "orderHistory": {
       "empty": "Belum ada pesanan.",

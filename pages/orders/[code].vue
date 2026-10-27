@@ -17,7 +17,7 @@ const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
 const token = useCookie<string | null>('token', {sameSite: 'lax'})
-const {getMyOrder, submitPaymentProof, cancelMyOrder, respondQuotation} = useOrderService()
+const {getMyOrder, submitPaymentProof, cancelMyOrder, respondQuotation, startOnlinePayment} = useOrderService()
 const code = computed(() => String(route.params.code || ''))
 
 const order = ref<Order | null>(null)
@@ -133,6 +133,29 @@ async function respond(action: 'accept' | 'reject' | 'revise') {
   }
 }
 
+// Midtrans sends the customer back here with ?transaction_status=...; the webhook may land a moment later
+const returnedFromGateway = computed(() => ['settlement', 'capture', 'pending'].includes(String(route.query.transaction_status || '')))
+const paying = ref(false)
+async function payOnline() {
+  if (!order.value || !targetDoc.value) return
+  paying.value = true
+  try {
+    const page = await startOnlinePayment(order.value.code, targetDoc.value.id)
+    window.location.href = page.redirect_url
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t('app.orderPage.onlineFailed')))
+    paying.value = false
+  }
+}
+async function refreshStatus() {
+  busy.value = true
+  try {
+    await load()
+  } finally {
+    busy.value = false
+  }
+}
+
 async function cancel() {
   if (!order.value || !window.confirm(t('app.orderPage.cancelConfirm'))) return
   busy.value = true
@@ -169,6 +192,10 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
             <p class="mt-1 text-sm text-slate-500">{{ $t('app.orderPage.placedAt', {date: formatWhen(order.created_at)}) }}</p>
             <p v-if="order.status === 'awaiting_shipping_fee'" class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $t('app.orderPage.awaitingShippingInfo') }}</p>
             <p v-if="order.status === 'pending_payment' && order.expires_at" class="mt-3 rounded-md bg-sky-50 p-3 text-sm text-sky-800">{{ $t('app.orderPage.payBefore', {date: formatWhen(order.expires_at)}) }}</p>
+            <div v-if="returnedFromGateway && order.can_submit_payment" class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-green-50 p-3 text-sm text-green-800">
+              <span>{{ $t('app.orderPage.onlineReturned') }}</span>
+              <Button size="sm" variant="outline" :disabled="busy" @click="refreshStatus">{{ $t('app.orderPage.refreshStatus') }}</Button>
+            </div>
             <p v-if="order.status === 'requested'" class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $t('app.orderPage.requestedInfo') }}</p>
             <p v-if="order.status === 'revision_requested'" class="mt-3 rounded-md bg-orange-50 p-3 text-sm text-orange-800">{{ $t('app.orderPage.revisionInfo') }}</p>
             <p v-if="order.status === 'accepted' && !order.payable_documents.length" class="mt-3 rounded-md bg-teal-50 p-3 text-sm text-teal-800">{{ $t('app.orderPage.acceptedInfo') }}</p>
@@ -290,6 +317,12 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
                 <option v-for="d in order.payable_documents" :key="d.id" :value="d.id">{{ d.number }} · {{ formatIDR(d.amount_due - d.paid_amount) }}</option>
               </select>
             </label>
+            <div v-if="order.can_pay_online" class="mb-4 space-y-2 border-b pb-4">
+              <Button class="h-11 w-full bg-green-600 hover:bg-green-700" :disabled="paying || busy" @click="payOnline">
+                <Loader2 v-if="paying" class="size-4 animate-spin"/> {{ $t('app.orderPage.payOnline', {amount: formatIDR(remaining)}) }}
+              </Button>
+              <p class="text-xs text-slate-500">{{ $t('app.orderPage.payOnlineHint') }}</p>
+            </div>
             <p class="text-slate-600">{{ $t('app.orderPage.transferTo', {number: targetDoc.number}) }}</p>
             <ul class="mt-2 space-y-1">
               <li v-for="b in inv.bank_accounts" :key="b.number"><span class="font-medium">{{ b.bank }} {{ b.number }}</span> a.n. {{ b.name }}</li>
