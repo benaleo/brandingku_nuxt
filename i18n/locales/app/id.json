@@ -339,7 +339,7 @@
       "browse": "Cari Produk",
       "remove": "Hapus dari wishlist",
       "productFallback": "Produk",
-      "viewDetail": "Lihat Detail"
+      "removeFailed": "Gagal menghapus dari wishlist. Silakan coba lagi."
     },
     "tncPage": {
       "metaTitle": "Syarat & Ketentuan - Brandingku",

@@ -339,7 +339,7 @@
       "browse": "Browse Products",
       "remove": "Remove from wishlist",
       "productFallback": "Product",
-      "viewDetail": "View Details"
+      "removeFailed": "Could not remove it from your wishlist. Please try again."
     },
     "tncPage": {
       "metaTitle": "Terms & Conditions - Brandingku",
