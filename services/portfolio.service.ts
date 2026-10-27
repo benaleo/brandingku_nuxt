@@ -46,6 +46,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                             title
                             subtitle
                             client
+                            product_id
                             galleries { id portfolio_id file orders created_at }
                             is_active
                             deleted_at
@@ -122,6 +123,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                         title
                         subtitle
                         client
+                        product_id
                         galleries { id portfolio_id file orders created_at }
                         is_active
                         deleted_at
@@ -165,6 +167,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                 $title: String!
                 $subtitle: String
                 $client: String
+                $product_id: Int
                 $is_active: Boolean!
             ) {
                 createPortfolio(
@@ -172,6 +175,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                     title: $title
                     subtitle: $subtitle
                     client: $client
+                    product_id: $product_id
                     is_active: $is_active
                 ) {
                     id
@@ -185,6 +189,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             title: payload.title,
             subtitle: payload.subtitle ?? null,
             client: payload.client ?? null,
+            product_id: payload.product_id ? Number(payload.product_id) : null,
             is_active: Boolean(payload.is_active),
         }
         
@@ -219,6 +224,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                 $title: String,
                 $subtitle: String,
                 $client: String,
+                $product_id: Int,
                 $is_active: Boolean
             ) {
                 updatePortfolio(
@@ -227,6 +233,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                     title: $title,
                     subtitle: $subtitle,
                     client: $client,
+                    product_id: $product_id,
                     is_active: $is_active
                 ) {
                     id
@@ -241,6 +248,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             title: payload.title,
             subtitle: payload.subtitle ?? null,
             client: payload.client ?? null,
+            product_id: payload.product_id ? Number(payload.product_id) : null,
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
         const res = await gqlFetch<{ updatePortfolio: { id: string; category: string; title: string } }>(mutation, variables, { auth: true })

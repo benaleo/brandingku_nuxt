@@ -10,6 +10,7 @@ import { usePortfolioService } from "~/services/portfolio.service";
 import { useFileToBase64 } from "~/composables/useFileToBase64";
 import { useAuth } from "~/composables/useAuth";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
+import { useOptionProducts } from "~/composables/useOptionProducts";
 import FieldXSelect from "~/components/forms/fields/FieldXSelect.vue";
 import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import type { PortfolioGallery } from "~/types/portfolio.type";
@@ -36,12 +37,14 @@ const statusOptions = [
 
 const { datas, loading, error, reFetch, createPortfolio, updatePortfolioById } = usePortfolioService(false, id);
 const { options: productCategoryOptions, loading: categoriesLoading, error: categoriesError, fetch: fetchCategories } = useOptionProductCategories();
+const { options: productOptions, loading: productsLoading, error: productsError, fetch: fetchProducts } = useOptionProducts();
 
 // portfolio.category is a plain string; store "Parent / Child" so same-named sub categories stay distinct
 const categoryOptions = computed(() =>
   productCategoryOptions.value.map((o) => ({
     ...o,
     id: o.parentName ? `${o.parentName} / ${o.label}` : o.label,
+    categoryId: Number(o.id),
   }))
 );
 
@@ -60,6 +63,7 @@ const formSchema = toTypedSchema(
     title: z.string().min(1, "Title is required"),
     subtitle: z.string().nullable().optional(),
     client: z.string().nullable().optional(),
+    product_id: z.string().nullable().optional(),
     is_active: z.coerce.boolean(),
   })
 );
@@ -76,9 +80,27 @@ const {
     title: "",
     subtitle: "",
     client: "",
+    product_id: "",
     is_active: true,
   },
 });
+
+// product list follows the selected category; the stored category string is mapped back to its id
+const selectedCategory = computed(() =>
+  categoryOptions.value.find((o) => o.id === formValues.category)
+);
+
+watch(
+  () => selectedCategory.value?.id,
+  async () => {
+    const category = selectedCategory.value;
+    await fetchProducts(category?.categoryId ?? null, category?.label);
+    // drop a product that does not belong to the newly selected category
+    if (!productsError.value && formValues.product_id && !productOptions.value.some((o) => o.id === formValues.product_id)) {
+      setFieldValue("product_id", "");
+    }
+  }
+);
 
 // galleries are managed locally and sent with the payload on submit
 const galleries = ref<(PortfolioGallery & { _raw?: string })[]>([]);
@@ -98,6 +120,7 @@ watch(loading, (isLoading) => {
     setFieldValue("client", portfolio.client || "");
     setFieldValue("is_active", portfolio.is_active ?? true);
     setFieldValue("category", portfolio.category || "");
+    setFieldValue("product_id", portfolio.product_id ? String(portfolio.product_id) : "");
     galleries.value = (portfolio.galleries || []).map((g: PortfolioGallery) => ({
       ...g,
       id: String(g.id),
@@ -163,6 +186,21 @@ useHead({
           :options="categoryOptions"
           :loading="categoriesLoading"
           :error="categoriesError !== null"
+        />
+
+        <!-- Product (optional, filtered by category) -->
+        <FieldXSelectWithGroupParent
+          name="product_id"
+          label="Product"
+          :placeholder="selectedCategory ? 'Select product (optional)' : 'Select category first'"
+          searchPlaceholder="Search product..."
+          emptyMessage="No product in this category."
+          :options="productOptions"
+          :loading="productsLoading"
+          :error="productsError !== null"
+          :disabled="!selectedCategory"
+          clearable
+          clearLabel="Tanpa product"
         />
 
         <!-- Title -->
