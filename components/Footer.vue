@@ -49,7 +49,7 @@
         <h3 class="text-xl font-bold mb-4">{{ $t('app.footer.quickLinks') }}</h3>
         <ul class="space-y-2 text-sm text-gray-300">
           <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.aboutUs') }}</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.portfolio') }}</a></li>
+          <li><NuxtLink to="/portfolio" class="hover:text-white transition-colors">{{ $t('app.footer.links.portfolio') }}</NuxtLink></li>
           <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.sustainability') }}</a></li>
           <li><a href="#" class="hover:text-white transition-colors">{{ $t('app.footer.links.shippingPolicy') }}</a></li>
         </ul>

@@ -3,7 +3,8 @@ import { X } from "lucide-vue-next";
 
 // bottom sheet on mobile, centered dialog from sm up
 const open = defineModel<boolean>("open", { default: false });
-defineProps<{ title: string; description?: string }>();
+// wide fits media such as an image gallery
+defineProps<{ title: string; description?: string; wide?: boolean }>();
 
 const close = () => (open.value = false);
 
@@ -53,7 +54,8 @@ onBeforeUnmount(() => {
           role="dialog"
           aria-modal="true"
           :aria-label="title"
-          class="pointer-events-auto flex max-h-[85dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl"
+          class="pointer-events-auto flex max-h-[85dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+          :class="wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'"
         >
           <div class="mx-auto mt-2 h-1.5 w-10 rounded-full bg-gray-200 sm:hidden" />
           <div class="flex items-start justify-between gap-4 border-b px-5 py-4">

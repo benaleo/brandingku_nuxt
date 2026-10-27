@@ -388,6 +388,78 @@
       "contactSupport": "Hubungi Dukungan",
       "lastUpdated": "Terakhir diperbarui: 26 Maret 2026",
       "downloadPdf": "Unduh PDF"
+    },
+    "portfolioPage": {
+      "metaTitle": "Portofolio - Brandingku",
+      "metaDescription": "Lihat hasil kerja Brandingku untuk berbagai klien: merchandise korporat, souvenir, dan produk branding.",
+      "eyebrow": "PORTOFOLIO",
+      "title": "Hasil Karya Kami",
+      "subtitle": "Beberapa proyek merchandise yang telah kami kerjakan bersama klien.",
+      "all": "Semua",
+      "filterLabel": "Filter kategori",
+      "client": "Klien: {name}",
+      "photos": "{count} foto",
+      "loadMore": "Muat Lebih Banyak",
+      "loading": "Memuat...",
+      "loadFailed": "Portofolio gagal dimuat.",
+      "retry": "Coba Lagi",
+      "emptyTitle": "Portofolio segera hadir",
+      "emptyText": "Kami sedang menyiapkan dokumentasi proyek-proyek terbaru kami. Sementara itu, lihat katalog produk kami atau ceritakan kebutuhan Anda.",
+      "browseProducts": "Lihat Produk",
+      "chatAdmin": "Chat dengan Admin",
+      "askSimilar": "Buat yang Serupa",
+      "ctaTitle": "Punya proyek serupa?",
+      "ctaText": "Ceritakan kebutuhan merchandise Anda dan tim kami akan membantu mewujudkannya.",
+      "similarTopic": "Halo admin, saya tertarik membuat proyek seperti {title}",
+      "generalTopic": "Halo admin, saya ingin konsultasi proyek merchandise",
+      "imageAlt": "{title} - foto {n}"
+    },
+    "servicesPage": {
+      "metaTitle": "Layanan - Brandingku",
+      "metaDescription": "Kenali layanan Brandingku: servis terbaik, desain logo gratis, cek kualitas, produksi tepat waktu, dan garansi untuk merchandise korporat Anda.",
+      "eyebrow": "LAYANAN KAMI",
+      "title": "Semua yang Anda butuhkan untuk merchandise yang berkesan",
+      "subtitle": "Dari ide hingga barang sampai di tangan Anda, tim kami mendampingi setiap langkah pembuatan merchandise perusahaan Anda.",
+      "jumpTo": "Lompat ke layanan",
+      "askService": "Tanya layanan ini",
+      "serviceTopic": "Halo admin, saya ingin konsultasi tentang layanan {service}",
+      "items": {
+        "bestService": {
+          "text": "Tim kami mendampingi Anda sejak konsultasi pertama, membantu memilih produk, bahan, dan teknik branding yang paling sesuai dengan kebutuhan serta anggaran perusahaan Anda.",
+          "p1": "Konsultasi gratis sebelum pemesanan",
+          "p2": "Rekomendasi produk sesuai kebutuhan dan anggaran",
+          "p3": "Satu kontak yang memantau pesanan Anda dari awal sampai akhir"
+        },
+        "freeLogoDesign": {
+          "text": "Belum punya file logo yang siap cetak? Desainer kami membantu menyiapkan atau merapikan logo Anda agar hasil cetak di setiap produk tetap tajam dan konsisten.",
+          "p1": "Penyesuaian logo agar siap cetak",
+          "p2": "Mockup produk sebelum produksi",
+          "p3": "Revisi desain sebelum produksi dimulai"
+        },
+        "qualityCheck": {
+          "text": "Setiap pesanan melewati pemeriksaan kualitas, mulai dari bahan baku hingga hasil cetak, sebelum dikemas dan dikirim ke alamat Anda.",
+          "p1": "Pemeriksaan bahan sebelum produksi",
+          "p2": "Pengecekan hasil cetak dan warna logo",
+          "p3": "Pengemasan rapi agar produk aman selama pengiriman"
+        },
+        "timelyProduction": {
+          "text": "Jadwal produksi disepakati di awal dan kami kabari perkembangannya, sehingga merchandise siap tepat waktu untuk acara atau kampanye Anda.",
+          "p1": "Estimasi waktu produksi yang jelas sejak awal",
+          "p2": "Kabar progres pesanan secara berkala",
+          "p3": "Siap untuk pesanan dalam jumlah besar"
+        },
+        "warranty": {
+          "text": "Kami bertanggung jawab atas hasil pekerjaan kami. Jika produk yang Anda terima tidak sesuai dengan spesifikasi yang disepakati, hubungi kami dan kami akan membantu menyelesaikannya.",
+          "p1": "Produk dibuat sesuai spesifikasi yang disepakati",
+          "p2": "Penanganan keluhan yang cepat",
+          "p3": "Bantuan penyelesaian untuk produk yang tidak sesuai"
+        }
+      },
+      "ctaTitle": "Siap memulai proyek merchandise Anda?",
+      "ctaText": "Ceritakan kebutuhan Anda, tim kami akan membantu dari konsultasi hingga pengiriman.",
+      "ctaChat": "Chat dengan Admin",
+      "ctaProducts": "Lihat Produk",
+      "generalTopic": "Halo admin, saya ingin konsultasi proyek merchandise"
     }
   }
 }

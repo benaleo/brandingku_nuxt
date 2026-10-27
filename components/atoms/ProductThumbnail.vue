@@ -6,6 +6,8 @@ import { ref, defineProps } from 'vue'
 
 const props = defineProps<{
   images: string[]
+  // alt text for the 1-based image number; defaults to the product wording
+  imageAlt?: (n: number) => string
 }>()
 
 const emblaMainApi = ref<CarouselApi>()
@@ -44,7 +46,7 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
       <CarouselContent>
         <CarouselItem v-for="(image, index) in images" :key="index">
           <div class="aspect-square overflow-hidden bg-gray-50 sm:rounded-xl sm:border">
-            <img :src="image" :alt="$t('app.productPage.detail.imageAlt', { n: index + 1 })" class="h-full w-full object-cover" />
+            <img :src="image" :alt="imageAlt ? imageAlt(index + 1) : $t('app.productPage.detail.imageAlt', { n: index + 1 })" class="h-full w-full object-cover" />
           </div>
         </CarouselItem>
       </CarouselContent>
@@ -62,7 +64,7 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
           <div class="p-1" :class="index === selectedIndex ? '' : 'opacity-50'">
             <Card class="flex items-center justify-center py-0 overflow-hidden rounded-lg">
               <CardContent class="flex items-center justify-center p-0 aspect-square overflow-hidden">
-                <img :src="image" :alt="$t('app.productPage.detail.imageAlt', { n: index + 1 })" class="w-full h-full object-cover" />
+                <img :src="image" :alt="imageAlt ? imageAlt(index + 1) : $t('app.productPage.detail.imageAlt', { n: index + 1 })" class="w-full h-full object-cover" />
               </CardContent>
             </Card>
           </div>

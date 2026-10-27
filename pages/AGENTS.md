@@ -14,6 +14,8 @@ File-based routes. Nuxt derives every URL from this tree, so a filename here is 
 | `kontak.vue` | `/kontak` — contact page with the inquiry form. Copy lives under `app.contactPage`; the submitted subject stays in English. |
 | `tentang.vue` | `/tentang` — about page. Copy and head title live under `app.aboutPage`. |
 | `tnc.vue` | `/tnc` — terms and conditions. Copy and head title live under `app.tncPage`. |
+| `portfolio.vue` | `/portfolio` — active portfolios from `getPortfolios` (first page server-rendered, more pages appended), category chips built from the loaded items, gallery viewer in `ElementsInsetSheet`. Copy under `app.portfolioPage`. |
+| `services.vue` | `/services` — the five services from the navbar menu; section ids are the navbar anchors. Copy under `app.servicesPage`, titles reuse `app.services.menu`. |
 | `wishlist.vue` | `/wishlist` — the saved-products view, backed by `useWishlist`. Copy lives under `app.wishlistPage`. |
 
 ## Subdirectories

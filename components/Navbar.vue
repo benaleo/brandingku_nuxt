@@ -60,14 +60,14 @@
                 style="z-index: 9999;"
               >
                 <div class="space-y-3">
-                  <a 
-                    v-for="service in services" 
+                  <NuxtLink
+                    v-for="service in services"
                     :key="service.name"
-                    :href="service.href"
+                    :to="service.href"
                     class="block text-gray-700 hover:text-green-600 hover:underline py-2 px-3 rounded hover:bg-green-100"
                   >
                     {{ service.name }}
-                  </a>
+                  </NuxtLink>
                 </div>
               </div>
             </li>
@@ -240,7 +240,7 @@
               <div class="grid transition-[grid-template-rows] duration-200" :class="openSection === 'services' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'" :inert="openSection !== 'services'">
                 <ul class="overflow-hidden pl-3">
                   <li v-for="service in services" :key="service.name">
-                    <a :href="service.href" class="block rounded-lg px-3 py-2.5 text-[15px] hover:bg-green-50" @click="mobileOpen = false">{{ service.name }}</a>
+                    <NuxtLink :to="service.href" class="block rounded-lg px-3 py-2.5 text-[15px] hover:bg-green-50" @click="mobileOpen = false">{{ service.name }}</NuxtLink>
                   </li>
                 </ul>
               </div>
@@ -328,11 +328,11 @@ const handleUserClick = () => {
 };
 
 const services = computed(() => [
-  { name: t('app.services.menu.bestService'), href: '#servis-terbaik' },
-  { name: t('app.services.menu.freeLogoDesign'), href: '#desain-logo' },
-  { name: t('app.services.menu.qualityCheck'), href: '#cek-kualitas' },
-  { name: t('app.services.menu.timelyProduction'), href: '#produksi-tepat-waktu' },
-  { name: t('app.services.menu.warranty'), href: '#garansi' }
+  { name: t('app.services.menu.bestService'), href: '/services#servis-terbaik' },
+  { name: t('app.services.menu.freeLogoDesign'), href: '/services#desain-logo' },
+  { name: t('app.services.menu.qualityCheck'), href: '/services#cek-kualitas' },
+  { name: t('app.services.menu.timelyProduction'), href: '/services#produksi-tepat-waktu' },
+  { name: t('app.services.menu.warranty'), href: '/services#garansi' }
 ]);
 
 const getFromLocalStorage = (key: string) => {

@@ -388,6 +388,78 @@
       "contactSupport": "Contact Support",
       "lastUpdated": "Last updated: March 26, 2026",
       "downloadPdf": "Download PDF"
+    },
+    "portfolioPage": {
+      "metaTitle": "Portfolio - Brandingku",
+      "metaDescription": "See Brandingku's work for our clients: corporate merchandise, souvenirs, and branded products.",
+      "eyebrow": "PORTFOLIO",
+      "title": "Our Work",
+      "subtitle": "A selection of merchandise projects we've delivered with our clients.",
+      "all": "All",
+      "filterLabel": "Filter by category",
+      "client": "Client: {name}",
+      "photos": "{count} photo | {count} photos",
+      "loadMore": "Load More",
+      "loading": "Loading...",
+      "loadFailed": "The portfolio could not be loaded.",
+      "retry": "Try Again",
+      "emptyTitle": "Portfolio coming soon",
+      "emptyText": "We're preparing documentation of our latest projects. In the meantime, browse our products or tell us what you need.",
+      "browseProducts": "Browse Products",
+      "chatAdmin": "Chat with Admin",
+      "askSimilar": "Ask for Something Similar",
+      "ctaTitle": "Have a similar project?",
+      "ctaText": "Tell us about your merchandise needs and our team will help bring it to life.",
+      "similarTopic": "Hi admin, I'm interested in a project like {title}",
+      "generalTopic": "Hi admin, I'd like to discuss a merchandise project",
+      "imageAlt": "{title} - photo {n}"
+    },
+    "servicesPage": {
+      "metaTitle": "Services - Brandingku",
+      "metaDescription": "Discover Brandingku's services: dedicated support, free logo design, quality checks, on-time production, and warranty for your corporate merchandise.",
+      "eyebrow": "OUR SERVICES",
+      "title": "Everything you need for memorable merchandise",
+      "subtitle": "From the first idea to delivery, our team supports every step of creating your company's merchandise.",
+      "jumpTo": "Jump to a service",
+      "askService": "Ask about this service",
+      "serviceTopic": "Hi admin, I'd like to ask about your {service} service",
+      "items": {
+        "bestService": {
+          "text": "Our team supports you from the first consultation, helping you choose the products, materials, and branding techniques that best fit your company's needs and budget.",
+          "p1": "Free consultation before you order",
+          "p2": "Product recommendations that fit your needs and budget",
+          "p3": "One point of contact following your order from start to finish"
+        },
+        "freeLogoDesign": {
+          "text": "Don't have a print-ready logo file yet? Our designers help prepare or clean up your logo so it prints sharp and consistent on every product.",
+          "p1": "Logo adjustments so it is ready to print",
+          "p2": "Product mockups before production",
+          "p3": "Design revisions before production starts"
+        },
+        "qualityCheck": {
+          "text": "Every order goes through quality checks, from raw materials to the final print, before it is packed and shipped to you.",
+          "p1": "Material checks before production",
+          "p2": "Print and logo colour inspection",
+          "p3": "Careful packing so products stay safe in transit"
+        },
+        "timelyProduction": {
+          "text": "We agree on the production schedule up front and keep you posted, so your merchandise is ready in time for your event or campaign.",
+          "p1": "Clear production estimates from the start",
+          "p2": "Regular order progress updates",
+          "p3": "Ready for large-volume orders"
+        },
+        "warranty": {
+          "text": "We stand behind our work. If the products you receive don't match the agreed specifications, contact us and we'll help put it right.",
+          "p1": "Products made to the agreed specifications",
+          "p2": "Fast handling of complaints",
+          "p3": "Help resolving any product that doesn't match"
+        }
+      },
+      "ctaTitle": "Ready to start your merchandise project?",
+      "ctaText": "Tell us what you need and our team will help from consultation to delivery.",
+      "ctaChat": "Chat with Admin",
+      "ctaProducts": "Browse Products",
+      "generalTopic": "Hi admin, I'd like to discuss a merchandise project"
     }
   }
 }
