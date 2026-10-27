@@ -44,6 +44,8 @@ const selectedColor = ref<string>("");
 // variant is taken from additional name
 const selectedVariantName = ref<string>("");
 
+const namedVariants = computed(() => (detail.value?.additionals || []).filter((a) => a.name?.trim()));
+
 // compute selected additional by name
 const selectedAdditional = computed(() => {
   const adds = detail.value?.additionals || [];
@@ -301,21 +303,24 @@ definePageMeta({
 
           <!-- Variant (from additional name) -->
           <div v-if="detail.additionals?.length" class="mt-6">
-            <h3 class="text-sm font-medium mb-2">{{ $t('app.productPage.detail.variant') }}</h3>
-            <Select v-model="selectedVariantName">
-              <SelectTrigger class="w-[220px]">
-                <SelectValue :placeholder="$t('app.productPage.detail.selectVariant')" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="a in detail.additionals"
-                  :key="a.id"
-                  :value="a.name"
-                >
-                  {{ a.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <!-- an unnamed variant cannot be a select option (empty values throw and break navigation) -->
+            <template v-if="namedVariants.length">
+              <h3 class="text-sm font-medium mb-2">{{ $t('app.productPage.detail.variant') }}</h3>
+              <Select v-model="selectedVariantName">
+                <SelectTrigger class="w-[220px]">
+                  <SelectValue :placeholder="$t('app.productPage.detail.selectVariant')" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="a in namedVariants"
+                    :key="a.id"
+                    :value="a.name"
+                  >
+                    {{ a.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </template>
             <div class="mt-3 text-sm text-gray-700 space-y-1">
               <div>
                 <span class="text-gray-500">{{ $t('app.productPage.detail.stock') }}</span>
