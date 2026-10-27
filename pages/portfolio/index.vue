@@ -3,6 +3,7 @@ import { Images, MessageCircle } from 'lucide-vue-next'
 
 type PortfolioItem = {
   id: number
+  slug: string
   category: string
   title: string
   subtitle?: string | null
@@ -23,7 +24,7 @@ const PAGE_SIZE = 12
 const PORTFOLIOS_QUERY = `
   query publicPortfolios($pagination: PaginationInput) {
     getPortfolios(pagination: $pagination, is_active: true, sort: { column: CREATED_AT, direction: DESC }) {
-      items { id category title subtitle client galleries { id file orders } }
+      items { id slug category title subtitle client galleries { id file orders } }
       page_info { current_page has_next_page total_items }
     }
   }
@@ -242,14 +243,24 @@ useHead(() => ({
       />
       <p v-if="selected?.subtitle" class="mt-4 text-gray-600">{{ selected.subtitle }}</p>
       <template #footer>
-        <button
-          type="button"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
-          @click="askSimilar"
-        >
-          <MessageCircle class="size-5" />
-          {{ $t('app.portfolioPage.askSimilar') }}
-        </button>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <NuxtLink
+            v-if="selected"
+            :to="`/portfolio/${selected.slug}`"
+            class="inline-flex w-full items-center justify-center rounded-lg border px-6 py-3 font-semibold text-slate-700 hover:bg-gray-50"
+            @click="viewerOpen = false"
+          >
+            {{ $t('app.portfolioDetail.viewDetail') }}
+          </NuxtLink>
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
+            @click="askSimilar"
+          >
+            <MessageCircle class="size-5" />
+            {{ $t('app.portfolioPage.askSimilar') }}
+          </button>
+        </div>
       </template>
     </ElementsInsetSheet>
   </div>

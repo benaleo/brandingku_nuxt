@@ -537,6 +537,25 @@
       "impactTitle": "Sustainability Impact",
       "impactText": "Your orders this year have contributed to planting 12 trees and reducing 45kg of carbon emissions.",
       "ecoReport": "View Eco-Report"
+    },
+    "portfolioCarousel": {
+      "eyebrow": "PORTFOLIO",
+      "titleProduct": "Trusted by clients for this product",
+      "titleLatest": "Our latest work",
+      "seeAll": "See all",
+      "viewProject": "View project",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "portfolioDetail": {
+      "metaTitle": "{title} - Brandingku Portfolio",
+      "breadcrumb": "Portfolio",
+      "client": "Client",
+      "category": "Category",
+      "notFound": "Portfolio not found",
+      "notFoundText": "This project may no longer be shown.",
+      "backToList": "Back to Portfolio",
+      "viewDetail": "View Details"
     }
   }
 }

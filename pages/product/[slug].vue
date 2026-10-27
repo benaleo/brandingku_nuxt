@@ -396,6 +396,9 @@ definePageMeta({
           </div>
         </div>
       </div>
+
+      <!-- client projects that used this product -->
+      <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" />
     </div>
   </div>
 </template>

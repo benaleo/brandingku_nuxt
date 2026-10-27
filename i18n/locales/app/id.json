@@ -537,6 +537,25 @@
       "impactTitle": "Dampak Keberlanjutan",
       "impactText": "Pesanan Anda tahun ini telah berkontribusi menanam 12 pohon dan mengurangi 45kg emisi karbon.",
       "ecoReport": "Lihat Laporan Eco"
+    },
+    "portfolioCarousel": {
+      "eyebrow": "PORTOFOLIO",
+      "titleProduct": "Dipercaya klien untuk produk ini",
+      "titleLatest": "Hasil karya terbaru kami",
+      "seeAll": "Lihat semua",
+      "viewProject": "Lihat proyek",
+      "prev": "Sebelumnya",
+      "next": "Berikutnya"
+    },
+    "portfolioDetail": {
+      "metaTitle": "{title} - Portofolio Brandingku",
+      "breadcrumb": "Portofolio",
+      "client": "Klien",
+      "category": "Kategori",
+      "notFound": "Portofolio tidak ditemukan",
+      "notFoundText": "Proyek ini mungkin sudah tidak ditampilkan.",
+      "backToList": "Kembali ke Portofolio",
+      "viewDetail": "Lihat Detail"
     }
   }
 }
