@@ -179,10 +179,14 @@ const ensureSession = async () => {
   startRealtime(onNewMessages);
 };
 
-// a topic from "ask admin" buttons waits until the name/contact steps are done
+// a topic from "ask admin" buttons waits until the name/contact steps are done;
+// it may replace an earlier topic the visitor left untouched, never their own typing
+let lastTopic = "";
 const applyPendingTopic = () => {
-  if (!pendingTopic.value || session.value?.stage !== "active" || draft.value.trim()) return;
-  draft.value = pendingTopic.value;
+  if (!pendingTopic.value || session.value?.stage !== "active") return;
+  const current = draft.value.trim();
+  if (current && current !== lastTopic) return;
+  draft.value = lastTopic = pendingTopic.value;
   pendingTopic.value = "";
 };
 
