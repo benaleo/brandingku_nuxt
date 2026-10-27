@@ -88,6 +88,19 @@ const setQuantity = (value: number | string) => {
   quantity.value = Number.isFinite(n) ? Math.min(Math.max(n, minQty.value), 100000) : minQty.value;
 };
 
+// buy now skips the cart; guests sign in first and come back to the same checkout
+const authToken = useCookie<string | null>("token", { sameSite: "lax" });
+const handleBuyNow = () => {
+  const variant = selectedAdditional.value;
+  if (!variant) {
+    toast.error(t("app.cartPage.selectVariant"));
+    return;
+  }
+  const target = `/checkout?item=${variant.id}&qty=${quantity.value}`;
+  if (authToken.value) router.push(target);
+  else router.push({ path: "/console/auth", query: { redirect: target } });
+};
+
 const { add: addToCart } = useCart();
 const adding = ref(false);
 const handleAddToCart = async () => {
@@ -410,7 +423,10 @@ definePageMeta({
               <MessageCircle class="h-4 w-4" />
               {{ $t('app.productPage.detail.askAdmin') }}
             </Button>
-            <Button v-else class="h-11 flex-1 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
+            <template v-else>
+              <Button variant="outline" class="h-11 flex-1 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
+              <Button class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" :disabled="adding" @click="handleBuyNow">{{ $t('app.productPage.detail.buyNow') }}</Button>
+            </template>
             <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>

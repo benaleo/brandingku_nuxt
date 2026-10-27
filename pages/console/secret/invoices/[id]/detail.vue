@@ -137,10 +137,23 @@
         <ul v-else class="divide-y">
           <li v-for="p in inv.payments" :key="p.id" class="flex flex-wrap items-center justify-between gap-2 py-2">
             <div>
-              <p class="font-medium">{{ formatRupiah(p.amount) }} <span class="font-normal text-muted-foreground">· {{ PAYMENT_METHODS[p.method] || p.method }} · {{ formatInvoiceDate(p.paid_on) }}</span></p>
-              <p class="text-xs text-muted-foreground">{{ [p.payer_name, p.note].filter(Boolean).join(' · ') || '—' }} · dicatat {{ p.verified_by }}</p>
+              <p class="font-medium">
+                {{ formatRupiah(p.amount) }}
+                <span class="font-normal text-muted-foreground">· {{ PAYMENT_METHODS[p.method] || p.method }} · {{ formatInvoiceDate(p.paid_on) }}</span>
+                <Badge class="ml-1" :class="PAYMENT_STATUS[p.status]?.[1]">{{ PAYMENT_STATUS[p.status]?.[0] || p.status }}</Badge>
+              </p>
+              <p class="text-xs text-muted-foreground">
+                {{ [p.payer_name, p.note].filter(Boolean).join(' · ') || '—' }}<template v-if="p.verified_by"> · {{ p.status === 'rejected' ? 'ditolak' : 'dicatat' }} {{ p.verified_by }}</template>
+              </p>
+              <p v-if="p.reject_reason" class="text-xs text-red-600">{{ p.reject_reason }}</p>
             </div>
-            <a v-if="p.proof_path" :href="storageUrl(p.proof_path)" target="_blank" rel="noopener" class="text-green-700 hover:underline">Bukti transfer</a>
+            <div class="flex items-center gap-2">
+              <a v-if="p.proof_path" :href="storageUrl(p.proof_path)" target="_blank" rel="noopener" class="text-green-700 hover:underline">Bukti transfer</a>
+              <template v-if="p.status === 'pending' && canAction(route.path, 'update')">
+                <Button size="sm" class="bg-green-600 hover:bg-green-700" :disabled="busy" @click="verifyProof(p.id)">Verifikasi</Button>
+                <Button size="sm" variant="outline" class="text-red-600" :disabled="busy" @click="rejectProof(p.id)">Tolak</Button>
+              </template>
+            </div>
           </li>
         </ul>
       </section>
@@ -249,9 +262,15 @@ import {invoiceErrorMessage, useInvoiceService} from '~/services/invoice.service
 import type {Invoice} from '~/types/invoice.type'
 
 const PAYMENT_METHODS: Record<string, string> = {bank_transfer: 'Transfer bank', cash: 'Tunai', other: 'Lainnya'}
+const PAYMENT_STATUS: Record<string, [string, string]> = {
+  pending: ['Menunggu verifikasi', 'bg-orange-100 text-orange-800'],
+  verified: ['Terverifikasi', 'bg-green-100 text-green-800'],
+  rejected: ['Ditolak', 'bg-red-100 text-red-800'],
+}
 const EVENT_LABELS: Record<string, string> = {
   created: 'Dibuat', updated: 'Diubah', sent: 'Dikirim', voided: 'Di-void', paid: 'Lunas',
   payment_recorded: 'Pembayaran dicatat', deal_created: 'Deal dibuat', dp_created: 'DP dibuat', final_created: 'Final dibuat',
+  payment_submitted: 'Bukti transfer dikirim', payment_rejected: 'Bukti transfer ditolak',
 }
 const MAX_PROOF_BYTES = 10 * 1024 * 1024
 
@@ -382,6 +401,33 @@ async function copyLink() {
     toast.success('Link disalin')
   } catch {
     toast.error('Gagal menyalin link')
+  }
+}
+
+// customer-submitted transfer proofs
+async function verifyProof(paymentId: number) {
+  busy.value = true
+  try {
+    inv.value = await service.verifyPayment(paymentId)
+    toast.success(inv.value.status === 'paid' ? 'Terverifikasi, invoice lunas' : 'Pembayaran diverifikasi')
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Verifikasi gagal'))
+  } finally {
+    busy.value = false
+  }
+}
+
+async function rejectProof(paymentId: number) {
+  const reason = window.prompt('Alasan penolakan (terlihat oleh customer)')?.trim()
+  if (!reason) return
+  busy.value = true
+  try {
+    inv.value = await service.rejectPayment(paymentId, reason)
+    toast.success('Bukti transfer ditolak')
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Gagal menolak'))
+  } finally {
+    busy.value = false
   }
 }
 

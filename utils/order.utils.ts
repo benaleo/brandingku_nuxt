@@ -1,0 +1,35 @@
+import type { OrderStatus } from '~/types/order.type'
+
+export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
+  awaiting_shipping_fee: 'bg-amber-100 text-amber-800',
+  pending_payment: 'bg-sky-100 text-sky-800',
+  paid: 'bg-green-100 text-green-800',
+  processing: 'bg-indigo-100 text-indigo-800',
+  shipped: 'bg-violet-100 text-violet-800',
+  completed: 'bg-emerald-100 text-emerald-800',
+  cancelled: 'bg-zinc-200 text-zinc-700',
+  expired: 'bg-zinc-200 text-zinc-700',
+}
+
+// console labels; the storefront uses app.orderStatus.* translations
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  awaiting_shipping_fee: 'Menunggu ongkir',
+  pending_payment: 'Menunggu pembayaran',
+  paid: 'Dibayar',
+  processing: 'Diproses',
+  shipped: 'Dikirim',
+  completed: 'Selesai',
+  cancelled: 'Dibatalkan',
+  expired: 'Kedaluwarsa',
+}
+
+export const readFileAsDataURL = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+
+export const newIdempotencyKey = () =>
+  (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9-]/g, '')

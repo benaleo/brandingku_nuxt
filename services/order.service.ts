@@ -1,0 +1,155 @@
+import { useGql } from '~/composables/useGql'
+import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, Order } from '~/types/order.type'
+
+const ORDER_FIELDS = `
+  id code type status user_id
+  customer_name customer_email customer_phone customer_company
+  delivery_method shipping_name shipping_phone shipping_address shipping_city shipping_postal_code
+  shipping_fee shipping_note tracking_number notes subtotal discount_total voucher_code
+  expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment created_at updated_at
+  items { id product_id product_additional_id product_name product_slug product_image variant_name quantity unit_price original_unit_price line_total note }
+  events { id action actor note created_at }
+  invoice {
+    id number status public_token due_date subtotal discount_total shipping_fee tax_mode tax_rate_bps tax_base tax_total total amount_due paid_amount
+    payments { id amount method proof_path payer_name note paid_on status reject_reason created_at }
+    bank_accounts { bank number name }
+  }
+`
+const LIST_FIELDS = `
+  id code type status customer_name customer_email customer_company delivery_method shipping_city
+  subtotal discount_total created_at expires_at can_cancel can_submit_payment
+  items { id product_name variant_name quantity }
+  invoice { id number status total amount_due paid_amount payments { id status } }
+`
+
+type OrderPage = { items: Order[]; page_info: { total_items: number } }
+
+export const useOrderService = () => {
+  const { gqlFetch } = useGql()
+
+  // customer
+  const previewCheckout = async (items: CheckoutItemInput[] | undefined, voucherCode?: string) => {
+    const res = await gqlFetch<{ previewCheckout: CheckoutPreview }>(
+      `query previewCheckout($items: [CheckoutItemInput!], $voucher: String) {
+        previewCheckout(items: $items, voucher_code: $voucher) {
+          lines { product_id product_additional_id product_name product_slug product_image variant_name quantity moq stock unit_price original_unit_price line_total note problem }
+          subtotal discount voucher_code voucher_message tax_mode tax_rate_bps tax_base tax_total total can_pay
+        }
+      }`,
+      { items: items?.length ? items : null, voucher: voucherCode || null },
+      { auth: true },
+    )
+    return res.previewCheckout
+  }
+
+  const placeOrder = async (input: CheckoutInput, idempotencyKey: string) => {
+    const res = await gqlFetch<{ placeOrder: Order }>(
+      `mutation placeOrder($input: CheckoutInput!, $key: String!) { placeOrder(input: $input, idempotency_key: $key) { ${ORDER_FIELDS} } }`,
+      { input, key: idempotencyKey },
+      { auth: true },
+    )
+    return res.placeOrder
+  }
+
+  const getMyOrders = async (page: number, limit: number, status?: string) => {
+    const res = await gqlFetch<{ getMyOrders: OrderPage }>(
+      `query getMyOrders($page: Int, $limit: Int, $status: String) {
+        getMyOrders(pagination: { page: $page, limit: $limit }, status: $status) { items { ${LIST_FIELDS} } page_info { total_items } }
+      }`,
+      { page, limit, status: status || null },
+      { auth: true },
+    )
+    return res.getMyOrders
+  }
+
+  const getMyOrder = async (code: string) => {
+    const res = await gqlFetch<{ getMyOrder: Order }>(
+      `query getMyOrder($code: String!) { getMyOrder(code: $code) { ${ORDER_FIELDS} } }`, { code }, { auth: true })
+    return res.getMyOrder
+  }
+
+  const cancelMyOrder = async (code: string, reason?: string) => {
+    const res = await gqlFetch<{ cancelMyOrder: Order }>(
+      `mutation cancelMyOrder($code: String!, $reason: String) { cancelMyOrder(code: $code, reason: $reason) { ${ORDER_FIELDS} } }`,
+      { code, reason: reason || null },
+      { auth: true },
+    )
+    return res.cancelMyOrder
+  }
+
+  const submitPaymentProof = async (code: string, input: { amount: number; paid_on: string; payer_name?: string; note?: string; proof: { file_name: string; content_type?: string; content: string } }) => {
+    const res = await gqlFetch<{ submitPaymentProof: Order }>(
+      `mutation submitPaymentProof($code: String!, $input: PaymentProofInput!) { submitPaymentProof(code: $code, input: $input) { ${ORDER_FIELDS} } }`,
+      { code, input },
+      { auth: true, timeout: 60000 },
+    )
+    return res.submitPaymentProof
+  }
+
+  // console
+  const getOrders = async (page: number, limit: number, filters: { status?: string; type?: string; keyword?: string }) => {
+    const res = await gqlFetch<{ getOrders: OrderPage }>(
+      `query getOrders($page: Int, $limit: Int, $status: String, $type: String, $keyword: String) {
+        getOrders(pagination: { page: $page, limit: $limit }, status: $status, type: $type, keyword: $keyword) { items { ${LIST_FIELDS} } page_info { total_items } }
+      }`,
+      { page, limit, status: filters.status || null, type: filters.type || null, keyword: filters.keyword || null },
+      { auth: true },
+    )
+    return res.getOrders
+  }
+
+  const getOrderStatusCounts = async () => {
+    const res = await gqlFetch<{ getOrderStatusCounts: { status: string; count: number }[] }>(
+      'query getOrderStatusCounts { getOrderStatusCounts { status count } }', {}, { auth: true })
+    return res.getOrderStatusCounts
+  }
+
+  const getOrder = async (id: number) => {
+    const res = await gqlFetch<{ getOrder: Order }>(`query getOrder($id: Int!) { getOrder(id: $id) { ${ORDER_FIELDS} } }`, { id }, { auth: true })
+    return res.getOrder
+  }
+
+  const setOrderShippingFee = async (id: number, fee: number, note: string, notify: boolean) => {
+    const res = await gqlFetch<{ setOrderShippingFee: Order }>(
+      `mutation setOrderShippingFee($id: Int!, $fee: Int64!, $note: String, $notify: Boolean) {
+        setOrderShippingFee(id: $id, shipping_fee: $fee, shipping_note: $note, notify: $notify) { ${ORDER_FIELDS} }
+      }`,
+      { id, fee, note, notify },
+      { auth: true, timeout: 60000 },
+    )
+    return res.setOrderShippingFee
+  }
+
+  const updateOrderStatus = async (id: number, status: string, trackingNumber?: string, note?: string) => {
+    const res = await gqlFetch<{ updateOrderStatus: Order }>(
+      `mutation updateOrderStatus($id: Int!, $status: String!, $tracking: String, $note: String) {
+        updateOrderStatus(id: $id, status: $status, tracking_number: $tracking, note: $note) { ${ORDER_FIELDS} }
+      }`,
+      { id, status, tracking: trackingNumber || null, note: note || null },
+      { auth: true },
+    )
+    return res.updateOrderStatus
+  }
+
+  const cancelOrder = async (id: number, reason: string) => {
+    const res = await gqlFetch<{ cancelOrder: Order }>(
+      `mutation cancelOrder($id: Int!, $reason: String!) { cancelOrder(id: $id, reason: $reason) { ${ORDER_FIELDS} } }`,
+      { id, reason },
+      { auth: true },
+    )
+    return res.cancelOrder
+  }
+
+  const verifyPayment = async (paymentId: number) => {
+    await gqlFetch('mutation verifyInvoicePayment($id: Int!) { verifyInvoicePayment(payment_id: $id) { id } }', { id: paymentId }, { auth: true })
+  }
+
+  const rejectPayment = async (paymentId: number, reason: string) => {
+    await gqlFetch('mutation rejectInvoicePayment($id: Int!, $reason: String!) { rejectInvoicePayment(payment_id: $id, reason: $reason) { id } }', { id: paymentId, reason }, { auth: true })
+  }
+
+  return {
+    previewCheckout, placeOrder, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
+    getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, verifyPayment, rejectPayment,
+  }
+}

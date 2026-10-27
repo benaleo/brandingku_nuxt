@@ -10,10 +10,16 @@ import {useForm} from 'vee-validate'
 import * as z from 'zod'
 import {toast} from "vue-sonner";
 import { useAuthService } from '~/services/auth.service';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useCookie } from '#app';
 
 const router = useRouter();
+const route = useRoute();
+// only same-site paths, so the parameter cannot send users to another site
+const redirectTarget = () => {
+  const r = route.query.redirect;
+  return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') && !r.includes('\\') ? r : '/';
+};
 const tokenCookie = useCookie('token');
 const authService = useAuthService();
 const isReady = ref(false);
@@ -63,7 +69,7 @@ const handleLogin = handleSubmit(async (values) => {
     
     // Route based on user role
     if (userRole === 'user') {
-      router.push('/');
+      router.push(redirectTarget());
     } else {
       router.push('/console/secret/dashboard');
     }

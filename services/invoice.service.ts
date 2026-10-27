@@ -96,6 +96,11 @@ export const useInvoiceService = () => {
   const recordPayment = (id: number, input: PaymentInput) =>
     detailMutation('recordInvoicePayment', '$id: Int!, $input: InvoicePaymentInput!', 'id: $id, input: $input', { id, input })
 
+  const verifyPayment = (paymentId: number) =>
+    detailMutation('verifyInvoicePayment', '$id: Int!', 'payment_id: $id', { id: paymentId })
+  const rejectPayment = (paymentId: number, reason: string) =>
+    detailMutation('rejectInvoicePayment', '$id: Int!, $reason: String!', 'payment_id: $id, reason: $reason', { id: paymentId, reason })
+
   const deleteInvoice = async (id: number) => {
     const res = await gqlFetch<{ deleteInvoice: boolean }>('mutation deleteInvoice($id: Int!) { deleteInvoice(id: $id) }', { id }, { auth: true })
     return res.deleteInvoice
@@ -119,5 +124,6 @@ export const useInvoiceService = () => {
   return {
     getInvoices, getInvoiceSummary, getInvoice, createInvoice, updateInvoice, deleteInvoice, sendInvoice,
     voidInvoice, duplicateInvoice, createDeal, createDownPayment, createFinal, recordPayment, getPublicInvoice,
+    verifyPayment, rejectPayment,
   }
 }

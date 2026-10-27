@@ -1,0 +1,250 @@
+<script setup lang="ts">
+import {computed, onMounted, reactive, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {toast} from 'vue-sonner'
+import {ArrowLeft, FileDown, ExternalLink, Loader2} from 'lucide-vue-next'
+import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {useOrderService} from '~/services/order.service'
+import type {Order} from '~/types/order.type'
+
+const MAX_PROOF_BYTES = 10 * 1024 * 1024
+
+const {t, te, locale} = useI18n()
+const route = useRoute()
+const router = useRouter()
+const config = useRuntimeConfig()
+const token = useCookie<string | null>('token', {sameSite: 'lax'})
+const {getMyOrder, submitPaymentProof, cancelMyOrder} = useOrderService()
+const code = computed(() => String(route.params.code || ''))
+
+const order = ref<Order | null>(null)
+const loading = ref(true)
+const notFound = ref(false)
+const busy = ref(false)
+
+useHead(() => ({title: t('app.orderPage.metaTitle', {code: code.value}), meta: [{name: 'robots', content: 'noindex'}]}))
+
+const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
+const formatWhen = (iso?: string | null) => iso
+  ? new Date(iso).toLocaleString(locale.value === 'en' ? 'en-US' : 'id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})
+  : ''
+const imageSrc = (image: string) => !image ? '/images/no-image.jpg' : image.startsWith('http') ? image : `${config.public.STORAGE_URL}${image}`
+const storageUrl = (path: string) => path.startsWith('http') ? path : `${config.public.STORAGE_URL}${path}`
+
+const inv = computed(() => order.value?.invoice || null)
+const remaining = computed(() => inv.value ? Math.max(0, inv.value.amount_due - inv.value.paid_amount) : 0)
+const invoiceUrl = computed(() => inv.value?.public_token ? `/invoice/${inv.value.public_token}` : '')
+const pdfUrl = computed(() => inv.value?.public_token ? `${String(config.public.API_URL).replace(/\/$/, '')}/invoice/${inv.value.public_token}/pdf` : '')
+const statusClass = computed(() => order.value ? ORDER_STATUS_STYLE[order.value.status] : '')
+
+async function load() {
+  try {
+    order.value = await getMyOrder(code.value)
+    // the remaining amount is the natural default for a new proof
+    proof.amount = remaining.value
+  } catch {
+    notFound.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  if (!token.value) {
+    router.replace({path: '/console/auth', query: {redirect: route.fullPath}})
+    return
+  }
+  load()
+})
+
+const proof = reactive({amount: 0 as number | string, paid_on: todayISO(), payer_name: '', note: '', file: null as File | null})
+const proofInput = ref<HTMLInputElement | null>(null)
+const pickProof = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0] || null
+  if (file && file.size > MAX_PROOF_BYTES) {
+    toast.error(t('app.orderPage.fileTooLarge'))
+    ;(e.target as HTMLInputElement).value = ''
+    proof.file = null
+    return
+  }
+  proof.file = file
+}
+
+async function sendProof() {
+  if (!order.value || !proof.file) return
+  busy.value = true
+  try {
+    order.value = await submitPaymentProof(order.value.code, {
+      amount: Math.floor(Number(proof.amount) || 0),
+      paid_on: proof.paid_on,
+      payer_name: proof.payer_name.trim(),
+      note: proof.note.trim(),
+      proof: {file_name: proof.file.name, content_type: proof.file.type, content: await readFileAsDataURL(proof.file)},
+    })
+    toast.success(t('app.orderPage.proofSent'))
+    proof.file = null
+    if (proofInput.value) proofInput.value.value = ''
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t('app.orderPage.failed')))
+  } finally {
+    busy.value = false
+  }
+}
+
+async function cancel() {
+  if (!order.value || !window.confirm(t('app.orderPage.cancelConfirm'))) return
+  busy.value = true
+  try {
+    order.value = await cancelMyOrder(order.value.code)
+    toast.success(t('app.orderPage.cancelled'))
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t('app.orderPage.failed')))
+  } finally {
+    busy.value = false
+  }
+}
+
+const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.orderStatus.${action}`) : action.replaceAll('_', ' ')
+</script>
+
+<template>
+  <div class="min-h-screen bg-gradient-to-b from-green-50 via-white to-white">
+    <div class="app-container px-4 md:px-6 pt-28 pb-16">
+      <NuxtLink to="/profile/order-histories" class="mb-4 inline-flex items-center gap-1 text-sm text-slate-600 hover:text-green-700">
+        <ArrowLeft class="size-4"/> {{ $t('app.orderPage.back') }}
+      </NuxtLink>
+
+      <p v-if="loading" class="py-10 text-center text-slate-500">{{ $t('app.orderPage.loading') }}</p>
+      <p v-else-if="notFound || !order" class="py-10 text-center text-slate-600">{{ $t('app.orderPage.notFound') }}</p>
+
+      <div v-else class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div class="space-y-6">
+          <header class="rounded-xl border bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-2xl font-bold text-slate-900">{{ order.code }}</h1>
+              <Badge :class="statusClass">{{ $t(`app.orderStatus.${order.status}`) }}</Badge>
+            </div>
+            <p class="mt-1 text-sm text-slate-500">{{ $t('app.orderPage.placedAt', {date: formatWhen(order.created_at)}) }}</p>
+            <p v-if="order.status === 'awaiting_shipping_fee'" class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $t('app.orderPage.awaitingShippingInfo') }}</p>
+            <p v-if="order.status === 'pending_payment' && order.expires_at" class="mt-3 rounded-md bg-sky-50 p-3 text-sm text-sky-800">{{ $t('app.orderPage.payBefore', {date: formatWhen(order.expires_at)}) }}</p>
+            <p v-if="order.cancel_reason" class="mt-3 text-sm text-slate-600">{{ order.cancel_reason }}</p>
+          </header>
+
+          <section class="rounded-xl border bg-white p-5 shadow-sm">
+            <h2 class="mb-3 font-semibold">{{ $t('app.orderPage.items') }}</h2>
+            <ul class="divide-y">
+              <li v-for="it in order.items" :key="it.id" class="flex gap-3 py-3">
+                <NuxtLink :to="`/product/${it.product_slug}`" class="shrink-0">
+                  <img :src="imageSrc(it.product_image)" :alt="it.product_name" class="size-16 rounded-lg bg-gray-100 object-cover" onerror="this.src='/images/no-image.jpg'"/>
+                </NuxtLink>
+                <div class="min-w-0 flex-1 text-sm">
+                  <p class="font-medium">{{ it.product_name }}</p>
+                  <p class="text-slate-500">{{ it.variant_name }} · {{ it.quantity }} × {{ formatIDR(it.unit_price) }}</p>
+                  <p v-if="it.note" class="text-xs text-slate-500">{{ it.note }}</p>
+                </div>
+                <p class="shrink-0 text-sm font-semibold">{{ formatIDR(it.line_total) }}</p>
+              </li>
+            </ul>
+          </section>
+
+          <section class="rounded-xl border bg-white p-5 text-sm shadow-sm">
+            <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.delivery') }}</h2>
+            <template v-if="order.delivery_method === 'pickup'">
+              <p>{{ $t('app.orderPage.pickup') }}</p>
+            </template>
+            <template v-else>
+              <p class="font-medium">{{ order.shipping_name }} · {{ order.shipping_phone }}</p>
+              <p class="whitespace-pre-line text-slate-600">{{ order.shipping_address }}</p>
+              <p class="text-slate-600">{{ [order.shipping_city, order.shipping_postal_code].filter(Boolean).join(' ') }}</p>
+              <p v-if="order.shipping_note" class="mt-2"><span class="text-slate-500">{{ $t('app.orderPage.shippingNote') }}:</span> {{ order.shipping_note }}</p>
+            </template>
+            <p v-if="order.tracking_number" class="mt-2"><span class="text-slate-500">{{ $t('app.orderPage.tracking') }}:</span> <span class="font-mono">{{ order.tracking_number }}</span></p>
+          </section>
+
+          <section v-if="order.events.length" class="rounded-xl border bg-white p-5 text-sm shadow-sm">
+            <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.history') }}</h2>
+            <ul class="space-y-1">
+              <li v-for="e in [...order.events].reverse()" :key="e.id" class="flex flex-wrap gap-x-2">
+                <span class="text-slate-500">{{ formatWhen(e.created_at) }}</span>
+                <span>{{ eventLabel(e.action) }}</span>
+                <span v-if="e.note" class="text-slate-500">· {{ e.note }}</span>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <aside class="space-y-6">
+          <section class="rounded-xl border bg-white p-5 text-sm shadow-sm">
+            <h2 class="mb-3 font-semibold">{{ $t('app.orderPage.summary') }}</h2>
+            <dl v-if="inv" class="space-y-1.5">
+              <div class="flex justify-between"><dt class="text-slate-600">{{ $t('app.orderPage.subtotal') }}</dt><dd>{{ formatIDR(inv.subtotal) }}</dd></div>
+              <div v-if="inv.discount_total" class="flex justify-between text-green-700"><dt>{{ $t('app.orderPage.discount', {code: order.voucher_code}) }}</dt><dd>-{{ formatIDR(inv.discount_total) }}</dd></div>
+              <div class="flex justify-between"><dt class="text-slate-600">{{ $t('app.orderPage.shipping') }}</dt><dd>{{ order.status === 'awaiting_shipping_fee' ? '—' : formatIDR(inv.shipping_fee) }}</dd></div>
+              <div v-if="inv.tax_mode !== 'none'" class="flex justify-between"><dt class="text-slate-600">{{ $t('app.orderPage.tax', {rate: formatBps(inv.tax_rate_bps)}) }}</dt><dd>{{ formatIDR(inv.tax_total) }}</dd></div>
+              <div class="flex justify-between border-t pt-2 text-base font-bold"><dt>{{ $t('app.orderPage.total') }}</dt><dd>{{ formatIDR(inv.total) }}</dd></div>
+              <template v-if="inv.paid_amount">
+                <div class="flex justify-between text-green-700"><dt>{{ $t('app.orderPage.paid') }}</dt><dd>{{ formatIDR(inv.paid_amount) }}</dd></div>
+                <div class="flex justify-between font-semibold"><dt>{{ $t('app.orderPage.remaining') }}</dt><dd>{{ formatIDR(remaining) }}</dd></div>
+              </template>
+            </dl>
+            <div v-if="invoiceUrl" class="mt-4 flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" as="a" :href="invoiceUrl" target="_blank" rel="noopener"><ExternalLink class="size-4"/> {{ $t('app.orderPage.viewInvoice') }}</Button>
+              <Button variant="outline" size="sm" as="a" :href="pdfUrl"><FileDown class="size-4"/> {{ $t('app.orderPage.downloadPdf') }}</Button>
+            </div>
+          </section>
+
+          <section v-if="order.can_submit_payment && inv" class="rounded-xl border bg-white p-5 text-sm shadow-sm">
+            <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.payment') }}</h2>
+            <p class="text-slate-600">{{ $t('app.orderPage.transferTo', {number: inv.number}) }}</p>
+            <ul class="mt-2 space-y-1">
+              <li v-for="b in inv.bank_accounts" :key="b.number"><span class="font-medium">{{ b.bank }} {{ b.number }}</span> a.n. {{ b.name }}</li>
+            </ul>
+            <form class="mt-4 space-y-3 border-t pt-4" @submit.prevent="sendProof">
+              <p class="font-medium">{{ $t('app.orderPage.uploadProof') }}</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <Label for="pf-amount">{{ $t('app.orderPage.amount') }}</Label>
+                  <Input id="pf-amount" v-model="proof.amount" type="number" min="1" :max="remaining" step="1"/>
+                </div>
+                <div class="space-y-1">
+                  <Label for="pf-date">{{ $t('app.orderPage.paidOn') }}</Label>
+                  <Input id="pf-date" v-model="proof.paid_on" type="date" :max="todayISO()"/>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <Label for="pf-payer">{{ $t('app.orderPage.payer') }}</Label>
+                <Input id="pf-payer" v-model="proof.payer_name" maxlength="100"/>
+              </div>
+              <div class="space-y-1">
+                <Label for="pf-file">{{ $t('app.orderPage.proof') }}</Label>
+                <input id="pf-file" ref="proofInput" type="file" accept="image/*,application/pdf" class="block w-full text-sm" @change="pickProof"/>
+              </div>
+              <Button type="submit" class="w-full bg-green-600 hover:bg-green-700" :disabled="busy || !proof.file">
+                <Loader2 v-if="busy" class="size-4 animate-spin"/> {{ $t('app.orderPage.submit') }}
+              </Button>
+            </form>
+          </section>
+
+          <section v-if="inv?.payments.length" class="rounded-xl border bg-white p-5 text-sm shadow-sm">
+            <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.proofs') }}</h2>
+            <ul class="divide-y">
+              <li v-for="p in inv.payments" :key="p.id" class="py-2">
+                <div class="flex justify-between gap-2">
+                  <span>{{ formatIDR(p.amount) }} · {{ formatInvoiceDate(p.paid_on) }}</span>
+                  <span :class="p.status === 'verified' ? 'text-green-700' : p.status === 'rejected' ? 'text-red-600' : 'text-amber-700'">{{ $t(`app.orderPage.paymentStatus.${p.status}`) }}</span>
+                </div>
+                <p v-if="p.reject_reason" class="text-xs text-red-600">{{ p.reject_reason }}</p>
+                <a v-if="p.proof_path" :href="storageUrl(p.proof_path)" target="_blank" rel="noopener" class="text-xs text-green-700 hover:underline">{{ p.proof_path.split('/').pop() }}</a>
+              </li>
+            </ul>
+          </section>
+
+          <Button v-if="order.can_cancel" variant="outline" class="w-full text-red-600" :disabled="busy" @click="cancel">{{ $t('app.orderPage.cancel') }}</Button>
+        </aside>
+      </div>
+    </div>
+  </div>
+</template>

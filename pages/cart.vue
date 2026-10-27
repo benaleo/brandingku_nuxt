@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-vue-next'
@@ -72,6 +72,13 @@ const saveNote = (item: CartItem) => {
 }
 
 const removeItem = (item: CartItem) => run(item, () => remove(item))
+
+const token = useCookie<string | null>('token', { sameSite: 'lax' })
+const hasPayable = computed(() => cart.value.items.some(i => i.available))
+// guests sign in first; their cart is merged into the account on the way back
+const goCheckout = () => token.value
+  ? router.push('/checkout')
+  : router.push({ path: '/console/auth', query: { redirect: '/checkout' } })
 </script>
 
 <template>
@@ -224,7 +231,11 @@ const removeItem = (item: CartItem) => run(item, () => remove(item))
           <p v-if="cart.has_price_on_request" class="mt-3 rounded-md bg-green-50 p-3 text-xs text-green-800">
             {{ $t('app.cartPage.priceOnRequestHint') }}
           </p>
-          <Button variant="outline" class="mt-5 w-full" @click="router.push('/product')">
+          <Button class="mt-5 h-11 w-full bg-green-600 hover:bg-green-700" :disabled="!hasPayable" @click="goCheckout">
+            {{ $t('app.cartPage.checkout') }}
+          </Button>
+          <p v-if="!token" class="mt-2 text-center text-xs text-slate-500">{{ $t('app.cartPage.checkoutHint') }}</p>
+          <Button variant="outline" class="mt-3 w-full" @click="router.push('/product')">
             {{ $t('app.cartPage.continueShopping') }}
           </Button>
         </aside>
