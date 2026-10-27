@@ -13,7 +13,7 @@ import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/
 import {
   BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
   Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, Mail, MessageCircle, MessageSquareQuote,
-  Package, ShieldCheck, ShieldUser, SlidersHorizontal, Store, Tags, UserCog,
+  Package, ReceiptText, ShieldCheck, ShieldUser, SlidersHorizontal, Store, Tags, UserCog, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import {useRoute} from 'vue-router'
@@ -37,11 +37,13 @@ const iconComponents: Record<string, Component> = {
   MessageSquareQuote,
   ShieldUser,
   Package,
+  ReceiptText,
   ShieldCheck,
   UserCog,
   SlidersHorizontal,
   Store,
   Tags,
+  Wallet,
 }
 
 const isActive = (href: string) => {
