@@ -76,8 +76,15 @@
           </ul>
       </div>
       <div class="flex shrink-0 items-center gap-2 lg:gap-3">
+        <!-- Cart -->
+        <NuxtLink to="/cart" class="relative inline-flex text-slate-700 hover:text-black" :title="$t('app.nav.cart')" :aria-label="cartCount ? `${$t('app.nav.cart')} (${cartCount})` : $t('app.nav.cart')">
+          <ShoppingCart class="size-6" />
+          <span v-if="cartCount" class="absolute -right-2 -top-2 inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-green-600 px-1 text-[11px] font-semibold leading-none text-white" aria-hidden="true">
+            {{ cartCount > 99 ? '99+' : cartCount }}
+          </span>
+        </NuxtLink>
         <!-- Wishlist -->
-        <button @click="router.push('/wishlist')" class="hidden lg:block text-slate-700 hover:text-black" :title="$t('app.nav.cart')" :aria-label="$t('app.nav.cart')">
+        <button @click="router.push('/wishlist')" class="hidden lg:block text-slate-700 hover:text-black" :title="$t('app.nav.wishlist')" :aria-label="$t('app.nav.wishlist')">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
           </svg>
@@ -256,9 +263,12 @@
         </nav>
 
         <div class="shrink-0 space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/cart')">
+              <ShoppingCart class="size-4" /> {{ $t('app.nav.cart') }}<span v-if="cartCount"> ({{ cartCount }})</span>
+            </button>
             <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/wishlist')">
-              <Heart class="size-4" /> {{ $t('app.nav.cart') }}
+              <Heart class="size-4" /> {{ $t('app.nav.wishlist') }}
             </button>
             <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="handleUserClick">
               <User class="size-4" /> {{ $t('app.nav.account') }}
@@ -273,7 +283,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
-import { ChevronDown, Heart, Menu as MenuIcon, User, X } from 'lucide-vue-next';
+import { ChevronDown, Heart, Menu as MenuIcon, ShoppingCart, User, X } from 'lucide-vue-next';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductCategoryService } from '~/services/product-category.service';
 import { getSecureIdFromToken } from '~/utils/token.helper';
@@ -283,6 +293,11 @@ const { t, locale, setLocale } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const mobileOpen = ref(false);
+
+// the navbar is on every storefront page, so it keeps the cart badge current
+const { count: cartCount, refresh: refreshCart } = useCart();
+const loadCart = () => refreshCart().catch((e) => console.error('Failed to load cart', e));
+onMounted(loadCart);
 // mobile menu accordions start collapsed
 const openSection = ref<'categories' | 'services' | null>(null);
 const openCategory = ref<number | string | null>(null);
@@ -307,6 +322,8 @@ const loading = ref(false);
 
 // Authentication check
 const token = useCookie<string | null>('token', { sameSite: 'lax' });
+// login merges the guest cart into the account; logout switches back to the guest cart
+watch(token, loadCart);
 
 // Handle user icon click
 const handleUserClick = () => {

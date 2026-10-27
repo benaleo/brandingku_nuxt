@@ -12,6 +12,8 @@ export type FeaturedProductItem = {
   is_upsell: boolean
   price: number
   originalPrice?: number | null
+  // set when the product has exactly one priced variant, so it can go straight into the cart
+  cartVariant?: { id: number; moq: number } | null
 }
 
 export const useFeaturedProduct = () => {
@@ -105,6 +107,9 @@ export const useFeaturedProduct = () => {
           is_upsell: !!p.is_upsell,
           price: Number(minAfter.toFixed(2)),
           originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
+          cartVariant: p.additionals?.length === 1 && Number(p.additionals[0]?.price) > 0
+            ? { id: Number(p.additionals[0].id), moq: Math.max(1, Number(p.additionals[0].moq) || 1) }
+            : null,
         }
       })
 

@@ -14,8 +14,9 @@
       "allCategories": "Semua Kategori",
       "allInCategory": "Semua {name}",
       "loadingCategories": "Memuat kategori...",
-      "cart": "Keranjang & Wishlist",
-      "account": "Akun Pengguna"
+      "cart": "Keranjang",
+      "account": "Akun Pengguna",
+      "wishlist": "Wishlist"
     },
     "hero": {
       "trustedBadge": "SUPPLIER TERPERCAYA",
@@ -556,6 +557,35 @@
       "notFoundText": "Proyek ini mungkin sudah tidak ditampilkan.",
       "backToList": "Kembali ke Portofolio",
       "viewDetail": "Lihat Detail"
+    },
+    "cartPage": {
+      "metaTitle": "Keranjang",
+      "title": "Keranjang Belanja",
+      "lines": "{count} produk",
+      "empty": "Keranjang kamu masih kosong.",
+      "browse": "Lihat produk",
+      "loading": "Memuat keranjang...",
+      "variant": "Varian",
+      "quantity": "Jumlah",
+      "minQty": "Min. {moq} pcs",
+      "decrease": "Kurangi jumlah",
+      "increase": "Tambah jumlah",
+      "note": "Catatan",
+      "notePlaceholder": "Mis. posisi logo, warna",
+      "remove": "Hapus",
+      "priceOnRequest": "Harga by request",
+      "priceOnRequestHint": "Sebagian produk harganya diberikan lewat penawaran (quotation).",
+      "unavailable": "Tidak tersedia",
+      "unavailableHint": "Produk ini sudah tidak dijual. Hapus dari keranjang.",
+      "overStock": "Stok tersedia {stock}. Kelebihannya diproses lewat penawaran.",
+      "summary": "Ringkasan",
+      "subtotal": "Subtotal",
+      "subtotalHint": "Belum termasuk ongkir dan PPN.",
+      "continueShopping": "Lanjut belanja",
+      "added": "Ditambahkan ke keranjang",
+      "viewCart": "Lihat keranjang",
+      "failed": "Gagal memperbarui keranjang",
+      "selectVariant": "Pilih varian terlebih dahulu"
     }
   }
 }

@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useFeaturedProduct } from "~/composables/useFeaturedProduct";
 import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
+import { toast } from "vue-sonner";
+import type { FeaturedProductItem } from "~/composables/useFeaturedProduct";
 
 const router = useRouter();
 const { data, loading, error, refetch } = useFeaturedProduct();
@@ -65,6 +67,29 @@ watch(data, (newData) => {
 function goTo(slug: string) {
   if (!slug) return;
   router.push(`/product/${slug}`);
+}
+
+// products with several variants need a choice on the product page first
+const { add: addToCart } = useCart();
+const addingId = ref<string | null>(null);
+async function quickAdd(product: FeaturedProductItem) {
+  const variant = product.cartVariant;
+  if (!variant) {
+    goTo(product.slug);
+    return;
+  }
+  addingId.value = product.id;
+  try {
+    await addToCart(variant.id, variant.moq);
+    toast.success(t("app.cartPage.added"), {
+      description: `${product.name} × ${variant.moq}`,
+      action: { label: t("app.cartPage.viewCart"), onClick: () => router.push("/cart") },
+    });
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
+  } finally {
+    addingId.value = null;
+  }
 }
 </script>
 
@@ -176,7 +201,8 @@ function goTo(slug: string) {
                             variant="outline"
                             class="opacity-0 group-hover:opacity-100 transition-opacity"
                             size="sm"
-                            @click.stop
+                            :disabled="addingId === product.id"
+                            @click.stop="quickAdd(product)"
                           >
                             {{ $t('app.products.addToCart') }}
                           </Button>

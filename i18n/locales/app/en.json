@@ -14,8 +14,9 @@
       "allCategories": "All Categories",
       "allInCategory": "All {name}",
       "loadingCategories": "Loading categories...",
-      "cart": "Cart & Wishlist",
-      "account": "User Account"
+      "cart": "Cart",
+      "account": "User Account",
+      "wishlist": "Wishlist"
     },
     "hero": {
       "trustedBadge": "TRUSTED SUPPLIER",
@@ -556,6 +557,35 @@
       "notFoundText": "This project may no longer be shown.",
       "backToList": "Back to Portfolio",
       "viewDetail": "View Details"
+    },
+    "cartPage": {
+      "metaTitle": "Cart",
+      "title": "Shopping Cart",
+      "lines": "{count} product | {count} products",
+      "empty": "Your cart is empty.",
+      "browse": "Browse products",
+      "loading": "Loading cart...",
+      "variant": "Variant",
+      "quantity": "Quantity",
+      "minQty": "Min. {moq} pcs",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "note": "Note",
+      "notePlaceholder": "E.g. logo position, colour",
+      "remove": "Remove",
+      "priceOnRequest": "Price on request",
+      "priceOnRequestHint": "Some products are priced through a quotation.",
+      "unavailable": "Unavailable",
+      "unavailableHint": "This product is no longer sold. Remove it from your cart.",
+      "overStock": "{stock} in stock. The rest is handled through a quotation.",
+      "summary": "Summary",
+      "subtotal": "Subtotal",
+      "subtotalHint": "Shipping and VAT not included.",
+      "continueShopping": "Continue shopping",
+      "added": "Added to cart",
+      "viewCart": "View cart",
+      "failed": "Could not update the cart",
+      "selectVariant": "Select a variant first"
     }
   }
 }

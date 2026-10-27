@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, MessageCircle } from "lucide-vue-next";
+import { ArrowLeftIcon, MessageCircle, Minus, Plus } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const router = useRouter();
@@ -77,6 +78,37 @@ const displayedPrice = computed(() => {
 
 // no price set: the customer has to ask the admin
 const isAskAdmin = computed(() => displayedPrice.value <= 0);
+
+// quantity starts at, and never goes below, the variant's MOQ
+const minQty = computed(() => Math.max(1, Number(selectedAdditional.value?.moq) || 1));
+const quantity = ref(1);
+watch(minQty, (moq) => { quantity.value = moq; }, { immediate: true });
+const setQuantity = (value: number | string) => {
+  const n = Math.floor(Number(value));
+  quantity.value = Number.isFinite(n) ? Math.min(Math.max(n, minQty.value), 100000) : minQty.value;
+};
+
+const { add: addToCart } = useCart();
+const adding = ref(false);
+const handleAddToCart = async () => {
+  const variant = selectedAdditional.value;
+  if (!variant) {
+    toast.error(t("app.cartPage.selectVariant"));
+    return;
+  }
+  adding.value = true;
+  try {
+    await addToCart(Number(variant.id), quantity.value);
+    toast.success(t("app.cartPage.added"), {
+      description: `${detail.value?.name || ""} · ${variant.name} × ${quantity.value}`,
+      action: { label: t("app.cartPage.viewCart"), onClick: () => router.push("/cart") },
+    });
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
+  } finally {
+    adding.value = false;
+  }
+};
 const { openChat } = useChatWidget();
 const askAdmin = () => {
   const name = detail.value?.name || "";
@@ -321,6 +353,38 @@ definePageMeta({
                 </SelectContent>
               </Select>
             </template>
+            <div v-if="selectedAdditional" class="mt-4">
+              <h3 class="text-sm font-medium mb-2">{{ $t('app.cartPage.quantity') }}</h3>
+              <div class="inline-flex items-center rounded-md border">
+                <button
+                  type="button"
+                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                  :aria-label="$t('app.cartPage.decrease')"
+                  :disabled="quantity <= minQty"
+                  @click="setQuantity(quantity - 1)"
+                >
+                  <Minus class="size-4" />
+                </button>
+                <input
+                  :value="quantity"
+                  type="number"
+                  inputmode="numeric"
+                  :min="minQty"
+                  :aria-label="$t('app.cartPage.quantity')"
+                  class="h-9 w-20 border-x text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  @change="setQuantity(($event.target as HTMLInputElement).value)"
+                />
+                <button
+                  type="button"
+                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50"
+                  :aria-label="$t('app.cartPage.increase')"
+                  @click="setQuantity(quantity + 1)"
+                >
+                  <Plus class="size-4" />
+                </button>
+              </div>
+              <p v-if="minQty > 1" class="mt-1 text-xs text-gray-500">{{ $t('app.cartPage.minQty', { moq: minQty }) }}</p>
+            </div>
             <div class="mt-3 text-sm text-gray-700 space-y-1">
               <div>
                 <span class="text-gray-500">{{ $t('app.productPage.detail.stock') }}</span>
@@ -346,7 +410,7 @@ definePageMeta({
               <MessageCircle class="h-4 w-4" />
               {{ $t('app.productPage.detail.askAdmin') }}
             </Button>
-            <Button v-else class="h-11 flex-1 lg:h-9">{{ $t('app.productPage.detail.addToCart') }}</Button>
+            <Button v-else class="h-11 flex-1 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
             <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
