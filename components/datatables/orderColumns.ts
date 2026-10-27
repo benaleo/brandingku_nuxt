@@ -22,6 +22,11 @@ export const orderColumns: ColumnDef<Order>[] = [
         ]),
     },
     {
+        accessorKey: 'type',
+        header: 'Jenis',
+        cell: ({row}) => row.original.type === 'quotation' ? 'Penawaran' : 'Beli',
+    },
+    {
         id: 'items',
         header: 'Produk',
         cell: ({row}) => {
@@ -46,7 +51,7 @@ export const orderColumns: ColumnDef<Order>[] = [
         header: 'Status',
         cell: ({row}) => {
             const o = row.original
-            const pendingProofs = (o.invoice?.payments || []).filter(p => p.status === 'pending').length
+            const pendingProofs = (o.documents || []).flatMap(d => d.payments).filter(p => p.status === 'pending').length
             return h('div', {class: 'flex flex-wrap items-center gap-1'}, [
                 h(Badge, {class: ORDER_STATUS_STYLE[o.status]}, () => ORDER_STATUS_LABELS[o.status] || o.status),
                 pendingProofs ? h(Badge, {class: 'bg-orange-100 text-orange-800'}, () => `${pendingProofs} bukti`) : null,

@@ -14,7 +14,10 @@ const {getMyOrders} = useOrderService()
 
 useHead(() => ({title: t('app.orderHistoryPage.metaTitle')}))
 
-const STATUSES: OrderStatus[] = ['awaiting_shipping_fee', 'pending_payment', 'paid', 'processing', 'shipped', 'completed', 'cancelled', 'expired']
+const STATUSES: OrderStatus[] = [
+  'awaiting_shipping_fee', 'pending_payment', 'paid', 'requested', 'quoted', 'revision_requested', 'accepted',
+  'processing', 'shipped', 'completed', 'rejected', 'cancelled', 'expired',
+]
 const orders = ref<Order[]>([])
 const total = ref(0)
 const loading = ref(true)
@@ -25,7 +28,7 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
 const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'id-ID', {day: 'numeric', month: 'short', year: 'numeric'})
-// before the shipping fee is known the invoice total excludes it
+// before the shipping fee is known the invoice total excludes it; quotations show the quoted total
 const orderTotal = (o: Order) => o.invoice?.total ?? o.subtotal - o.discount_total
 const itemSummary = (o: Order) => o.items.map(i => `${i.product_name} (${i.variant_name}) × ${i.quantity}`).join(', ')
 

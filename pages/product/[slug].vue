@@ -419,10 +419,15 @@ definePageMeta({
           <div
             class="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur lg:static lg:z-auto lg:mt-8 lg:gap-6 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
           >
-            <Button v-if="isAskAdmin" class="h-11 flex-1 gap-2 bg-green-600 text-white hover:bg-green-700 lg:h-9" @click="askAdmin">
-              <MessageCircle class="h-4 w-4" />
-              {{ $t('app.productPage.detail.askAdmin') }}
-            </Button>
+            <template v-if="isAskAdmin">
+              <Button variant="outline" class="h-11 flex-1 gap-2 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" @click="askAdmin">
+                <MessageCircle class="h-4 w-4" />
+                {{ $t('app.productPage.detail.askAdmin') }}
+              </Button>
+              <Button v-if="selectedAdditional" class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" @click="handleBuyNow">
+                {{ $t('app.productPage.detail.requestQuote') }}
+              </Button>
+            </template>
             <template v-else>
               <Button variant="outline" class="h-11 flex-1 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
               <Button class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" :disabled="adding" @click="handleBuyNow">{{ $t('app.productPage.detail.buyNow') }}</Button>

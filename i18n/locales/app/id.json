@@ -238,7 +238,8 @@
         "metaTitle": "{name} - Brandingku",
         "metaFallback": "Produk - Brandingku",
         "imageAlt": "Gambar produk {n}",
-        "buyNow": "Beli sekarang"
+        "buyNow": "Beli sekarang",
+        "requestQuote": "Minta penawaran"
       },
       "quickViewDialog": {
         "category": "Kategori:",
@@ -598,7 +599,18 @@
       "shipped": "Dikirim",
       "completed": "Selesai",
       "cancelled": "Dibatalkan",
-      "expired": "Kedaluwarsa"
+      "expired": "Kedaluwarsa",
+      "requested": "Menunggu penawaran",
+      "quoted": "Penawaran dikirim",
+      "revision_requested": "Revisi diminta",
+      "accepted": "Penawaran diterima",
+      "rejected": "Penawaran ditolak",
+      "quotation_drafted": "Penawaran disiapkan",
+      "payment_submitted": "Bukti transfer dikirim",
+      "payment_rejected": "Bukti transfer ditolak",
+      "shipping_fee_set": "Ongkir ditetapkan",
+      "invoice_sent": "Invoice dikirim",
+      "created": "Pesanan dibuat"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -642,7 +654,13 @@
       "cannotPay": "Sebagian produk tidak bisa dibeli langsung. Ubah jumlahnya di keranjang atau ajukan penawaran.",
       "required": "Lengkapi {field}",
       "failed": "Pesanan gagal dibuat",
-      "loginFirst": "Masuk dulu untuk checkout"
+      "loginFirst": "Masuk dulu untuk checkout",
+      "requestQuote": "Minta penawaran",
+      "requesting": "Mengirim...",
+      "quoteHint": "Untuk harga khusus, jumlah besar, atau desain custom. Admin mengirim penawaran (quotation) ke email kamu; voucher tidak berlaku.",
+      "designFile": "File desain/logo (opsional, gambar atau PDF maks 10 MB)",
+      "quoteFailed": "Permintaan penawaran gagal dikirim",
+      "or": "atau"
     },
     "orderPage": {
       "metaTitle": "Pesanan {code}",
@@ -689,7 +707,32 @@
       "cancelReason": "Alasan pembatalan",
       "history": "Riwayat",
       "failed": "Aksi gagal",
-      "fileTooLarge": "File maksimal 10 MB"
+      "fileTooLarge": "File maksimal 10 MB",
+      "quotation": "Penawaran",
+      "validUntil": "Berlaku sampai {date}",
+      "accept": "Terima penawaran",
+      "reject": "Tolak",
+      "revise": "Minta revisi",
+      "reviseMessage": "Apa yang perlu diubah?",
+      "rejectMessage": "Alasan (opsional)",
+      "send": "Kirim",
+      "acceptConfirm": "Terima penawaran {number}? Admin akan menerbitkan invoice DP atau pelunasan.",
+      "accepted": "Penawaran diterima",
+      "rejected": "Penawaran ditolak",
+      "revisionSent": "Permintaan revisi dikirim",
+      "requestedInfo": "Permintaan penawaran diterima. Admin akan mengirim penawaran ke email kamu.",
+      "revisionInfo": "Permintaan revisi dikirim. Admin akan mengirim penawaran baru.",
+      "acceptedInfo": "Penawaran diterima. Tagihan DP atau pelunasan akan muncul di sini.",
+      "documents": "Dokumen",
+      "payFor": "Bayar untuk",
+      "designFile": "File desain",
+      "docTypes": {
+        "invoice": "Invoice",
+        "quotation": "Penawaran",
+        "deal": "Deal",
+        "dp": "Invoice DP",
+        "final": "Invoice pelunasan"
+      }
     },
     "orderHistory": {
       "empty": "Belum ada pesanan.",

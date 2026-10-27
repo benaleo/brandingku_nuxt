@@ -17,7 +17,7 @@ const router = useRouter()
 const config = useRuntimeConfig()
 const STORAGE_URL = config.public.STORAGE_URL
 const token = useCookie<string | null>('token', {sameSite: 'lax'})
-const {previewCheckout, placeOrder} = useOrderService()
+const {previewCheckout, placeOrder, requestQuotation} = useOrderService()
 const {getUserProfile} = useUserProfile()
 const {refresh: refreshCart} = useCart()
 
@@ -37,8 +37,12 @@ const placing = ref(false)
 const voucherInput = ref('')
 const appliedVoucher = ref('')
 const applyingVoucher = ref(false)
-// one key per checkout page: a double submit or a retry after a timeout returns the same order
+// one key per checkout page and action: a double submit or a retry after a timeout returns the same order
 const idempotencyKey = newIdempotencyKey()
+const quoteKey = newIdempotencyKey()
+const requesting = ref(false)
+const designFile = ref<File | null>(null)
+const MAX_DESIGN_BYTES = 10 * 1024 * 1024
 
 const form = reactive({
   delivery_method: 'delivery' as 'delivery' | 'pickup',
@@ -119,6 +123,17 @@ async function removeVoucher() {
   await loadPreview('')
 }
 
+function pickDesign(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0] || null
+  if (file && file.size > MAX_DESIGN_BYTES) {
+    toast.error(t('app.orderPage.fileTooLarge'))
+    ;(e.target as HTMLInputElement).value = ''
+    designFile.value = null
+    return
+  }
+  designFile.value = file
+}
+
 function missingField(): string | null {
   const required: [string, string][] = [[form.customer_name, 'name'], [form.customer_phone, 'phone']]
   if (form.delivery_method === 'delivery') {
@@ -128,15 +143,15 @@ function missingField(): string | null {
   return missing ? t(`app.checkoutPage.${missing[1]}`) : null
 }
 
-async function submit() {
+function checkoutInput(withVoucher: boolean): CheckoutInput | null {
   const missing = missingField()
   if (missing) {
     toast.error(t('app.checkoutPage.required', {field: missing}))
-    return
+    return null
   }
-  const input: CheckoutInput = {
+  return {
     items: buyNowItems.value,
-    voucher_code: appliedVoucher.value || undefined,
+    voucher_code: withVoucher ? appliedVoucher.value || undefined : undefined,
     delivery_method: form.delivery_method,
     customer_name: form.customer_name.trim(),
     customer_phone: form.customer_phone.trim(),
@@ -150,6 +165,11 @@ async function submit() {
       shipping_postal_code: form.shipping_postal_code.trim(),
     } : {}),
   }
+}
+
+async function submit() {
+  const input = checkoutInput(true)
+  if (!input) return
   placing.value = true
   try {
     const order = await placeOrder(input, idempotencyKey)
@@ -161,6 +181,25 @@ async function submit() {
     loadPreview().catch(() => {})
   } finally {
     placing.value = false
+  }
+}
+
+// a quotation request takes any line, including ones that cannot be paid directly
+async function requestQuote() {
+  const input = checkoutInput(false)
+  if (!input) return
+  requesting.value = true
+  try {
+    const file = designFile.value
+      ? {file_name: designFile.value.name, content_type: designFile.value.type, content: await readFileAsDataURL(designFile.value)}
+      : null
+    const order = await requestQuotation(input, file, quoteKey)
+    refreshCart().catch(() => {})
+    await router.push(`/orders/${order.code}`)
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t('app.checkoutPage.quoteFailed')))
+  } finally {
+    requesting.value = false
   }
 }
 </script>
@@ -299,10 +338,22 @@ async function submit() {
           </dl>
 
           <p v-if="!preview.can_pay" class="rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $t('app.checkoutPage.cannotPay') }}</p>
-          <Button type="submit" class="h-11 w-full bg-green-600 hover:bg-green-700" :disabled="placing || !preview.can_pay">
+          <Button type="submit" class="h-11 w-full bg-green-600 hover:bg-green-700" :disabled="placing || requesting || !preview.can_pay">
             <Loader2 v-if="placing" class="size-4 animate-spin"/>
             {{ placing ? $t('app.checkoutPage.placing') : $t('app.checkoutPage.placeOrder') }}
           </Button>
+
+          <div class="space-y-2 border-t pt-4">
+            <p class="text-xs text-slate-500">{{ $t('app.checkoutPage.quoteHint') }}</p>
+            <label class="block space-y-1 text-xs text-slate-600">
+              <span>{{ $t('app.checkoutPage.designFile') }}</span>
+              <input type="file" accept="image/*,application/pdf" class="block w-full text-sm" @change="pickDesign"/>
+            </label>
+            <Button type="button" variant="outline" class="h-11 w-full border-green-600 text-green-700 hover:bg-green-50" :disabled="placing || requesting" @click="requestQuote">
+              <Loader2 v-if="requesting" class="size-4 animate-spin"/>
+              {{ requesting ? $t('app.checkoutPage.requesting') : $t('app.checkoutPage.requestQuote') }}
+            </Button>
+          </div>
           <Button type="button" variant="outline" class="w-full" @click="router.push('/cart')">{{ $t('app.checkoutPage.backToCart') }}</Button>
         </aside>
       </form>

@@ -6,6 +6,7 @@
     <div v-else-if="order" class="space-y-6 pb-10">
       <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
+          <p class="text-sm text-muted-foreground">{{ order.type === 'quotation' ? 'Permintaan penawaran' : 'Pembelian langsung' }}</p>
           <h1 class="flex flex-wrap items-center gap-2 text-2xl font-bold">
             {{ order.code }}
             <Badge :class="ORDER_STATUS_STYLE[order.status]">{{ ORDER_STATUS_LABELS[order.status] }}</Badge>
@@ -15,10 +16,17 @@
             <span v-if="order.expires_at"> · batas bayar {{ formatDateTime(order.expires_at) }}</span>
           </p>
           <p v-if="order.cancel_reason" class="mt-1 text-sm text-red-600">{{ order.cancel_reason }}</p>
+          <p v-if="order.status === 'revision_requested' && revisionNote" class="mt-2 rounded-md bg-orange-50 p-2 text-sm text-orange-800">Revisi diminta: {{ revisionNote }}</p>
+          <a v-if="order.design_file_path" :href="storageUrl(order.design_file_path)" target="_blank" rel="noopener" class="mt-1 inline-block text-sm text-green-700 hover:underline">
+            File desain: {{ order.design_file_name }}
+          </a>
         </div>
         <div class="flex flex-wrap gap-2">
-          <Button v-if="order.invoice && canInvoices" variant="outline" size="sm" @click="router.push(`/console/secret/invoices/${order.invoice.id}/detail`)">
+          <Button v-if="order.invoice && canInvoices && order.type === 'purchase'" variant="outline" size="sm" @click="router.push(`/console/secret/invoices/${order.invoice.id}/detail`)">
             <ReceiptText class="size-4"/> {{ order.invoice.number }}
+          </Button>
+          <Button v-if="canDraftQuotation" size="sm" class="bg-green-600 hover:bg-green-700" :disabled="busy" @click="draftQuotation">
+            <ReceiptText class="size-4"/> Buat quotation
           </Button>
           <Button v-if="next.includes('processing')" size="sm" :disabled="busy" @click="setStatus('processing')">Proses</Button>
           <Button v-if="next.includes('shipped')" size="sm" :disabled="busy" @click="dialog = 'ship'">Tandai dikirim</Button>
@@ -67,6 +75,21 @@
         </ul>
       </section>
 
+      <section v-if="order.type === 'quotation' && order.documents.length" class="rounded-xl border bg-card p-4 text-sm">
+        <p class="mb-2 font-medium">Dokumen</p>
+        <ul class="divide-y">
+          <li v-for="d in order.documents" :key="d.id" class="flex flex-wrap items-center justify-between gap-2 py-2">
+            <NuxtLink :to="`/console/secret/invoices/${d.id}/detail`" class="font-medium text-green-700 hover:underline">
+              {{ INVOICE_TYPE_LABELS[d.type] }} {{ d.number }}
+            </NuxtLink>
+            <span class="text-muted-foreground">
+              {{ formatRupiah(d.amount_due) }}<template v-if="d.paid_amount"> · dibayar {{ formatRupiah(d.paid_amount) }}</template>
+              · {{ INVOICE_STATUS[d.status as InvoiceStatus]?.[0] || d.status }}
+            </span>
+          </li>
+        </ul>
+      </section>
+
       <div class="grid gap-4 md:grid-cols-2">
         <section class="rounded-xl border bg-card p-4 text-sm">
           <p class="mb-2 font-medium">Customer</p>
@@ -110,7 +133,7 @@
             </tr>
           </tbody>
         </table>
-        <dl v-if="order.invoice" class="ml-auto max-w-sm space-y-1 border-t p-4 text-sm">
+        <dl v-if="order.invoice && order.type === 'purchase'" class="ml-auto max-w-sm space-y-1 border-t p-4 text-sm">
           <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ formatRupiah(order.invoice.subtotal) }}</dd></div>
           <div v-if="order.invoice.discount_total" class="flex justify-between"><dt>Voucher {{ order.voucher_code }}</dt><dd>-{{ formatRupiah(order.invoice.discount_total) }}</dd></div>
           <div class="flex justify-between"><dt>Ongkir</dt><dd>{{ order.status === 'awaiting_shipping_fee' ? 'belum diisi' : formatRupiah(order.invoice.shipping_fee) }}</dd></div>
@@ -171,8 +194,9 @@ import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import {useOrderService} from '~/services/order.service'
 import {invoiceErrorMessage} from '~/services/invoice.service'
 import type {Order, OrderStatus} from '~/types/order.type'
+import type {InvoiceStatus} from '~/types/invoice.type'
 
-const NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {paid: ['processing', 'shipped'], processing: ['shipped'], shipped: ['completed']}
+const NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {accepted: ['processing'], paid: ['processing', 'shipped'], processing: ['shipped'], shipped: ['completed']}
 
 const router = useRouter()
 const route = useRoute()
@@ -194,10 +218,14 @@ const canUpdate = computed(() => canAction(route.path, 'update'))
 const canInvoices = computed(() => canAction('/console/secret/invoices', 'index'))
 const canVerify = computed(() => canAction('/console/secret/invoices', 'update'))
 const next = computed(() => (order.value && canUpdate.value ? NEXT[order.value.status] || [] : []))
-const pendingProofs = computed(() => (order.value?.invoice?.payments || []).filter(p => p.status === 'pending'))
+const allPayments = computed(() => (order.value?.documents || []).flatMap(d => d.payments))
+const pendingProofs = computed(() => allPayments.value.filter(p => p.status === 'pending'))
 const canCancel = computed(() => !!order.value && canAction(route.path, 'delete') &&
-  ['awaiting_shipping_fee', 'pending_payment'].includes(order.value.status) &&
-  !(order.value.invoice?.payments || []).some(p => p.status !== 'rejected'))
+  ['awaiting_shipping_fee', 'pending_payment', 'requested', 'quoted', 'revision_requested', 'accepted'].includes(order.value.status) &&
+  !allPayments.value.some(p => p.status !== 'rejected'))
+const canDraftQuotation = computed(() => !!order.value && order.value.type === 'quotation' &&
+  ['requested', 'revision_requested'].includes(order.value.status) && canAction('/console/secret/invoices', 'create'))
+const revisionNote = computed(() => [...(order.value?.events || [])].reverse().find(e => e.action === 'revision_requested')?.note || '')
 const storageUrl = (path: string) => path.startsWith('http') ? path : `${config.public.STORAGE_URL}${path}`
 
 async function load() {
@@ -237,6 +265,19 @@ const saveShipping = () => {
 }
 const setStatus = (status: OrderStatus, tracking?: string) =>
   act(() => service.updateOrderStatus(id.value, status, tracking), `Status: ${ORDER_STATUS_LABELS[status]}`)
+// drafts (or reopens the existing draft of) the quotation, then hands over to the invoice editor
+async function draftQuotation() {
+  busy.value = true
+  try {
+    const q = await service.createQuotationFromOrder(id.value)
+    toast.success(`Quotation ${q.number} siap diedit`)
+    await router.push(`/console/secret/invoices/${q.id}/edit`)
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Gagal membuat quotation'))
+  } finally {
+    busy.value = false
+  }
+}
 const verify = (paymentId: number) => act(() => service.verifyPayment(paymentId), 'Pembayaran diverifikasi')
 
 function confirmDialog() {

@@ -238,7 +238,8 @@
         "metaTitle": "{name} - Brandingku",
         "metaFallback": "Product - Brandingku",
         "imageAlt": "Product image {n}",
-        "buyNow": "Buy now"
+        "buyNow": "Buy now",
+        "requestQuote": "Request a quotation"
       },
       "quickViewDialog": {
         "category": "Category:",
@@ -598,7 +599,18 @@
       "shipped": "Shipped",
       "completed": "Completed",
       "cancelled": "Cancelled",
-      "expired": "Expired"
+      "expired": "Expired",
+      "requested": "Awaiting quotation",
+      "quoted": "Quotation sent",
+      "revision_requested": "Revision requested",
+      "accepted": "Quotation accepted",
+      "rejected": "Quotation declined",
+      "quotation_drafted": "Quotation in preparation",
+      "payment_submitted": "Transfer proof sent",
+      "payment_rejected": "Transfer proof rejected",
+      "shipping_fee_set": "Shipping fee set",
+      "invoice_sent": "Invoice sent",
+      "created": "Order placed"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -642,7 +654,13 @@
       "cannotPay": "Some products cannot be bought directly. Change the quantity in your cart or request a quotation.",
       "required": "Please fill in {field}",
       "failed": "Could not place the order",
-      "loginFirst": "Sign in to check out"
+      "loginFirst": "Sign in to check out",
+      "requestQuote": "Request a quotation",
+      "requesting": "Sending...",
+      "quoteHint": "For special prices, large quantities or custom designs. Our team emails you a quotation; vouchers do not apply.",
+      "designFile": "Design/logo file (optional, image or PDF up to 10 MB)",
+      "quoteFailed": "Could not send the quotation request",
+      "or": "or"
     },
     "orderPage": {
       "metaTitle": "Order {code}",
@@ -689,7 +707,32 @@
       "cancelReason": "Reason",
       "history": "History",
       "failed": "Action failed",
-      "fileTooLarge": "Max file size is 10 MB"
+      "fileTooLarge": "Max file size is 10 MB",
+      "quotation": "Quotation",
+      "validUntil": "Valid until {date}",
+      "accept": "Accept quotation",
+      "reject": "Decline",
+      "revise": "Request changes",
+      "reviseMessage": "What should change?",
+      "rejectMessage": "Reason (optional)",
+      "send": "Send",
+      "acceptConfirm": "Accept quotation {number}? We will issue the down payment or final invoice.",
+      "accepted": "Quotation accepted",
+      "rejected": "Quotation declined",
+      "revisionSent": "Change request sent",
+      "requestedInfo": "Quotation request received. Our team will email you a quotation.",
+      "revisionInfo": "Change request sent. Our team will send a new quotation.",
+      "acceptedInfo": "Quotation accepted. Down payment or final invoices will appear here.",
+      "documents": "Documents",
+      "payFor": "Pay for",
+      "designFile": "Design file",
+      "docTypes": {
+        "invoice": "Invoice",
+        "quotation": "Quotation",
+        "deal": "Deal",
+        "dp": "Down payment invoice",
+        "final": "Final invoice"
+      }
     },
     "orderHistory": {
       "empty": "No orders yet.",

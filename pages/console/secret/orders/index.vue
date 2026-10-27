@@ -4,7 +4,7 @@
     <AppTableHeader :pageTitle="pageTitle"/>
 
     <!-- what needs attention first -->
-    <div class="mt-2 grid grid-cols-2 gap-3 md:grid-cols-5">
+    <div class="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
       <button
         v-for="card in cards"
         :key="card.status"
@@ -19,6 +19,11 @@
     </div>
 
     <AppFilterTable v-model="keyword" placeholder="Cari kode, customer, email…">
+      <select v-model="type" aria-label="Filter jenis" class="h-9 rounded-md border bg-background px-3 text-sm">
+        <option value="">Semua jenis</option>
+        <option value="purchase">Pembelian langsung</option>
+        <option value="quotation">Permintaan penawaran</option>
+      </select>
       <select v-model="status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
         <option value="">Semua status</option>
         <option v-for="(label, value) in ORDER_STATUS_LABELS" :key="value" :value="value">{{ label }}</option>
@@ -64,8 +69,9 @@ const limit = ref(10)
 const total = ref(0)
 const keyword = ref('')
 const status = ref(String(route.query.status || ''))
+const type = ref('')
 
-const ATTENTION: OrderStatus[] = ['awaiting_shipping_fee', 'pending_payment', 'paid', 'processing', 'shipped']
+const ATTENTION: OrderStatus[] = ['awaiting_shipping_fee', 'pending_payment', 'paid', 'requested', 'revision_requested', 'processing', 'shipped']
 const cards = computed(() => ATTENTION.map(s => ({status: s, count: counts.value.find(c => c.status === s)?.count ?? 0})))
 
 let requestId = 0
@@ -74,7 +80,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const res = await getOrders(page.value + 1, limit.value, {status: status.value, keyword: keyword.value.trim()})
+    const res = await getOrders(page.value + 1, limit.value, {status: status.value, type: type.value, keyword: keyword.value.trim()})
     if (current !== requestId) return
     rows.value = res.items
     total.value = res.page_info.total_items
@@ -98,7 +104,7 @@ watch(keyword, () => {
   clearTimeout(keywordTimer)
   keywordTimer = setTimeout(() => { page.value = 0; load() }, 300)
 })
-watch(status, () => { page.value = 0; load() })
+watch([status, type], () => { page.value = 0; load() })
 
 onMounted(() => {
   load()

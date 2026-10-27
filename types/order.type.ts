@@ -7,6 +7,12 @@ export type OrderStatus =
   | 'completed'
   | 'cancelled'
   | 'expired'
+  // quotation requests
+  | 'requested'
+  | 'quoted'
+  | 'revision_requested'
+  | 'accepted'
+  | 'rejected'
 
 export type OrderItem = {
   id: number
@@ -56,6 +62,20 @@ export type OrderInvoice = {
   bank_accounts: { bank: string; number: string; name: string }[]
 }
 
+export type OrderDocument = {
+  id: number
+  number: string
+  type: 'invoice' | 'quotation' | 'deal' | 'dp' | 'final'
+  status: string
+  public_token: string
+  issue_date: string
+  due_date: string
+  total: number
+  amount_due: number
+  paid_amount: number
+  payments: OrderPayment[]
+}
+
 export type Order = {
   id: number
   code: string
@@ -85,6 +105,11 @@ export type Order = {
   cancel_reason?: string | null
   can_cancel: boolean
   can_submit_payment: boolean
+  can_respond_quotation: boolean
+  design_file_path: string
+  design_file_name: string
+  documents: OrderDocument[]
+  payable_documents: OrderDocument[]
   items: OrderItem[]
   events: { id: number; action: string; actor: string; note: string; created_at: string }[]
   invoice?: OrderInvoice | null

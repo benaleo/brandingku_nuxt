@@ -9,6 +9,11 @@ export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
   completed: 'bg-emerald-100 text-emerald-800',
   cancelled: 'bg-zinc-200 text-zinc-700',
   expired: 'bg-zinc-200 text-zinc-700',
+  requested: 'bg-amber-100 text-amber-800',
+  quoted: 'bg-sky-100 text-sky-800',
+  revision_requested: 'bg-orange-100 text-orange-800',
+  accepted: 'bg-teal-100 text-teal-800',
+  rejected: 'bg-zinc-200 text-zinc-700',
 }
 
 // console labels; the storefront uses app.orderStatus.* translations
@@ -21,6 +26,11 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   completed: 'Selesai',
   cancelled: 'Dibatalkan',
   expired: 'Kedaluwarsa',
+  requested: 'Minta penawaran',
+  quoted: 'Penawaran terkirim',
+  revision_requested: 'Minta revisi',
+  accepted: 'Penawaran diterima',
+  rejected: 'Penawaran ditolak',
 }
 
 export const readFileAsDataURL = (file: File) =>

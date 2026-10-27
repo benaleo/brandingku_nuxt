@@ -1,12 +1,19 @@
 import { useGql } from '~/composables/useGql'
 import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, Order } from '~/types/order.type'
 
+const DOC_FIELDS = `
+  id number type status public_token issue_date due_date total amount_due paid_amount
+  payments { id amount method proof_path payer_name note paid_on status reject_reason created_at }
+`
 const ORDER_FIELDS = `
   id code type status user_id
   customer_name customer_email customer_phone customer_company
   delivery_method shipping_name shipping_phone shipping_address shipping_city shipping_postal_code
   shipping_fee shipping_note tracking_number notes subtotal discount_total voucher_code
-  expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment created_at updated_at
+  expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment can_respond_quotation
+  design_file_path design_file_name created_at updated_at
+  documents { ${DOC_FIELDS} }
+  payable_documents { ${DOC_FIELDS} }
   items { id product_id product_additional_id product_name product_slug product_image variant_name quantity unit_price original_unit_price line_total note }
   events { id action actor note created_at }
   invoice {
@@ -20,6 +27,7 @@ const LIST_FIELDS = `
   subtotal discount_total created_at expires_at can_cancel can_submit_payment
   items { id product_name variant_name quantity }
   invoice { id number status total amount_due paid_amount payments { id status } }
+  documents { id type status payments { id status } }
 `
 
 type OrderPage = { items: Order[]; page_info: { total_items: number } }
@@ -51,6 +59,28 @@ export const useOrderService = () => {
     return res.placeOrder
   }
 
+  const requestQuotation = async (input: CheckoutInput, designFile: { file_name: string; content_type?: string; content: string } | null, idempotencyKey: string) => {
+    const res = await gqlFetch<{ requestQuotation: Order }>(
+      `mutation requestQuotation($input: CheckoutInput!, $file: EmailAttachmentInput, $key: String!) {
+        requestQuotation(input: $input, design_file: $file, idempotency_key: $key) { ${ORDER_FIELDS} }
+      }`,
+      { input, file: designFile, key: idempotencyKey },
+      { auth: true, timeout: 60000 },
+    )
+    return res.requestQuotation
+  }
+
+  const respondQuotation = async (code: string, action: 'accept' | 'reject' | 'revise', message?: string) => {
+    const res = await gqlFetch<{ respondQuotation: Order }>(
+      `mutation respondQuotation($code: String!, $action: String!, $message: String) {
+        respondQuotation(code: $code, action: $action, message: $message) { ${ORDER_FIELDS} }
+      }`,
+      { code, action, message: message || null },
+      { auth: true },
+    )
+    return res.respondQuotation
+  }
+
   const getMyOrders = async (page: number, limit: number, status?: string) => {
     const res = await gqlFetch<{ getMyOrders: OrderPage }>(
       `query getMyOrders($page: Int, $limit: Int, $status: String) {
@@ -77,7 +107,7 @@ export const useOrderService = () => {
     return res.cancelMyOrder
   }
 
-  const submitPaymentProof = async (code: string, input: { amount: number; paid_on: string; payer_name?: string; note?: string; proof: { file_name: string; content_type?: string; content: string } }) => {
+  const submitPaymentProof = async (code: string, input: { invoice_id?: number; amount: number; paid_on: string; payer_name?: string; note?: string; proof: { file_name: string; content_type?: string; content: string } }) => {
     const res = await gqlFetch<{ submitPaymentProof: Order }>(
       `mutation submitPaymentProof($code: String!, $input: PaymentProofInput!) { submitPaymentProof(code: $code, input: $input) { ${ORDER_FIELDS} } }`,
       { code, input },
@@ -140,6 +170,12 @@ export const useOrderService = () => {
     return res.cancelOrder
   }
 
+  const createQuotationFromOrder = async (orderId: number) => {
+    const res = await gqlFetch<{ createQuotationFromOrder: { id: number; number: string } }>(
+      'mutation createQuotationFromOrder($id: Int!) { createQuotationFromOrder(id: $id) { id number } }', { id: orderId }, { auth: true })
+    return res.createQuotationFromOrder
+  }
+
   const verifyPayment = async (paymentId: number) => {
     await gqlFetch('mutation verifyInvoicePayment($id: Int!) { verifyInvoicePayment(payment_id: $id) { id } }', { id: paymentId }, { auth: true })
   }
@@ -149,7 +185,7 @@ export const useOrderService = () => {
   }
 
   return {
-    previewCheckout, placeOrder, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
-    getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, verifyPayment, rejectPayment,
+    previewCheckout, placeOrder, requestQuotation, respondQuotation, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
+    getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, createQuotationFromOrder, verifyPayment, rejectPayment,
   }
 }
