@@ -11,6 +11,7 @@ export const INVOICE_TYPE_LABELS: Record<InvoiceType, string> = {
 export const INVOICE_STATUS: Record<InvoiceStatus, [string, string]> = {
   draft: ['Draft', 'bg-gray-100 text-gray-800'],
   sent: ['Terkirim', 'bg-sky-100 text-sky-800'],
+  approved: ['Disetujui', 'bg-emerald-100 text-emerald-800'],
   overdue: ['Lewat jatuh tempo', 'bg-red-100 text-red-800'],
   paid: ['Lunas', 'bg-green-100 text-green-800'],
   void: ['Void', 'bg-zinc-200 text-zinc-700 line-through'],

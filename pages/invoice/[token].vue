@@ -9,6 +9,7 @@ const TITLES: Record<string, string> = {
 }
 const STAMPS: Record<string, [string, string]> = {
   paid: ['LUNAS', 'border-green-600 text-green-700'],
+  approved: ['DISETUJUI', 'border-emerald-600 text-emerald-700'],
   void: ['VOID', 'border-red-600 text-red-700'],
   cancelled: ['DIBATALKAN', 'border-red-600 text-red-700'],
   overdue: ['LEWAT JATUH TEMPO', 'border-red-600 text-red-700'],

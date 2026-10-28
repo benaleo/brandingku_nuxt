@@ -1,5 +1,6 @@
 export type InvoiceType = 'invoice' | 'quotation' | 'deal' | 'dp' | 'final'
-export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void' | 'cancelled' | 'overdue'
+// approved: a quotation the customer agreed to
+export type InvoiceStatus = 'draft' | 'sent' | 'approved' | 'paid' | 'void' | 'cancelled' | 'overdue'
 export type TaxMode = 'none' | 'exclusive' | 'inclusive'
 
 export type InvoiceItem = {

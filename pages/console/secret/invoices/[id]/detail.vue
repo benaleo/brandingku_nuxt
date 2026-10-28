@@ -326,7 +326,7 @@ const actions = computed(() => {
     edit: can('update') && status === 'draft' && !['dp', 'final'].includes(i.type) && !orderPurchase,
     send: can('update') && status === 'draft',
     payment: can('update') && status === 'sent' && isBillableType(i.type),
-    void: can('delete') && (status === 'draft' || status === 'sent') && !hasMoney && !i.children.some(c => c.status !== 'void'),
+    void: can('delete') && ['draft', 'sent', 'approved'].includes(status) && !hasMoney && !i.children.some(c => c.status !== 'void'),
     delete: can('delete') && status === 'draft' && !i.children.length && !i.order_id,
     duplicate: can('create') && !['deal', 'dp', 'final'].includes(i.type),
     // an order's quotation becomes a deal when the customer accepts it
