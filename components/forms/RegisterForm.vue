@@ -15,10 +15,11 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
 import { toast } from 'vue-sonner'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthService } from '~/services/auth.service'
 
 const router = useRouter()
+const route = useRoute()
 const authService = useAuthService()
 
 const formSchema = toTypedSchema(z.object({
@@ -44,7 +45,8 @@ const onSubmit = handleSubmit(async (values) => {
     toast.success('Registration successful', {
       description: 'You can now log in with your credentials',
     })
-    router.push('/console/secret/dashboard')
+    // registering signs the visitor in, so a return path (e.g. from the cart) works right away
+    router.push(safeRedirectPath(route.query.redirect) ?? '/console/secret/dashboard')
   } catch (err: any) {
     const errorMessage = err.response?.data?.message || err.message || 'Registration failed'
     toast.error('Registration failed', {

@@ -34,3 +34,8 @@ export function getLangValue(val: string | undefined | null, locale: 'id' | 'en'
     }
     return val;
 }
+
+// a ?redirect= value kept to same-site paths, so it cannot send users to another site
+export function safeRedirectPath(value: unknown): string | null {
+    return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !value.includes('\\') ? value : null;
+}

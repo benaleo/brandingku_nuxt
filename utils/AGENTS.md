@@ -12,7 +12,7 @@ Auto-imported application helpers: JWT decoding, the console navigation tree, an
 |------|-------------|
 | `token.helper.ts` | Exports the `DecodedToken` interface, `decodeToken`, `isTokenExpired` and `getSecureIdFromToken`. This is client-side decoding for UI decisions only — the backend re-validates every token. |
 | `error-messages.ts` | Maps HTTP and GraphQL error codes to user-facing messages. Menu data now comes from the backend through `useConsoleAccess`. |
-| `global.utils.ts` | Exports `getPathWithoutIdInForm()` and `getIdFromPath()` — route-path helpers used by the add/edit/detail console pages. |
+| `global.utils.ts` | Exports `getPathWithoutIdInForm()` and `getIdFromPath()` — route-path helpers used by the add/edit/detail console pages — and `safeRedirectPath()`, which the login and register forms use to accept only same-site `?redirect=` paths. |
 
 ## For AI Agents
 

@@ -15,11 +15,7 @@ import { useCookie } from '#app';
 
 const router = useRouter();
 const route = useRoute();
-// only same-site paths, so the parameter cannot send users to another site
-const redirectTarget = () => {
-  const r = route.query.redirect;
-  return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') && !r.includes('\\') ? r : null;
-};
+const redirectTarget = () => safeRedirectPath(route.query.redirect);
 const tokenCookie = useCookie('token');
 const authService = useAuthService();
 const isReady = ref(false);
