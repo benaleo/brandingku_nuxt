@@ -168,7 +168,8 @@
         "rowsPerPage": "Rows per page",
         "previous": "Previous",
         "next": "Next"
-      }
+      },
+      "back": "Go back"
     },
     "productPage": {
       "title": "Brandingku Products",
@@ -678,7 +679,8 @@
       "quoteHint": "For special prices, large quantities or custom designs. Our team emails you a quotation; vouchers do not apply.",
       "designFile": "Design/logo file (optional, image or PDF up to 5 MB)",
       "quoteFailed": "Could not send the quotation request",
-      "or": "or"
+      "or": "or",
+      "designChoose": "Choose a design file"
     },
     "orderPage": {
       "metaTitle": "Order {code}",
@@ -834,6 +836,12 @@
       "viewOrders": "View all orders",
       "viewAll": "View all notifications",
       "back": "Back"
+    },
+    "filePick": {
+      "choose": "Choose a file",
+      "drop": "or drag a file here",
+      "change": "Change",
+      "remove": "Remove {name}"
     }
   }
 }

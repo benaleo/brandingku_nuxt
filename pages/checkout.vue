@@ -129,12 +129,9 @@ async function removeVoucher() {
   }
 }
 
-function pickDesign(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0] || null
-  if (file && (file.size > MAX_UPLOAD_BYTES || !isImageOrPdf(file))) {
+function pickDesign([file]: File[]) {
+  if (file.size > MAX_UPLOAD_BYTES || !isImageOrPdf(file)) {
     toast.error(t(file.size > MAX_UPLOAD_BYTES ? 'app.orderPage.fileTooLarge' : 'app.orderPage.fileType'))
-    ;(e.target as HTMLInputElement).value = ''
-    designFile.value = null
     return
   }
   designFile.value = file
@@ -354,10 +351,17 @@ async function requestQuote() {
 
           <div class="space-y-2 border-t pt-4">
             <p class="text-xs text-slate-500">{{ $t('app.checkoutPage.quoteHint') }}</p>
-            <label class="block space-y-1 text-xs text-slate-600">
-              <span>{{ $t('app.checkoutPage.designFile') }}</span>
-              <input type="file" accept="image/*,application/pdf" class="block w-full text-sm" @change="pickDesign"/>
-            </label>
+            <div class="space-y-1 text-xs text-slate-600">
+              <label for="design-file">{{ $t('app.checkoutPage.designFile') }}</label>
+              <ElementsFilePickField
+                id="design-file"
+                :files="designFile ? [designFile] : []"
+                :label="$t('app.checkoutPage.designChoose')"
+                :disabled="placing || requesting"
+                @pick="pickDesign"
+                @remove="designFile = null"
+              />
+            </div>
             <Button type="button" variant="outline" class="h-11 w-full border-green-600 text-green-700 hover:bg-green-50" :disabled="placing || requesting" @click="requestQuote">
               <Loader2 v-if="requesting" class="size-4 animate-spin"/>
               {{ requesting ? $t('app.checkoutPage.requesting') : $t('app.checkoutPage.requestQuote') }}

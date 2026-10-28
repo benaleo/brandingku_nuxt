@@ -22,6 +22,9 @@ Composite widgets that sit between the shadcn primitives and full pages — cons
 | `BenefitFaq.vue` | Accordion rendering of benefit/FAQ entries. |
 | `ElementsProductQuickView.vue` | Product quick-view overlay for the storefront. Note the redundant `Elements` prefix in the filename — auto-import resolves this to `<ElementsElementsProductQuickView>`. |
 | `ChatProductButton.vue` | Product card button that opens the live chat with the product as the topic. |
+| `ConfirmDialog.vue` | Storefront confirmation (`v-model:open`, `title`, `description`, `confirm-label`, `tone`, `icon`, `busy`; extra fields in the slot). Stays open while `busy`, focuses the dismiss button first. Use it instead of `window.confirm`/`window.prompt`. |
+| `FilePickField.vue` | Visible file picker: a dashed drop zone (tap to choose, drag on desktop), then the chosen files with thumbnail, size, change and remove. The parent validates and owns `files`; listens to `pick` and `remove`. Use it instead of a bare `<input type="file">`. |
+| `RupiahInput.vue` | Rupiah amount field with dot thousand separators while typing (`1.500.000`); `v-model` stays a plain number (or `''`). |
 | `NotificationBell.vue` | Storefront header bell for signed-in accounts: running quotation cards on top (always counted), then notifications (counted until read). State and the live `notificationsChanged` subscription come from `composables/useNotifications.ts`; rows are written by backend hooks in `brandingku_go/graph/notification.go`. |
 | `DiscussionThread.vue` | Live discussion thread for a record (`subject-type`, `subject-id`), used on quotation orders in the storefront (`viewer="customer"`) and the console (`viewer="staff"`). Data and the websocket subscription come from `services/discussion.service.ts`; the backend decides who may join (`discussionSubjects` in `brandingku_go/graph/discussion.go`). |
 

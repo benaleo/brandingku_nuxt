@@ -168,7 +168,8 @@
         "rowsPerPage": "Baris per halaman",
         "previous": "Sebelumnya",
         "next": "Berikutnya"
-      }
+      },
+      "back": "Kembali"
     },
     "productPage": {
       "title": "Produk Brandingku",
@@ -678,7 +679,8 @@
       "quoteHint": "Untuk harga khusus, jumlah besar, atau desain custom. Admin mengirim penawaran (quotation) ke email kamu; voucher tidak berlaku.",
       "designFile": "File desain/logo (opsional, gambar atau PDF maks 5 MB)",
       "quoteFailed": "Permintaan penawaran gagal dikirim",
-      "or": "atau"
+      "or": "atau",
+      "designChoose": "Pilih file desain"
     },
     "orderPage": {
       "metaTitle": "Pesanan {code}",
@@ -834,6 +836,12 @@
       "viewOrders": "Lihat semua pesanan",
       "viewAll": "Lihat semua notifikasi",
       "back": "Kembali"
+    },
+    "filePick": {
+      "choose": "Pilih file",
+      "drop": "atau tarik file ke sini",
+      "change": "Ganti",
+      "remove": "Hapus {name}"
     }
   }
 }

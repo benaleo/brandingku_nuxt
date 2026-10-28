@@ -197,7 +197,8 @@
           </div>
           <div class="space-y-1">
             <Label for="dp-value">{{ dpMode === 'percent' ? 'Persen dari total deal (%)' : 'Nominal (Rp)' }}</Label>
-            <Input id="dp-value" v-model="dpValue" type="number" min="0" :step="dpMode === 'percent' ? '0.01' : '1'"/>
+            <ElementsRupiahInput v-if="dpMode === 'amount'" id="dp-value" v-model="dpValue"/>
+            <Input v-else id="dp-value" v-model="dpValue" type="number" min="0" step="0.01"/>
           </div>
           <p class="text-muted-foreground">Total deal {{ formatRupiah(inv?.total ?? 0) }} · DP aktif {{ formatRupiah(activeDP) }} · bisa ditagih {{ formatRupiah((inv?.total ?? 0) - activeDP) }}</p>
           <p v-if="dpPreview" class="font-medium">Invoice DP: {{ formatRupiah(dpPreview) }}</p>
@@ -206,7 +207,7 @@
         <div v-else-if="dialog === 'payment'" class="space-y-3 text-sm">
           <div class="space-y-1">
             <Label for="pay-amount">Nominal (Rp) *</Label>
-            <Input id="pay-amount" v-model="payment.amount" type="number" min="1" step="1"/>
+            <ElementsRupiahInput id="pay-amount" v-model="payment.amount"/>
             <p class="text-xs text-muted-foreground">Sisa tagihan {{ formatRupiah(remaining) }}</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
@@ -231,7 +232,14 @@
           </div>
           <div class="space-y-1">
             <Label for="pay-proof">Bukti transfer</Label>
-            <input id="pay-proof" type="file" accept="image/*,application/pdf" class="block w-full text-sm" @change="pickProof"/>
+            <ElementsFilePickField
+              id="pay-proof"
+              :files="proofFile ? [proofFile] : []"
+              label="Pilih bukti transfer"
+              hint="Gambar atau PDF, maks. 5 MB"
+              @pick="pickProof"
+              @remove="proofFile = null"
+            />
           </div>
         </div>
 
@@ -384,13 +392,9 @@ const dialogAction = computed(() => ({
   send: 'Kirim', void: 'Void', delete: 'Hapus', duplicate: 'Duplikat', deal: 'Buat deal', dp: 'Buat DP', final: 'Buat final', payment: 'Simpan',
 } as Record<DialogKind, string>)[dialog.value!] || 'OK')
 
-function pickProof(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0] || null
-  proofFile.value = null
-  if (!file) return
+function pickProof([file]: File[]) {
   if (file.size > MAX_UPLOAD_BYTES || !isImageOrPdf(file)) {
     toast.error(file.size > MAX_UPLOAD_BYTES ? 'Bukti transfer maksimal 5 MB' : 'Bukti transfer harus gambar atau PDF')
-    ;(e.target as HTMLInputElement).value = ''
     return
   }
   proofFile.value = file
