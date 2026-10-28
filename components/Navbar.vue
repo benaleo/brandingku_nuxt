@@ -83,6 +83,7 @@
             {{ cartCount > 99 ? '99+' : cartCount }}
           </span>
         </NuxtLink>
+        <ElementsNotificationBell />
         <!-- Wishlist -->
         <button @click="router.push('/wishlist')" class="hidden lg:block text-slate-700 hover:text-black" :title="$t('app.nav.wishlist')" :aria-label="$t('app.nav.wishlist')">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

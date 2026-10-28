@@ -818,6 +818,20 @@
       "fileTooLarge": "Ukuran file maksimal {max} MB.",
       "viewImage": "Lihat gambar {name}",
       "imageDialog": "Gambar lampiran diskusi"
+    },
+    "notifications": {
+      "title": "Notifikasi",
+      "openWithCount": "Notifikasi, {count} perlu dilihat",
+      "markAll": "Tandai semua dibaca",
+      "quotations": "Penawaran berjalan",
+      "others": "Notifikasi lainnya",
+      "empty": "Belum ada notifikasi.",
+      "discussionTitle": "Balasan admin di {code}",
+      "statusTitle": "{code}: {status}",
+      "moreItems": "+{count} produk lainnya",
+      "justNow": "Baru saja",
+      "unread": "Belum dibaca",
+      "viewOrders": "Lihat semua pesanan"
     }
   }
 }

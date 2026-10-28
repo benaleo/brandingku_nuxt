@@ -818,6 +818,20 @@
       "fileTooLarge": "Files can be up to {max} MB.",
       "viewImage": "View image {name}",
       "imageDialog": "Discussion attachment image"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "openWithCount": "Notifications, {count} to see",
+      "markAll": "Mark all as read",
+      "quotations": "Quotations in progress",
+      "others": "Other notifications",
+      "empty": "No notifications yet.",
+      "discussionTitle": "Admin replied on {code}",
+      "statusTitle": "{code}: {status}",
+      "moreItems": "+{count} more products",
+      "justNow": "Just now",
+      "unread": "Unread",
+      "viewOrders": "View all orders"
     }
   }
 }

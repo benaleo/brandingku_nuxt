@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {toast} from 'vue-sonner'
 import {ArrowLeft, FileDown, ExternalLink, Loader2} from 'lucide-vue-next'
@@ -72,6 +72,15 @@ onMounted(() => {
   }
   load()
 })
+
+// the bell's notifications about this order count as read while it is on screen
+const {viewing, markSubjectRead} = useNotifications()
+watch(() => order.value?.id, (id) => {
+  if (!id) return
+  viewing.value = {type: 'order', id}
+  markSubjectRead('order', id).catch(() => {})
+})
+onBeforeUnmount(() => { viewing.value = null })
 
 const proof = reactive({amount: 0 as number | string, paid_on: todayISO(), payer_name: '', note: '', file: null as File | null})
 // the remaining amount of the first payable document is the natural default for a new proof
