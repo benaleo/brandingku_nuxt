@@ -95,7 +95,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
         </button>
-        <LanguageSwitcher />
+        <!-- below lg the language toggle lives in the hamburger menu -->
+        <div class="hidden lg:block">
+          <LanguageSwitcher />
+        </div>
         <Button @click="router.push('/product')" variant="primary" class="hidden sm:inline-flex bg-green-600 hover:bg-green-700">{{ $t('app.nav.searchProduct') }}</Button>
         <!-- Mobile / tablet menu toggle -->
         <button
