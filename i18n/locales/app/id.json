@@ -831,7 +831,9 @@
       "moreItems": "+{count} produk lainnya",
       "justNow": "Baru saja",
       "unread": "Belum dibaca",
-      "viewOrders": "Lihat semua pesanan"
+      "viewOrders": "Lihat semua pesanan",
+      "viewAll": "Lihat semua notifikasi",
+      "back": "Kembali"
     }
   }
 }

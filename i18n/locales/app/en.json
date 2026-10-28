@@ -831,7 +831,9 @@
       "moreItems": "+{count} more products",
       "justNow": "Just now",
       "unread": "Unread",
-      "viewOrders": "View all orders"
+      "viewOrders": "View all orders",
+      "viewAll": "View all notifications",
+      "back": "Back"
     }
   }
 }

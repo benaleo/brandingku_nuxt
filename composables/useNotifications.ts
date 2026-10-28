@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useGql } from './useGql'
-import type { NotificationFeed } from '~/types/notification.type'
+import type { AppNotification, NotificationFeed } from '~/types/notification.type'
 
 const FEED_LIMIT = 30
 const FEED_QUERY = `
@@ -29,6 +29,15 @@ export const useNotifications = () => {
   // a page showing this record reads its notifications as they arrive
   const viewing = useState<{ type: string; id: number } | null>('notifications-viewing', () => null)
   const badge = computed(() => feed.value.badge_count)
+  const { t, te, locale } = useI18n()
+
+  // shared wording for the dropdown and the notifications page
+  const statusLabel = (status: string) => (te(`app.orderStatus.${status}`) ? t(`app.orderStatus.${status}`) : status.replaceAll('_', ' '))
+  const titleOf = (n: AppNotification) =>
+    n.kind === 'discussion'
+      ? t('app.notifications.discussionTitle', { code: n.subject_label })
+      : t('app.notifications.statusTitle', { code: n.subject_label, status: statusLabel(n.action) })
+  const timeAgo = (iso: string) => formatRelativeTime(iso, locale.value === 'en' ? 'en-US' : 'id-ID') ?? t('app.notifications.justNow')
 
   // the header comes from this ref: after login, other useCookie refs only catch up asynchronously
   const run = (query: string, variables: Record<string, any> = {}) =>
@@ -96,5 +105,5 @@ export const useNotifications = () => {
     feed.value = emptyFeed()
   }
 
-  return { feed, badge, viewing, refresh, markRead, markAllRead, markSubjectRead, start, stop }
+  return { feed, badge, viewing, refresh, markRead, markAllRead, markSubjectRead, start, stop, statusLabel, titleOf, timeAgo }
 }

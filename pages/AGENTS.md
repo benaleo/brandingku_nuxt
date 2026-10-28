@@ -18,6 +18,7 @@ File-based routes. Nuxt derives every URL from this tree, so a filename here is 
 | `portfolio/[slug].vue` | `/portfolio/:slug` — one active portfolio via the public `getPublicPortfolio(slug)` query (server-rendered), plus `ElementsPortfolioCarousel` for related work. The backend generates the slug from the title. Copy under `app.portfolioDetail`. |
 | `services.vue` | `/services` — the five services from the navbar menu; section ids are the navbar anchors. Copy under `app.servicesPage`, titles reuse `app.services.menu`. |
 | `wishlist.vue` | `/wishlist` — the saved-products view, backed by `useWishlist`. Copy lives under `app.wishlistPage`. |
+| `notifications.vue` | `/notifications` — the signed-in account's notifications (running quotations on top, then the rest); phones reach it from the header bell, larger screens get the same list as a dropdown. State comes from `useNotifications`; copy lives under `app.notifications`. |
 
 ## Subdirectories
 
