@@ -41,8 +41,9 @@ export const todayISO = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// half-up integer division, same rounding as the server
-const mulDivRound = (a: number, b: number, c: number) => Math.floor((a * b * 2 + c) / (c * 2))
+// half-up integer division, same rounding as the server; BigInt keeps large products exact
+const mulDivRound = (a: number, b: number, c: number) =>
+  Number((BigInt(Math.trunc(a)) * BigInt(Math.trunc(b)) * 2n + BigInt(c)) / (BigInt(c) * 2n))
 
 // preview of the server's CalcInvoice; the saved invoice always uses the server's numbers
 export const previewInvoiceTotals = (input: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {toast} from 'vue-sonner'
 import {ArrowLeft, FileDown, ExternalLink, Loader2} from 'lucide-vue-next'
@@ -10,7 +10,6 @@ import {Label} from '@/components/ui/label'
 import {useOrderService} from '~/services/order.service'
 import type {Order} from '~/types/order.type'
 
-const MAX_PROOF_BYTES = 10 * 1024 * 1024
 
 const {t, te, locale} = useI18n()
 const route = useRoute()
@@ -50,13 +49,21 @@ const statusClass = computed(() => order.value ? ORDER_STATUS_STYLE[order.value.
 async function load() {
   try {
     order.value = await getMyOrder(code.value)
+    notFound.value = false
     resetProof()
-  } catch {
-    notFound.value = true
+  } catch (e: any) {
+    // a failed refresh keeps the order on screen
+    if (order.value) toast.error(cartErrorMessage(e, t('app.orderPage.failed')))
+    else notFound.value = true
   } finally {
     loading.value = false
   }
 }
+
+// coming back from the gateway with the browser's back button restores this page as it was
+const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) paying.value = false }
+onMounted(() => window.addEventListener('pageshow', onPageShow))
+onBeforeUnmount(() => window.removeEventListener('pageshow', onPageShow))
 
 onMounted(() => {
   if (!token.value) {
@@ -75,8 +82,8 @@ function resetProof() {
 const proofInput = ref<HTMLInputElement | null>(null)
 const pickProof = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0] || null
-  if (file && file.size > MAX_PROOF_BYTES) {
-    toast.error(t('app.orderPage.fileTooLarge'))
+  if (file && (file.size > MAX_UPLOAD_BYTES || !isImageOrPdf(file))) {
+    toast.error(t(file.size > MAX_UPLOAD_BYTES ? 'app.orderPage.fileTooLarge' : 'app.orderPage.fileType'))
     ;(e.target as HTMLInputElement).value = ''
     proof.file = null
     return
@@ -141,6 +148,7 @@ async function payOnline() {
   paying.value = true
   try {
     const page = await startOnlinePayment(order.value.code, targetDoc.value.id)
+    if (new URL(page.redirect_url).protocol !== 'https:') throw new Error(t('app.orderPage.onlineFailed'))
     window.location.href = page.redirect_url
   } catch (e: any) {
     toast.error(cartErrorMessage(e, t('app.orderPage.onlineFailed')))

@@ -42,7 +42,6 @@ const idempotencyKey = newIdempotencyKey()
 const quoteKey = newIdempotencyKey()
 const requesting = ref(false)
 const designFile = ref<File | null>(null)
-const MAX_DESIGN_BYTES = 10 * 1024 * 1024
 
 const form = reactive({
   delivery_method: 'delivery' as 'delivery' | 'pickup',
@@ -118,15 +117,19 @@ async function applyVoucher() {
 }
 
 async function removeVoucher() {
-  appliedVoucher.value = ''
-  voucherInput.value = ''
-  await loadPreview('')
+  try {
+    await loadPreview('')
+    appliedVoucher.value = ''
+    voucherInput.value = ''
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t('app.checkoutPage.failed')))
+  }
 }
 
 function pickDesign(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0] || null
-  if (file && file.size > MAX_DESIGN_BYTES) {
-    toast.error(t('app.orderPage.fileTooLarge'))
+  if (file && (file.size > MAX_UPLOAD_BYTES || !isImageOrPdf(file))) {
+    toast.error(t(file.size > MAX_UPLOAD_BYTES ? 'app.orderPage.fileTooLarge' : 'app.orderPage.fileType'))
     ;(e.target as HTMLInputElement).value = ''
     designFile.value = null
     return

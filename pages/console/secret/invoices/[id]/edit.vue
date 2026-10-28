@@ -5,7 +5,8 @@
     <div v-if="loading" class="py-4 text-center">Loading...</div>
     <div v-else-if="error" class="py-4 text-center text-red-500">{{ error }}</div>
     <div v-else-if="invoice && !editable" class="rounded-lg border bg-card p-6 text-sm">
-      {{ invoice.number }} tidak bisa diedit: hanya draft invoice, quotation atau deal yang bisa diubah.
+      {{ invoice.number }} tidak bisa diedit: hanya draft invoice, quotation atau deal yang bisa diubah,
+      dan invoice pembelian diatur dari halaman Transaksi.
       <NuxtLink :to="detailPath" class="ml-1 font-medium text-green-700 hover:underline">Kembali ke detail</NuxtLink>
     </div>
     <InvoiceForm
@@ -34,7 +35,8 @@ const {getInvoice} = useInvoiceService()
 const invoice = ref<Invoice | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const editable = computed(() => invoice.value?.status === 'draft' && !['dp', 'final'].includes(invoice.value.type))
+const editable = computed(() => invoice.value?.status === 'draft' && !['dp', 'final'].includes(invoice.value.type) &&
+  !(invoice.value.type === 'invoice' && invoice.value.order_id))
 const pageTitle = computed(() => invoice.value ? `Edit ${invoice.value.number}` : 'Edit Invoice')
 
 onMounted(async () => {

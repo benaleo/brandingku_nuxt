@@ -259,6 +259,7 @@ import {Textarea} from '@/components/ui/textarea'
 import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import {invoiceErrorMessage, useInvoiceService} from '~/services/invoice.service'
+import {MAX_UPLOAD_BYTES, isImageOrPdf, readFileAsDataURL} from '~/utils/order.utils'
 import type {Invoice} from '~/types/invoice.type'
 
 const PAYMENT_METHODS: Record<string, string> = {bank_transfer: 'Transfer bank', cash: 'Tunai', other: 'Lainnya', midtrans: 'Midtrans'}
@@ -273,7 +274,6 @@ const EVENT_LABELS: Record<string, string> = {
   payment_submitted: 'Bukti transfer dikirim', payment_rejected: 'Bukti transfer ditolak',
   online_payment_unapplied: 'Pembayaran online tidak dibukukan, perlu refund',
 }
-const MAX_PROOF_BYTES = 10 * 1024 * 1024
 
 const router = useRouter()
 const route = useRoute()
@@ -319,14 +319,18 @@ const actions = computed(() => {
   if (!i) return {} as Record<string, boolean>
   const can = (a: 'create' | 'update' | 'delete') => canAction(route.path, a)
   const status = i.status === 'overdue' ? 'sent' : i.status
+  // purchase invoices of an order are priced and cancelled from the Transaksi page
+  const orderPurchase = i.type === 'invoice' && !!i.order_id
+  const hasMoney = i.paid_amount > 0 || i.payments.some(p => p.status === 'pending')
   return {
-    edit: can('update') && status === 'draft' && !['dp', 'final'].includes(i.type),
+    edit: can('update') && status === 'draft' && !['dp', 'final'].includes(i.type) && !orderPurchase,
     send: can('update') && status === 'draft',
     payment: can('update') && status === 'sent' && isBillableType(i.type),
-    void: can('delete') && (status === 'draft' || status === 'sent') && !i.children.some(c => c.status !== 'void'),
-    delete: can('delete') && status === 'draft' && !i.children.length,
-    duplicate: can('create') && !['dp', 'final'].includes(i.type),
-    deal: can('create') && i.type === 'quotation' && (status === 'draft' || status === 'sent') && !activeChildren('deal').length,
+    void: can('delete') && (status === 'draft' || status === 'sent') && !hasMoney && !i.children.some(c => c.status !== 'void'),
+    delete: can('delete') && status === 'draft' && !i.children.length && !i.order_id,
+    duplicate: can('create') && !['deal', 'dp', 'final'].includes(i.type),
+    // an order's quotation becomes a deal when the customer accepts it
+    deal: can('create') && i.type === 'quotation' && !i.order_id && (status === 'draft' || status === 'sent') && !activeChildren('deal').length,
     dp: can('create') && i.type === 'deal' && status === 'sent' && !activeChildren('final').length && activeDP.value < i.total,
     final: can('create') && i.type === 'deal' && status === 'sent' && !activeChildren('final').length,
   }
@@ -340,7 +344,7 @@ const voidReason = ref('')
 const dpMode = ref<'percent' | 'amount'>('percent')
 const dpValue = ref<number | string>(30)
 const payment = reactive({amount: 0 as number | string, paid_on: todayISO(), method: 'bank_transfer', payer_name: '', note: ''})
-const proof = ref<{ file_name: string; content_type: string; content: string } | null>(null)
+const proofFile = ref<File | null>(null)
 
 const dpPreview = computed(() => {
   const v = Number(dpValue.value) || 0
@@ -356,7 +360,7 @@ function open(kind: DialogKind) {
   payment.method = 'bank_transfer'
   payment.payer_name = ''
   payment.note = ''
-  proof.value = null
+  proofFile.value = null
   dialog.value = kind
 }
 
@@ -381,19 +385,15 @@ const dialogAction = computed(() => ({
 } as Record<DialogKind, string>)[dialog.value!] || 'OK')
 
 function pickProof(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  proof.value = null
+  const file = (e.target as HTMLInputElement).files?.[0] || null
+  proofFile.value = null
   if (!file) return
-  if (file.size > MAX_PROOF_BYTES) {
-    toast.error('Bukti transfer maksimal 10 MB')
+  if (file.size > MAX_UPLOAD_BYTES || !isImageOrPdf(file)) {
+    toast.error(file.size > MAX_UPLOAD_BYTES ? 'Bukti transfer maksimal 5 MB' : 'Bukti transfer harus gambar atau PDF')
     ;(e.target as HTMLInputElement).value = ''
     return
   }
-  const reader = new FileReader()
-  reader.onload = () => {
-    proof.value = {file_name: file.name, content_type: file.type, content: String(reader.result)}
-  }
-  reader.readAsDataURL(file)
+  proofFile.value = file
 }
 
 async function copyLink() {
@@ -460,9 +460,11 @@ async function confirmDialog() {
         await router.push('/console/secret/invoices')
         return
       case 'payment': {
+        const file = proofFile.value
         const created = await service.recordPayment(i.id, {
           amount: Math.floor(Number(payment.amount) || 0), paid_on: payment.paid_on, method: payment.method,
-          payer_name: payment.payer_name.trim(), note: payment.note.trim(), proof: proof.value,
+          payer_name: payment.payer_name.trim(), note: payment.note.trim(),
+          proof: file ? {file_name: file.name, content_type: file.type, content: await readFileAsDataURL(file)} : null,
         })
         inv.value = created
         toast.success(created.status === 'paid' ? 'Lunas' : 'Pembayaran dicatat')

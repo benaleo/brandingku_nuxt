@@ -32,21 +32,29 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString(locale.valu
 const orderTotal = (o: Order) => o.invoice?.total ?? o.subtotal - o.discount_total
 const itemSummary = (o: Order) => o.items.map(i => `${i.product_name} (${i.variant_name}) × ${i.quantity}`).join(', ')
 
+let requestId = 0
 async function load() {
+  const current = ++requestId
   loading.value = true
   try {
     const res = await getMyOrders(page.value, limit, status.value)
+    if (current !== requestId) return
     orders.value = res.items
     total.value = res.page_info.total_items
   } catch (e) {
+    if (current !== requestId) return
     console.error('Failed to load orders', e)
     orders.value = []
   } finally {
-    loading.value = false
+    if (current === requestId) loading.value = false
   }
 }
 
-watch(status, () => { page.value = 1; load() })
+// a filter change on a later page resets the page; the page watcher then does the single load
+watch(status, () => {
+  if (page.value !== 1) page.value = 1
+  else load()
+})
 watch(page, load)
 
 onMounted(() => {

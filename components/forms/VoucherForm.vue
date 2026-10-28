@@ -47,8 +47,10 @@ const productQuery = ref('')
 const productResults = ref<VoucherTargetRef[]>([])
 const searching = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | undefined
+let searchId = 0
 watch(productQuery, (q) => {
   clearTimeout(searchTimer)
+  const current = ++searchId
   if (q.trim().length < 2) {
     productResults.value = []
     return
@@ -61,11 +63,12 @@ watch(productQuery, (q) => {
         {kw: q.trim()},
         {auth: true},
       )
+      if (current !== searchId) return
       productResults.value = res.getProducts.items.filter(p => !products.value.some(s => s.id === p.id))
     } catch {
-      productResults.value = []
+      if (current === searchId) productResults.value = []
     } finally {
-      searching.value = false
+      if (current === searchId) searching.value = false
     }
   }, 300)
 })
