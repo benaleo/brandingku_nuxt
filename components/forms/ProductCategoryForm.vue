@@ -12,6 +12,7 @@ import FieldXVueEditor from '~/components/forms/fields/FieldXVueEditor.vue'
 import FormButton from "~/components/atoms/FormButton.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import CategoryImageField from "~/components/forms/CategoryImageField.vue";
+import CategoryBrandingForm from "~/components/forms/CategoryBrandingForm.vue";
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
 import type { ProductCategoryRequest } from '~/types/products.type';
 import { useFileToBase64 } from '~/composables/useFileToBase64'
@@ -134,6 +135,11 @@ const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
 
+// default branding prices; saved after the category so a new one has its id
+const brandingForm = ref<InstanceType<typeof CategoryBrandingForm> | null>(null)
+const brandingCategoryId = computed(() => isCreate ? null : Number(detail.value?.id ?? resolvedEditId.value) || null)
+const brandingParentId = computed(() => props.parentId ?? (detail.value as any)?.parent_id ?? null)
+
 const setFieldsFromDetail = (val: any) => {
   isApiUpdate = true
   name.value = val.name || ''
@@ -210,6 +216,11 @@ watch(name, (newVal) => {
 
 const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
   let savedId: number | string | undefined = isCreate ? undefined : (resolvedEditId.value as any)
+  const brandingProblem = brandingForm.value?.problem()
+  if (brandingProblem) {
+    toast.error(`Harga branding ${brandingProblem}`)
+    return
+  }
   try {
     if (isCreate) {
       const payload = { 
@@ -324,6 +335,11 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
     } catch (error: any) {
       // the category is already saved; report the catalog problem but still leave the form
       toast.error(`Kategori tersimpan, tetapi katalog gagal disimpan: ${error?.message || error}`)
+    }
+    try {
+      await brandingForm.value?.save(Number(brandingCategoryId.value ?? savedId))
+    } catch (error: any) {
+      toast.error(`Kategori tersimpan, tetapi harga branding gagal disimpan: ${cartErrorMessage(error, 'coba lagi')}`)
     }
   }
   router.push(getPathWithoutIdInForm(currentPath))
@@ -440,6 +456,16 @@ const handleBack = () => {
         </div>
         <p class="text-xs text-muted-foreground">Mengunggah katalog… {{ catalogProgress }}%</p>
       </div>
+    </FormsFormSection>
+    <FormsFormSection title="Harga branding default" description="Harga per pcs tiap metode branding untuk produk di kategori ini. Produk bisa memakai harga sendiri.">
+      <CategoryBrandingForm
+        v-if="isCreate || detail"
+        ref="brandingForm"
+        :key="brandingCategoryId ?? 'new'"
+        :category-id="brandingCategoryId"
+        :parent-id="brandingParentId"
+        :disabled="disabled"
+      />
     </FormsFormSection>
     <FormsFormSection title="Pengaturan kategori" description="Atur subkategori dan visibilitasnya di website.">
     <!-- Sub Category -->

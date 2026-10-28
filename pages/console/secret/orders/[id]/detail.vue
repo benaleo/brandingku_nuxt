@@ -125,10 +125,13 @@
             <tr v-for="it in order.items" :key="it.id" class="border-b last:border-0">
               <td class="px-4 py-2">
                 <p class="font-medium">{{ it.product_name }} <span class="text-muted-foreground">· {{ it.variant_name }}</span></p>
+                <p v-for="b in it.brandings || []" :key="b.branding_method_id" class="text-xs text-muted-foreground">
+                  Branding {{ b.name }} +{{ formatRupiah(b.unit_price) }}/pcs
+                </p>
                 <p v-if="it.note" class="text-xs text-muted-foreground">{{ it.note }}</p>
               </td>
               <td class="px-4 py-2 text-right">{{ it.quantity.toLocaleString('id-ID') }}</td>
-              <td class="px-4 py-2 text-right whitespace-nowrap">{{ formatRupiah(it.unit_price) }}</td>
+              <td class="px-4 py-2 text-right whitespace-nowrap">{{ formatRupiah(it.unit_price + (it.branding_unit_price || 0)) }}</td>
               <td class="px-4 py-2 text-right whitespace-nowrap">{{ formatRupiah(it.line_total) }}</td>
             </tr>
           </tbody>

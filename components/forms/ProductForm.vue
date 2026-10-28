@@ -19,6 +19,7 @@ import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue"
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
 import GalleryMultiUploadForm from "./GalleryMultiUploadForm.vue";
 import ProductColorForm from "./ProductColorForm.vue";
+import ProductBrandingForm from "./ProductBrandingForm.vue";
 import FieldXArea from "./fields/FieldXArea.vue";
 import Label from "../ui/label/Label.vue";
 import QuillEditor from "~/components/editor/QuillEditor.vue";
@@ -156,6 +157,8 @@ const galleries = ref<ProductGallery[]>([]);
 const removedGalleryIds = ref<string[]>([]);
 // colour variants; each may carry its own picture
 const colors = ref<ProductColorDraft[]>([]);
+// branding methods offered, saved after the product
+const brandingForm = ref<InstanceType<typeof ProductBrandingForm> | null>(null);
 
 // Watch for API data load and set fields ONCE when available
 const initialized = ref(false);
@@ -455,6 +458,12 @@ const handleSubmitForm = handleSubmit(
         toast.error(`Nama warna ke-${blankColor + 1} wajib diisi`);
         return;
       }
+      const brandingProblem = brandingForm.value?.problem();
+      if (brandingProblem) {
+        toast.error(`Layanan branding ${brandingProblem}`);
+        return;
+      }
+      submitData.brandings = brandingForm.value?.payload();
       const { convertToBase64: colorToBase64 } = useFileToBase64();
       submitData.colors = await Promise.all(
         colors.value.map(async (c) => {
@@ -487,6 +496,7 @@ const handleSubmitForm = handleSubmit(
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
           colors: submitData.colors,
+          brandings: submitData.brandings,
         });
         toast.success("Product created successfully!");
       } else {
@@ -508,6 +518,7 @@ const handleSubmitForm = handleSubmit(
           galleries: submitData.galleries || [],
           removed_gallery_ids: removedGalleryIds.value,
           colors: submitData.colors,
+          brandings: submitData.brandings,
         });
         toast.success("Product updated successfully!");
       }
@@ -605,6 +616,15 @@ function handleBack() {
 
     <FormsFormSection title="Varian & harga" description="Kelola pilihan produk, harga, stok, dan atributnya.">
       <ProductAdditionalForm v-model="additionals" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Layanan branding" description="Pilih metode branding yang tersedia untuk produk ini. Harga mengikuti kategori, atau isi harga khusus produk.">
+      <ProductBrandingForm
+        ref="brandingForm"
+        :product-id="isCreate ? null : Number(id) || null"
+        :category-id="Number(product_category_id) || null"
+        :disabled="disabled"
+      />
     </FormsFormSection>
 
     <FormsFormSection title="Kategori & visibilitas" description="Tentukan kategori dan posisi produk di website.">

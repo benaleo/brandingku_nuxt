@@ -263,7 +263,10 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
                 </NuxtLink>
                 <div class="min-w-0 flex-1 text-sm">
                   <p class="font-medium">{{ it.product_name }}</p>
-                  <p class="text-slate-500">{{ it.variant_name }} · {{ it.quantity }} × {{ formatIDR(it.unit_price) }}</p>
+                  <p class="text-slate-500">{{ it.variant_name }} · {{ it.quantity }} × {{ formatIDR(it.unit_price + (it.branding_unit_price || 0)) }}</p>
+                  <p v-for="b in it.brandings || []" :key="b.branding_method_id" class="text-xs text-slate-500">
+                    {{ $t('app.cartPage.branding') }} {{ b.name }}: {{ $t('app.productPage.detail.brandingPerPcs', { price: formatIDR(b.unit_price) }) }}
+                  </p>
                   <p v-if="it.note" class="text-xs text-slate-500">{{ it.note }}</p>
                 </div>
                 <p class="shrink-0 text-sm font-semibold">{{ formatIDR(it.line_total) }}</p>

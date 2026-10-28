@@ -23,11 +23,14 @@ const {refresh: refreshCart} = useCart()
 
 useHead(() => ({title: t('app.checkoutPage.metaTitle'), meta: [{name: 'robots', content: 'noindex'}]}))
 
-// "Beli sekarang" passes one variant in the query; otherwise the cart is checked out
+// "Beli sekarang" passes one variant, and its brandings as "2,5", in the query; otherwise the cart is checked out
 const buyNowItems = computed<CheckoutItemInput[] | undefined>(() => {
   const id = Number(route.query.item)
   const qty = Number(route.query.qty)
-  return id > 0 && qty > 0 ? [{product_additional_id: id, quantity: Math.floor(qty)}] : undefined
+  const brandingIds = String(route.query.branding || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0)
+  return id > 0 && qty > 0
+    ? [{product_additional_id: id, quantity: Math.floor(qty), ...(brandingIds.length ? {branding_ids: brandingIds} : {})}]
+    : undefined
 })
 
 const preview = ref<CheckoutPreview | null>(null)
@@ -224,11 +227,14 @@ async function requestQuote() {
           <section class="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
             <h2 class="mb-3 font-semibold text-slate-900">{{ $t('app.checkoutPage.items') }}</h2>
             <ul class="divide-y">
-              <li v-for="line in preview.lines" :key="line.product_additional_id" class="flex gap-3 py-3">
+              <li v-for="line in preview.lines" :key="`${line.product_additional_id}-${brandingKey(line.brandings.map(b => b.branding_method_id))}`" class="flex gap-3 py-3">
                 <img :src="imageSrc(line.product_image)" :alt="line.product_name" class="size-16 shrink-0 rounded-lg bg-gray-100 object-cover" onerror="this.src='/images/no-image.jpg'"/>
                 <div class="min-w-0 flex-1 text-sm">
                   <p class="font-medium text-slate-900">{{ line.product_name }}</p>
-                  <p class="text-slate-500">{{ line.variant_name }} · {{ line.quantity }} × {{ formatIDR(line.unit_price) }}</p>
+                  <p class="text-slate-500">{{ line.variant_name }} · {{ line.quantity }} × {{ formatIDR(line.unit_price + line.branding_unit_price) }}</p>
+                  <p v-for="b in line.brandings" :key="b.branding_method_id" class="text-xs" :class="b.available ? 'text-slate-500' : 'text-amber-700'">
+                    {{ $t('app.cartPage.branding') }} {{ b.name }}<template v-if="b.available">: {{ $t('app.productPage.detail.brandingPerPcs', { price: formatIDR(b.unit_price) }) }}</template>
+                  </p>
                   <p v-if="line.note" class="text-xs text-slate-500">{{ line.note }}</p>
                   <p v-if="line.problem" class="mt-1 text-xs font-medium text-red-600">{{ line.problem }}</p>
                 </div>

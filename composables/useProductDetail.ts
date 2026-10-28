@@ -28,6 +28,8 @@ export type ProductDetail = {
     // wholesale prices, lowest quantity first
     price_tiers: { min_qty: number; price: number }[]
   }>
+  // branding methods the customer can choose, each priced per piece from a minimum quantity
+  brandings: { id: number; name: string; description: string; tiers: { min_qty: number; price: number }[] }[]
 }
 
 export const useProductDetail = (initialSlug: string) => {
@@ -71,6 +73,7 @@ export const useProductDetail = (initialSlug: string) => {
               attributes
               price_tiers { min_qty price }
             }
+            brandings { branding_method_id name description tiers { min_qty price } }
             created_at
             updated_at
           }
@@ -168,6 +171,14 @@ export const useProductDetail = (initialSlug: string) => {
           discount_type: String(a.discount_type || 'AMOUNT'),
           attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
           price_tiers: (a.price_tiers || [])
+            .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
+            .sort((x: any, y: any) => x.min_qty - y.min_qty),
+        })),
+        brandings: (p.brandings || []).map((b: any) => ({
+          id: Number(b.branding_method_id),
+          name: String(b.name || ''),
+          description: String(b.description || ''),
+          tiers: (b.tiers || [])
             .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
             .sort((x: any, y: any) => x.min_qty - y.min_qty),
         })),

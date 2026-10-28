@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { useGql } from './useGql'
+import type { LineBranding } from '~/types/branding.type'
 
 export type CartItem = {
   id: number
@@ -16,6 +17,10 @@ export type CartItem = {
   // 0 means the price is given on request
   unit_price: number
   original_unit_price: number
+  brandings: LineBranding[]
+  // sum of the available brandings per piece
+  branding_unit_price: number
+  // (unit_price + branding_unit_price) * quantity
   line_total: number
   available: boolean
 }
@@ -27,7 +32,7 @@ export type Cart = {
   has_price_on_request: boolean
 }
 
-type GuestLine = { product_additional_id: number; quantity: number; note?: string }
+type GuestLine = { product_additional_id: number; quantity: number; note?: string; branding_ids?: number[] }
 
 const GUEST_KEY = 'bk_guest_cart'
 const MAX_LINES = 50
@@ -36,6 +41,7 @@ const CART_FIELDS = `
     id product_id product_additional_id quantity note
     product_name product_slug product_image variant_name
     moq stock unit_price original_unit_price line_total available
+    branding_unit_price brandings { branding_method_id name unit_price min_qty available }
   }
   item_count subtotal has_price_on_request
 `
@@ -48,7 +54,12 @@ const readGuest = (): GuestLine[] => {
     const list = JSON.parse(localStorage.getItem(GUEST_KEY) || '[]')
     return Array.isArray(list)
       ? list.filter((l: any) => Number(l?.product_additional_id) > 0 && Number(l?.quantity) > 0)
-        .map((l: any) => ({ product_additional_id: Number(l.product_additional_id), quantity: Number(l.quantity), note: l.note ? String(l.note) : undefined }))
+        .map((l: any) => ({
+          product_additional_id: Number(l.product_additional_id),
+          quantity: Number(l.quantity),
+          note: l.note ? String(l.note) : undefined,
+          branding_ids: Array.isArray(l.branding_ids) ? l.branding_ids.map(Number).filter((id: number) => id > 0) : undefined,
+        }))
       : []
   } catch {
     return []
@@ -130,25 +141,33 @@ export const useCart = () => {
     }
   }
 
-  const add = async (productAdditionalId: number, quantity: number, note?: string) => {
+  // a guest line is a variant with one set of brandings, like a server cart line
+  const sameLine = (l: GuestLine, variantId: number, key: string) =>
+    l.product_additional_id === variantId && brandingKey(l.branding_ids) === key
+  const itemKey = (item: CartItem) => brandingKey(item.brandings.map(b => b.branding_method_id))
+
+  const add = async (productAdditionalId: number, quantity: number, note?: string, brandingIds: number[] = []) => {
     const token = currentToken()
     if (token) {
       const res = await authed<{ addToCart: Cart }>(
-        `mutation addToCart($id: Int!, $qty: Int!, $note: String) { addToCart(product_additional_id: $id, quantity: $qty, note: $note) { ${CART_FIELDS} } }`,
-        { id: productAdditionalId, qty: quantity, note: note ?? null },
+        `mutation addToCart($id: Int!, $qty: Int!, $note: String, $brandings: [Int!]) {
+          addToCart(product_additional_id: $id, quantity: $qty, note: $note, branding_ids: $brandings) { ${CART_FIELDS} }
+        }`,
+        { id: productAdditionalId, qty: quantity, note: note ?? null, brandings: brandingIds.length ? brandingIds : null },
         token,
       )
       cart.value = res.addToCart
       return
     }
     const lines = readGuest()
-    const line = lines.find(l => l.product_additional_id === productAdditionalId)
+    const key = brandingKey(brandingIds)
+    const line = lines.find(l => sameLine(l, productAdditionalId, key))
     if (line) {
       line.quantity += quantity
       if (note) line.note = note
     } else {
       if (lines.length >= MAX_LINES) throw new Error(`Keranjang maksimal ${MAX_LINES} produk`)
-      lines.push({ product_additional_id: productAdditionalId, quantity, note })
+      lines.push({ product_additional_id: productAdditionalId, quantity, note, branding_ids: brandingIds.length ? [...brandingIds] : undefined })
     }
     writeGuest(lines)
     cart.value = await preview(lines)
@@ -167,7 +186,7 @@ export const useCart = () => {
       return
     }
     const lines = readGuest()
-    const line = lines.find(l => l.product_additional_id === item.product_additional_id)
+    const line = lines.find(l => sameLine(l, item.product_additional_id, itemKey(item)))
     if (line) {
       line.quantity = quantity
       if (note !== undefined) line.note = note
@@ -187,7 +206,7 @@ export const useCart = () => {
       cart.value = res.removeCartItem
       return
     }
-    const lines = readGuest().filter(l => l.product_additional_id !== item.product_additional_id)
+    const lines = readGuest().filter(l => !sameLine(l, item.product_additional_id, itemKey(item)))
     writeGuest(lines)
     cart.value = await preview(lines)
   }

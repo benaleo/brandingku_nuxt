@@ -51,8 +51,12 @@ const imageSrc = (image: string) => {
   return `${STORAGE_URL}${image}`
 }
 
-// guest lines have no id yet, the variant identifies them
-const lineKey = (item: CartItem) => item.id || `v${item.product_additional_id}`
+// guest lines have no id yet, the variant and its brandings identify them
+const lineKey = (item: CartItem) => item.id || `v${item.product_additional_id}-${brandingKey(item.brandings.map(b => b.branding_method_id))}`
+const brandingNote = (item: CartItem, b: CartItem['brandings'][number]) => {
+  if (b.available) return b.unit_price > 0 ? t('app.productPage.detail.brandingPerPcs', { price: formatIDR(b.unit_price) }) : t('app.cartPage.brandingFree')
+  return b.min_qty > item.quantity ? t('app.cartPage.brandingMin', { qty: b.min_qty }) : t('app.cartPage.brandingUnavailable')
+}
 const pending = reactive<Record<string, boolean>>({})
 const notes = reactive<Record<string, string>>({})
 const noteOf = (item: CartItem) => notes[lineKey(item)] ?? item.note
@@ -149,6 +153,11 @@ const goCheckout = () => token.value
                     {{ item.product_name }}
                   </NuxtLink>
                   <p class="mt-0.5 text-sm text-slate-500">{{ $t('app.cartPage.variant') }}: {{ item.variant_name }}</p>
+                  <ul v-if="item.brandings.length" class="mt-0.5 space-y-0.5 text-xs">
+                    <li v-for="b in item.brandings" :key="b.branding_method_id" :class="b.available ? 'text-slate-600' : 'font-medium text-amber-700'">
+                      {{ $t('app.cartPage.branding') }} {{ b.name }}: {{ brandingNote(item, b) }}
+                    </li>
+                  </ul>
                 </div>
                 <button
                   type="button"
@@ -166,6 +175,9 @@ const goCheckout = () => token.value
                   <template v-if="item.unit_price > 0">
                     <span class="font-semibold text-slate-900">{{ formatIDR(item.unit_price) }}</span>
                     <span v-if="item.original_unit_price > item.unit_price" class="ml-2 text-slate-400 line-through">{{ formatIDR(item.original_unit_price) }}</span>
+                    <span v-if="item.branding_unit_price > 0" class="ml-1 text-slate-600">
+                      {{ $t('app.cartPage.withBranding', { total: formatIDR(item.unit_price + item.branding_unit_price) }) }}
+                    </span>
                   </template>
                   <span v-else class="font-semibold text-green-700">{{ $t('app.cartPage.priceOnRequest') }}</span>
                 </div>

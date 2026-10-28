@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
 import { useProductAdditionalService } from '~/services/product-additional.service'
 import { useProductGalleriesService } from '~/services/product-galleries.service'
+import { useBrandingService } from '~/services/branding.service'
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
 
@@ -10,6 +11,7 @@ type ProductListParams = { keyword?: string; category_id?: number | null; is_act
 
 export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; params?: ProductListParams } = {}) => {
     const { gqlFetch } = useGql()
+    const brandingService = useBrandingService()
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
     const url = `${BASE_URL}/cms/v1/product${dataId ? `/${dataId}` : ''}`
@@ -296,6 +298,10 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         if (Array.isArray(payload.colors) && payload.colors.length) {
             await saveProductColors(productId, payload.colors)
         }
+
+        if (Array.isArray(payload.brandings) && payload.brandings.length) {
+            await brandingService.saveProductBrandings(productId, payload.brandings)
+        }
         
         return res?.createProduct
     }
@@ -445,6 +451,11 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
 
         if (Array.isArray(payload.colors)) {
             await saveProductColors(Number(id), payload.colors)
+        }
+
+        // undefined when the branding list never loaded: leave the saved offers alone
+        if (Array.isArray(payload.brandings)) {
+            await brandingService.saveProductBrandings(Number(id), payload.brandings)
         }
 
         return res?.updateProduct

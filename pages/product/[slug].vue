@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, MessageCircle, Minus, Plus } from "lucide-vue-next";
+import { ArrowLeftIcon, Check, MessageCircle, Minus, Plus } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const route = useRoute();
@@ -61,10 +61,42 @@ const formatIDR = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-// quantity starts at, and never goes below, the variant's MOQ
-const minQty = computed(() => Math.max(1, Number(selectedAdditional.value?.moq) || 1));
+// branding methods picked by the customer; several can be combined
+const selectedBrandings = ref<number[]>([]);
+const brandingOptions = computed(() => detail.value?.brandings || []);
+const chosenBrandings = computed(() => brandingOptions.value.filter((b) => selectedBrandings.value.includes(b.id)));
+const brandingMin = computed(() => chosenBrandings.value.reduce((least, b) => Math.max(least, brandingMinQty(b.tiers)), 0));
+
+// quantity starts at the variant's MOQ and never goes below it or a chosen branding's minimum
+const variantMoq = computed(() => Math.max(1, Number(selectedAdditional.value?.moq) || 1));
+const minQty = computed(() => Math.max(variantMoq.value, brandingMin.value));
 const quantity = ref(1);
-watch(minQty, (moq) => { quantity.value = moq; }, { immediate: true });
+watch(variantMoq, (moq) => { quantity.value = Math.max(moq, brandingMin.value); }, { immediate: true });
+
+// another product starts again from its own minimum
+watch(() => detail.value?.id, () => { quantity.value = minQty.value; });
+
+// branding cost per piece at the current quantity
+const brandingUnit = computed(() =>
+  chosenBrandings.value.reduce((sum, b) => sum + (brandingPriceAt(b.tiers, quantity.value) ?? 0), 0)
+);
+const brandingLabel = (b: { tiers: { min_qty: number; price: number }[] }) => {
+  const price = brandingPriceAt(b.tiers, quantity.value);
+  if (price == null) return t("app.productPage.detail.brandingMin", { qty: brandingMinQty(b.tiers) });
+  return price > 0 ? t("app.productPage.detail.brandingPerPcs", { price: formatIDR(price) }) : t("app.productPage.detail.brandingFree");
+};
+const toggleBranding = (b: { id: number; name: string; tiers: { min_qty: number; price: number }[] }) => {
+  if (selectedBrandings.value.includes(b.id)) {
+    selectedBrandings.value = selectedBrandings.value.filter((id) => id !== b.id);
+    return;
+  }
+  selectedBrandings.value = [...selectedBrandings.value, b.id];
+  const least = Math.min(brandingMinQty(b.tiers), 100000);
+  if (quantity.value < least) {
+    quantity.value = least;
+    toast.info(t("app.productPage.detail.brandingRaised", { qty: least, name: b.name }));
+  }
+};
 
 // the variant discount applied to a price per piece, rounded down like the server
 const applyDiscount = (base: number) => {
@@ -128,7 +160,8 @@ const handleBuyNow = () => {
     toast.error(t("app.cartPage.selectVariant"));
     return;
   }
-  const target = `/checkout?item=${variant.id}&qty=${quantity.value}`;
+  const branding = brandingKey(selectedBrandings.value);
+  const target = `/checkout?item=${variant.id}&qty=${quantity.value}${branding ? `&branding=${branding}` : ""}`;
   if (authToken.value) router.push(target);
   else router.push({ path: "/console/auth", query: { redirect: target } });
 };
@@ -143,7 +176,7 @@ const handleAddToCart = async () => {
   }
   adding.value = true;
   try {
-    await addToCart(Number(variant.id), quantity.value);
+    await addToCart(Number(variant.id), quantity.value, undefined, selectedBrandings.value);
     toast.success(t("app.cartPage.added", { name: detail.value?.name || variant.name }));
   } catch (e: any) {
     toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
@@ -282,6 +315,7 @@ useHead(() => ({
 
 // Handle same-route param changes
 watch(slug, (val) => {
+  selectedBrandings.value = [];
   setSlug(val);
   refetch();
 });
@@ -364,6 +398,9 @@ definePageMeta({
               {{ formatIDR(displayedOriginal as number) }}
             </span>
           </div>
+          <p v-if="!isAskAdmin && brandingUnit > 0" class="mt-1 text-sm text-gray-700">
+            {{ $t('app.productPage.detail.brandingTotal', { branding: formatIDR(brandingUnit), total: formatIDR(displayedPrice + brandingUnit) }) }}
+          </p>
 
           <!-- Color: the product's colour variants, else colours from the selected variant's attributes -->
           <div v-if="colorOptions.length" class="mt-8">
@@ -431,6 +468,41 @@ definePageMeta({
                 </SelectContent>
               </Select>
             </template>
+            <!-- branding methods, priced per piece at the chosen quantity -->
+            <div v-if="brandingOptions.length" class="mt-6">
+              <h3 class="text-sm font-medium">{{ $t('app.productPage.detail.branding') }}</h3>
+              <p class="mb-2 text-xs text-gray-500">{{ $t('app.productPage.detail.brandingHint') }}</p>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                  v-for="b in brandingOptions"
+                  :key="b.id"
+                  type="button"
+                  :aria-pressed="selectedBrandings.includes(b.id)"
+                  class="flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors"
+                  :class="selectedBrandings.includes(b.id) ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-300'"
+                  @click="toggleBranding(b)"
+                >
+                  <span
+                    class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border"
+                    :class="selectedBrandings.includes(b.id) ? 'border-green-600 bg-green-600 text-white' : 'border-gray-300 bg-white'"
+                  >
+                    <Check v-if="selectedBrandings.includes(b.id)" class="size-3" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="flex items-baseline justify-between gap-2">
+                      <span class="font-medium text-gray-900">{{ b.name }}</span>
+                      <span
+                        class="shrink-0 text-xs font-semibold"
+                        :class="brandingPriceAt(b.tiers, quantity) == null ? 'text-amber-700' : 'text-green-700'"
+                      >{{ brandingLabel(b) }}</span>
+                    </span>
+                    <span v-if="b.description" class="mt-0.5 block text-xs text-gray-500">{{ b.description }}</span>
+                    <span v-if="b.tiers.length > 1" class="mt-0.5 block text-xs text-gray-500">{{ describeBrandingTiers(b.tiers) }}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div v-if="selectedAdditional" class="mt-4">
               <h3 class="text-sm font-medium mb-2">{{ $t('app.cartPage.quantity') }}</h3>
               <div class="inline-flex items-center rounded-md border">
@@ -463,8 +535,8 @@ definePageMeta({
                 </button>
               </div>
               <p v-if="minQty > 1" class="mt-1 text-xs text-gray-500">{{ $t('app.cartPage.minQty', { moq: minQty }) }}</p>
-              <p v-if="!isAskAdmin && quantity > 1" class="mt-1 text-sm text-gray-700">
-                {{ $t('app.productPage.detail.subtotalFor', { qty: quantity, total: formatIDR(displayedPrice * quantity) }) }}
+              <p v-if="!isAskAdmin && (quantity > 1 || brandingUnit > 0)" class="mt-1 text-sm text-gray-700">
+                {{ $t('app.productPage.detail.subtotalFor', { qty: quantity, total: formatIDR((displayedPrice + brandingUnit) * quantity) }) }}
               </p>
             </div>
 

@@ -146,6 +146,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     catalog_file
                     catalog_file_name
                     catalog_file_size
+                    parent_id
                     sub_categories {
                         id
                         name

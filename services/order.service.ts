@@ -14,7 +14,10 @@ const ORDER_FIELDS = `
   design_file_path design_file_name created_at updated_at
   documents { ${DOC_FIELDS} }
   payable_documents { ${DOC_FIELDS} }
-  items { id product_id product_additional_id product_name product_slug product_image variant_name quantity unit_price original_unit_price line_total note }
+  items {
+    id product_id product_additional_id product_name product_slug product_image variant_name quantity unit_price original_unit_price line_total note
+    branding_unit_price brandings { branding_method_id name unit_price }
+  }
   events { id action actor note created_at }
   invoice {
     id number status public_token due_date subtotal discount_total shipping_fee tax_mode tax_rate_bps tax_base tax_total total amount_due paid_amount
@@ -40,7 +43,10 @@ export const useOrderService = () => {
     const res = await gqlFetch<{ previewCheckout: CheckoutPreview }>(
       `query previewCheckout($items: [CheckoutItemInput!], $voucher: String) {
         previewCheckout(items: $items, voucher_code: $voucher) {
-          lines { product_id product_additional_id product_name product_slug product_image variant_name quantity moq stock unit_price original_unit_price line_total note problem }
+          lines {
+            product_id product_additional_id product_name product_slug product_image variant_name quantity moq stock unit_price original_unit_price line_total note problem
+            branding_unit_price brandings { branding_method_id name unit_price min_qty available }
+          }
           subtotal discount voucher_code voucher_message tax_mode tax_rate_bps tax_base tax_total total can_pay
         }
       }`,

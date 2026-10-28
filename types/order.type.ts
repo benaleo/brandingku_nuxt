@@ -1,3 +1,5 @@
+import type { LineBranding, OrderItemBranding } from './branding.type'
+
 export type OrderStatus =
   | 'awaiting_shipping_fee'
   | 'pending_payment'
@@ -25,6 +27,9 @@ export type OrderItem = {
   quantity: number
   unit_price: number
   original_unit_price: number
+  brandings: OrderItemBranding[]
+  branding_unit_price: number
+  // (unit_price + branding_unit_price) * quantity
   line_total: number
   note: string
 }
@@ -118,7 +123,7 @@ export type Order = {
   updated_at: string
 }
 
-export type CheckoutItemInput = { product_additional_id: number; quantity: number; note?: string }
+export type CheckoutItemInput = { product_additional_id: number; quantity: number; note?: string; branding_ids?: number[] }
 
 export type CheckoutLine = {
   product_id: number
@@ -132,6 +137,8 @@ export type CheckoutLine = {
   stock: number
   unit_price: number
   original_unit_price: number
+  brandings: LineBranding[]
+  branding_unit_price: number
   line_total: number
   note: string
   problem: string
