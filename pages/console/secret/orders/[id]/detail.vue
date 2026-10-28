@@ -42,7 +42,7 @@
         <form class="mt-3 grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)_auto] sm:items-end" @submit.prevent="saveShipping">
           <div class="space-y-1">
             <Label for="ship-fee">Ongkir (Rp) *</Label>
-            <Input id="ship-fee" v-model="shipping.fee" type="number" min="0" step="1" class="bg-white"/>
+            <ElementsRupiahInput id="ship-fee" v-model="shipping.fee" class="bg-white"/>
           </div>
           <div class="space-y-1">
             <Label for="ship-note">Kurir / estimasi</Label>
@@ -74,6 +74,41 @@
           </li>
         </ul>
       </section>
+
+      <!-- quotation orders: the customer's first payment, then production step by step -->
+      <section v-if="order.type === 'quotation' && (order.payment_plan || order.payment_options)" class="rounded-xl border bg-card p-4 text-sm">
+        <p class="font-medium">Pembayaran pertama</p>
+        <p v-if="order.payment_plan" class="mt-1">{{ order.payment_plan === 'dp' ? 'DP, sisanya ditagih otomatis saat siap kirim' : 'Langsung pelunasan' }} · dipilih customer</p>
+        <p v-else class="mt-1 text-muted-foreground">Menunggu customer memilih DP (min. {{ formatRupiah(order.payment_options?.min_dp_amount || 0) }}) atau pelunasan untuk {{ order.payment_options?.deal_number }}.</p>
+      </section>
+      <ElementsOrderProgressTimeline v-if="order.type === 'quotation' && order.production_stage" :order="order" viewer="staff">
+        <template #[progressSlot]>
+          <p v-if="approvalWaiting" class="mt-2 text-xs text-muted-foreground">{{ stepName }} baru bisa dikirim setelah customer menjawab yang sebelumnya.</p>
+          <form v-else-if="canUpdate && order.status === 'processing' && progressStep" class="mt-3 space-y-3 rounded-lg border border-dashed p-3" @submit.prevent="submitProgress">
+            <p v-if="progressStep === 'ready_to_ship' && order.payment_plan === 'dp'" class="text-xs text-teal-700">Tagihan pelunasan dibuat dan dikirim ke customer otomatis setelah tahap ini.</p>
+            <div class="space-y-1">
+              <Label for="progress-files">{{ progressStep === 'mockup' ? 'Gambar mockup' : 'Foto / file' }} {{ needsFiles ? '(wajib)' : '(opsional)' }}</Label>
+              <ElementsFilePickField
+                id="progress-files"
+                multiple
+                :files="progressFiles"
+                label="Pilih foto atau PDF"
+                hint="Maks. 5 file, 5 MB per file, 7 MB total. Foto disimpan sebagai WebP."
+                :disabled="busy || progressFiles.length >= 5"
+                @pick="pickProgressFiles"
+                @remove="(i: number) => progressFiles.splice(i, 1)"
+              />
+            </div>
+            <div class="space-y-1">
+              <Label for="progress-note">Catatan untuk customer</Label>
+              <Textarea id="progress-note" v-model="progressNote" rows="2" maxlength="1000"/>
+            </div>
+            <Button type="submit" size="sm" class="bg-green-600 hover:bg-green-700" :disabled="busy || (needsFiles && !progressFiles.length)">
+              <Loader2 v-if="busy" class="size-4 animate-spin"/>{{ STEP_SUBMIT[progressStep] }}
+            </Button>
+          </form>
+        </template>
+      </ElementsOrderProgressTimeline>
 
       <section v-if="order.type === 'quotation' && order.documents.length" class="rounded-xl border bg-card p-4 text-sm">
         <p class="mb-2 font-medium">Dokumen</p>
@@ -151,7 +186,7 @@
         <ul class="space-y-1">
           <li v-for="e in [...order.events].reverse()" :key="e.id" class="flex flex-wrap gap-x-2">
             <span class="text-muted-foreground">{{ formatDateTime(e.created_at) }}</span>
-            <span class="font-medium">{{ ORDER_STATUS_LABELS[e.action as OrderStatus] || e.action.replaceAll('_', ' ') }}</span>
+            <span class="font-medium">{{ EVENT_LABELS[e.action] || ORDER_STATUS_LABELS[e.action as OrderStatus] || e.action.replaceAll('_', ' ') }}</span>
             <span v-if="e.note" class="text-muted-foreground">{{ e.note }}</span>
             <span v-if="e.actor" class="text-muted-foreground">· {{ e.actor }}</span>
           </li>
@@ -198,7 +233,7 @@ import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, Di
 import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import {useOrderService} from '~/services/order.service'
 import {invoiceErrorMessage} from '~/services/invoice.service'
-import type {Order, OrderStatus} from '~/types/order.type'
+import type {Order, OrderStatus, ProductionStep} from '~/types/order.type'
 import type {InvoiceStatus} from '~/types/invoice.type'
 
 const NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {accepted: ['processing'], paid: ['processing', 'shipped'], processing: ['shipped'], shipped: ['completed']}
@@ -222,7 +257,55 @@ const shipping = reactive({fee: 0 as number | string, note: '', notify: true})
 const canUpdate = computed(() => canAction(route.path, 'update'))
 const canInvoices = computed(() => canAction('/console/secret/invoices', 'index'))
 const canVerify = computed(() => canAction('/console/secret/invoices', 'update'))
-const next = computed(() => (order.value && canUpdate.value ? NEXT[order.value.status] || [] : []))
+// quotation production starts with the first payment, and shipping waits for production and the balance
+const next = computed(() => {
+  const o = order.value
+  if (!o || !canUpdate.value) return []
+  return (NEXT[o.status] || []).filter(s => !(o.type === 'quotation' && s === 'processing') && !(s === 'shipped' && !o.can_ship))
+})
+
+const EVENT_LABELS: Record<string, string> = {
+  payment_plan_chosen: 'Pembayaran pertama dipilih', progress_sample: 'Sample dikirim', sample_approved: 'Sample disetujui',
+  sample_revision: 'Revisi sample diminta', progress_mockup: 'Mockup dikirim', mockup_approved: 'Mockup disetujui', mockup_revision: 'Revisi mockup diminta', progress_mass_production: 'Produksi massal selesai', progress_qc: 'Quality check selesai',
+  progress_ready_to_ship: 'Siap kirim', thank_you_sent: 'Email terima kasih terkirim', thank_you_failed: 'Email terima kasih gagal',
+}
+const STEP_NAME: Record<ProductionStep, string> = {
+  mockup: 'Mockup', sample: 'Sample', mass_production: 'Produksi massal', qc: 'Quality check', ready_to_ship: 'Siap kirim',
+}
+const STEP_SUBMIT: Record<ProductionStep, string> = {
+  mockup: 'Kirim mockup ke customer',
+  sample: 'Kirim sample ke customer', mass_production: 'Tandai produksi massal selesai', qc: 'Tandai quality check selesai', ready_to_ship: 'Tandai siap kirim',
+}
+const progressStep = computed(() => {
+  const s = order.value?.production_stage
+  return s && s !== 'done' ? s : null
+})
+const progressSlot = computed(() => `current-${order.value?.production_stage || ''}`)
+// mockup and sample need files and the customer's answer before the next one can be sent
+const stepName = computed(() => (progressStep.value ? STEP_NAME[progressStep.value] : ''))
+const needsFiles = computed(() => progressStep.value === 'mockup' || progressStep.value === 'sample')
+const approvalWaiting = computed(() => needsFiles.value && !!order.value?.progress.some(p => p.stage === progressStep.value && !p.decision))
+const progressFiles = ref<File[]>([])
+const progressNote = ref('')
+function pickProgressFiles(picked: File[]) {
+  const tooBig = picked.find(f => f.size > MAX_UPLOAD_BYTES)
+  if (tooBig) toast.error(`${tooBig.name} lebih dari 5 MB`)
+  progressFiles.value = [...progressFiles.value, ...picked.filter(f => f.size <= MAX_UPLOAD_BYTES)].slice(0, 5)
+}
+async function submitProgress() {
+  const step = progressStep.value
+  if (!step) return
+  if (progressFiles.value.reduce((sum, f) => sum + f.size, 0) > 7 * 1024 * 1024) {
+    toast.error('Total file maksimal 7 MB')
+    return
+  }
+  await act(async () => {
+    const files = await Promise.all(progressFiles.value.map(async f => ({file_name: f.name, content_type: f.type || undefined, content: await readFileAsDataURL(f)})))
+    await service.addOrderProgress(id.value, step, progressNote.value.trim(), files)
+    progressFiles.value = []
+    progressNote.value = ''
+  }, step === 'ready_to_ship' && order.value?.payment_plan === 'dp' ? 'Siap kirim · tagihan pelunasan dikirim' : 'Progres tersimpan')
+}
 const allPayments = computed(() => (order.value?.documents || []).flatMap(d => d.payments))
 const pendingProofs = computed(() => allPayments.value.filter(p => p.status === 'pending'))
 const canCancel = computed(() => !!order.value && canAction(route.path, 'delete') &&
@@ -269,7 +352,8 @@ const saveShipping = () => {
   act(() => service.setOrderShippingFee(id.value, fee, shipping.note.trim(), shipping.notify), 'Ongkir disimpan, invoice terkirim')
 }
 const setStatus = (status: OrderStatus, tracking?: string) =>
-  act(() => service.updateOrderStatus(id.value, status, tracking), `Status: ${ORDER_STATUS_LABELS[status]}`)
+  act(() => service.updateOrderStatus(id.value, status, tracking),
+    status === 'completed' ? 'Pesanan selesai · hasil email terima kasih tercatat di Aktivitas' : `Status: ${ORDER_STATUS_LABELS[status]}`)
 // drafts (or reopens the existing draft of) the quotation, then hands over to the invoice editor
 async function draftQuotation() {
   busy.value = true

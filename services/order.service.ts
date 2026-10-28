@@ -1,5 +1,6 @@
 import { useGql } from '~/composables/useGql'
-import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, Order } from '~/types/order.type'
+import type { EmailAttachmentInput } from '~/types/admin-smtp.type'
+import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, Order, PaymentPlanInput, ProductionStep } from '~/types/order.type'
 
 const DOC_FIELDS = `
   id number type status public_token issue_date due_date total amount_due paid_amount
@@ -12,6 +13,9 @@ const ORDER_FIELDS = `
   shipping_fee shipping_note tracking_number notes subtotal discount_total voucher_code
   expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment can_respond_quotation can_pay_online
   design_file_path design_file_name created_at updated_at
+  payment_plan production_stage can_review_progress can_ship
+  payment_options { deal_number deal_total min_dp_amount }
+  progress { id stage note decision decision_note decided_at created_at files { file_name content_type size path } }
   documents { ${DOC_FIELDS} }
   payable_documents { ${DOC_FIELDS} }
   items {
@@ -85,6 +89,37 @@ export const useOrderService = () => {
       { auth: true },
     )
     return res.respondQuotation
+  }
+
+  // the would-be first invoice as a base64 PDF; nothing is saved
+  const previewPaymentPlan = async (code: string, input: PaymentPlanInput) => {
+    const res = await gqlFetch<{ previewPaymentPlan: string }>(
+      'query previewPaymentPlan($code: String!, $input: PaymentPlanInput!) { previewPaymentPlan(code: $code, input: $input) }',
+      { code, input },
+      { auth: true, timeout: 60000 },
+    )
+    return res.previewPaymentPlan
+  }
+
+  const choosePaymentPlan = async (code: string, input: PaymentPlanInput) => {
+    const res = await gqlFetch<{ choosePaymentPlan: Order }>(
+      `mutation choosePaymentPlan($code: String!, $input: PaymentPlanInput!) { choosePaymentPlan(code: $code, input: $input) { ${ORDER_FIELDS} } }`,
+      { code, input },
+      { auth: true },
+    )
+    return res.choosePaymentPlan
+  }
+
+  // the customer's answer to the mockup or sample waiting for approval
+  const reviewProgress = async (code: string, progressId: number, approve: boolean, note?: string) => {
+    const res = await gqlFetch<{ reviewProgress: Order }>(
+      `mutation reviewProgress($code: String!, $id: Int!, $approve: Boolean!, $note: String) {
+        reviewProgress(code: $code, progress_id: $id, approve: $approve, note: $note) { ${ORDER_FIELDS} }
+      }`,
+      { code, id: progressId, approve, note: note || null },
+      { auth: true },
+    )
+    return res.reviewProgress
   }
 
   const getMyOrders = async (page: number, limit: number, status?: string) => {
@@ -179,6 +214,18 @@ export const useOrderService = () => {
     return res.updateOrderStatus
   }
 
+  // completes the order's current production step; files are data URLs (pictures become WebP)
+  const addOrderProgress = async (id: number, stage: ProductionStep, note: string, files: EmailAttachmentInput[]) => {
+    const res = await gqlFetch<{ addOrderProgress: Order }>(
+      `mutation addOrderProgress($id: Int!, $stage: String!, $note: String, $files: [EmailAttachmentInput!]) {
+        addOrderProgress(order_id: $id, stage: $stage, note: $note, files: $files) { ${ORDER_FIELDS} }
+      }`,
+      { id, stage, note: note || null, files: files.length ? files : null },
+      { auth: true, timeout: 90000 },
+    )
+    return res.addOrderProgress
+  }
+
   const cancelOrder = async (id: number, reason: string) => {
     const res = await gqlFetch<{ cancelOrder: Order }>(
       `mutation cancelOrder($id: Int!, $reason: String!) { cancelOrder(id: $id, reason: $reason) { ${ORDER_FIELDS} } }`,
@@ -204,6 +251,8 @@ export const useOrderService = () => {
 
   return {
     previewCheckout, placeOrder, requestQuotation, respondQuotation, startOnlinePayment, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
+    previewPaymentPlan, choosePaymentPlan, reviewProgress,
     getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, createQuotationFromOrder, verifyPayment, rejectPayment,
+    addOrderProgress,
   }
 }

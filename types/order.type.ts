@@ -81,6 +81,42 @@ export type OrderDocument = {
   payments: OrderPayment[]
 }
 
+// production steps an admin reports on a quotation order after its first payment
+export type ProductionStep = 'mockup' | 'sample' | 'mass_production' | 'qc' | 'ready_to_ship'
+
+export type OrderProgressFile = {
+  file_name: string
+  // image/webp for pictures, application/pdf, or application/octet-stream
+  content_type: string
+  size: number
+  path: string
+}
+
+export type OrderProgress = {
+  id: number
+  stage: ProductionStep
+  note: string
+  files: OrderProgressFile[]
+  // mockup and sample: '' while waiting for the customer
+  decision: '' | 'approved' | 'revision'
+  decision_note: string
+  decided_at?: string | null
+  created_at: string
+}
+
+export type PaymentPlanOptions = {
+  deal_number: string
+  deal_total: number
+  // half the deal, rounded up
+  min_dp_amount: number
+}
+
+export type PaymentPlanInput = {
+  plan: 'dp' | 'full'
+  dp_percent_bps?: number | null
+  dp_amount?: number | null
+}
+
 export type Order = {
   id: number
   code: string
@@ -119,6 +155,17 @@ export type Order = {
   items: OrderItem[]
   events: { id: number; action: string; actor: string; note: string; created_at: string }[]
   invoice?: OrderInvoice | null
+  // quotation requests: the customer's first payment, empty until chosen
+  payment_plan: '' | 'dp' | 'full'
+  // the admin's next production step, 'done' when ready to ship; empty until the first payment
+  production_stage: '' | ProductionStep | 'done'
+  progress: OrderProgress[]
+  // set while the customer may choose how to pay first
+  payment_options?: PaymentPlanOptions | null
+  // the customer may approve the latest mockup or sample
+  can_review_progress: boolean
+  // production done and everything paid
+  can_ship: boolean
   created_at: string
   updated_at: string
 }

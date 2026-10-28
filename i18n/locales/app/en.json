@@ -629,7 +629,18 @@
       "shipping_fee_set": "Shipping fee set",
       "invoice_sent": "Invoice sent",
       "created": "Order placed",
-      "online_payment_unapplied": "Online payment to be refunded"
+      "online_payment_unapplied": "Online payment to be refunded",
+      "payment_plan_chosen": "First payment chosen",
+      "progress_sample": "Sample sent for approval",
+      "sample_approved": "Sample approved",
+      "sample_revision": "Sample changes requested",
+      "progress_mass_production": "Mass production done",
+      "progress_qc": "Quality check done",
+      "progress_ready_to_ship": "Ready to ship",
+      "thank_you_sent": "Thank-you email sent",
+      "progress_mockup": "Mockup sent for approval",
+      "mockup_approved": "Mockup approved",
+      "mockup_revision": "Mockup changes requested"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -712,7 +723,6 @@
       "amount": "Amount",
       "paidOn": "Transfer date",
       "payer": "Sender name",
-      "proof": "Transfer proof (image/PDF, max 5 MB)",
       "submit": "Send proof",
       "proofSent": "Proof sent, awaiting verification",
       "proofs": "Submitted proofs",
@@ -722,7 +732,6 @@
         "rejected": "Rejected"
       },
       "cancel": "Cancel order",
-      "cancelConfirm": "Cancel this order? The voucher you used will be returned.",
       "cancelled": "Order cancelled",
       "cancelReason": "Reason",
       "history": "History",
@@ -737,13 +746,12 @@
       "reviseMessage": "What should change?",
       "rejectMessage": "Reason (optional)",
       "send": "Send",
-      "acceptConfirm": "Accept quotation {number}? We will issue the down payment or final invoice.",
       "accepted": "Quotation accepted",
       "rejected": "Quotation declined",
       "revisionSent": "Change request sent",
       "requestedInfo": "Quotation request received. Our team will email you a quotation.",
       "revisionInfo": "Change request sent. Our team will send a new quotation.",
-      "acceptedInfo": "Quotation accepted. Down payment or final invoices will appear here.",
+      "acceptedInfo": "Quotation accepted. Our admin is preparing the deal; once it is sent you can choose a down payment or pay in full here.",
       "documents": "Documents",
       "payFor": "Pay for",
       "designFile": "Design file",
@@ -758,7 +766,22 @@
       "payOnlineHint": "Virtual account, QRIS, e-wallet or card via Midtrans. Marked paid automatically once paid.",
       "onlineReturned": "Your payment is being confirmed. Refresh in a moment.",
       "refreshStatus": "Refresh status",
-      "onlineFailed": "Could not open the payment page"
+      "onlineFailed": "Could not open the payment page",
+      "acceptConfirmTitle": "Accept quotation {number}?",
+      "acceptConfirmText": "Our admin will issue the down payment or final invoice once you accept.",
+      "rejectConfirmTitle": "Decline quotation {number}?",
+      "rejectConfirmText": "This quotation request will be closed. If you only want a different price or quantity, choose Request changes instead.",
+      "rejectPlaceholder": "e.g. the price is above our budget",
+      "cancelConfirmTitle": "Cancel this order?",
+      "cancelConfirmText": "The order cannot be resumed. Any voucher you used will be returned.",
+      "dealPrices": "Prices follow {number}",
+      "proofLabel": "Transfer proof",
+      "proofChoose": "Choose a photo or PDF of the transfer",
+      "proofHint": "Image or PDF, up to 5 MB",
+      "moreDocuments": "Show other documents ({count})",
+      "fewerDocuments": "Show less",
+      "payBarDue": "Balance of {number}",
+      "payNow": "Pay now"
     },
     "orderHistory": {
       "empty": "No orders yet.",
@@ -836,6 +859,77 @@
       "viewOrders": "View all orders",
       "viewAll": "View all notifications",
       "back": "Back"
+    },
+    "paymentPlan": {
+      "title": "First payment",
+      "subtitle": "Deal {number} · total {total}. Choose how to pay before production starts.",
+      "dp": "Down payment",
+      "dpText": "Pay at least 50% now; the rest is billed when the order is ready to ship.",
+      "full": "Pay in full",
+      "fullText": "Pay everything now, nothing to pay later.",
+      "dpType": "Down payment type",
+      "percent": "Percent",
+      "amount": "Amount",
+      "minHint": "At least 50% ({min}) and less than the total.",
+      "percentRange": "The down payment must be at least 50% and below 100%. Choose pay in full to pay everything.",
+      "amountRange": "The down payment must be at least {min} and below {total}.",
+      "payNow": "Pay now",
+      "payLater": "Balance when ready to ship",
+      "previewDp": "Down payment invoice preview",
+      "previewFull": "Full payment invoice preview",
+      "previewLoading": "Preparing the preview…",
+      "previewFailed": "Could not load the preview, try changing the amount again.",
+      "openPreview": "Open PDF preview",
+      "submitDp": "Create down payment invoice",
+      "submitFull": "Create full payment invoice",
+      "confirmDpTitle": "Create a down payment invoice of {amount}?",
+      "confirmFullTitle": "Create a full payment invoice of {amount}?",
+      "confirmDpText": "The invoice appears on this page right away. The balance is billed when the order is ready to ship.",
+      "confirmFullText": "The invoice appears on this page right away. Production starts once the payment is verified.",
+      "dpCreated": "Down payment invoice created",
+      "fullCreated": "Full payment invoice created"
+    },
+    "production": {
+      "title": "Production progress",
+      "steps": {
+        "mockup": "Mockup approval",
+        "sample": "Sample approval",
+        "mass_production": "Mass production",
+        "qc": "Quality check",
+        "ready_to_ship": "Ready to ship",
+        "shipped": "Shipped",
+        "completed": "Completed"
+      },
+      "inProgress": "In progress",
+      "shipWaiting": "Waiting for the balance and shipping.",
+      "decision": {
+        "approved": "Approved",
+        "revision": "Changes requested",
+        "waiting": "Waiting for approval"
+      },
+      "revisionNote": "Requested changes",
+      "approve": {
+        "mockup": "Approve mockup",
+        "sample": "Approve sample"
+      },
+      "requestRevision": "Request changes",
+      "revisionPlaceholder": "Describe what should change in the sample",
+      "sendRevision": "Send change request",
+      "approvedToast": {
+        "mockup": "Mockup approved, our team moves on to the sample",
+        "sample": "Sample approved, mass production starts"
+      },
+      "revisionToast": "Change request sent",
+      "viewFile": "View {name}",
+      "preparing": {
+        "mockup": "Our designers are preparing the mockup.",
+        "sample": "Our team is preparing the sample."
+      },
+      "waitingYou": {
+        "mockup": "The mockup is waiting for your approval.",
+        "sample": "The sample is waiting for your approval."
+      },
+      "waitingCustomer": "Waiting for the customer's answer."
     },
     "filePick": {
       "choose": "Choose a file",

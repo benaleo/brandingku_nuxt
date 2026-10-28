@@ -629,7 +629,18 @@
       "shipping_fee_set": "Ongkir ditetapkan",
       "invoice_sent": "Invoice dikirim",
       "created": "Pesanan dibuat",
-      "online_payment_unapplied": "Pembayaran online perlu refund"
+      "online_payment_unapplied": "Pembayaran online perlu refund",
+      "payment_plan_chosen": "Pembayaran pertama dipilih",
+      "progress_sample": "Sample dikirim untuk disetujui",
+      "sample_approved": "Sample disetujui",
+      "sample_revision": "Revisi sample diminta",
+      "progress_mass_production": "Produksi massal selesai",
+      "progress_qc": "Quality check selesai",
+      "progress_ready_to_ship": "Pesanan siap kirim",
+      "thank_you_sent": "Email terima kasih dikirim",
+      "progress_mockup": "Mockup dikirim untuk disetujui",
+      "mockup_approved": "Mockup disetujui",
+      "mockup_revision": "Revisi mockup diminta"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -712,7 +723,6 @@
       "amount": "Nominal",
       "paidOn": "Tanggal transfer",
       "payer": "Nama pengirim",
-      "proof": "Bukti transfer (gambar/PDF, maks 5 MB)",
       "submit": "Kirim bukti",
       "proofSent": "Bukti transfer dikirim, menunggu verifikasi",
       "proofs": "Bukti yang dikirim",
@@ -722,7 +732,6 @@
         "rejected": "Ditolak"
       },
       "cancel": "Batalkan pesanan",
-      "cancelConfirm": "Batalkan pesanan ini? Voucher yang dipakai akan dikembalikan.",
       "cancelled": "Pesanan dibatalkan",
       "cancelReason": "Alasan pembatalan",
       "history": "Riwayat",
@@ -737,13 +746,12 @@
       "reviseMessage": "Apa yang perlu diubah?",
       "rejectMessage": "Alasan (opsional)",
       "send": "Kirim",
-      "acceptConfirm": "Terima penawaran {number}? Admin akan menerbitkan invoice DP atau pelunasan.",
       "accepted": "Penawaran diterima",
       "rejected": "Penawaran ditolak",
       "revisionSent": "Permintaan revisi dikirim",
       "requestedInfo": "Permintaan penawaran diterima. Admin akan mengirim penawaran ke email kamu.",
       "revisionInfo": "Permintaan revisi dikirim. Admin akan mengirim penawaran baru.",
-      "acceptedInfo": "Penawaran diterima. Tagihan DP atau pelunasan akan muncul di sini.",
+      "acceptedInfo": "Penawaran diterima. Admin sedang menyiapkan deal; setelah dikirim kamu bisa memilih DP atau langsung pelunasan di sini.",
       "documents": "Dokumen",
       "payFor": "Bayar untuk",
       "designFile": "File desain",
@@ -758,7 +766,22 @@
       "payOnlineHint": "Virtual account, QRIS, e-wallet atau kartu lewat Midtrans. Status lunas otomatis setelah pembayaran.",
       "onlineReturned": "Pembayaran sedang dikonfirmasi. Muat ulang beberapa saat lagi.",
       "refreshStatus": "Muat ulang status",
-      "onlineFailed": "Gagal membuka halaman pembayaran"
+      "onlineFailed": "Gagal membuka halaman pembayaran",
+      "acceptConfirmTitle": "Terima penawaran {number}?",
+      "acceptConfirmText": "Admin akan menerbitkan invoice DP atau pelunasan setelah penawaran diterima.",
+      "rejectConfirmTitle": "Tolak penawaran {number}?",
+      "rejectConfirmText": "Permintaan penawaran ini akan ditutup. Kalau hanya ingin mengubah harga atau jumlah, pilih Minta revisi.",
+      "rejectPlaceholder": "Contoh: harga di atas budget kami",
+      "cancelConfirmTitle": "Batalkan pesanan ini?",
+      "cancelConfirmText": "Pesanan tidak bisa dilanjutkan lagi. Voucher yang dipakai akan dikembalikan.",
+      "dealPrices": "Harga mengikuti {number}",
+      "proofLabel": "Bukti transfer",
+      "proofChoose": "Pilih foto atau PDF bukti transfer",
+      "proofHint": "Gambar atau PDF, maks. 5 MB",
+      "moreDocuments": "Tampilkan dokumen lainnya ({count})",
+      "fewerDocuments": "Tampilkan lebih sedikit",
+      "payBarDue": "Sisa tagihan {number}",
+      "payNow": "Bayar sekarang"
     },
     "orderHistory": {
       "empty": "Belum ada pesanan.",
@@ -836,6 +859,77 @@
       "viewOrders": "Lihat semua pesanan",
       "viewAll": "Lihat semua notifikasi",
       "back": "Kembali"
+    },
+    "paymentPlan": {
+      "title": "Pembayaran pertama",
+      "subtitle": "Deal {number} · total {total}. Pilih cara membayar sebelum produksi dimulai.",
+      "dp": "DP (uang muka)",
+      "dpText": "Bayar minimal 50% sekarang, sisanya ditagih saat pesanan siap kirim.",
+      "full": "Langsung pelunasan",
+      "fullText": "Bayar penuh sekarang, tidak ada tagihan lagi nanti.",
+      "dpType": "Tipe DP",
+      "percent": "Persen",
+      "amount": "Nominal",
+      "minHint": "Minimal 50% ({min}) dan kurang dari total.",
+      "percentRange": "DP minimal 50% dan kurang dari 100%. Pilih pelunasan untuk membayar penuh.",
+      "amountRange": "DP minimal {min} dan kurang dari {total}.",
+      "payNow": "Dibayar sekarang",
+      "payLater": "Pelunasan saat siap kirim",
+      "previewDp": "Preview invoice DP",
+      "previewFull": "Preview invoice pelunasan",
+      "previewLoading": "Menyiapkan preview…",
+      "previewFailed": "Preview gagal dimuat, coba ubah nominal lagi.",
+      "openPreview": "Lihat preview PDF",
+      "submitDp": "Buat tagihan DP",
+      "submitFull": "Buat tagihan pelunasan",
+      "confirmDpTitle": "Buat tagihan DP {amount}?",
+      "confirmFullTitle": "Buat tagihan pelunasan {amount}?",
+      "confirmDpText": "Tagihan langsung muncul di halaman ini. Sisa pembayaran ditagih saat pesanan siap kirim.",
+      "confirmFullText": "Tagihan langsung muncul di halaman ini. Produksi dimulai setelah pembayaran diverifikasi.",
+      "dpCreated": "Tagihan DP dibuat",
+      "fullCreated": "Tagihan pelunasan dibuat"
+    },
+    "production": {
+      "title": "Progres produksi",
+      "steps": {
+        "mockup": "Mockup approval",
+        "sample": "Sample approval",
+        "mass_production": "Produksi massal",
+        "qc": "Quality check",
+        "ready_to_ship": "Siap kirim",
+        "shipped": "Dikirim ke customer",
+        "completed": "Selesai"
+      },
+      "inProgress": "Sedang dikerjakan",
+      "shipWaiting": "Menunggu pelunasan dan pengiriman.",
+      "decision": {
+        "approved": "Disetujui",
+        "revision": "Minta revisi",
+        "waiting": "Menunggu persetujuan"
+      },
+      "revisionNote": "Catatan revisi",
+      "approve": {
+        "mockup": "Setujui mockup",
+        "sample": "Setujui sample"
+      },
+      "requestRevision": "Minta revisi",
+      "revisionPlaceholder": "Tulis apa yang perlu diubah dari sample",
+      "sendRevision": "Kirim permintaan revisi",
+      "approvedToast": {
+        "mockup": "Mockup disetujui, tim kami lanjut membuat sample",
+        "sample": "Sample disetujui, produksi massal dimulai"
+      },
+      "revisionToast": "Permintaan revisi terkirim",
+      "viewFile": "Lihat {name}",
+      "preparing": {
+        "mockup": "Tim desain sedang menyiapkan mockup.",
+        "sample": "Tim kami sedang menyiapkan sample."
+      },
+      "waitingYou": {
+        "mockup": "Mockup menunggu persetujuan kamu.",
+        "sample": "Sample menunggu persetujuan kamu."
+      },
+      "waitingCustomer": "Menunggu jawaban customer."
     },
     "filePick": {
       "choose": "Pilih file",
