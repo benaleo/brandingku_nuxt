@@ -6,6 +6,13 @@ import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { CartItem } from '~/composables/useCart'
 
+// the cart needs an account; login brings the visitor back here
+definePageMeta({
+  middleware: (to) => {
+    if (!useCookie<string | null>('token').value) return navigateTo({ path: '/console/auth', query: { redirect: to.fullPath } })
+  },
+})
+
 const router = useRouter()
 const { t } = useI18n()
 const config = useRuntimeConfig()
@@ -23,6 +30,12 @@ onMounted(async () => {
   try {
     await refresh()
   } catch (e: any) {
+    // an expired session: sign in again instead of showing the error
+    if (e?.cause?.code === 'UNAUTHENTICATED') {
+      token.value = null
+      await router.replace({ path: '/console/auth', query: { redirect: '/cart' } })
+      return
+    }
     toast.error(cartErrorMessage(e, t('app.cartPage.failed')))
   } finally {
     loaded.value = true
