@@ -181,6 +181,18 @@ const variantAttributes = computed<{ key: string; value: string }[] | null>(
   }
 );
 
+// colour variants take precedence over colour attributes on the price variants
+const colorOptions = computed<string[]>(() => {
+  const named = detail.value?.colorVariants?.map((c) => c.name) || [];
+  if (named.length) return named;
+  return variantColors.value?.length ? variantColors.value : detail.value?.colors || [];
+});
+// the gallery shows the chosen colour's picture, or the main image when it has none
+const focusImage = computed(() => {
+  const img = detail.value?.colorVariants?.find((c) => c.name === selectedColor.value)?.image;
+  return img ? `${STORAGE_URL}${img}` : undefined;
+});
+
 const variantColors = computed<string[] | null>(() => {
   const attrs = variantAttributes.value;
   if (!attrs) return null;
@@ -209,8 +221,10 @@ watch(
   detail,
   (v) => {
     if (!v) return;
-    if (!selectedColor.value && (v.colors?.length || 0) > 0)
-      selectedColor.value = v.colors?.[0] || "";
+    // product colour variants first, else colours from the variant attributes
+    if (!selectedColor.value) {
+      selectedColor.value = v.colorVariants?.[0]?.name || v.colors?.[0] || "";
+    }
     // default variant: first additional name
     if (!selectedVariantName.value && (v.additionals?.length || 0) > 0) {
       selectedVariantName.value = v.additionals?.[0]?.name || "";
@@ -219,8 +233,10 @@ watch(
   { immediate: true }
 );
 
-// when variant changes, adjust selectedColor to first variant color if available
+// when variant changes, adjust selectedColor to first variant color if available;
+// product colour variants are independent of the price variant and stay as chosen
 watch(selectedVariantName, () => {
+  if (detail.value?.colorVariants?.length) return;
   if (variantColors.value && variantColors.value.length) {
     selectedColor.value = variantColors.value[0] || "";
   }
@@ -289,6 +305,7 @@ definePageMeta({
         <div class="-mx-4 sm:mx-0">
           <AtomsProductThumbnail
             :images="detail.images.map((img: string) => `${STORAGE_URL}${img}`)"
+            :focus="focusImage"
             class="lg:sticky lg:top-24"
           />
         </div>
@@ -318,19 +335,37 @@ definePageMeta({
             </span>
           </div>
 
-          <!-- Color (depends on selected variant) -->
-          <div
-            v-if="
-              (variantColors && variantColors.length) || detail.colors?.length
-            "
-            class="mt-8"
-          >
-            <h3 class="text-sm font-medium mb-2">{{ $t('app.productPage.detail.color') }}</h3>
-            <div class="flex gap-2 flex-wrap">
+          <!-- Color: the product's colour variants, else colours from the selected variant's attributes -->
+          <div v-if="colorOptions.length" class="mt-8">
+            <h3 class="text-sm font-medium mb-2">
+              {{ $t('app.productPage.detail.color') }}<span v-if="selectedColor" class="font-normal text-gray-500">: {{ selectedColor }}</span>
+            </h3>
+            <div v-if="detail.colorVariants.length" class="flex flex-wrap gap-2">
               <button
-                v-for="color in variantColors && variantColors.length
-                  ? variantColors
-                  : detail.colors"
+                v-for="c in detail.colorVariants"
+                :key="c.name"
+                type="button"
+                :title="c.name"
+                :aria-label="c.name"
+                :aria-pressed="c.name === selectedColor"
+                class="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm transition-all"
+                :class="c.name === selectedColor ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 hover:border-gray-300'"
+                @click="selectedColor = c.name"
+              >
+                <img
+                  v-if="c.image"
+                  :src="`${STORAGE_URL}${c.image}`"
+                  alt=""
+                  class="size-7 rounded-full object-cover"
+                  loading="lazy"
+                />
+                <span v-else class="size-7 rounded-full bg-gray-100"></span>
+                {{ c.name }}
+              </button>
+            </div>
+            <div v-else class="flex gap-2 flex-wrap">
+              <button
+                v-for="color in colorOptions"
                 :key="color"
                 @click="selectedColor = color"
                 class="px-3 py-1.5 border rounded-full text-sm transition-all"

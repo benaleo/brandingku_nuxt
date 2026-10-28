@@ -13,11 +13,12 @@ import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import FormButton from "../atoms/FormButton.vue";
-import type { ProductAdditional, ProductGallery } from "~/types/products.type";
+import type { ProductAdditional, ProductColorDraft, ProductGallery } from "~/types/products.type";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
 import GalleryMultiUploadForm from "./GalleryMultiUploadForm.vue";
+import ProductColorForm from "./ProductColorForm.vue";
 import FieldXArea from "./fields/FieldXArea.vue";
 import Label from "../ui/label/Label.vue";
 import QuillEditor from "~/components/editor/QuillEditor.vue";
@@ -151,6 +152,8 @@ if (!isCreate) {
 const galleries = ref<ProductGallery[]>([]);
 // existing gallery ids removed in the form; deleted (with their stored files) on save
 const removedGalleryIds = ref<string[]>([]);
+// colour variants; each may carry its own picture
+const colors = ref<ProductColorDraft[]>([]);
 
 // Watch for API data load and set fields ONCE when available
 const initialized = ref(false);
@@ -184,6 +187,14 @@ const stopInitWatch = watch(
             orders: gallery.orders || 1,
           })
         );
+
+        colors.value = (datasVal.colors || []).map((c: any, i: number) => ({
+          key: i + 1,
+          id: c.id != null ? String(c.id) : undefined,
+          name: c.name || "",
+          image: c.image ? `${STORAGE_URL}${c.image}` : "",
+          file: null,
+        }));
 
         const processedAdditionals = (datasVal.additionals || []).map(
           (add: any) => {
@@ -428,6 +439,27 @@ const handleSubmitForm = handleSubmit(
         }
       }
 
+      // colours: a new file goes up as base64, a stored picture is sent back as its path
+      const blankColor = colors.value.findIndex((c) => !c.name.trim());
+      if (blankColor >= 0) {
+        toast.error(`Nama warna ke-${blankColor + 1} wajib diisi`);
+        return;
+      }
+      const { convertToBase64: colorToBase64 } = useFileToBase64();
+      submitData.colors = await Promise.all(
+        colors.value.map(async (c) => {
+          let img = "";
+          if (c.file) {
+            const b64 = await colorToBase64(c.file);
+            const comma = b64.indexOf(",");
+            img = b64.startsWith("data:") && comma >= 0 ? b64.slice(comma + 1) : b64;
+          } else if (c.image.startsWith(STORAGE_URL)) {
+            img = c.image.slice(STORAGE_URL.length);
+          }
+          return { id: c.id, name: c.name.trim(), image: img };
+        })
+      );
+
       console.log(submitData);
 
       // First save the form data
@@ -444,6 +476,7 @@ const handleSubmitForm = handleSubmit(
           is_active: submitData.is_active,
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
+          colors: submitData.colors,
         });
         toast.success("Product created successfully!");
       } else {
@@ -464,6 +497,7 @@ const handleSubmitForm = handleSubmit(
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
           removed_gallery_ids: removedGalleryIds.value,
+          colors: submitData.colors,
         });
         toast.success("Product updated successfully!");
       }
@@ -551,6 +585,10 @@ function handleBack() {
 
     <!-- Galleries Section -->
     <GalleryMultiUploadForm v-model="galleries" v-model:removedIds="removedGalleryIds" :disabled="disabled" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Varian warna" description="Tambahkan pilihan warna. Gambar per warna opsional; tanpa gambar, warna memakai gambar utama produk.">
+      <ProductColorForm v-model="colors" :fallback-image="image" :disabled="disabled" />
     </FormsFormSection>
 
     <FormsFormSection title="Varian & harga" description="Kelola pilihan produk, harga, stok, dan atributnya.">

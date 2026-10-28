@@ -8,6 +8,7 @@ export type Product = {
     is_recommended: boolean
     is_upsell: boolean
     galleries: ProductGallery[]
+    colors?: ProductColor[]
     additionals: {
         id: string,
         name: string,
@@ -32,6 +33,25 @@ export type ProductAdditional = {
     discount_type: string
     attributes: string
     _uniqueKey?: string
+}
+
+export type ProductColor = {
+    id: string
+    product_id: number
+    name: string
+    // storage path; empty means the product's main image is used for this colour
+    image: string
+    orders: number
+}
+
+// one colour card in the product form
+export type ProductColorDraft = {
+    key: number
+    id?: string
+    name: string
+    // stored path, a preview URL for a newly picked file, or empty
+    image: string
+    file?: File | null
 }
 
 export type ProductGallery = {

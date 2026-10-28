@@ -159,6 +159,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                         is_active
                         is_wishlisted
                         galleries { id image orders }
+                        colors { id product_id name image orders }
                         additionals {
                             id
                             name
@@ -200,6 +201,21 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         if (p.page !== undefined) changePage(p.page)
         if (p.limit) changeLimit(p.limit)
         return refetch()
+    }
+
+    // replaces the product's colour list; a colour with a new file sends it as base64
+    const saveProductColors = async (productId: number, colors: { id?: string; name: string; image?: string }[]) => {
+        const mutation = `
+            mutation saveProductColors($productId: Int!, $colors: [ProductColorInput!]!) {
+                saveProductColors(product_id: $productId, colors: $colors) { id name image orders }
+            }
+        `
+        const input = colors.map((c) => ({
+            id: c.id ? Number(c.id) : null,
+            name: c.name,
+            image: c.image ?? '',
+        }))
+        await gqlFetch(mutation, { productId, colors: input }, { auth: true, timeout: 60000 })
     }
 
     const createProduct = async (payload: any) => {
@@ -270,6 +286,10 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                     product_id: productId
                 })
             }
+        }
+
+        if (Array.isArray(payload.colors) && payload.colors.length) {
+            await saveProductColors(productId, payload.colors)
         }
         
         return res?.createProduct
@@ -409,6 +429,10 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                 }
             } catch (e) {
             }
+        }
+
+        if (Array.isArray(payload.colors)) {
+            await saveProductColors(Number(id), payload.colors)
         }
 
         return res?.updateProduct

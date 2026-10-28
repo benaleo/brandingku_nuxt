@@ -8,6 +8,8 @@ export type ProductDetail = {
   category?: string
   description?: string
   images: string[]
+  // colour variants with the image each one shows (its own, or the main product image)
+  colorVariants: { name: string; image: string }[]
   price: number
   originalPrice?: number | null
   colors: string[]
@@ -55,6 +57,7 @@ export const useProductDetail = (initialSlug: string) => {
             is_recommended
             is_upsell
             galleries { id image orders }
+            colors { id name image orders }
             additionals {
               id
               name
@@ -75,11 +78,18 @@ export const useProductDetail = (initialSlug: string) => {
       const p = res?.getProductDetailSlug
       if (!p) throw new Error('Product not found')
 
-      // Sort galleries
+      // images: main image, then galleries, then colour pictures, each path once
       const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
       galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
-      const images: string[] = galleries.map((g: any) => g?.image).filter(Boolean)
-      if (!images.length && p.image) images.push(p.image)
+      const colorRows = (Array.isArray(p.colors) ? [...p.colors] : [])
+        .sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
+      const images: string[] = []
+      for (const img of [p.image, ...galleries.map((g: any) => g?.image), ...colorRows.map((c: any) => c?.image)]) {
+        if (img && !images.includes(img)) images.push(img)
+      }
+      const colorVariants = colorRows
+        .filter((c: any) => c?.name)
+        .map((c: any) => ({ name: String(c.name), image: c.image || p.image || '' }))
 
       // Compute pricing from additionals
       let minBase = Infinity
@@ -138,6 +148,7 @@ export const useProductDetail = (initialSlug: string) => {
         category: p?.category?.name,
         description: p?.description,
         images,
+        colorVariants,
         price: Number(minAfter.toFixed(2)),
         originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
         colors,

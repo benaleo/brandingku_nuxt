@@ -2,12 +2,14 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Carousel, type CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { watchOnce } from '@vueuse/core'
-import { ref, defineProps } from 'vue'
+import { ref, watch, defineProps } from 'vue'
 
 const props = defineProps<{
   images: string[]
   // alt text for the 1-based image number; defaults to the product wording
   imageAlt?: (n: number) => string
+  // image to bring into view, e.g. the picture of the chosen colour
+  focus?: string
 }>()
 
 const emblaMainApi = ref<CarouselApi>()
@@ -26,6 +28,13 @@ function onThumbClick(index: number) {
     return
   emblaMainApi.value.scrollTo(index)
 }
+
+// jump to the requested image once the carousel exists and whenever it changes
+watch([() => props.focus, emblaMainApi], ([focus, api]) => {
+  if (!focus || !api) return
+  const index = props.images.indexOf(focus)
+  if (index >= 0 && index !== api.selectedScrollSnap()) api.scrollTo(index)
+})
 
 watchOnce(emblaMainApi, (emblaMainApi) => {
   if (!emblaMainApi)
