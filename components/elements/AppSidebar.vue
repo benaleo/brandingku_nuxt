@@ -20,8 +20,21 @@ import {useRoute} from 'vue-router'
 import {useChatUnreadCount} from '~/services/chat-admin.service'
 
 const route = useRoute()
-const { menus: secretConsoleMenu } = useConsoleAccess()
+const { menus: secretConsoleMenu, can } = useConsoleAccess()
 const { unreadCount } = useChatUnreadCount()
+
+// unfinished transactions; refreshed on navigation and every minute
+const ORDERS_HREF = '/console/secret/orders'
+const { count: openOrders, refresh: refreshOpenOrders } = useOpenOrderCount()
+const refreshOrders = () => { if (can('orders.index')) refreshOpenOrders() }
+let ordersTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  refreshOrders()
+  ordersTimer = setInterval(refreshOrders, 60_000)
+})
+onBeforeUnmount(() => clearInterval(ordersTimer))
+watch(() => route.path, refreshOrders)
+const badgeOf = (href: string) => href === '/console/secret/chat' ? unreadCount.value : href === ORDERS_HREF ? openOrders.value : 0
 const iconComponents: Record<string, Component> = {
   BadgeCheck,
   Building2,
@@ -94,10 +107,11 @@ const isActive = (href: string) => {
                       />
                       <span>{{ item.name }}</span>
                       <span
-                          v-if="item.href === '/console/secret/chat' && unreadCount > 0"
+                          v-if="badgeOf(item.href) > 0"
                           class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold text-white"
+                          :title="item.href === ORDERS_HREF ? `${openOrders} transaksi belum selesai` : undefined"
                       >
-                        {{ unreadCount > 9 ? '9+' : unreadCount }}
+                        {{ badgeOf(item.href) > 99 ? '99+' : badgeOf(item.href) }}
                       </span>
                     </NuxtLink>
                   </SidebarMenuButton>

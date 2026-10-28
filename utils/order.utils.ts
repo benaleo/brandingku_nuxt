@@ -33,6 +33,9 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   rejected: 'Penawaran ditolak',
 }
 
+// statuses where nothing is left to do on the order
+export const FINISHED_ORDER_STATUSES: OrderStatus[] = ['completed', 'cancelled', 'expired', 'rejected']
+
 // the API takes 5 MB per file (base64 must fit its 10 MB request limit)
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 export const isImageOrPdf = (file: File) => file.type.startsWith('image/') || file.type === 'application/pdf'
