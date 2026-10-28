@@ -58,21 +58,22 @@
 
     <!-- Copyright Notice & Language Selection -->
     <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto text-sm text-gray-400">
-      <p>{{ $t('app.footer.copyright') }}</p>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-400">{{ $t('app.language.switch') }}:</span>
+      <p class="text-center">{{ $t('app.footer.copyright') }}</p>
+      <div role="group" :aria-label="$t('app.language.switch')" class="flex items-center gap-2">
         <button
           @click="setLocale('id')"
           class="px-2 py-1 rounded text-xs transition-colors"
           :class="locale === 'id' ? 'bg-green-700 text-white font-semibold' : 'text-gray-400 hover:text-white'"
+          :aria-pressed="locale === 'id'"
         >
           🇮🇩 ID
         </button>
-        <span class="text-gray-600">|</span>
+        <span class="text-gray-600" aria-hidden="true">|</span>
         <button
           @click="setLocale('en')"
           class="px-2 py-1 rounded text-xs transition-colors"
           :class="locale === 'en' ? 'bg-green-700 text-white font-semibold' : 'text-gray-400 hover:text-white'"
+          :aria-pressed="locale === 'en'"
         >
           🇬🇧 EN
         </button>
