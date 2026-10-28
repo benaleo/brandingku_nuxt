@@ -239,6 +239,12 @@
         "metaFallback": "Produk - Brandingku",
         "imageAlt": "Gambar produk {n}",
         "buyNow": "Beli sekarang",
+        "subtotalFor": "Subtotal {qty} pcs: {total}",
+        "wholesale": "Harga grosir",
+        "wholesaleQty": "Jumlah",
+        "wholesalePrice": "Harga per pcs",
+        "qtyRange": "{from} - {to} pcs",
+        "qtyFrom": "≥ {from} pcs",
         "requestQuote": "Minta penawaran"
       },
       "quickViewDialog": {

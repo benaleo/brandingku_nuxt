@@ -25,6 +25,8 @@ export type ProductDetail = {
     discount: number
     discount_type: string
     attributes: string
+    // wholesale prices, lowest quantity first
+    price_tiers: { min_qty: number; price: number }[]
   }>
 }
 
@@ -67,6 +69,7 @@ export const useProductDetail = (initialSlug: string) => {
               discount
               discount_type
               attributes
+              price_tiers { min_qty price }
             }
             created_at
             updated_at
@@ -163,7 +166,10 @@ export const useProductDetail = (initialSlug: string) => {
           stock: Number(a.stock) || 0,
           discount: Number(a.discount) || 0,
           discount_type: String(a.discount_type || 'AMOUNT'),
-          attributes: typeof a.attributes === 'string' ? a.attributes : '[]'
+          attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
+          price_tiers: (a.price_tiers || [])
+            .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
+            .sort((x: any, y: any) => x.min_qty - y.min_qty),
         })),
       }
     } catch (e: any) {

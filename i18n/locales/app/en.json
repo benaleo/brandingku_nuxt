@@ -239,6 +239,12 @@
         "metaFallback": "Product - Brandingku",
         "imageAlt": "Product image {n}",
         "buyNow": "Buy now",
+        "subtotalFor": "Subtotal for {qty} pcs: {total}",
+        "wholesale": "Wholesale prices",
+        "wholesaleQty": "Quantity",
+        "wholesalePrice": "Price per piece",
+        "qtyRange": "{from} - {to} pcs",
+        "qtyFrom": "{from}+ pcs",
         "requestQuote": "Request a quotation"
       },
       "quickViewDialog": {

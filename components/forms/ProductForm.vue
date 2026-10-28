@@ -60,6 +60,7 @@ const formSchema = toTypedSchema(
           discount: z.coerce.number().int("Discount must be an integer"),
           discount_type: z.string().min(1, "Discount type is required"),
           attributes: z.string().optional().default(""),
+          price_tiers: z.array(z.object({ min_qty: z.coerce.number(), price: z.coerce.number() })).optional(),
         })
       )
       .min(1, "At least one additional is required"),
@@ -87,11 +88,12 @@ const {
       {
         name: "",
         price: 0,
-        moq: 0,
+        moq: 1,
         stock: 0,
         discount: 0,
         discount_type: "AMOUNT",
         attributes: "[]",
+        price_tiers: [],
       },
     ],
   },
@@ -218,6 +220,10 @@ const stopInitWatch = watch(
               discount: Number(add.discount) || 0,
               discount_type: add.discount_type || "AMOUNT",
               attributes,
+              price_tiers: (add.price_tiers || []).map((t: any) => ({
+                min_qty: Number(t.min_qty) || 0,
+                price: Number(t.price) || 0,
+              })),
             };
           }
         );
@@ -372,6 +378,10 @@ const handleSubmitForm = handleSubmit(
           typeof (add as any).attributes === "string"
             ? (add as any).attributes
             : "[]",
+        price_tiers: ((add as any).price_tiers || []).map((t: any) => ({
+          min_qty: Math.floor(Number(t.min_qty) || 0),
+          price: Math.floor(Number(t.price) || 0),
+        })),
       })),
       galleries: galleries.value,
     };
@@ -506,8 +516,10 @@ const handleSubmitForm = handleSubmit(
 
       // Navigate back
       router.push(getPathWithoutIdInForm(currentPath));
-    } catch (e) {
-      toast.error("Failed to save product");
+    } catch (e: any) {
+      // GraphQL errors arrive as "[GQL] Request failed: <message>"
+      const msg = String(e?.message || "").replace(/^\[GQL\] Request failed:\s*/, "");
+      toast.error(msg || "Failed to save product");
       console.error(e);
     }
   },

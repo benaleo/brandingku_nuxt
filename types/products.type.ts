@@ -32,7 +32,14 @@ export type ProductAdditional = {
     discount: number
     discount_type: string
     attributes: string
+    // wholesale prices: from min_qty pieces the price per piece is price
+    price_tiers?: PriceTier[]
     _uniqueKey?: string
+}
+
+export type PriceTier = {
+    min_qty: number
+    price: number
 }
 
 export type ProductColor = {

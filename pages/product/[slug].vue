@@ -61,28 +61,60 @@ const formatIDR = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value || 0);
 
+// quantity starts at, and never goes below, the variant's MOQ
+const minQty = computed(() => Math.max(1, Number(selectedAdditional.value?.moq) || 1));
+const quantity = ref(1);
+watch(minQty, (moq) => { quantity.value = moq; }, { immediate: true });
+
+// the variant discount applied to a price per piece, rounded down like the server
+const applyDiscount = (base: number) => {
+  const a = selectedAdditional.value;
+  const disc = Number(a?.discount) || 0;
+  if (!a || disc <= 0) return Math.max(0, Math.floor(base));
+  const final =
+    String(a.discount_type).toUpperCase() === "PERCENTAGE"
+      ? base - (base * disc) / 100
+      : base - disc;
+  return Math.max(0, Math.floor(final));
+};
+
+// price per piece for a quantity: the wholesale tier with the largest minimum not above it
+const tierBase = (qty: number) => {
+  const a = selectedAdditional.value;
+  let best = Number(a?.price) || 0;
+  let bestMin = 0;
+  for (const t of a?.price_tiers || []) {
+    if (t.min_qty <= qty && t.min_qty > bestMin) {
+      best = t.price;
+      bestMin = t.min_qty;
+    }
+  }
+  return best;
+};
+
+// every price row of the selected variant: default first, then wholesale tiers
+const priceRows = computed(() => {
+  const a = selectedAdditional.value;
+  if (!a?.price_tiers?.length) return [];
+  const rows = [{ from: 1, price: applyDiscount(Number(a.price) || 0) }];
+  for (const t of a.price_tiers) rows.push({ from: t.min_qty, price: applyDiscount(t.price) });
+  return rows.map((r, i) => ({ ...r, to: i + 1 < rows.length ? rows[i + 1].from - 1 : null }));
+});
+
 const displayedPrice = computed(() => {
   const a = selectedAdditional.value;
   if (!a) return detail.value ? detail.value.price : 0;
-  const base = Number(a.price) || 0;
-  const disc = Number(a.discount) || 0;
-  let final = base;
-  if (disc > 0) {
-    final =
-      String(a.discount_type).toUpperCase() === "PERCENTAGE"
-        ? base - (base * disc) / 100
-        : base - disc;
-  }
-  return Math.max(0, Math.floor(final));
+  return applyDiscount(tierBase(quantity.value));
 });
 
 // no price set: the customer has to ask the admin
 const isAskAdmin = computed(() => displayedPrice.value <= 0);
 
-// quantity starts at, and never goes below, the variant's MOQ
-const minQty = computed(() => Math.max(1, Number(selectedAdditional.value?.moq) || 1));
-const quantity = ref(1);
-watch(minQty, (moq) => { quantity.value = moq; }, { immediate: true });
+// while typing, follow valid numbers so the price per piece updates live; @change clamps
+const previewQuantity = (value: string) => {
+  const n = Math.floor(Number(value));
+  if (Number.isFinite(n) && n >= minQty.value && n <= 100000) quantity.value = n;
+};
 const setQuantity = (value: number | string) => {
   const n = Math.floor(Number(value));
   quantity.value = Number.isFinite(n) ? Math.min(Math.max(n, minQty.value), 100000) : minQty.value;
@@ -129,17 +161,18 @@ const askAdmin = () => {
   openChat(t("app.productPage.detail.askPriceMessage", { name, variant }));
 };
 
+// the default price, struck through when a discount or wholesale tier makes it cheaper
 const displayedOriginal = computed(() => {
   const a = selectedAdditional.value;
   if (!a) return detail.value?.originalPrice || null;
-  const base = Number(a.price) || 0;
-  const disc = Number(a.discount) || 0;
-  if (disc <= 0) return null;
-  const final =
-    String(a.discount_type).toUpperCase() === "PERCENTAGE"
-      ? base - (base * disc) / 100
-      : base - disc;
-  return final < base ? Math.floor(base) : null;
+  const base = Math.floor(Number(a.price) || 0);
+  return displayedPrice.value < base ? base : null;
+});
+
+const activeRow = computed(() => {
+  const rows = priceRows.value;
+  for (let i = rows.length - 1; i >= 0; i--) if (rows[i].from <= quantity.value) return i;
+  return 0;
 });
 
 const displayedStock = computed(() =>
@@ -420,6 +453,7 @@ definePageMeta({
                   :min="minQty"
                   :aria-label="$t('app.cartPage.quantity')"
                   class="h-9 w-20 border-x text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  @input="previewQuantity(($event.target as HTMLInputElement).value)"
                   @change="setQuantity(($event.target as HTMLInputElement).value)"
                 />
                 <button
@@ -432,6 +466,37 @@ definePageMeta({
                 </button>
               </div>
               <p v-if="minQty > 1" class="mt-1 text-xs text-gray-500">{{ $t('app.cartPage.minQty', { moq: minQty }) }}</p>
+              <p v-if="!isAskAdmin && quantity > 1" class="mt-1 text-sm text-gray-700">
+                {{ $t('app.productPage.detail.subtotalFor', { qty: quantity, total: formatIDR(displayedPrice * quantity) }) }}
+              </p>
+            </div>
+
+            <!-- wholesale price list of the selected variant -->
+            <div v-if="priceRows.length" class="mt-4 max-w-sm overflow-hidden rounded-lg border">
+              <p class="bg-gray-50 px-3 py-2 text-sm font-medium">{{ $t('app.productPage.detail.wholesale') }}</p>
+              <table class="w-full text-sm">
+                <thead class="text-left text-xs text-gray-500">
+                  <tr>
+                    <th class="px-3 py-1.5 font-normal">{{ $t('app.productPage.detail.wholesaleQty') }}</th>
+                    <th class="px-3 py-1.5 text-right font-normal">{{ $t('app.productPage.detail.wholesalePrice') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(row, i) in priceRows"
+                    :key="row.from"
+                    class="cursor-pointer border-t"
+                    :class="i === activeRow ? 'bg-green-50 font-semibold text-green-800' : 'hover:bg-gray-50'"
+                    :aria-current="i === activeRow ? 'true' : undefined"
+                    @click="setQuantity(row.from)"
+                  >
+                    <td class="px-3 py-1.5">
+                      {{ row.to ? $t('app.productPage.detail.qtyRange', { from: row.from, to: row.to }) : $t('app.productPage.detail.qtyFrom', { from: row.from }) }}
+                    </td>
+                    <td class="px-3 py-1.5 text-right">{{ formatIDR(row.price) }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             <div class="mt-3 text-sm text-gray-700 space-y-1">
               <div>

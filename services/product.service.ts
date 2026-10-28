@@ -169,6 +169,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                             discount
                             discount_type
                             attributes
+                            price_tiers { min_qty price }
                         }
                         created_at
                         updated_at
@@ -270,10 +271,14 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         if (payload.additionals?.length) {
             const additionalService = useProductAdditionalService()
             for (const additional of payload.additionals) {
-                await additionalService.createProductAdditional({
-                    ...additional,
+                const { price_tiers, ...fields } = additional
+                const created: any = await additionalService.createProductAdditional({
+                    ...fields,
                     product_id: productId
                 })
+                if (Array.isArray(price_tiers) && price_tiers.length && created?.id) {
+                    await additionalService.saveProductPriceTiers(Number(created.id), price_tiers)
+                }
             }
         }
         
@@ -410,13 +415,18 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                         attributes: typeof add.attributes === 'string' ? add.attributes : '[]',
                     }
 
+                    let variantId = hasId ? Number(add.id) : 0
                     if (hasId) {
                         await additionalService.updateProductAdditional(Number(add.id), normalized)
                     } else {
-                        await additionalService.createProductAdditional({
+                        const created: any = await additionalService.createProductAdditional({
                             ...normalized,
                             product_id: Number(id),
                         })
+                        variantId = Number(created?.id) || 0
+                    }
+                    if (variantId && Array.isArray(add.price_tiers)) {
+                        await additionalService.saveProductPriceTiers(variantId, add.price_tiers)
                     }
                 }
 
@@ -428,6 +438,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                     }
                 }
             } catch (e) {
+                // a rejected price (e.g. a wholesale price above the default) must reach the form
+                throw e
             }
         }
 

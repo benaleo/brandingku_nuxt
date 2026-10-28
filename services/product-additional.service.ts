@@ -48,6 +48,19 @@ export const useProductAdditionalService = () => {
     return response?.getProductAdditionalDetail
   }
 
+  // replaces a variant's wholesale prices
+  const saveProductPriceTiers = async (variantId: number, tiers: { min_qty: number; price: number }[]) => {
+    const mutation = `
+      mutation saveProductPriceTiers($id: Int!, $tiers: [ProductPriceTierInput!]!) {
+        saveProductPriceTiers(product_additional_id: $id, tiers: $tiers) { id min_qty price }
+      }
+    `
+    await gqlFetch(mutation, {
+      id: variantId,
+      tiers: tiers.map((t) => ({ min_qty: Math.floor(Number(t.min_qty)), price: Math.floor(Number(t.price)) })),
+    }, { auth: true })
+  }
+
   const createProductAdditional = async (input: (Omit<ProductAdditional, 'id' | 'created_at' | 'updated_at'> & { product_id: number })) => {
     const mutation = `
       mutation CreateProductAdditional(
@@ -149,6 +162,7 @@ export const useProductAdditionalService = () => {
     getProductAdditionalDetail,
     createProductAdditional,
     updateProductAdditional,
-    deleteProductAdditional
+    deleteProductAdditional,
+    saveProductPriceTiers,
   }
 }
