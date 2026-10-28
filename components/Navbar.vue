@@ -266,15 +266,15 @@
         </nav>
 
         <div class="shrink-0 space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/cart')">
-              <ShoppingCart class="size-4" /> {{ $t('app.nav.cart') }}<span v-if="cartCount"> ({{ cartCount }})</span>
+              <ShoppingCart class="size-4 shrink-0" /> {{ $t('app.nav.cart') }}<span v-if="cartCount"> ({{ cartCount }})</span>
             </button>
             <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/wishlist')">
-              <Heart class="size-4" /> {{ $t('app.nav.wishlist') }}
+              <Heart class="size-4 shrink-0" /> {{ $t('app.nav.wishlist') }}
             </button>
-            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="handleUserClick">
-              <User class="size-4" /> {{ $t('app.nav.account') }}
+            <button type="button" class="col-span-2 inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="handleUserClick">
+              <User class="size-4 shrink-0" /> {{ $t('app.nav.account') }}
             </button>
           </div>
           <Button class="h-11 w-full bg-green-600 hover:bg-green-700" @click="router.push('/product')">{{ $t('app.nav.searchProduct') }}</Button>
