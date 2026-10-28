@@ -748,6 +748,38 @@
       "items": "{count} produk",
       "view": "Detail",
       "loading": "Memuat pesanan..."
+    },
+    "replyPage": {
+      "metaTitle": "Balas Inquiry - Brandingku",
+      "loading": "Memuat percakapan…",
+      "linkError": "Tautan tidak dapat dibuka",
+      "contactUs": "Hubungi kami",
+      "greeting": "Halo {name},",
+      "statusOpen": "Terbuka",
+      "statusClosed": "Ditutup",
+      "yourMessage": "Pesan Anda",
+      "you": "Anda",
+      "replyTitle": "Balas pesan",
+      "validUntil": "Tautan ini berlaku sampai {date}. Tanpa balasan dalam 7 hari, inquiry ditutup otomatis.",
+      "placeholder": "Tulis balasan Anda…",
+      "closeInquiry": "Tutup inquiry",
+      "sendContinue": "Kirim & lanjutkan",
+      "confirmClose": "Tutup inquiry ini? Setelah ditutup Anda tidak bisa membalas lagi melalui tautan ini. Pesan di atas (jika ada) akan ikut terkirim.",
+      "cancel": "Batal",
+      "confirmCloseYes": "Ya, tutup inquiry",
+      "closedText": "Inquiry ini sudah ditutup dan tidak bisa dibalas lagi.",
+      "expiredText": "Tautan balasan ini sudah kedaluwarsa.",
+      "newInquiry": "Kirim inquiry baru",
+      "closedNotice": "Inquiry telah ditutup. Terima kasih sudah menghubungi Brandingku.",
+      "sentNotice": "Balasan terkirim. Tim kami akan segera menanggapi melalui email.",
+      "errors": {
+        "generic": "Terjadi kesalahan",
+        "invalidLink": "Tautan tidak valid.",
+        "closed": "Inquiry ini sudah ditutup.",
+        "expired": "Tautan sudah kedaluwarsa.",
+        "messageRequired": "Tulis pesan terlebih dahulu.",
+        "tooLong": "Pesan maksimal {max} karakter."
+      }
     }
   }
 }

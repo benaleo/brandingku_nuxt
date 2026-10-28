@@ -748,6 +748,38 @@
       "items": "{count} products",
       "view": "Details",
       "loading": "Loading orders..."
+    },
+    "replyPage": {
+      "metaTitle": "Reply to Inquiry - Brandingku",
+      "loading": "Loading conversation…",
+      "linkError": "This link can't be opened",
+      "contactUs": "Contact us",
+      "greeting": "Hi {name},",
+      "statusOpen": "Open",
+      "statusClosed": "Closed",
+      "yourMessage": "Your message",
+      "you": "You",
+      "replyTitle": "Reply",
+      "validUntil": "This link is valid until {date}. If there is no reply within 7 days, the inquiry closes automatically.",
+      "placeholder": "Write your reply…",
+      "closeInquiry": "Close inquiry",
+      "sendContinue": "Send & continue",
+      "confirmClose": "Close this inquiry? Once it is closed you can no longer reply through this link. The message above (if any) will be sent as well.",
+      "cancel": "Cancel",
+      "confirmCloseYes": "Yes, close inquiry",
+      "closedText": "This inquiry is closed and can no longer be replied to.",
+      "expiredText": "This reply link has expired.",
+      "newInquiry": "Send a new inquiry",
+      "closedNotice": "The inquiry has been closed. Thank you for contacting Brandingku.",
+      "sentNotice": "Reply sent. Our team will get back to you by email soon.",
+      "errors": {
+        "generic": "Something went wrong",
+        "invalidLink": "This link is not valid.",
+        "closed": "This inquiry is already closed.",
+        "expired": "This link has expired.",
+        "messageRequired": "Please write a message first.",
+        "tooLong": "Messages can be at most {max} characters."
+      }
     }
   }
 }

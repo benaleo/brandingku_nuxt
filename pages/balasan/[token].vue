@@ -10,11 +10,12 @@ const route = useRoute()
 const token = computed(() => String(route.params.token || ''))
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 const { getInquiryThread, replyInquiry } = useInquiryResponseService()
+const { t, locale } = useI18n()
 
-useHead({
-  title: 'Balas Inquiry - Brandingku',
+useHead(() => ({
+  title: t('app.replyPage.metaTitle'),
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
-})
+}))
 
 const thread = ref<InquiryThread | null>(null)
 const loading = ref(true)
@@ -22,15 +23,29 @@ const loadError = ref<string | null>(null)
 const message = ref('')
 const submitting = ref<'continue' | 'close' | null>(null)
 const confirmClose = ref(false)
-const notice = ref<string | null>(null)
+const notice = ref<'sent' | 'closed' | null>(null)
 const submitError = ref<string | null>(null)
 
 const purify = shallowRef<{ sanitize: (html: string) => string } | null>(null)
 const sanitize = (html: string) => (purify.value ? purify.value.sanitize(html) : '')
 
-const cleanError = (e: any) => String(e?.message || 'Terjadi kesalahan').replace(/^\[GQL\] Request failed:\s*/, '')
+// the API answers in Indonesian; known messages are shown in the visitor's language
+const knownErrors: Record<string, string> = {
+  'tautan tidak valid': 'invalidLink',
+  'inquiry ini sudah ditutup': 'closed',
+  'tautan sudah kedaluwarsa': 'expired',
+  'pesan wajib diisi': 'messageRequired',
+}
+const cleanError = (e: any) => {
+  const raw = String(e?.message || '').replace(/^\[GQL\] Request failed:\s*/, '').trim()
+  if (!raw) return t('app.replyPage.errors.generic')
+  const known = knownErrors[raw.toLowerCase()]
+  if (known) return t(`app.replyPage.errors.${known}`)
+  const tooLong = raw.match(/^pesan maksimal (\d+) karakter$/i)
+  return tooLong ? t('app.replyPage.errors.tooLong', { max: tooLong[1] }) : raw
+}
 const formatDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : ''
+  iso ? new Date(iso).toLocaleString(locale.value === 'en' ? 'en-US' : 'id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : ''
 
 const isClosed = computed(() => thread.value?.status === 'closed')
 
@@ -49,7 +64,7 @@ async function submit(close: boolean) {
   submitError.value = null
   notice.value = null
   if (!close && !message.value.trim()) {
-    submitError.value = 'Tulis pesan terlebih dahulu.'
+    submitError.value = t('app.replyPage.errors.messageRequired')
     return
   }
   submitting.value = close ? 'close' : 'continue'
@@ -57,9 +72,7 @@ async function submit(close: boolean) {
     thread.value = (await replyInquiry(token.value, message.value.trim(), close)) || thread.value
     message.value = ''
     confirmClose.value = false
-    notice.value = close
-      ? 'Inquiry telah ditutup. Terima kasih sudah menghubungi Brandingku.'
-      : 'Balasan terkirim. Tim kami akan segera menanggapi melalui email.'
+    notice.value = close ? 'closed' : 'sent'
   } catch (e) {
     submitError.value = cleanError(e)
   } finally {
@@ -71,31 +84,31 @@ async function submit(close: boolean) {
 <template>
   <div class="mx-auto w-full max-w-3xl px-4 pt-28 pb-16">
     <div v-if="loading" class="flex items-center justify-center gap-2 py-24 text-muted-foreground">
-      <Loader2 class="size-5 animate-spin" /> Memuat percakapan…
+      <Loader2 class="size-5 animate-spin" /> {{ $t('app.replyPage.loading') }}
     </div>
 
     <div v-else-if="loadError" class="rounded-2xl border bg-white p-8 text-center shadow-sm">
-      <h1 class="text-xl font-semibold">Tautan tidak dapat dibuka</h1>
+      <h1 class="text-xl font-semibold">{{ $t('app.replyPage.linkError') }}</h1>
       <p class="mt-2 text-sm text-gray-600">{{ loadError }}</p>
-      <NuxtLink to="/kontak" class="mt-6 inline-block rounded-lg bg-black px-4 py-2 text-sm text-white">Hubungi kami</NuxtLink>
+      <NuxtLink to="/kontak" class="mt-6 inline-block rounded-lg bg-black px-4 py-2 text-sm text-white">{{ $t('app.replyPage.contactUs') }}</NuxtLink>
     </div>
 
     <div v-else-if="thread" class="space-y-6">
       <header class="rounded-2xl border bg-white p-6 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="text-sm text-gray-500">Halo {{ thread.name }},</p>
+            <p class="text-sm text-gray-500">{{ $t('app.replyPage.greeting', { name: thread.name }) }}</p>
             <h1 class="mt-1 text-xl font-semibold break-words">{{ thread.subject }}</h1>
           </div>
           <span
             class="shrink-0 rounded-full px-3 py-1 text-xs font-medium"
             :class="isClosed ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-700'"
           >
-            {{ isClosed ? 'Ditutup' : 'Terbuka' }}
+            {{ isClosed ? $t('app.replyPage.statusClosed') : $t('app.replyPage.statusOpen') }}
           </span>
         </div>
         <div class="mt-4 rounded-xl bg-gray-50 p-4">
-          <p class="text-xs font-medium text-gray-500">Pesan Anda</p>
+          <p class="text-xs font-medium text-gray-500">{{ $t('app.replyPage.yourMessage') }}</p>
           <p class="mt-1 whitespace-pre-wrap break-words text-sm text-gray-800">{{ thread.message }}</p>
         </div>
       </header>
@@ -109,7 +122,7 @@ async function submit(close: boolean) {
           :class="m.direction === 'inbound' ? 'ml-6 bg-green-50 sm:ml-16' : 'mr-6 bg-white sm:mr-16'"
         >
           <p class="text-xs text-gray-500">
-            <span class="font-semibold text-gray-700">{{ m.direction === 'inbound' ? 'Anda' : 'Brandingku' }}</span>
+            <span class="font-semibold text-gray-700">{{ m.direction === 'inbound' ? $t('app.replyPage.you') : 'Brandingku' }}</span>
             · {{ formatDate(m.created_at) }}
           </p>
           <div class="thread-body mt-2 text-sm text-gray-800" v-html="sanitize(m.body)" />
@@ -129,20 +142,20 @@ async function submit(close: boolean) {
       </section>
 
       <p v-if="notice" class="flex items-start gap-2 rounded-xl bg-green-100 p-4 text-sm text-green-800">
-        <CheckCircle2 class="mt-0.5 size-4 shrink-0" /> {{ notice }}
+        <CheckCircle2 class="mt-0.5 size-4 shrink-0" /> {{ notice === 'closed' ? $t('app.replyPage.closedNotice') : $t('app.replyPage.sentNotice') }}
       </p>
 
       <!-- reply form -->
       <section v-if="thread.can_reply" class="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 class="font-semibold">Balas pesan</h2>
+        <h2 class="font-semibold">{{ $t('app.replyPage.replyTitle') }}</h2>
         <p class="mt-1 text-xs text-gray-500">
-          Tautan ini berlaku sampai {{ formatDate(thread.expires_at) }}. Tanpa balasan dalam 7 hari, inquiry ditutup otomatis.
+          {{ $t('app.replyPage.validUntil', { date: formatDate(thread.expires_at) }) }}
         </p>
         <textarea
           v-model="message"
           rows="5"
           maxlength="5000"
-          placeholder="Tulis balasan Anda…"
+          :placeholder="$t('app.replyPage.placeholder')"
           class="mt-4 w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-black focus:outline-none"
           :disabled="!!submitting"
         />
@@ -150,33 +163,32 @@ async function submit(close: boolean) {
 
         <div v-if="!confirmClose" class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" :disabled="!!submitting" @click="confirmClose = true">
-            <Lock class="size-4" /> Tutup inquiry
+            <Lock class="size-4" /> {{ $t('app.replyPage.closeInquiry') }}
           </Button>
           <Button type="button" :disabled="!!submitting" @click="submit(false)">
             <Loader2 v-if="submitting === 'continue'" class="size-4 animate-spin" />
             <Send v-else class="size-4" />
-            Kirim &amp; lanjutkan
+            {{ $t('app.replyPage.sendContinue') }}
           </Button>
         </div>
         <div v-else class="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
           <p class="text-sm text-amber-900">
-            Tutup inquiry ini? Setelah ditutup Anda tidak bisa membalas lagi melalui tautan ini.
-            Pesan di atas (jika ada) akan ikut terkirim.
+            {{ $t('app.replyPage.confirmClose') }}
           </p>
           <div class="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" :disabled="!!submitting" @click="confirmClose = false">Batal</Button>
+            <Button type="button" variant="outline" :disabled="!!submitting" @click="confirmClose = false">{{ $t('app.replyPage.cancel') }}</Button>
             <Button type="button" variant="destructive" :disabled="!!submitting" @click="submit(true)">
               <Loader2 v-if="submitting === 'close'" class="size-4 animate-spin" />
-              Ya, tutup inquiry
+              {{ $t('app.replyPage.confirmCloseYes') }}
             </Button>
           </div>
         </div>
       </section>
 
       <section v-else-if="!notice" class="rounded-2xl border bg-white p-6 text-center text-sm text-gray-600 shadow-sm">
-        <template v-if="isClosed">Inquiry ini sudah ditutup dan tidak bisa dibalas lagi.</template>
-        <template v-else>Tautan balasan ini sudah kedaluwarsa.</template>
-        <NuxtLink to="/kontak" class="ml-1 underline">Kirim inquiry baru</NuxtLink>
+        <template v-if="isClosed">{{ $t('app.replyPage.closedText') }}</template>
+        <template v-else>{{ $t('app.replyPage.expiredText') }}</template>
+        <NuxtLink to="/kontak" class="ml-1 underline">{{ $t('app.replyPage.newInquiry') }}</NuxtLink>
       </section>
     </div>
   </div>
