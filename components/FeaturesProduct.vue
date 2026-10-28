@@ -81,10 +81,7 @@ async function quickAdd(product: FeaturedProductItem) {
   addingId.value = product.id;
   try {
     await addToCart(variant.id, variant.moq);
-    toast.success(t("app.cartPage.added"), {
-      description: `${product.name} × ${variant.moq}`,
-      action: { label: t("app.cartPage.viewCart"), onClick: () => router.push("/cart") },
-    });
+    toast.success(t("app.cartPage.added", { name: product.name }));
   } catch (e: any) {
     toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
   } finally {

@@ -144,10 +144,7 @@ const handleAddToCart = async () => {
   adding.value = true;
   try {
     await addToCart(Number(variant.id), quantity.value);
-    toast.success(t("app.cartPage.added"), {
-      description: `${detail.value?.name || ""} · ${variant.name} × ${quantity.value}`,
-      action: { label: t("app.cartPage.viewCart"), onClick: () => router.push("/cart") },
-    });
+    toast.success(t("app.cartPage.added", { name: detail.value?.name || variant.name }));
   } catch (e: any) {
     toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
   } finally {
