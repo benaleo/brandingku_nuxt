@@ -797,10 +797,15 @@
       "placeholder": "Write a message…",
       "send": "Send message",
       "sendFailed": "Message not sent. Please try again.",
-      "enterHint": "Enter to send, Shift+Enter for a new line.",
+      "enterHint": "Enter to send, Shift+Enter for a new line. Files up to {max} MB.",
       "you": "You",
       "staffName": "{name} (Admin)",
-      "customerName": "{name} (Customer)"
+      "customerName": "{name} (Customer)",
+      "attach": "Attach a file",
+      "removeFile": "Remove file",
+      "fileTooLarge": "Files can be up to {max} MB.",
+      "viewImage": "View image {name}",
+      "imageDialog": "Discussion attachment image"
     }
   }
 }

@@ -1,8 +1,9 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { useGql } from '~/composables/useGql'
+import type { EmailAttachmentInput } from '~/types/admin-smtp.type'
 import type { DiscussionMessage, DiscussionSubject } from '~/types/discussion.type'
 
-const MESSAGE_FIELDS = 'id subject_type subject_id author_name author_role message created_at'
+const MESSAGE_FIELDS = 'id subject_type subject_id author_name author_role message attachment { file_name content_type size path } created_at'
 
 // one discussion thread, kept live over the shared websocket while the component is mounted
 export const useDiscussionService = (subjectType: DiscussionSubject, subjectId: () => number) => {
@@ -35,15 +36,16 @@ export const useDiscussionService = (subjectType: DiscussionSubject, subjectId: 
     }
   }
 
-  const post = async (message: string) => {
+  // attachment.content is a data URL; the upload can take a while for a 5 MB file
+  const post = async (message: string, attachment?: EmailAttachmentInput) => {
     sending.value = true
     try {
       const res = await gqlFetch<{ postDiscussionMessage: DiscussionMessage }>(
-        `mutation postDiscussionMessage($type: String!, $id: Int!, $message: String!) {
-          postDiscussionMessage(subject_type: $type, subject_id: $id, message: $message) { ${MESSAGE_FIELDS} }
+        `mutation postDiscussionMessage($type: String!, $id: Int!, $message: String, $attachment: EmailAttachmentInput) {
+          postDiscussionMessage(subject_type: $type, subject_id: $id, message: $message, attachment: $attachment) { ${MESSAGE_FIELDS} }
         }`,
-        { type: subjectType, id: subjectId(), message },
-        { auth: true },
+        { type: subjectType, id: subjectId(), message, attachment: attachment ?? null },
+        { auth: true, timeout: 60000 },
       )
       merge([res.postDiscussionMessage])
     } finally {

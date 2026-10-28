@@ -797,10 +797,15 @@
       "placeholder": "Tulis pesan…",
       "send": "Kirim pesan",
       "sendFailed": "Pesan gagal dikirim. Coba lagi.",
-      "enterHint": "Enter untuk kirim, Shift+Enter untuk baris baru.",
+      "enterHint": "Enter untuk kirim, Shift+Enter untuk baris baru. File maksimal {max} MB.",
       "you": "Kamu",
       "staffName": "{name} (Admin)",
-      "customerName": "{name} (Customer)"
+      "customerName": "{name} (Customer)",
+      "attach": "Lampirkan file",
+      "removeFile": "Hapus file",
+      "fileTooLarge": "Ukuran file maksimal {max} MB.",
+      "viewImage": "Lihat gambar {name}",
+      "imageDialog": "Gambar lampiran diskusi"
     }
   }
 }
