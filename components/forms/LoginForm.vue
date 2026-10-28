@@ -18,7 +18,7 @@ const route = useRoute();
 // only same-site paths, so the parameter cannot send users to another site
 const redirectTarget = () => {
   const r = route.query.redirect;
-  return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') && !r.includes('\\') ? r : '/';
+  return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') && !r.includes('\\') ? r : null;
 };
 const tokenCookie = useCookie('token');
 const authService = useAuthService();
@@ -67,12 +67,8 @@ const handleLogin = handleSubmit(async (values) => {
     const decodedToken = JSON.parse(atob(payload));
     const userRole = decodedToken.role;
     
-    // Route based on user role
-    if (userRole === 'user') {
-      router.push(redirectTarget());
-    } else {
-      router.push('/console/secret/dashboard');
-    }
+    // a return path (e.g. from the cart) wins for every role; otherwise route by role
+    router.push(redirectTarget() ?? (userRole === 'user' ? '/' : '/console/secret/dashboard'));
     
     toast.success('Login successful', {
       description: 'You are now logged in',
