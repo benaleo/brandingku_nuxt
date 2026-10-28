@@ -11,9 +11,9 @@ type PortfolioCard = {
   galleries: { file: string }[]
 }
 
-// productId: show portfolios that showcase this product, falling back to the latest ones;
-// excludeId: leave out the portfolio currently on screen
-const props = defineProps<{ productId?: number | null; excludeId?: number }>()
+// productId: show portfolios that showcase this product, falling back to the latest ones
+// unless linkedOnly is set; excludeId: leave out the portfolio currently on screen
+const props = defineProps<{ productId?: number | null; excludeId?: number; linkedOnly?: boolean }>()
 
 const { gqlFetch } = useGql()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
@@ -41,7 +41,7 @@ const fetchCards = async (productId?: number | null) => {
 const load = async () => {
   try {
     const linked = props.productId ? await fetchCards(props.productId) : []
-    if (linked.length) {
+    if (linked.length || props.linkedOnly) {
       mode.value = 'product'
       items.value = linked
       return
@@ -54,7 +54,7 @@ const load = async () => {
 }
 
 onMounted(load)
-watch(() => [props.productId, props.excludeId], load)
+watch(() => [props.productId, props.excludeId, props.linkedOnly], load)
 
 const coverOf = (p: PortfolioCard) => {
   const file = p.galleries?.[0]?.file
@@ -101,9 +101,9 @@ const carousel = ref<{ scrollPrev: () => void; scrollNext: () => void; canScroll
     </div>
 
     <Carousel ref="carousel" :opts="{ align: 'start' }" class="w-full">
-      <CarouselContent class="-ml-4">
-        <!-- a peek of the next card on phones hints that the row scrolls -->
-        <CarouselItem v-for="p in items" :key="p.id" class="basis-[82%] pl-4 sm:basis-1/2 lg:basis-1/3">
+      <CarouselContent class="-ml-3 sm:-ml-4">
+        <!-- two cards plus a peek of the next on phones hints that the row scrolls -->
+        <CarouselItem v-for="p in items" :key="p.id" class="basis-[45%] pl-3 sm:basis-1/2 sm:pl-4 lg:basis-1/3">
           <NuxtLink
             :to="`/portfolio/${p.slug}`"
             class="group relative block aspect-[4/5] overflow-hidden rounded-2xl bg-slate-900 shadow-sm outline-none ring-1 ring-black/10 transition-shadow duration-500 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
@@ -126,17 +126,17 @@ const carousel = ref<{ scrollPrev: () => void; scrollNext: () => void; canScroll
 
             <span
               v-if="p.category"
-              class="absolute left-4 top-4 max-w-[80%] truncate rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-800 backdrop-blur"
+              class="absolute left-2.5 top-2.5 max-w-[85%] truncate rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-800 backdrop-blur sm:left-4 sm:top-4 sm:max-w-[80%] sm:px-3 sm:py-1 sm:text-[11px]"
             >
               {{ p.category }}
             </span>
 
             <div
-              class="absolute inset-x-0 bottom-0 p-5 text-white transition duration-500 ease-out motion-reduce:transition-none [@media(hover:hover)]:translate-y-4 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+              class="absolute inset-x-0 bottom-0 p-3 text-white sm:p-5 transition duration-500 ease-out motion-reduce:transition-none [@media(hover:hover)]:translate-y-4 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
             >
-              <h3 class="text-lg font-semibold leading-snug md:text-xl">{{ p.title }}</h3>
-              <p v-if="p.subtitle" class="mt-1 line-clamp-2 text-sm text-white/80">{{ p.subtitle }}</p>
-              <span class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-green-300">
+              <h3 class="line-clamp-2 text-sm font-semibold leading-snug sm:text-lg md:text-xl">{{ p.title }}</h3>
+              <p v-if="p.subtitle" class="mt-1 hidden text-sm text-white/80 sm:line-clamp-2">{{ p.subtitle }}</p>
+              <span class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-green-300 sm:mt-3 sm:text-sm">
                 {{ $t('app.portfolioCarousel.viewProject') }}
                 <ArrowRight class="size-4 transition-transform duration-300 group-hover:translate-x-1" />
               </span>

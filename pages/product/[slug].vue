@@ -565,17 +565,17 @@ definePageMeta({
             class="mt-8 pt-6 border-t"
           >
             <h3 class="font-medium mb-3">{{ $t('app.productPage.detail.specifications') }}</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+            <div class="flex flex-col">
               <div
                 v-for="(kv, idx) in variantAttributes &&
                 variantAttributes.length
                   ? variantAttributes
                   : detail.details"
                 :key="idx"
-                class="flex justify-between border-b py-2"
+                class="flex justify-between gap-4 border-b py-2"
               >
-                <span class="text-gray-500">{{ kv.key }}</span>
-                <span class="font-medium">{{ kv.value }}</span>
+                <span class="shrink-0 text-gray-500">{{ kv.key }}</span>
+                <span class="text-right font-medium">{{ kv.value }}</span>
               </div>
             </div>
           </div>
@@ -583,7 +583,7 @@ definePageMeta({
       </div>
 
       <!-- client projects that used this product -->
-      <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" />
+      <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" linked-only />
     </div>
   </div>
 </template>
