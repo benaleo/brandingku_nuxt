@@ -154,6 +154,8 @@
           </li>
         </ul>
       </section>
+
+      <ElementsDiscussionThread v-if="order.type === 'quotation'" subject-type="order" :subject-id="order.id" viewer="staff" />
     </div>
 
     <Dialog :open="!!dialog" @update:open="(v: boolean) => { if (!v && !busy) dialog = null }">

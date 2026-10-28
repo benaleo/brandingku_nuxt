@@ -785,6 +785,22 @@
         "messageRequired": "Please write a message first.",
         "tooLong": "Messages can be at most {max} characters."
       }
+    },
+    "discussion": {
+      "title": "Discussion",
+      "hintCustomer": "Ask about the quotation or leave a note for the Brandingku team. Admin replies appear here.",
+      "hintStaff": "Visible to the customer who placed the order and every admin who can view transactions.",
+      "empty": "No messages yet.",
+      "loading": "Loading discussion…",
+      "loadFailed": "Could not load the discussion.",
+      "retry": "Try again",
+      "placeholder": "Write a message…",
+      "send": "Send message",
+      "sendFailed": "Message not sent. Please try again.",
+      "enterHint": "Enter to send, Shift+Enter for a new line.",
+      "you": "You",
+      "staffName": "{name} (Admin)",
+      "customerName": "{name} (Customer)"
     }
   }
 }

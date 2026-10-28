@@ -295,6 +295,8 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
               </li>
             </ul>
           </section>
+
+          <ElementsDiscussionThread v-if="isQuote" subject-type="order" :subject-id="order.id" viewer="customer" />
         </div>
 
         <aside class="space-y-6">

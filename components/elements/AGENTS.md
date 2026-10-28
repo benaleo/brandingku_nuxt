@@ -22,6 +22,7 @@ Composite widgets that sit between the shadcn primitives and full pages — cons
 | `BenefitFaq.vue` | Accordion rendering of benefit/FAQ entries. |
 | `ElementsProductQuickView.vue` | Product quick-view overlay for the storefront. Note the redundant `Elements` prefix in the filename — auto-import resolves this to `<ElementsElementsProductQuickView>`. |
 | `ChatProductButton.vue` | Product card button that opens the live chat with the product as the topic. |
+| `DiscussionThread.vue` | Live discussion thread for a record (`subject-type`, `subject-id`), used on quotation orders in the storefront (`viewer="customer"`) and the console (`viewer="staff"`). Data and the websocket subscription come from `services/discussion.service.ts`; the backend decides who may join (`discussionSubjects` in `brandingku_go/graph/discussion.go`). |
 
 ## For AI Agents
 

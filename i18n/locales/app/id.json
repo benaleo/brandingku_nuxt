@@ -785,6 +785,22 @@
         "messageRequired": "Tulis pesan terlebih dahulu.",
         "tooLong": "Pesan maksimal {max} karakter."
       }
+    },
+    "discussion": {
+      "title": "Diskusi",
+      "hintCustomer": "Tanyakan detail penawaran atau kirim catatan untuk tim Brandingku. Balasan admin muncul di sini.",
+      "hintStaff": "Terlihat oleh customer pemilik pesanan dan semua admin yang bisa melihat transaksi.",
+      "empty": "Belum ada diskusi.",
+      "loading": "Memuat diskusi…",
+      "loadFailed": "Diskusi gagal dimuat.",
+      "retry": "Coba lagi",
+      "placeholder": "Tulis pesan…",
+      "send": "Kirim pesan",
+      "sendFailed": "Pesan gagal dikirim. Coba lagi.",
+      "enterHint": "Enter untuk kirim, Shift+Enter untuk baris baru.",
+      "you": "Kamu",
+      "staffName": "{name} (Admin)",
+      "customerName": "{name} (Customer)"
     }
   }
 }
