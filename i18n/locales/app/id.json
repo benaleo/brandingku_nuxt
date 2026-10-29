@@ -781,7 +781,13 @@
       "moreDocuments": "Tampilkan dokumen lainnya ({count})",
       "fewerDocuments": "Tampilkan lebih sedikit",
       "payBarDue": "Sisa tagihan {number}",
-      "payNow": "Bayar sekarang"
+      "payNow": "Bayar sekarang",
+      "viewProof": "Bukti",
+      "proofDialog": "Bukti transfer",
+      "openProof": "Buka di tab baru",
+      "resubmitTitle": "Kirim bukti transfer lagi?",
+      "resubmitText": "Kamu sudah mengirim bukti {amount} ({date}) untuk {number} dan statusnya {status}. Kirim lagi hanya kalau ini pembayaran tambahan.",
+      "resubmitAction": "Tetap kirim"
     },
     "orderHistory": {
       "empty": "Belum ada pesanan.",

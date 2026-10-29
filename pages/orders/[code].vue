@@ -3,8 +3,9 @@ import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue'
 import {useElementVisibility} from '@vueuse/core'
 import {useRoute, useRouter} from 'vue-router'
 import {toast} from 'vue-sonner'
-import {ArrowLeft, Ban, CheckCircle2, FileDown, ExternalLink, Loader2, XCircle} from 'lucide-vue-next'
+import {AlertCircle, ArrowLeft, Ban, CheckCircle2, FileDown, ExternalLink, Loader2, XCircle} from 'lucide-vue-next'
 import {Badge} from '@/components/ui/badge'
+import {Dialog, DialogContent, DialogDescription, DialogTitle} from '@/components/ui/dialog'
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
@@ -182,7 +183,7 @@ const payCard = ref<HTMLElement | null>(null)
 const payCardVisible = useElementVisibility(payCard)
 const showPayBar = computed(() => canPay.value && !payCardVisible.value)
 useHead(() => ({
-  title: t('app.orderPage.metaTitle', {code: code.value}),
+  title: t('app.orderPage.metaTitle', {code: order.value?.code || ''}),
   meta: [{name: 'robots', content: 'noindex'}],
   // lifts the chat bubble above the pay bar
   htmlAttrs: {class: showPayBar.value ? 'has-bottom-bar' : ''},
@@ -272,7 +273,7 @@ const itemsTotal = computed(() => itemRows.value.reduce((sum, r) => sum + linesO
 
 // accepting, declining and cancelling are final, so each asks first in a dialog
 // the action outlives the open flag so the copy does not change while the dialog fades out
-const confirming = ref<'accept' | 'reject' | 'cancel'>('accept')
+const confirming = ref<'accept' | 'reject' | 'cancel' | 'resubmit'>('accept')
 const confirmOpen = ref(false)
 const rejectReason = ref('')
 const confirmCopy = computed(() => {
@@ -282,17 +283,43 @@ const confirmCopy = computed(() => {
       return {icon: CheckCircle2, tone: 'primary' as const, title: t('app.orderPage.acceptConfirmTitle', {number}), text: t('app.orderPage.acceptConfirmText'), action: t('app.orderPage.accept')}
     case 'reject':
       return {icon: XCircle, tone: 'danger' as const, title: t('app.orderPage.rejectConfirmTitle', {number}), text: t('app.orderPage.rejectConfirmText'), action: t('app.orderPage.reject')}
+    case 'resubmit': {
+      const last = earlierProofs.value[earlierProofs.value.length - 1]
+      return {
+        icon: AlertCircle, tone: 'primary' as const, title: t('app.orderPage.resubmitTitle'), action: t('app.orderPage.resubmitAction'),
+        text: t('app.orderPage.resubmitText', {
+          number: targetDoc.value?.number || '', amount: formatIDR(last?.amount || 0), date: last ? formatInvoiceDate(last.paid_on) : '',
+          status: last ? t(`app.orderPage.paymentStatus.${last.status}`).toLowerCase() : '',
+        }),
+      }
+    }
     default:
       return {icon: Ban, tone: 'danger' as const, title: t('app.orderPage.cancelConfirmTitle'), text: t('app.orderPage.cancelConfirmText'), action: t('app.orderPage.cancel')}
   }
 })
-function askConfirm(action: 'accept' | 'reject' | 'cancel') {
+// proofs already sent for the document being paid that still count (waiting or verified)
+const earlierProofs = computed(() => (targetDoc.value?.payments || []).filter(p => p.status === 'pending' || p.status === 'verified'))
+// a second proof for the same bill is usually a duplicate, so it asks first
+function submitProof() {
+  if (earlierProofs.value.length) askConfirm('resubmit')
+  else sendProof()
+}
+
+// a proof opens in a popup: pictures inline, PDFs embedded with a link to open them
+const viewingProof = ref<{url: string; name: string; pdf: boolean} | null>(null)
+function showProof(path: string) {
+  const name = path.split('/').pop() || ''
+  viewingProof.value = {url: storageUrl(path), name, pdf: /\.pdf$/i.test(name)}
+}
+
+function askConfirm(action: 'accept' | 'reject' | 'cancel' | 'resubmit') {
   confirming.value = action
   rejectReason.value = ''
   confirmOpen.value = true
 }
 async function runConfirmed() {
   if (confirming.value === 'cancel') await cancel()
+  else if (confirming.value === 'resubmit') await sendProof()
   else await respond(confirming.value, rejectReason.value.trim())
   confirmOpen.value = false
 }
@@ -474,13 +501,16 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
           <section v-if="allPayments.length" class="rounded-xl border bg-white p-5 text-sm shadow-sm">
             <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.proofs') }}</h2>
             <ul class="divide-y">
-              <li v-for="p in allPayments" :key="p.id" class="py-2">
-                <div class="flex justify-between gap-2">
-                  <span>{{ formatIDR(p.amount) }} · {{ formatInvoiceDate(p.paid_on) }}<template v-if="isQuote"> · {{ p.number }}</template></span>
-                  <span :class="p.status === 'verified' ? 'text-green-700' : p.status === 'rejected' ? 'text-red-600' : 'text-amber-700'">{{ $t(`app.orderPage.paymentStatus.${p.status}`) }}</span>
+              <li v-for="p in allPayments" :key="p.id" class="space-y-0.5 py-2.5">
+                <div class="flex items-baseline justify-between gap-3">
+                  <span class="font-medium text-slate-900">{{ formatIDR(p.amount) }} <span class="font-normal text-slate-500">· {{ formatInvoiceDate(p.paid_on) }}</span></span>
+                  <span class="shrink-0 text-xs font-medium" :class="p.status === 'verified' ? 'text-green-700' : p.status === 'rejected' ? 'text-red-600' : 'text-amber-700'">{{ $t(`app.orderPage.paymentStatus.${p.status}`) }}</span>
+                </div>
+                <div class="flex items-baseline justify-between gap-3 text-xs">
+                  <span class="truncate text-slate-500">{{ p.number }}</span>
+                  <button v-if="p.proof_path" type="button" class="shrink-0 font-medium text-green-700 hover:underline" @click="showProof(p.proof_path)">{{ $t('app.orderPage.viewProof') }}</button>
                 </div>
                 <p v-if="p.reject_reason" class="text-xs text-red-600">{{ p.reject_reason }}</p>
-                <a v-if="p.proof_path" :href="storageUrl(p.proof_path)" target="_blank" rel="noopener" class="text-xs text-green-700 hover:underline">{{ p.proof_path.split('/').pop() }}</a>
               </li>
             </ul>
           </section>
@@ -506,7 +536,7 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
               <ul class="mt-2 space-y-1">
                 <li v-for="b in inv.bank_accounts" :key="b.number"><span class="font-medium">{{ b.bank }} {{ b.number }}</span> a.n. {{ b.name }}</li>
               </ul>
-              <form class="mt-4 space-y-3 border-t pt-4" @submit.prevent="sendProof">
+              <form class="mt-4 space-y-3 border-t pt-4" @submit.prevent="submitProof">
                 <p class="font-medium">{{ $t('app.orderPage.uploadProof') }}</p>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="space-y-1">
@@ -561,6 +591,20 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
         <Button class="h-11 shrink-0 bg-green-600 px-6 hover:bg-green-700" @click="goToPayment">{{ $t('app.orderPage.payNow') }}</Button>
       </div>
     </Transition>
+
+    <Dialog :open="!!viewingProof" @update:open="(open: boolean) => { if (!open) viewingProof = null }">
+      <DialogContent class="max-w-[calc(100%-2rem)] gap-3 p-3 sm:max-w-2xl">
+        <DialogTitle class="truncate pr-8 text-sm font-medium">{{ $t('app.orderPage.proofDialog') }}</DialogTitle>
+        <DialogDescription class="truncate text-xs">{{ viewingProof?.name }}</DialogDescription>
+        <template v-if="viewingProof">
+          <iframe v-if="viewingProof.pdf" :src="viewingProof.url" :title="viewingProof.name" class="h-[70vh] w-full rounded-md border"/>
+          <img v-else :src="viewingProof.url" :alt="viewingProof.name" class="mx-auto max-h-[75vh] w-auto max-w-full rounded-md object-contain">
+          <a :href="viewingProof.url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-xs font-medium text-green-700 hover:underline">
+            <ExternalLink class="size-3.5"/> {{ $t('app.orderPage.openProof') }}
+          </a>
+        </template>
+      </DialogContent>
+    </Dialog>
 
     <ElementsConfirmDialog
       v-model:open="confirmOpen"

@@ -781,7 +781,13 @@
       "moreDocuments": "Show other documents ({count})",
       "fewerDocuments": "Show less",
       "payBarDue": "Balance of {number}",
-      "payNow": "Pay now"
+      "payNow": "Pay now",
+      "viewProof": "Proof",
+      "proofDialog": "Transfer proof",
+      "openProof": "Open in a new tab",
+      "resubmitTitle": "Send another transfer proof?",
+      "resubmitText": "You already sent a {amount} proof ({date}) for {number} and it is {status}. Only send another one for an additional payment.",
+      "resubmitAction": "Send anyway"
     },
     "orderHistory": {
       "empty": "No orders yet.",
