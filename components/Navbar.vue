@@ -84,12 +84,6 @@
           </span>
         </NuxtLink>
         <ElementsNotificationBell />
-        <!-- Wishlist -->
-        <button @click="router.push('/wishlist')" class="hidden lg:block text-slate-700 hover:text-black" :title="$t('app.nav.wishlist')" :aria-label="$t('app.nav.wishlist')">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-          </svg>
-        </button>
         <!-- Account -->
         <button @click="handleUserClick" class="hidden lg:block text-slate-700 hover:text-black" :title="$t('app.nav.account')" :aria-label="$t('app.nav.account')">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +143,7 @@
                 class="rounded-md px-2.5 py-1 uppercase"
                 :class="locale === code ? 'bg-green-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
                 :aria-pressed="locale === code"
-                @click="setLocale(code as 'id' | 'en')"
+                @click="changeLanguage(code as AppLocale)"
               >
                 {{ code }}
               </button>
@@ -292,8 +286,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { useProductCategoryService } from '~/services/product-category.service';
 import { getSecureIdFromToken } from '~/utils/token.helper';
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue';
+import type { AppLocale } from '~/composables/useLanguage';
 
-const { t, locale, setLocale } = useI18n();
+const { t } = useI18n();
+const { locale, change: changeLanguage } = useLanguage();
 const router = useRouter();
 const route = useRoute();
 const mobileOpen = ref(false);

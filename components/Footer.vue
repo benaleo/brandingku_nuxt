@@ -61,7 +61,7 @@
       <p class="text-center">{{ $t('app.footer.copyright') }}</p>
       <div role="group" :aria-label="$t('app.language.switch')" class="flex items-center gap-2">
         <button
-          @click="setLocale('id')"
+          @click="changeLanguage('id')"
           class="px-2 py-1 rounded text-xs transition-colors"
           :class="locale === 'id' ? 'bg-green-700 text-white font-semibold' : 'text-gray-400 hover:text-white'"
           :aria-pressed="locale === 'id'"
@@ -70,7 +70,7 @@
         </button>
         <span class="text-gray-600" aria-hidden="true">|</span>
         <button
-          @click="setLocale('en')"
+          @click="changeLanguage('en')"
           class="px-2 py-1 rounded text-xs transition-colors"
           :class="locale === 'en' ? 'bg-green-700 text-white font-semibold' : 'text-gray-400 hover:text-white'"
           :aria-pressed="locale === 'en'"
@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-const { locale, setLocale } = useI18n();
+const { locale, change: changeLanguage } = useLanguage();
 // contact details are editable in the console Options menu
 const { phone, email, address, mapsUrl, phoneHref, emailHref } = useSiteSettings();
 </script>

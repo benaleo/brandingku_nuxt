@@ -13,7 +13,7 @@ import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/
 import {
   BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
   Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, Mail, MessageCircle, MessageSquareQuote, MessagesSquare,
-  Package, ReceiptText, ShieldAlert, ShieldCheck, ShoppingBag, ShieldUser, SlidersHorizontal, Stamp, Store, Tags, TicketPercent, UserCog, Wallet,
+  Package, ReceiptText, ShieldAlert, ShieldCheck, ShoppingBag, ShieldUser, SlidersHorizontal, Stamp, Store, Tags, TicketPercent, UserCog, Users, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import {useRoute} from 'vue-router'
@@ -118,6 +118,7 @@ const iconComponents: Record<string, Component> = {
   ShieldCheck,
   ShoppingBag,
   UserCog,
+  Users,
   SlidersHorizontal,
   Stamp,
   Store,

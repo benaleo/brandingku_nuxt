@@ -63,11 +63,8 @@ export default defineNuxtConfig({
         files: ['app/en.json', 'console/en.json'],
       },
     ],
-    detectBrowserLanguage: {
-      useCookie: true,
-      cookieKey: 'i18n_redirected',
-      redirectOn: 'root',
-    },
+    // everyone starts in Indonesian; plugins/language.ts restores a visitor's own choice
+    detectBrowserLanguage: false,
   },
 
   nitro: {

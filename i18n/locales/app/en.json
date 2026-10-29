@@ -9,7 +9,7 @@
       "service": "Services",
       "contact": "Contact",
       "about": "About",
-      "searchProduct": "Search Product",
+      "searchProduct": "Products",
       "other": "OTHER",
       "allCategories": "All Categories",
       "allInCategory": "All {name}",
@@ -1011,6 +1011,18 @@
     "reviews": {
       "title": "Customer reviews",
       "count": "{count} reviews"
+    },
+    "avatar": {
+      "change": "Change profile photo",
+      "updated": "Profile photo updated",
+      "failed": "Could not upload the photo. Please try again.",
+      "notImage": "Choose an image file.",
+      "tooLarge": "Photos can be up to 5 MB."
+    },
+    "profileMenu": {
+      "wishlist": "Wishlist",
+      "logout": "Log out",
+      "logoutConfirm": "Log out of this account?"
     }
   }
 }

@@ -9,7 +9,7 @@
       "service": "Servis",
       "contact": "Kontak",
       "about": "Tentang",
-      "searchProduct": "Cari Produk",
+      "searchProduct": "Produk",
       "other": "LAINNYA",
       "allCategories": "Semua Kategori",
       "allInCategory": "Semua {name}",
@@ -1011,6 +1011,18 @@
     "reviews": {
       "title": "Ulasan pelanggan",
       "count": "{count} ulasan"
+    },
+    "avatar": {
+      "change": "Ganti foto profil",
+      "updated": "Foto profil diperbarui",
+      "failed": "Foto profil gagal diunggah. Coba lagi.",
+      "notImage": "Pilih file gambar.",
+      "tooLarge": "Foto maksimal 5 MB."
+    },
+    "profileMenu": {
+      "wishlist": "Wishlist",
+      "logout": "Keluar",
+      "logoutConfirm": "Keluar dari akun ini?"
     }
   }
 }
