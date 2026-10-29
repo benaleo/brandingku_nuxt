@@ -76,15 +76,6 @@ onMounted(() => {
   load()
 })
 
-// the bell's notifications about this order count as read while it is on screen
-const {viewing, markSubjectRead} = useNotifications()
-watch(() => order.value?.id, (id) => {
-  if (!id) return
-  viewing.value = {type: 'order', id}
-  markSubjectRead('order', id).catch(() => {})
-})
-onBeforeUnmount(() => { viewing.value = null })
-
 const proof = reactive({amount: 0 as number | string, paid_on: todayISO(), payer_name: '', note: '', file: null as File | null})
 // the remaining amount of the first payable document is the natural default for a new proof
 function resetProof() {

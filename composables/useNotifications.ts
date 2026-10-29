@@ -26,8 +26,6 @@ export const useNotifications = () => {
   const { gqlFetch } = useGql()
   const token = useCookie<string | null>('token', { sameSite: 'lax' })
   const feed = useState<NotificationFeed>('notifications', emptyFeed)
-  // a page showing this record reads its notifications as they arrive
-  const viewing = useState<{ type: string; id: number } | null>('notifications-viewing', () => null)
   const badge = computed(() => feed.value.badge_count)
   const { t, te, locale } = useI18n()
 
@@ -43,30 +41,18 @@ export const useNotifications = () => {
   const run = (query: string, variables: Record<string, any> = {}) =>
     gqlFetch(query, variables, { headers: { Authorization: `Bearer ${token.value}` } })
 
-  const markSubjectRead = async (type: string, id: number) => {
-    await run(
-      'mutation markSubjectNotificationsRead($type: String!, $id: Int!) { markSubjectNotificationsRead(subject_type: $type, subject_id: $id) }',
-      { type, id },
-    )
-    await refresh()
-  }
-
   const refresh = async () => {
     if (!import.meta.client) return
     if (!token.value) {
       feed.value = emptyFeed()
       return
     }
+    // notifications stay unread until opened from the bell or read all, so every new one counts
     try {
       const res = await run(FEED_QUERY, { limit: FEED_LIMIT }) as { myNotifications: NotificationFeed }
       feed.value = res.myNotifications
     } catch {
       // the bell keeps its last known state
-      return
-    }
-    const v = viewing.value
-    if (v && feed.value.items.some(n => !n.read && n.subject_type === v.type && n.subject_id === v.id)) {
-      await markSubjectRead(v.type, v.id).catch(() => {})
     }
   }
 
@@ -105,5 +91,5 @@ export const useNotifications = () => {
     feed.value = emptyFeed()
   }
 
-  return { feed, badge, viewing, refresh, markRead, markAllRead, markSubjectRead, start, stop, statusLabel, titleOf, timeAgo }
+  return { feed, badge, refresh, markRead, markAllRead, start, stop, statusLabel, titleOf, timeAgo }
 }
