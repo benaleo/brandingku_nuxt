@@ -207,7 +207,9 @@
         </ul>
       </section>
 
-      <ElementsDiscussionThread v-if="order.type === 'quotation'" subject-type="order" :subject-id="order.id" viewer="staff" />
+      <ElementsDiscussionThread subject-type="order" :subject-id="order.id" viewer="staff" />
+      <!-- floating shortcut to the same thread, with the admin's unread count -->
+      <ElementsDiscussionFab :key="order.id" subject-type="order" :subject-id="order.id" viewer="staff" :label="order.code" />
     </div>
 
     <Dialog :open="!!dialog" @update:open="(v: boolean) => { if (!v && !busy) dialog = null }">

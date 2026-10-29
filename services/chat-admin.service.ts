@@ -324,17 +324,22 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
   };
 };
 
-export const useChatUnreadCount = () => {
+// onIncrease runs when the count goes up after the first load
+export const useChatUnreadCount = (onIncrease?: (added: number) => void) => {
   const { gqlFetch } = useGql();
   const unreadCount = ref(0);
   const { subscribe, onReconnect } = useChatSocket();
   const stops: (() => void)[] = [];
+  let loaded = false;
 
   const fetchUnreadCount = async () => {
     try {
       const query = `query getChatUnreadCount { getChatUnreadCount }`;
       const res = await gqlFetch<{ getChatUnreadCount: number }>(query, {}, { auth: true });
+      const prev = unreadCount.value;
       unreadCount.value = res.getChatUnreadCount || 0;
+      if (loaded && unreadCount.value > prev) onIncrease?.(unreadCount.value - prev);
+      loaded = true;
     } catch {
       // silent — badge just stays at its last known value
     }

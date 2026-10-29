@@ -117,7 +117,8 @@
       "contactPrompt": "Choose how we should contact you",
       "contactEmail": "Email",
       "contactPhone": "Phone / WA",
-      "contactSubmit": "Choose"
+      "contactSubmit": "Choose",
+      "newToast": "New reply from our team"
     },
     "categoryPage": {
       "eyebrow": "CATALOG {year}",
@@ -849,7 +850,9 @@
       "removeFile": "Remove file",
       "fileTooLarge": "Files can be up to {max} MB.",
       "viewImage": "View image {name}",
-      "imageDialog": "Discussion attachment image"
+      "imageDialog": "Discussion attachment image",
+      "newToast": "New reply in discussion {code}",
+      "open": "Open"
     },
     "notifications": {
       "title": "Notifications",

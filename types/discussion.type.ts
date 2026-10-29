@@ -22,3 +22,21 @@ export interface DiscussionMessage {
   attachment: DiscussionAttachment | null
   created_at: string
 }
+
+// one thread in the console inbox
+export interface DiscussionThread {
+  subject_type: DiscussionSubject
+  subject_id: number
+  // e.g. the order code
+  label: string
+  customer_name: string
+  last_message: DiscussionMessage
+  unread: number
+}
+
+// a new message from the other side; link opens the thread for the receiving side
+export interface DiscussionActivity {
+  message: DiscussionMessage
+  label: string
+  link: string
+}

@@ -117,7 +117,8 @@
       "contactPrompt": "Pilih cara kami menghubungi Anda",
       "contactEmail": "Email",
       "contactPhone": "Telepon / WA",
-      "contactSubmit": "Pilih"
+      "contactSubmit": "Pilih",
+      "newToast": "Balasan baru dari admin"
     },
     "categoryPage": {
       "eyebrow": "KATALOG {year}",
@@ -849,7 +850,9 @@
       "removeFile": "Hapus file",
       "fileTooLarge": "Ukuran file maksimal {max} MB.",
       "viewImage": "Lihat gambar {name}",
-      "imageDialog": "Gambar lampiran diskusi"
+      "imageDialog": "Gambar lampiran diskusi",
+      "newToast": "Balasan baru di diskusi {code}",
+      "open": "Buka"
     },
     "notifications": {
       "title": "Notifikasi",

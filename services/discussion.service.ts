@@ -1,7 +1,7 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { useGql } from '~/composables/useGql'
 import type { EmailAttachmentInput } from '~/types/admin-smtp.type'
-import type { DiscussionMessage, DiscussionSubject } from '~/types/discussion.type'
+import type { DiscussionActivity, DiscussionMessage, DiscussionSubject, DiscussionThread } from '~/types/discussion.type'
 
 const MESSAGE_FIELDS = 'id subject_type subject_id author_name author_role message attachment { file_name content_type size path } created_at'
 
@@ -80,4 +80,65 @@ export const useDiscussionService = (subjectType: DiscussionSubject, subjectId: 
   onBeforeUnmount(() => stop?.())
 
   return { messages, loading, sending, load, post, listen }
+}
+
+// messages from the other side of every thread the signed-in user takes part in
+export const useDiscussionIncoming = (onIncoming: (a: DiscussionActivity) => void) => {
+  const { subscribe, onReconnect } = useChatSocket()
+  let stops: (() => void)[] = []
+  const start = (onReconnected?: () => void) => {
+    stop()
+    stops = [subscribe(
+      `subscription discussionIncoming { discussionIncoming { message { ${MESSAGE_FIELDS} } label link } }`,
+      {},
+      { next: (data) => { if (data?.discussionIncoming) onIncoming(data.discussionIncoming) } },
+    )]
+    if (onReconnected) stops.push(onReconnect(onReconnected))
+  }
+  const stop = () => { stops.splice(0).forEach(s => s()) }
+  onBeforeUnmount(stop)
+  return { start, stop }
+}
+
+export const useDiscussionInbox = () => {
+  const { gqlFetch } = useGql()
+  const threads = ref<DiscussionThread[]>([])
+  const loading = ref(false)
+  const error = ref('')
+
+  const load = async (unreadOnly = false) => {
+    loading.value = true
+    error.value = ''
+    try {
+      const res = await gqlFetch<{ getDiscussionInbox: DiscussionThread[] }>(
+        `query getDiscussionInbox($unread: Boolean) { getDiscussionInbox(unread_only: $unread) {
+          subject_type subject_id label customer_name unread last_message { ${MESSAGE_FIELDS} }
+        } }`,
+        { unread: unreadOnly },
+        { auth: true },
+      )
+      threads.value = res.getDiscussionInbox
+    } catch (e: any) {
+      error.value = e?.message || 'Gagal memuat diskusi'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { threads, loading, error, load }
+}
+
+// threads with unread messages, shared by the console sidebar and anything that reads a thread
+export const useDiscussionInboxCount = () => {
+  const { gqlFetch } = useGql()
+  const count = useState('discussion-inbox-unread', () => 0)
+  const refresh = async () => {
+    try {
+      const res = await gqlFetch<{ discussionInboxUnread: number }>('query { discussionInboxUnread }', {}, { auth: true })
+      count.value = res.discussionInboxUnread
+    } catch {
+      // the badge keeps its last value
+    }
+  }
+  return { count, refresh }
 }

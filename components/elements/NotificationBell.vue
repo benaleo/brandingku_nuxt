@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { toast } from 'vue-sonner'
+import { useDiscussionIncoming } from '~/services/discussion.service'
 import type { AppNotification } from '~/types/notification.type'
 
 const route = useRoute()
@@ -17,19 +19,36 @@ const { reconnect } = useChatSocket()
 const token = useCookie<string | null>('token', { sameSite: 'lax' })
 const open = ref(false)
 
+// admin replies on the customer's own threads pop up unless that thread is on screen;
+// staff hear about customer messages in the console instead
+const { t } = useI18n()
+const onScreen = useDiscussionOnScreen()
+const incoming = useDiscussionIncoming(({ message, label, link }) => {
+  if (message.author_role !== 'staff' || onScreen(message.subject_type, message.subject_id)) return
+  toast.info(t('app.discussion.newToast', { code: label }), {
+    description: message.message || message.attachment?.file_name,
+    action: { label: t('app.discussion.open'), onClick: () => router.push(link) },
+  })
+})
+
 onMounted(() => {
   if (!token.value) return
   refresh()
   start()
+  incoming.start()
 })
 onBeforeUnmount(() => stop())
 
 // a new login re-authenticates the shared socket so the subscription runs as that account
 watch(token, (value) => {
-  if (!value) return stop()
+  if (!value) {
+    incoming.stop()
+    return stop()
+  }
   reconnect()
   refresh()
   start()
+  incoming.start()
 })
 // cheap catch-up after actions on other pages, and whenever the panel opens
 watch(() => route.path, () => { if (token.value) refresh() })

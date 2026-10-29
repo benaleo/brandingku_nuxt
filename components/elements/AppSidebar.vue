@@ -12,16 +12,44 @@ import {
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
 import {
   BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
-  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, Mail, MessageCircle, MessageSquareQuote,
+  Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, Mail, MessageCircle, MessageSquareQuote, MessagesSquare,
   Package, ReceiptText, ShieldCheck, ShoppingBag, ShieldUser, SlidersHorizontal, Stamp, Store, Tags, TicketPercent, UserCog, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import {useRoute} from 'vue-router'
+import {toast} from 'vue-sonner'
 import {useChatUnreadCount} from '~/services/chat-admin.service'
+import {useDiscussionIncoming, useDiscussionInboxCount} from '~/services/discussion.service'
 
 const route = useRoute()
+const router = useRouter()
 const { menus: secretConsoleMenu, can } = useConsoleAccess()
-const { unreadCount } = useChatUnreadCount()
+const CHAT_HREF = '/console/secret/chat'
+const { unreadCount } = useChatUnreadCount(() => {
+  if (route.path.startsWith(CHAT_HREF)) return
+  toast.info('Chat baru masuk', { action: { label: 'Buka', onClick: () => router.push(CHAT_HREF) } })
+})
+
+// discussions with unread messages; new customer messages also show a toast unless that
+// thread is already on screen
+const DISCUSSIONS_HREF = '/console/secret/discussions'
+const { count: openDiscussions, refresh: refreshDiscussions } = useDiscussionInboxCount()
+const onScreen = useDiscussionOnScreen()
+const { start: startIncoming } = useDiscussionIncoming(({ message, label, link }) => {
+  refreshDiscussions()
+  if (onScreen(message.subject_type, message.subject_id)) return
+  toast.info(`Diskusi baru · ${label}`, {
+    description: `${message.author_name}: ${message.message || message.attachment?.file_name || ''}`,
+    action: { label: 'Buka', onClick: () => router.push(link) },
+  })
+})
+// console access may still be loading when the sidebar mounts
+onMounted(() => watch(() => can('discussions.index'), (allowed) => {
+  if (!allowed) return
+  refreshDiscussions()
+  startIncoming(refreshDiscussions)
+}, { immediate: true }))
+watch(useDiscussionInboxStale(), () => { if (can('discussions.index')) refreshDiscussions() })
 
 // unfinished transactions; refreshed on navigation and every minute
 const ORDERS_HREF = '/console/secret/orders'
@@ -34,7 +62,16 @@ onMounted(() => {
 })
 onBeforeUnmount(() => clearInterval(ordersTimer))
 watch(() => route.path, refreshOrders)
-const badgeOf = (href: string) => href === '/console/secret/chat' ? unreadCount.value : href === ORDERS_HREF ? openOrders.value : 0
+const badges: Record<string, () => number> = {
+  [CHAT_HREF]: () => unreadCount.value,
+  [ORDERS_HREF]: () => openOrders.value,
+  [DISCUSSIONS_HREF]: () => openDiscussions.value,
+}
+const badgeTitles: Record<string, (n: number) => string> = {
+  [ORDERS_HREF]: n => `${n} transaksi belum selesai`,
+  [DISCUSSIONS_HREF]: n => `${n} diskusi belum dibaca`,
+}
+const badgeOf = (href: string) => badges[href]?.() ?? 0
 const iconComponents: Record<string, Component> = {
   BadgeCheck,
   Building2,
@@ -48,6 +85,7 @@ const iconComponents: Record<string, Component> = {
   Mail,
   MessageCircle,
   MessageSquareQuote,
+  MessagesSquare,
   ShieldUser,
   Package,
   ReceiptText,
@@ -109,7 +147,7 @@ const isActive = (href: string) => {
                       <span
                           v-if="badgeOf(item.href) > 0"
                           class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold text-white"
-                          :title="item.href === ORDERS_HREF ? `${openOrders} transaksi belum selesai` : undefined"
+                          :title="badgeTitles[item.href]?.(badgeOf(item.href))"
                       >
                         {{ badgeOf(item.href) > 99 ? '99+' : badgeOf(item.href) }}
                       </span>

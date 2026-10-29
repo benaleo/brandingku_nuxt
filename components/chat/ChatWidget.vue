@@ -1,5 +1,14 @@
 <template>
-  <div v-if="showWidget" class="fixed bottom-5 right-5 z-50 [.has-bottom-bar_&]:bottom-24 lg:[.has-bottom-bar_&]:bottom-5 flex flex-col items-end gap-3">
+  <!-- on an order page the button opens that order's discussion instead of the live chat -->
+  <ElementsDiscussionFab
+    v-if="showWidget && discussion"
+    :key="`${discussion.subjectType}:${discussion.subjectId}`"
+    :subject-type="discussion.subjectType"
+    :subject-id="discussion.subjectId"
+    :label="discussion.label"
+    viewer="customer"
+  />
+  <div v-else-if="showWidget" class="fixed bottom-5 right-5 z-50 [.has-bottom-bar_&]:bottom-24 lg:[.has-bottom-bar_&]:bottom-5 flex flex-col items-end gap-3">
     <div
       v-if="open"
       class="flex h-[520px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl"
@@ -112,6 +121,7 @@ import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { Mail, MessageCircle, Phone, Send, X } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 import { Button } from "~/components/ui/button";
 import { useChatService } from "~/services/chat.service";
 import type { ChatMessage } from "~/types/chat.type";
@@ -130,7 +140,7 @@ const {
   startRealtime,
 } = useChatService();
 
-const { open, pendingTopic } = useChatWidget();
+const { open, pendingTopic, discussion } = useChatWidget();
 const draft = ref("");
 const unreadCount = ref(0);
 const scrollEl = ref<HTMLElement | null>(null);
@@ -167,7 +177,15 @@ const scrollToBottom = async () => {
 };
 
 const onNewMessages = (added: ChatMessage[]) => {
-  if (!open.value) unreadCount.value += added.filter((m) => !isOwnMessage(m)).length;
+  if (open.value) return;
+  const replies = added.filter((m) => !isOwnMessage(m));
+  if (!replies.length) return;
+  unreadCount.value += replies.length;
+  // on order pages the floating button belongs to the discussion, so there is nothing to open
+  toast.info(t("app.chat.newToast"), {
+    description: replies[replies.length - 1]!.message,
+    action: discussion.value ? undefined : { label: t("app.discussion.open"), onClick: () => (open.value = true) },
+  });
 };
 
 const ensureSession = async () => {
@@ -195,7 +213,8 @@ const toggleOpen = () => {
 };
 
 watch(open, async (isOpen) => {
-  if (!isOpen) return;
+  // no live chat session is started while a page shows its discussion instead
+  if (!isOpen || discussion.value) return;
   unreadCount.value = 0;
   await ensureSession();
   applyPendingTopic();

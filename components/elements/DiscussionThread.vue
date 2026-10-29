@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { useElementVisibility } from '@vueuse/core'
 import { FileText, Loader2, MessagesSquare, Paperclip, Send, X } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
@@ -7,8 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { useDiscussionService } from '~/services/discussion.service'
 import type { DiscussionAttachment, DiscussionMessage, DiscussionRole, DiscussionSubject } from '~/types/discussion.type'
 
-// viewer: the side the current page writes as; its messages sit on the right
-const props = defineProps<{ subjectType: DiscussionSubject; subjectId: number; viewer: DiscussionRole }>()
+// viewer: the side the current page writes as; its messages sit on the right.
+// embedded: inside the floating chat panel, which has its own header and height
+const props = defineProps<{ subjectType: DiscussionSubject; subjectId: number; viewer: DiscussionRole; embedded?: boolean }>()
 
 const MAX_LENGTH = 2000
 // the backend refuses larger files; pictures are converted to WebP there
@@ -51,6 +53,15 @@ onMounted(() => {
   fetchThread()
   listen(() => scrollToEnd(true))
 })
+
+// a thread on screen is being read: it marks the messages read and keeps the unread badge at zero
+const unread = useDiscussionUnread(props.subjectType, () => props.subjectId)
+const onScreen = useElementVisibility(listEl)
+watch(onScreen, (on, was) => { if (on !== !!was) unread.setViewing(on) })
+watch([onScreen, () => messages.value[messages.value.length - 1]?.id], ([on, lastId]) => {
+  if (on && lastId) unread.markRead(lastId)
+})
+onBeforeUnmount(() => { if (onScreen.value) unread.setViewing(false) })
 
 const dropPreview = () => {
   if (pickedPreview.value) URL.revokeObjectURL(pickedPreview.value)
@@ -121,15 +132,17 @@ const viewing = ref<DiscussionAttachment | null>(null)
 </script>
 
 <template>
-  <section class="rounded-xl border bg-card p-4 text-sm shadow-sm md:p-5">
-    <h2 class="flex items-center gap-2 font-semibold">
-      <MessagesSquare class="size-4 text-green-700" /> {{ $t('app.discussion.title') }}
-    </h2>
-    <p class="mt-1 text-xs text-muted-foreground">
-      {{ viewer === 'customer' ? $t('app.discussion.hintCustomer') : $t('app.discussion.hintStaff') }}
-    </p>
+  <section :class="embedded ? 'flex h-full min-h-0 flex-col p-3 text-sm' : 'rounded-xl border bg-card p-4 text-sm shadow-sm md:p-5'">
+    <template v-if="!embedded">
+      <h2 class="flex items-center gap-2 font-semibold">
+        <MessagesSquare class="size-4 text-green-700" /> {{ $t('app.discussion.title') }}
+      </h2>
+      <p class="mt-1 text-xs text-muted-foreground">
+        {{ viewer === 'customer' ? $t('app.discussion.hintCustomer') : $t('app.discussion.hintStaff') }}
+      </p>
+    </template>
 
-    <div ref="listEl" class="mt-3 max-h-96 space-y-3 overflow-y-auto rounded-lg bg-muted/50 p-3" aria-live="polite">
+    <div ref="listEl" class="space-y-3 overflow-y-auto rounded-lg bg-muted/50 p-3" :class="embedded ? 'min-h-0 flex-1' : 'mt-3 max-h-96'" aria-live="polite">
       <p v-if="loading && !messages.length" class="flex items-center justify-center gap-2 py-6 text-muted-foreground">
         <Loader2 class="size-4 animate-spin" /> {{ $t('app.discussion.loading') }}
       </p>

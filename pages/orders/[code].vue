@@ -68,6 +68,13 @@ const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) paying.value =
 onMounted(() => window.addEventListener('pageshow', onPageShow))
 onBeforeUnmount(() => window.removeEventListener('pageshow', onPageShow))
 
+// on an order page the floating chat button opens this order's discussion
+const {discussion: widgetDiscussion} = useChatWidget()
+watch(() => order.value && {id: order.value.id, code: order.value.code}, (o) => {
+  widgetDiscussion.value = o ? {subjectType: 'order', subjectId: o.id, label: o.code} : null
+}, {immediate: true})
+onBeforeUnmount(() => { widgetDiscussion.value = null })
+
 onMounted(() => {
   if (!token.value) {
     router.replace({path: '/console/auth', query: {redirect: route.fullPath}})
