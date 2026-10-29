@@ -177,7 +177,7 @@ async function submit() {
   try {
     const order = await placeOrder(input, idempotencyKey)
     refreshCart().catch(() => {})
-    await router.push(`/orders/${order.code}`)
+    await router.push(`/orders/${order.access_token}`)
   } catch (e: any) {
     toast.error(cartErrorMessage(e, t('app.checkoutPage.failed')))
     // prices or stock may have changed meanwhile
@@ -198,7 +198,7 @@ async function requestQuote() {
       : null
     const order = await requestQuotation(input, file, quoteKey)
     refreshCart().catch(() => {})
-    await router.push(`/orders/${order.code}`)
+    await router.push(`/orders/${order.access_token}`)
   } catch (e: any) {
     toast.error(cartErrorMessage(e, t('app.checkoutPage.quoteFailed')))
   } finally {

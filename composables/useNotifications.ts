@@ -6,7 +6,7 @@ const FEED_LIMIT = 30
 const FEED_QUERY = `
   query myNotifications($limit: Int) {
     myNotifications(limit: $limit) {
-      quotations { order_id code status first_item item_count updated_at }
+      quotations { order_id code access_token status first_item item_count updated_at }
       items { id kind action subject_type subject_id subject_label body link read created_at }
       unread_count badge_count
     }

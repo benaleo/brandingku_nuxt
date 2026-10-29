@@ -7,7 +7,7 @@ const DOC_FIELDS = `
   payments { id amount method proof_path payer_name note paid_on status reject_reason created_at }
 `
 const ORDER_FIELDS = `
-  id code type status user_id
+  id code access_token type status user_id
   customer_name customer_email customer_phone customer_company
   delivery_method shipping_name shipping_phone shipping_address shipping_city shipping_postal_code
   shipping_fee shipping_note tracking_number notes subtotal discount_total voucher_code
@@ -30,7 +30,7 @@ const ORDER_FIELDS = `
   }
 `
 const LIST_FIELDS = `
-  id code type status customer_name customer_email customer_company delivery_method shipping_city
+  id code access_token type status customer_name customer_email customer_company delivery_method shipping_city
   subtotal discount_total created_at expires_at can_cancel can_submit_payment
   items { id product_name variant_name quantity }
   invoice { id number status total amount_due paid_amount payments { id status } }
@@ -133,9 +133,10 @@ export const useOrderService = () => {
     return res.getMyOrders
   }
 
-  const getMyOrder = async (code: string) => {
+  // token: the order's access_token from the /orders/<token> URL
+  const getMyOrder = async (token: string) => {
     const res = await gqlFetch<{ getMyOrder: Order }>(
-      `query getMyOrder($code: String!) { getMyOrder(code: $code) { ${ORDER_FIELDS} } }`, { code }, { auth: true })
+      `query getMyOrder($token: String!) { getMyOrder(token: $token) { ${ORDER_FIELDS} } }`, { token }, { auth: true })
     return res.getMyOrder
   }
 

@@ -89,7 +89,7 @@ onMounted(() => {
       <template v-else>
         <ul class="space-y-3">
           <li v-for="o in orders" :key="o.id">
-            <NuxtLink :to="`/orders/${o.code}`" class="flex flex-col gap-2 rounded-xl border bg-white p-4 shadow-sm transition hover:border-green-600 sm:flex-row sm:items-center sm:justify-between">
+            <NuxtLink :to="`/orders/${o.access_token}`" class="flex flex-col gap-2 rounded-xl border bg-white p-4 shadow-sm transition hover:border-green-600 sm:flex-row sm:items-center sm:justify-between">
               <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-semibold text-slate-900">{{ o.code }}</span>

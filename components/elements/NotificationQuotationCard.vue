@@ -9,7 +9,7 @@ const { statusLabel, timeAgo } = useNotifications()
 
 <template>
   <NuxtLink
-    :to="`/orders/${quotation.code}`"
+    :to="`/orders/${quotation.access_token}`"
     class="block rounded-lg border bg-white p-3 shadow-xs transition-colors hover:border-green-600 focus-visible:border-green-600"
   >
     <span class="flex items-start justify-between gap-2">

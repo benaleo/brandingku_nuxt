@@ -120,6 +120,8 @@ export type PaymentPlanInput = {
 export type Order = {
   id: number
   code: string
+  // unguessable id of the customer's order page: /orders/<access_token>
+  access_token: string
   type: 'purchase' | 'quotation'
   status: OrderStatus
   user_id: number

@@ -20,6 +20,7 @@ export interface AppNotification {
 export interface NotificationQuotation {
   order_id: number
   code: string
+  access_token: string
   status: OrderStatus
   first_item: string
   item_count: number
