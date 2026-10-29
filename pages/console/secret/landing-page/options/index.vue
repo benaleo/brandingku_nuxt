@@ -178,6 +178,13 @@ const SECTIONS: Section[] = [
       {key: 'INVOICE_TERMS', label: 'Syarat & ketentuan', placeholder: 'Pembayaran dianggap sah setelah dana diterima…', kind: 'textarea', rows: 4, wide: true},
     ],
   },
+  {
+    title: 'Garansi',
+    description: 'Berlaku untuk semua pesanan. Setelah pesanan selesai, customer bisa mengajukan klaim (refund atau tukar barang) selama masa garansi.',
+    fields: [
+      {key: 'ORDER_GUARANTEE_DAYS', label: 'Masa garansi (hari)', placeholder: '7', kind: 'number', hint: 'Dihitung sejak pesanan ditandai selesai. 0 = tanpa garansi.'},
+    ],
+  },
 ]
 
 const KEYS = [...SECTIONS.flatMap(s => s.fields.map(f => f.key)), BANKS_KEY]

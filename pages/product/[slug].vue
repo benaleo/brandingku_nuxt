@@ -651,6 +651,8 @@ definePageMeta({
         </div>
       </div>
 
+      <ElementsProductReviews v-if="Number((detail as any).id)" :key="(detail as any).id" :product-id="Number((detail as any).id)" />
+
       <!-- client projects that used this product -->
       <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" linked-only />
     </div>

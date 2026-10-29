@@ -1,9 +1,15 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { useGql } from "~/composables/useGql";
-import type { Testimonial } from "~/types/testimonial.type";
+import type { Testimonial, TestimonialPlacement } from "~/types/testimonial.type";
 import type { PageInfo } from "~/types/Pagination";
 
-export const useTestimonialService = () => {
+const FIELDS = "id name job content rating orders is_active placement product_id product_name order_id public_consent created_at";
+const toTestimonial = (t: Omit<Testimonial, "id"> & { id: number }): Testimonial => ({ ...t, id: String(t.id) });
+
+type TestimonialParams = { keyword?: string; is_active?: boolean; placement?: string; product_id?: number; source?: string; limit?: number };
+
+// initial: list filters set before the first fetch, without triggering one
+export const useTestimonialService = (initial: TestimonialParams = {}) => {
   const { gqlFetch } = useGql();
 
   const datas = ref<Testimonial[]>([]);
@@ -12,7 +18,8 @@ export const useTestimonialService = () => {
   // Keep local page 0-based for UI consistency (like useProductService)
   const pagination = ref({ page: 0, limit: 10, total: 0 });
   const pageInfo = ref<PageInfo | null>(null);
-  const params = reactive<{ keyword?: string; is_active?: boolean }>({});
+  // placement: landing_page | product; source: customer (written after an order) | console
+  const params = reactive<TestimonialParams>({ ...initial });
   const detail = ref<Testimonial | null>(null);
 
   // List with server-side pagination
@@ -21,16 +28,9 @@ export const useTestimonialService = () => {
     error.value = null;
     try {
       const query = `
-        query GetTestimonials($page: Int!, $limit: Int!, $is_active: Boolean) {
-          getTestimonials(pagination: { page: $page, limit: $limit }, is_active: $is_active) {
-            items {
-              id
-              name
-              job
-              content
-              rating
-              orders
-            }
+        query GetTestimonials($page: Int!, $limit: Int!, $is_active: Boolean, $placement: String, $product_id: Int, $source: String) {
+          getTestimonials(pagination: { page: $page, limit: $limit }, is_active: $is_active, placement: $placement, product_id: $product_id, source: $source) {
+            items { ${FIELDS} }
             page_info {
               current_page
               per_page
@@ -47,39 +47,26 @@ export const useTestimonialService = () => {
 
       // server is 1-based pages; local is 0-based
       const serverPage = (pagination.value.page || 0) + 1;
-      const serverLimit = pagination.value.limit || 10;
+      const serverLimit = params.limit || pagination.value.limit || 10;
       const variables: any = {
         page: serverPage,
         limit: serverLimit,
         ...(params.is_active != null
           ? { is_active: Boolean(params.is_active) }
           : {}),
+        placement: params.placement || null,
+        product_id: params.product_id ?? null,
+        source: params.source || null,
       };
 
       const res = await gqlFetch<{
         getTestimonials: {
-          items: Array<{
-            id: number;
-            name: string;
-            job: string;
-            content: string;
-            rating: number;
-            orders: number;
-          }>;
+          items: Array<Omit<Testimonial, 'id'> & { id: number }>;
           page_info: PageInfo;
         };
       }>(query, variables, { auth: true });
 
-      let items = (res?.getTestimonials?.items || []).map((it) => ({
-        id: String(it.id),
-        name: it.name,
-        job: it.job,
-        content: it.content,
-        rating: it.rating,
-        orders: it.orders,
-        // When API list doesn't include is_active, fallback to filter param or true
-        is_active: params.is_active ?? true,
-      }));
+      let items: Testimonial[] = (res?.getTestimonials?.items || []).map(toTestimonial);
 
       // testimonial-side keyword filter (by name)
       const kw = params.keyword?.toLowerCase()?.trim();
@@ -132,39 +119,11 @@ export const useTestimonialService = () => {
   const getTestimonialDetail = async (id: number) => {
     const query = `
       query GetTestimonialDetail($id: Int!) {
-        getTestimonialDetail(id: $id) {
-          id
-          name
-          job
-          content
-          rating
-          orders
-          is_active
-        }
+        getTestimonialDetail(id: $id) { ${FIELDS} }
       }
     `;
-    const data = await gqlFetch<{
-      getTestimonialDetail: {
-        id: number;
-        name: string;
-        job: string;
-        content: string;
-        rating: number;
-        orders: number;
-        is_active: boolean;
-      };
-    }>(query, { id }, { auth: true });
-
-    const d = data.getTestimonialDetail;
-    return {
-      id: String(d.id),
-      name: d.name,
-      job: d.job,
-      content: d.content,
-      rating: d.rating,
-      orders: d.orders,
-      is_active: d.is_active,
-    } as Testimonial;
+    const data = await gqlFetch<{ getTestimonialDetail: Omit<Testimonial, 'id'> & { id: number } }>(query, { id }, { auth: true });
+    return toTestimonial(data.getTestimonialDetail);
   };
 
   const loadDetail = async (id: number) => {
@@ -180,42 +139,16 @@ export const useTestimonialService = () => {
     rating: number;
     orders: number;
     is_active: boolean;
+    placement: TestimonialPlacement;
+    product_id: number | null;
   }) => {
     const mutation = `
-      mutation CreateTestimonial($name: String!, $job: String!, $content: String!, $rating: Int!, $orders: Int!, $is_active: Boolean!) {
-        createTestimonial(name: $name, job: $job, content: $content, rating: $rating, orders: $orders, is_active: $is_active) {
-          id
-          name
-          job
-          content
-          rating
-          orders
-          is_active
-        }
+      mutation CreateTestimonial($name: String!, $job: String!, $content: String!, $rating: Float!, $orders: Int!, $is_active: Boolean!, $placement: String, $product_id: Int) {
+        createTestimonial(name: $name, job: $job, content: $content, rating: $rating, orders: $orders, is_active: $is_active, placement: $placement, product_id: $product_id) { ${FIELDS} }
       }
     `;
-    const data = await gqlFetch<{
-      createTestimonial: {
-        id: number;
-        name: string;
-        job: string;
-        content: string;
-        rating: number;
-        orders: number;
-        is_active: boolean;
-      };
-    }>(mutation, vars, { auth: true });
-
-    const c = data.createTestimonial;
-    return {
-      id: String(c.id),
-      name: c.name,
-      job: c.job,
-      content: c.content,
-      rating: c.rating,
-      orders: c.orders,
-      is_active: c.is_active,
-    } as Testimonial;
+    const data = await gqlFetch<{ createTestimonial: Omit<Testimonial, 'id'> & { id: number } }>(mutation, vars, { auth: true });
+    return toTestimonial(data.createTestimonial);
   };
 
   // Update
@@ -227,42 +160,16 @@ export const useTestimonialService = () => {
     rating?: number;
     orders?: number;
     is_active?: boolean;
+    placement?: TestimonialPlacement;
+    product_id?: number | null;
   }) => {
     const mutation = `
-      mutation UpdateTestimonial($id: Int!, $name: String!, $job: String, $content: String, $rating: Int, $orders: Int, $is_active: Boolean) {
-        updateTestimonial(id: $id, name: $name, job: $job, content: $content, rating: $rating, orders: $orders, is_active: $is_active) {
-          id
-          name
-          job
-          content
-          rating
-          orders
-          is_active
-        }
+      mutation UpdateTestimonial($id: Int!, $name: String!, $job: String, $content: String, $rating: Float, $orders: Int, $is_active: Boolean, $placement: String, $product_id: Int) {
+        updateTestimonial(id: $id, name: $name, job: $job, content: $content, rating: $rating, orders: $orders, is_active: $is_active, placement: $placement, product_id: $product_id) { ${FIELDS} }
       }
     `;
-    const data = await gqlFetch<{
-      updateTestimonial: {
-        id: number;
-        name: string;
-        job: string;
-        content: string;
-        rating: number;
-        orders: number;
-        is_active: boolean;
-      };
-    }>(mutation, vars, { auth: true });
-
-    const c = data.updateTestimonial;
-    return {
-      id: String(c.id),
-      name: c.name,
-      job: c.job,
-      content: c.content,
-      rating: c.rating,
-      orders: c.orders,
-      is_active: c.is_active,
-    } as Testimonial;
+    const data = await gqlFetch<{ updateTestimonial: Omit<Testimonial, 'id'> & { id: number } }>(mutation, vars, { auth: true });
+    return toTestimonial(data.updateTestimonial);
   };
 
   // Delete

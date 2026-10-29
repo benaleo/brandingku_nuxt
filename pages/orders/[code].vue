@@ -372,6 +372,8 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
             :busy="busy"
             @review="answerProgress"
           />
+          <!-- once completed: guarantee claims and reviews -->
+          <ElementsOrderAftercare v-if="order.status === 'completed'" viewer="customer" :code="order.code" :token="code" />
 
           <section v-if="isQuote && order.documents.length" class="rounded-xl border bg-white p-5 text-sm shadow-sm">
             <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.documents') }}</h2>

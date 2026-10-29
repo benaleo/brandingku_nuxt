@@ -643,7 +643,11 @@
       "mockup_approved": "Mockup approved",
       "mockup_revision": "Mockup changes requested",
       "mass_production_approved": "Mass production approved",
-      "mass_production_revision": "Changes requested before mass production"
+      "mass_production_revision": "Changes requested before mass production",
+      "guarantee_claimed": "Guarantee claim filed",
+      "guarantee_approved": "Guarantee claim approved",
+      "guarantee_rejected": "Guarantee claim rejected",
+      "guarantee_resolved": "Guarantee claim settled"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -954,6 +958,59 @@
       "drop": "or drag a file here",
       "change": "Change",
       "remove": "Remove {name}"
+    },
+    "aftercare": {
+      "guaranteeTitle": "{days}-day guarantee",
+      "guaranteeUntil": "Valid until {date}",
+      "guaranteeEnded": "Guarantee ended {date}",
+      "claim": "Claim guarantee",
+      "claimTitle": "Claim guarantee",
+      "claimDescription": "Tell us what went wrong and attach photos as evidence. Claims are accepted until {date}.",
+      "claimWant": "What you would like",
+      "resolution": {
+        "refund": "Refund",
+        "replace": "Replacement"
+      },
+      "claimReason": "Reason",
+      "claimReasonPlaceholder": "E.g. 5 tumblers arrived dented at the bottom",
+      "claimEvidence": "Photos / files as evidence",
+      "claimEvidencePick": "Choose photos or PDFs",
+      "claimEvidenceHint": "1-5 files, up to 5 MB each and 7 MB in total.",
+      "claimSubmit": "Send claim",
+      "claimSent": "Guarantee claim sent. Our team will review it.",
+      "claimStatus": {
+        "submitted": "Under review",
+        "approved": "Approved, in progress",
+        "rejected": "Rejected",
+        "resolved": "Settled"
+      },
+      "decisionNote": "Our note",
+      "resolutionNote": "Settlement",
+      "reviewTitle": "Reviews",
+      "reviewHint": "Share your experience. Reviews help us and other customers.",
+      "reviewProduct": "Review a product",
+      "reviewCompany": "Review Brandingku",
+      "reviewProductTitle": "Review a product",
+      "reviewCompanyTitle": "Review Brandingku",
+      "reviewDescription": "Rate it and tell us about your experience.",
+      "pickProduct": "Product",
+      "rating": "Rating",
+      "content": "Review",
+      "contentPlaceholder": "Tell us about the product quality, the branding, delivery or our service…",
+      "minChars": "{count}/{min} characters minimum",
+      "consentCompany": "I agree to show this review on the Brandingku home page with my name and company.",
+      "consentProduct": "I agree to show this review on the product page with my name and company.",
+      "reviewSubmit": "Send review",
+      "reviewSent": "Thank you for your review!",
+      "aboutCompany": "About Brandingku",
+      "reviewPublished": "Shown publicly",
+      "reviewModeration": "Waiting for review before it is shown",
+      "reviewPrivate": "Only for the Brandingku team",
+      "failed": "Could not send. Please try again."
+    },
+    "reviews": {
+      "title": "Customer reviews",
+      "count": "{count} reviews"
     }
   }
 }

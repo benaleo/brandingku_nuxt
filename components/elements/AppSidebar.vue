@@ -13,13 +13,14 @@ import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/
 import {
   BadgeCheck, Building2, ChartNoAxesCombined, ChevronDown, ExternalLink,
   Globe, Images, Inbox, LayoutDashboard, LayoutTemplate, Mail, MessageCircle, MessageSquareQuote, MessagesSquare,
-  Package, ReceiptText, ShieldCheck, ShoppingBag, ShieldUser, SlidersHorizontal, Stamp, Store, Tags, TicketPercent, UserCog, Wallet,
+  Package, ReceiptText, ShieldAlert, ShieldCheck, ShoppingBag, ShieldUser, SlidersHorizontal, Stamp, Store, Tags, TicketPercent, UserCog, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import {useRoute} from 'vue-router'
 import {toast} from 'vue-sonner'
 import {useChatUnreadCount} from '~/services/chat-admin.service'
 import {useDiscussionIncoming, useDiscussionInboxCount} from '~/services/discussion.service'
+import {useAftercareService} from '~/services/aftercare.service'
 
 const route = useRoute()
 const router = useRouter()
@@ -51,6 +52,26 @@ onMounted(() => watch(() => can('discussions.index'), (allowed) => {
 }, { immediate: true }))
 watch(useDiscussionInboxStale(), () => { if (can('discussions.index')) refreshDiscussions() })
 
+// customers' testimonials waiting for moderation and new guarantee claims; refreshed like the order count
+const TESTIMONIALS_HREF = '/console/secret/landing-page/testimonial'
+const GUARANTEES_HREF = '/console/secret/guarantees'
+const { getConsoleCounts } = useAftercareService()
+const aftercare = ref({ testimonialsPendingCount: 0, guaranteeClaimsOpenCount: 0 })
+const refreshAftercare = async () => {
+  try {
+    aftercare.value = await getConsoleCounts(can('testimonials.index'), can('guarantees.index'))
+  } catch {
+    // the badges keep their last value
+  }
+}
+let aftercareTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  refreshAftercare()
+  aftercareTimer = setInterval(refreshAftercare, 60_000)
+})
+onBeforeUnmount(() => clearInterval(aftercareTimer))
+watch([() => route.path, useAftercareCountsStale(), () => can('testimonials.index') || can('guarantees.index')], refreshAftercare)
+
 // unfinished transactions; refreshed on navigation and every minute
 const ORDERS_HREF = '/console/secret/orders'
 const { count: openOrders, refresh: refreshOpenOrders } = useOpenOrderCount()
@@ -66,10 +87,14 @@ const badges: Record<string, () => number> = {
   [CHAT_HREF]: () => unreadCount.value,
   [ORDERS_HREF]: () => openOrders.value,
   [DISCUSSIONS_HREF]: () => openDiscussions.value,
+  [TESTIMONIALS_HREF]: () => aftercare.value.testimonialsPendingCount,
+  [GUARANTEES_HREF]: () => aftercare.value.guaranteeClaimsOpenCount,
 }
 const badgeTitles: Record<string, (n: number) => string> = {
   [ORDERS_HREF]: n => `${n} transaksi belum selesai`,
   [DISCUSSIONS_HREF]: n => `${n} diskusi belum dibaca`,
+  [TESTIMONIALS_HREF]: n => `${n} ulasan customer menunggu moderasi`,
+  [GUARANTEES_HREF]: n => `${n} klaim garansi baru`,
 }
 const badgeOf = (href: string) => badges[href]?.() ?? 0
 const iconComponents: Record<string, Component> = {
@@ -89,6 +114,7 @@ const iconComponents: Record<string, Component> = {
   ShieldUser,
   Package,
   ReceiptText,
+  ShieldAlert,
   ShieldCheck,
   ShoppingBag,
   UserCog,

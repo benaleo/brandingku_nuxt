@@ -643,7 +643,11 @@
       "mockup_approved": "Mockup disetujui",
       "mockup_revision": "Revisi mockup diminta",
       "mass_production_approved": "Produksi massal disetujui",
-      "mass_production_revision": "Perubahan sebelum produksi massal diminta"
+      "mass_production_revision": "Perubahan sebelum produksi massal diminta",
+      "guarantee_claimed": "Klaim garansi diajukan",
+      "guarantee_approved": "Klaim garansi disetujui",
+      "guarantee_rejected": "Klaim garansi ditolak",
+      "guarantee_resolved": "Klaim garansi selesai"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -954,6 +958,59 @@
       "drop": "atau tarik file ke sini",
       "change": "Ganti",
       "remove": "Hapus {name}"
+    },
+    "aftercare": {
+      "guaranteeTitle": "Garansi {days} hari",
+      "guaranteeUntil": "Berlaku sampai {date}",
+      "guaranteeEnded": "Masa garansi berakhir {date}",
+      "claim": "Klaim garansi",
+      "claimTitle": "Klaim garansi",
+      "claimDescription": "Ceritakan masalahnya dan lampirkan foto bukti. Klaim bisa diajukan sampai {date}.",
+      "claimWant": "Yang kamu inginkan",
+      "resolution": {
+        "refund": "Pengembalian dana",
+        "replace": "Tukar barang"
+      },
+      "claimReason": "Alasan klaim",
+      "claimReasonPlaceholder": "Mis. 5 tumbler penyok di bagian bawah saat diterima",
+      "claimEvidence": "Foto / file bukti",
+      "claimEvidencePick": "Pilih foto atau PDF",
+      "claimEvidenceHint": "1-5 file, maks. 5 MB per file, 7 MB total.",
+      "claimSubmit": "Kirim klaim",
+      "claimSent": "Klaim garansi terkirim. Tim kami akan meninjaunya.",
+      "claimStatus": {
+        "submitted": "Ditinjau",
+        "approved": "Disetujui, sedang diproses",
+        "rejected": "Ditolak",
+        "resolved": "Selesai"
+      },
+      "decisionNote": "Catatan tim",
+      "resolutionNote": "Penyelesaian",
+      "reviewTitle": "Ulasan",
+      "reviewHint": "Bagikan pengalamanmu. Ulasan membantu kami dan pelanggan lain.",
+      "reviewProduct": "Ulas produk",
+      "reviewCompany": "Ulas Brandingku",
+      "reviewProductTitle": "Ulas produk",
+      "reviewCompanyTitle": "Ulas layanan Brandingku",
+      "reviewDescription": "Beri bintang dan ceritakan pengalamanmu.",
+      "pickProduct": "Produk yang diulas",
+      "rating": "Penilaian",
+      "content": "Ulasan",
+      "contentPlaceholder": "Ceritakan kualitas produk, hasil branding, pengiriman, atau pelayanan kami…",
+      "minChars": "{count}/{min} karakter minimal",
+      "consentCompany": "Saya setuju ulasan ini ditampilkan di halaman utama Brandingku beserta nama dan perusahaan saya.",
+      "consentProduct": "Saya setuju ulasan ini ditampilkan di halaman produk beserta nama dan perusahaan saya.",
+      "reviewSubmit": "Kirim ulasan",
+      "reviewSent": "Terima kasih atas ulasanmu!",
+      "aboutCompany": "Tentang Brandingku",
+      "reviewPublished": "Ditampilkan",
+      "reviewModeration": "Menunggu ditinjau sebelum ditampilkan",
+      "reviewPrivate": "Hanya untuk tim Brandingku",
+      "failed": "Gagal mengirim. Coba lagi."
+    },
+    "reviews": {
+      "title": "Ulasan pelanggan",
+      "count": "{count} ulasan"
     }
   }
 }

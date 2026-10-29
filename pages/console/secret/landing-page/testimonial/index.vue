@@ -8,9 +8,25 @@
 
     <!-- Filter -->
     <AppFilterTable v-model="keyword">
-      <div class="flex-1">
+      <div class="flex flex-1 flex-wrap gap-2">
+        <select v-model="placement" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Tampil di">
+          <option value="">Semua tempat</option>
+          <option value="landing_page">Landing page</option>
+          <option value="product">Halaman produk</option>
+        </select>
+        <select v-model="source" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Sumber">
+          <option value="">Semua sumber</option>
+          <option value="customer">Ulasan customer</option>
+          <option value="console">Dibuat di console</option>
+        </select>
+        <select v-model="status" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Status">
+          <option value="">Semua status</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Tidak aktif</option>
+        </select>
       </div>
     </AppFilterTable>
+    <p class="mt-1 text-xs text-muted-foreground">Ulasan customer masuk sebagai tidak aktif. Aktifkan lewat edit agar tampil; ulasan yang customer tidak setujui tidak bisa diaktifkan.</p>
 
     <!-- Data Table -->
     <div class="mt-2">
@@ -89,6 +105,18 @@ const handleDelete = async (id: string) => {
     toast.error('Gagal menghapus data')
   }
 }
+
+const placement = ref('')
+const source = ref('')
+const status = ref('')
+watch([placement, source, status], () => {
+  pagination.value.page = 0
+  setParams({
+    placement: placement.value || undefined,
+    source: source.value || undefined,
+    is_active: status.value ? status.value === 'active' : undefined,
+  })
+})
 
 // Load data when component mounts
 onMounted(() => {

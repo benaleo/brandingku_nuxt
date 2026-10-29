@@ -10,7 +10,7 @@ import { useRouter } from 'vue-router'
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import FormButton from "~/components/atoms/FormButton.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
-import type { Testimonial, TestimonialRequest } from '~/types/testimonial.type';
+import type { Testimonial, TestimonialPlacement, TestimonialRequest } from '~/types/testimonial.type';
 
 const router = useRouter()
 const props = defineProps<{
@@ -28,10 +28,12 @@ const formSchema = toTypedSchema(z.object({
   name: z.string().min(1, 'Name is required'),
   job: z.string().min(1, 'Job is required'),
   content: z.string().min(1, 'Content is required'),
-  rating: z.coerce.number().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
+  rating: z.coerce.number().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5').multipleOf(0.5, 'Rating in half steps'),
   orders: z.coerce.number().min(0, 'Orders must be a positive number'),
   is_active: z.coerce.boolean(),
-}))
+  placement: z.enum(['landing_page', 'product']),
+  product_id: z.number().nullable(),
+}).refine(v => v.placement !== 'product' || !!v.product_id, { message: 'Pilih produk', path: ['product_id'] }))
 
 const { isFieldDirty, setFieldValue, handleSubmit, values } = useForm<TestimonialRequest>({
   validationSchema: formSchema,
@@ -42,6 +44,8 @@ const { isFieldDirty, setFieldValue, handleSubmit, values } = useForm<Testimonia
     rating: 5,
     orders: 0,
     is_active: true,
+    placement: 'landing_page',
+    product_id: null,
   }
 })
 
@@ -51,9 +55,27 @@ const content = ref('')
 const rating = ref(5)
 const orders = ref(0)
 const is_active = ref(true)
+const placement = ref<TestimonialPlacement>('landing_page')
+const product_id = ref<number | null>(null)
+// customers' testimonials: the order they came from and whether they agreed to show it
+const orderId = ref<number | null>(null)
+const consent = ref(true)
+
+// products for product testimonials
+const { gqlFetch } = useGql()
+const products = ref<{ id: number; name: string }[]>([])
+onMounted(async () => {
+  try {
+    const res = await gqlFetch<{ getProducts: { items: { id: number; name: string }[] } }>(
+      'query testimonialProducts { getProducts(pagination: { page: 1, limit: 500 }) { items { id name } } }', {}, { auth: true })
+    products.value = res.getProducts.items
+  } catch {
+    // the select stays empty; a product testimonial cannot be saved without one
+  }
+})
 
 // Watch local refs and update form values
-watch([name, job, content, rating, orders, is_active], () => {
+watch([name, job, content, rating, orders, is_active, placement, product_id], () => {
   if (!isApiUpdate) {
     setFieldValue('name', name.value)
     setFieldValue('job', job.value)
@@ -61,6 +83,8 @@ watch([name, job, content, rating, orders, is_active], () => {
     setFieldValue('rating', rating.value)
     setFieldValue('orders', orders.value)
     setFieldValue('is_active', is_active.value)
+    setFieldValue('placement', placement.value)
+    setFieldValue('product_id', placement.value === 'product' ? product_id.value : null)
   }
 }, { deep: true })
 
@@ -76,7 +100,13 @@ const setFieldsFromDetail = (val: Testimonial) => {
   rating.value = val.rating || 5
   orders.value = val.orders || 0
   is_active.value = Boolean(val.is_active) || false
+  placement.value = val.placement || 'landing_page'
+  product_id.value = val.product_id ?? null
+  orderId.value = val.order_id ?? null
+  consent.value = val.public_consent ?? true
   isApiUpdate = false
+  setFieldValue('placement', placement.value)
+  setFieldValue('product_id', product_id.value)
 }
 
 // Load detail on mount for edit/detail pages
@@ -107,6 +137,8 @@ const handleSubmitForm = handleSubmit(async (values: TestimonialRequest) => {
       rating: Number(values.rating) || 5,
       orders: Number(values.orders) || 0,
       is_active: Boolean(values.is_active),
+      placement: values.placement,
+      product_id: values.placement === 'product' ? values.product_id : null,
     }
     
     console.log('Payload to send:', payload)
@@ -119,6 +151,8 @@ const handleSubmitForm = handleSubmit(async (values: TestimonialRequest) => {
         rating: payload.rating,
         orders: payload.orders,
         is_active: payload.is_active,
+        placement: payload.placement,
+        product_id: payload.product_id,
       })
       toast.success('Testimonial created successfully!')
     } else if (resolvedEditId.value) {
@@ -130,12 +164,14 @@ const handleSubmitForm = handleSubmit(async (values: TestimonialRequest) => {
         rating: payload.rating,
         orders: payload.orders,
         is_active: payload.is_active,
+        placement: payload.placement,
+        product_id: payload.product_id,
       })
       toast.success('Testimonial updated successfully!')
     }
     router.push(getPathWithoutIdInForm(currentPath))
-  } catch (error) {
-    toast.error('Failed to submit testimonial form')
+  } catch (error: any) {
+    toast.error(error?.message || 'Failed to submit testimonial form')
     console.error('Submit error:', error)
     console.error('Error details:', JSON.stringify(error, null, 2))
   }
@@ -160,7 +196,27 @@ useHead({
 
 <template>
   <form class="editor-form" @submit.prevent="handleSubmitForm">
-    <FormsFormSection title="Testimonial pelanggan" description="Bagikan pengalaman pelanggan dan atur tampilannya di halaman utama.">
+    <FormsFormSection title="Testimonial pelanggan" description="Bagikan pengalaman pelanggan dan atur tampilannya di landing page atau halaman produk.">
+    <div v-if="orderId" class="rounded-md border p-3 text-sm" :class="consent ? 'bg-muted' : 'border-red-200 bg-red-50 text-red-800'">
+      Ulasan customer dari <NuxtLink :to="`/console/secret/orders/${orderId}/detail`" class="font-medium text-primary hover:underline">pesanan #{{ orderId }}</NuxtLink>.
+      {{ consent ? 'Customer setuju ulasan ini ditampilkan.' : 'Customer tidak setuju ditampilkan, jadi ulasan ini tidak bisa diaktifkan.' }}
+    </div>
+    <div class="form-grid">
+      <div class="space-y-2">
+        <label for="testimonial-placement" class="text-sm font-medium">Tampil di</label>
+        <select id="testimonial-placement" v-model="placement" :disabled="disabled" class="h-9 w-full rounded-md border bg-background px-3 text-sm">
+          <option value="landing_page">Landing page</option>
+          <option value="product">Halaman produk</option>
+        </select>
+      </div>
+      <div v-if="placement === 'product'" class="space-y-2">
+        <label for="testimonial-product" class="text-sm font-medium">Produk</label>
+        <select id="testimonial-product" v-model="product_id" :disabled="disabled" class="h-9 w-full rounded-md border bg-background px-3 text-sm">
+          <option :value="null" disabled>Pilih produk</option>
+          <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+        </select>
+      </div>
+    </div>
     <div class="form-grid">
     <!-- Name -->
     <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
@@ -186,8 +242,10 @@ useHead({
 
     <div class="form-grid">
     <!-- Rating -->
-    <FieldXText name="rating" label="Rating (1-5)" placeholder="Enter rating" type="number" min="1" max="5" v-model="rating" :disabled="disabled"
-      :isFieldDirty="isFieldDirty('rating')" />
+    <div class="space-y-2">
+      <span class="block text-sm font-medium">Rating</span>
+      <ElementsStarRating v-model="rating" :editable="!disabled" size="md" label="Rating" />
+    </div>
 
     <!-- Orders -->
     <FieldXText name="orders" label="Orders" placeholder="Enter orders" type="number" v-model="orders" :disabled="disabled"
@@ -195,7 +253,7 @@ useHead({
     </div>
     
     <!-- Is Active -->
-    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
+    <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled || (!!orderId && !consent)"
       :isFieldDirty="isFieldDirty('is_active')" />
 
     </FormsFormSection>

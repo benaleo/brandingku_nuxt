@@ -112,6 +112,7 @@
           <Button v-if="next.includes('shipped')" size="sm" class="mt-2" :disabled="busy" @click="dialog = 'ship'">Tandai dikirim</Button>
         </template>
       </ElementsOrderProgressTimeline>
+      <ElementsOrderAftercare v-if="order.status === 'completed'" viewer="staff" :code="order.code" :order-id="order.id" />
 
       <section v-if="order.type === 'quotation' && order.documents.length" class="rounded-xl border bg-card p-4 text-sm">
         <p class="mb-2 font-medium">Dokumen</p>
@@ -283,7 +284,7 @@ const next = computed(() => {
 const EVENT_LABELS: Record<string, string> = {
   payment_plan_chosen: 'Pembayaran pertama dipilih', progress_sample: 'Sample dikirim', sample_approved: 'Sample disetujui',
   sample_revision: 'Revisi sample diminta', progress_mockup: 'Mockup dikirim', mockup_approved: 'Mockup disetujui', mockup_revision: 'Revisi mockup diminta', progress_mass_production: 'Produksi massal diajukan', mass_production_approved: 'Produksi massal disetujui', mass_production_revision: 'Perubahan sebelum produksi massal diminta', progress_qc: 'Quality check selesai',
-  progress_ready_to_ship: 'Siap kirim', thank_you_sent: 'Email terima kasih terkirim', thank_you_failed: 'Email terima kasih gagal',
+  progress_ready_to_ship: 'Siap kirim', guarantee_claimed: 'Klaim garansi diajukan', guarantee_approved: 'Klaim garansi disetujui', guarantee_rejected: 'Klaim garansi ditolak', guarantee_resolved: 'Klaim garansi selesai', thank_you_sent: 'Email terima kasih terkirim', thank_you_failed: 'Email terima kasih gagal',
 }
 const STEP_NAME: Record<ProductionStep, string> = {
   mockup: 'Mockup', sample: 'Sample', mass_production: 'Produksi massal', qc: 'Quality check', ready_to_ship: 'Siap kirim',

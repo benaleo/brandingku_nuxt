@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { useTestimonialService } from '~/services/testimonial.service'
 import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
 
-const { datas: testimonials, loading, reFetch } = useTestimonialService()
+// active landing page testimonials, customers' published reviews among them
+const { datas: testimonials, loading, reFetch } = useTestimonialService({ is_active: true, placement: 'landing_page', limit: 6 })
 const isInitialLoad = ref(true)
 const shouldLoad = ref(false)
 
@@ -90,7 +91,7 @@ const loadTestimonials = async () => {
       
       <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div 
-          v-for="testimonial in testimonials.slice(0, 3)" 
+          v-for="testimonial in testimonials"
           :key="testimonial.id"
           class="bg-white flex flex-col justify-between rounded-lg p-6 shadow-sm relative"
         >
@@ -103,16 +104,7 @@ const loadTestimonials = async () => {
             <div>
               <h4 class="font-semibold text-gray-800">{{ testimonial.name }}</h4>
               <p class="text-sm text-gray-600">{{ testimonial.job }}</p>
-              <div class="flex mt-1">
-                <span 
-                  v-for="star in 5" 
-                  :key="star"
-                  class="text-yellow-500"
-                  :class="{ 'text-gray-300': star > testimonial.rating }"
-                >
-                  ★
-                </span>
-              </div>
+              <ElementsStarRating :model-value="testimonial.rating" class="mt-1" />
             </div>
           </div>
         </div>
