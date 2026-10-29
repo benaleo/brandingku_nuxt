@@ -108,6 +108,9 @@
             </Button>
           </form>
         </template>
+        <template #current-shipped>
+          <Button v-if="next.includes('shipped')" size="sm" class="mt-2" :disabled="busy" @click="dialog = 'ship'">Tandai dikirim</Button>
+        </template>
       </ElementsOrderProgressTimeline>
 
       <section v-if="order.type === 'quotation' && order.documents.length" class="rounded-xl border bg-card p-4 text-sm">
@@ -156,20 +159,31 @@
               <th class="px-4 py-2 text-right">Jumlah</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="it in order.items" :key="it.id" class="border-b last:border-0">
-              <td class="px-4 py-2">
-                <p class="font-medium">{{ it.product_name }} <span class="text-muted-foreground">· {{ it.variant_name }}</span></p>
-                <p v-for="b in it.brandings || []" :key="b.branding_method_id" class="text-xs text-muted-foreground">
-                  Branding {{ b.name }} +{{ formatRupiah(b.unit_price) }}/pcs
-                </p>
-                <p v-if="it.note" class="text-xs text-muted-foreground">{{ it.note }}</p>
+          <!-- one row per product, its branding services indented below; deal prices once there is a deal -->
+          <tbody v-for="row in itemRows" :key="row.key" class="border-b last:border-0">
+            <tr v-for="(line, i) in linesOf(row)" :key="line.key">
+              <td class="px-4 py-2" :class="{ 'pt-0 pl-8': i > 0 && row.product }">
+                <template v-if="i === 0 && row.product">
+                  <p class="font-medium">{{ row.name }} <span v-if="line.label" class="text-muted-foreground">· {{ line.label }}</span></p>
+                  <p v-if="row.note" class="text-xs text-muted-foreground">{{ row.note }}</p>
+                </template>
+                <p v-else :class="row.product ? 'text-xs text-muted-foreground' : 'font-medium'">{{ line.label || row.name }}</p>
               </td>
-              <td class="px-4 py-2 text-right">{{ it.quantity.toLocaleString('id-ID') }}</td>
-              <td class="px-4 py-2 text-right whitespace-nowrap">{{ formatRupiah(it.unit_price + (it.branding_unit_price || 0)) }}</td>
-              <td class="px-4 py-2 text-right whitespace-nowrap">{{ formatRupiah(it.line_total) }}</td>
+              <td class="px-4 py-2 text-right" :class="{ 'pt-0 text-xs text-muted-foreground': i > 0 && row.product }">{{ line.quantity.toLocaleString('id-ID') }}</td>
+              <td class="px-4 py-2 text-right whitespace-nowrap" :class="{ 'pt-0 text-xs text-muted-foreground': i > 0 && row.product }">
+                {{ formatRupiah(line.unitPrice) }}<span v-if="line.discountBps" class="text-green-700"> −{{ line.discountBps / 100 }}%</span>
+              </td>
+              <td class="px-4 py-2 text-right whitespace-nowrap" :class="{ 'pt-0 text-xs text-muted-foreground': i > 0 && row.product }">{{ formatRupiah(line.total) }}</td>
             </tr>
           </tbody>
+          <tfoot v-if="dealItems?.length && deal" class="border-t bg-muted/20 text-sm">
+            <tr>
+              <td colspan="3" class="px-4 py-2 text-xs text-teal-700">
+                Harga mengikuti {{ deal.number }}{{ deal.status === 'draft' ? ' (draft, belum dikirim ke customer)' : '' }}
+              </td>
+              <td class="px-4 py-2 text-right font-semibold whitespace-nowrap">{{ formatRupiah(rowsTotal(itemRows)) }}</td>
+            </tr>
+          </tfoot>
         </table>
         <dl v-if="order.invoice && order.type === 'purchase'" class="ml-auto max-w-sm space-y-1 border-t p-4 text-sm">
           <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ formatRupiah(order.invoice.subtotal) }}</dd></div>
@@ -232,9 +246,9 @@ import {Textarea} from '@/components/ui/textarea'
 import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import {useOrderService} from '~/services/order.service'
-import {invoiceErrorMessage} from '~/services/invoice.service'
+import {invoiceErrorMessage, useInvoiceService} from '~/services/invoice.service'
 import type {Order, OrderStatus, ProductionStep} from '~/types/order.type'
-import type {InvoiceStatus} from '~/types/invoice.type'
+import type {InvoiceItem, InvoiceStatus} from '~/types/invoice.type'
 
 const NEXT: Partial<Record<OrderStatus, OrderStatus[]>> = {accepted: ['processing'], paid: ['processing', 'shipped'], processing: ['shipped'], shipped: ['completed']}
 
@@ -315,6 +329,23 @@ const canDraftQuotation = computed(() => !!order.value && order.value.type === '
   ['requested', 'revision_requested'].includes(order.value.status) && canAction('/console/secret/invoices', 'create'))
 const revisionNote = computed(() => [...(order.value?.events || [])].reverse().find(e => e.action === 'revision_requested')?.note || '')
 const storageUrl = (path: string) => path.startsWith('http') ? path : `${config.public.STORAGE_URL}${path}`
+
+// like the customer's page, the deal's items and prices replace the requested ones (drafts included here)
+const {getInvoice} = useInvoiceService()
+const deal = computed(() => currentDeal(order.value, true))
+const dealItems = ref<InvoiceItem[] | null>(null)
+watch(() => deal.value?.id, async (dealId) => {
+  dealItems.value = null
+  if (!dealId || !canInvoices.value) return
+  try {
+    dealItems.value = (await getInvoice(dealId)).items
+  } catch {
+    // the requested items stay on screen
+  }
+}, {immediate: true})
+const itemRows = computed(() => !order.value ? []
+  : dealItems.value?.length ? rowsFromDeal(order.value, dealItems.value)
+  : rowsFromOrder(order.value, name => `Branding ${name}`))
 
 async function load() {
   try {

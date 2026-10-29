@@ -907,7 +907,9 @@
         "completed": "Completed"
       },
       "inProgress": "In progress",
-      "shipWaiting": "Waiting for the balance and shipping.",
+      "shipWaiting": "Waiting for the balance before shipping.",
+      "shipReadyCustomer": "Balance received. Your order ships soon.",
+      "shipReadyStaff": "Fully paid. Mark it shipped once it is on its way.",
       "decision": {
         "approved": "Approved",
         "revision": "Changes requested",

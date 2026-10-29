@@ -907,7 +907,9 @@
         "completed": "Selesai"
       },
       "inProgress": "Sedang dikerjakan",
-      "shipWaiting": "Menunggu pelunasan dan pengiriman.",
+      "shipWaiting": "Menunggu pelunasan sebelum dikirim.",
+      "shipReadyCustomer": "Pelunasan diterima. Pesanan segera dikirim.",
+      "shipReadyStaff": "Pelunasan sudah lunas. Tandai dikirim setelah barang dikirim.",
       "decision": {
         "approved": "Disetujui",
         "revision": "Minta revisi",

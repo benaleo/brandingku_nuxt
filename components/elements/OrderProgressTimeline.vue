@@ -45,7 +45,11 @@ const currentHint = (key: string) => {
     if (pending.value) return props.viewer === 'customer' ? t(`app.production.waitingYou.${key}`) : t('app.production.waitingCustomer')
     return t(`app.production.preparing.${key}`)
   }
-  if (key === 'shipped') return t('app.production.shipWaiting')
+  // the final sets paid_at: from then on only the shipment is left
+  if (key === 'shipped') {
+    if (!props.order.paid_at) return t('app.production.shipWaiting')
+    return props.viewer === 'customer' ? t('app.production.shipReadyCustomer') : t('app.production.shipReadyStaff')
+  }
   return t('app.production.inProgress')
 }
 

@@ -225,15 +225,9 @@ async function answerProgress(progressId: number, approve: boolean, note: string
   }
 }
 
-// product lines show qty × product price, with each branding service as its own qty × price
-// line below; once a deal is sent its items and prices replace the requested ones
-type PriceLine = {key: string; label: string; quantity: number; unitPrice: number; discountBps: number; total: number}
-type ItemRow = {key: string; name: string; image: string; slug: string; note: string; product: PriceLine | null; brandings: PriceLine[]}
-
+// once a deal is sent its items and prices replace the requested ones (utils/order-items.utils)
 const {getPublicInvoice} = useInvoiceService()
-const deal = computed(() => [...(order.value?.documents || [])]
-  .filter(d => d.type === 'deal' && !['void', 'cancelled', 'draft'].includes(d.status))
-  .sort((a, b) => b.id - a.id)[0] || null)
+const deal = computed(() => currentDeal(order.value))
 const dealItems = ref<InvoiceItem[] | null>(null)
 watch(() => deal.value?.public_token, async (token) => {
   dealItems.value = null
@@ -245,31 +239,10 @@ watch(() => deal.value?.public_token, async (token) => {
   }
 }, {immediate: true})
 
-const rowsFromOrder = (o: Order): ItemRow[] => o.items.map(it => ({
-  key: `o${it.id}`, name: it.product_name, image: it.product_image, slug: it.product_slug, note: it.note,
-  product: {key: 'p', label: it.variant_name, quantity: it.quantity, unitPrice: it.unit_price, discountBps: 0, total: it.quantity * it.unit_price},
-  brandings: (it.brandings || []).map(b => ({
-    key: `b${b.branding_method_id}`, label: `${t('app.cartPage.branding')} ${b.name}`, quantity: it.quantity, unitPrice: b.unit_price, discountBps: 0, total: it.quantity * b.unit_price,
-  })),
-}))
-// deal lines keep the quotation's order: a product line, then its "Branding <name> - <product>" lines;
-// anything else the admin added stands on its own row
-const rowsFromDeal = (o: Order, items: InvoiceItem[]): ItemRow[] => {
-  const rows: ItemRow[] = []
-  items.forEach((it, i) => {
-    const line = (label: string): PriceLine => ({key: `d${it.id ?? i}`, label, quantity: it.quantity, unitPrice: it.unit_price, discountBps: it.discount_bps || 0, total: it.line_total ?? it.quantity * it.unit_price})
-    const source = it.product_additional_id ? o.items.find(x => x.product_additional_id === it.product_additional_id) : undefined
-    const branding = !it.product_additional_id && /^Branding /.test(it.description) ? it.description.split(' - ')[0] : ''
-    const last = rows[rows.length - 1]
-    if (branding && last?.product) last.brandings.push(line(branding))
-    else if (it.product_additional_id) rows.push({key: `d${it.id ?? i}`, name: source?.product_name || it.description, image: source?.product_image || '', slug: source?.product_slug || '', note: source?.note || '', product: line(source?.variant_name || ''), brandings: []})
-    else rows.push({key: `d${it.id ?? i}`, name: it.description, image: '', slug: '', note: '', product: null, brandings: [line('')]})
-  })
-  return rows
-}
-const itemRows = computed(() => !order.value ? [] : dealItems.value?.length ? rowsFromDeal(order.value, dealItems.value) : rowsFromOrder(order.value))
-const linesOf = (row: ItemRow) => (row.product ? [row.product, ...row.brandings] : row.brandings)
-const itemsTotal = computed(() => itemRows.value.reduce((sum, r) => sum + linesOf(r).reduce((s, l) => s + l.total, 0), 0))
+const itemRows = computed(() => !order.value ? []
+  : dealItems.value?.length ? rowsFromDeal(order.value, dealItems.value)
+  : rowsFromOrder(order.value, name => `${t('app.cartPage.branding')} ${name}`))
+const itemsTotal = computed(() => rowsTotal(itemRows.value))
 
 // accepting, declining and cancelling are final, so each asks first in a dialog
 // the action outlives the open flag so the copy does not change while the dialog fades out
