@@ -12,7 +12,7 @@ import type { Testimonial, TestimonialPlacement } from '~/types/testimonial.type
 // The customer (token) gets the claim and review buttons; staff (orderId) see the same read-only.
 const props = defineProps<{ viewer: 'customer' | 'staff'; code: string; token?: string; orderId?: number }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 const service = useAftercareService()
 const data = ref<OrderAftercare | null>(null)
@@ -31,8 +31,6 @@ watch(() => [props.token, props.orderId], load)
 const isCustomer = computed(() => props.viewer === 'customer')
 const fileUrl = (path: string) => (path.startsWith('http') ? path : `${STORAGE_URL}${path}`)
 const isImage = (f: GuaranteeClaimFile) => f.content_type.startsWith('image/')
-const formatDate = (iso: string) =>
-  new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
 const expired = computed(() => !!data.value?.guarantee_until && new Date(data.value.guarantee_until) <= new Date())
 const STATUS_STYLE: Record<string, string> = {
   submitted: 'bg-amber-100 text-amber-800', approved: 'bg-sky-100 text-sky-800', rejected: 'bg-zinc-200 text-zinc-700', resolved: 'bg-green-100 text-green-800',
@@ -120,7 +118,7 @@ const reviewState = (r: Testimonial) =>
           <div>
             <h2 class="font-semibold text-slate-900">{{ $t('app.aftercare.guaranteeTitle', { days: data.guarantee_days }) }}</h2>
             <p v-if="data.guarantee_until" class="text-xs" :class="expired ? 'text-slate-500' : 'text-green-700'">
-              {{ $t(expired ? 'app.aftercare.guaranteeEnded' : 'app.aftercare.guaranteeUntil', { date: formatDate(data.guarantee_until) }) }}
+              {{ $t(expired ? 'app.aftercare.guaranteeEnded' : 'app.aftercare.guaranteeUntil', { date: formatDateTime(data.guarantee_until) }) }}
             </p>
           </div>
         </div>
@@ -132,7 +130,7 @@ const reviewState = (r: Testimonial) =>
       <ul v-if="data.claims.length" class="space-y-2">
         <li v-for="c in data.claims" :key="c.id" class="rounded-lg border bg-slate-50 p-3">
           <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-            <span>{{ formatDate(c.created_at) }} · {{ $t(`app.aftercare.resolution.${c.resolution}`) }}</span>
+            <span>{{ formatDateTime(c.created_at) }} · {{ $t(`app.aftercare.resolution.${c.resolution}`) }}</span>
             <span class="rounded-full px-2 py-0.5 font-medium" :class="STATUS_STYLE[c.status]">{{ $t(`app.aftercare.claimStatus.${c.status}`) }}</span>
           </div>
           <p class="mt-1 whitespace-pre-wrap break-words text-slate-700">{{ c.reason }}</p>
@@ -182,7 +180,7 @@ const reviewState = (r: Testimonial) =>
     <Dialog :open="claimOpen" @update:open="(v: boolean) => { if (!busy) claimOpen = v }">
       <DialogContent class="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogTitle>{{ $t('app.aftercare.claimTitle') }}</DialogTitle>
-        <DialogDescription>{{ $t('app.aftercare.claimDescription', { date: data.guarantee_until ? formatDate(data.guarantee_until) : '' }) }}</DialogDescription>
+        <DialogDescription>{{ $t('app.aftercare.claimDescription', { date: data.guarantee_until ? formatDateTime(data.guarantee_until) : '' }) }}</DialogDescription>
         <form class="space-y-4" @submit.prevent="submitClaim">
           <fieldset class="space-y-2">
             <legend class="mb-1 text-sm font-medium">{{ $t('app.aftercare.claimWant') }}</legend>

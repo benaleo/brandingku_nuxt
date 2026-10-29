@@ -15,7 +15,7 @@ import type {InvoiceItem} from '~/types/invoice.type'
 import type {Order} from '~/types/order.type'
 
 
-const {t, te, locale} = useI18n()
+const {t, te} = useI18n()
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
@@ -30,9 +30,6 @@ const busy = ref(false)
 
 
 const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
-const formatWhen = (iso?: string | null) => iso
-  ? new Date(iso).toLocaleString(locale.value === 'en' ? 'en-US' : 'id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})
-  : ''
 const imageSrc = (image: string) => !image ? '/images/no-image.jpg' : image.startsWith('http') ? image : `${config.public.STORAGE_URL}${image}`
 const storageUrl = (path: string) => path.startsWith('http') ? path : `${config.public.STORAGE_URL}${path}`
 
@@ -322,9 +319,9 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
               <h1 class="text-2xl font-bold text-slate-900">{{ order.code }}</h1>
               <Badge :class="statusClass">{{ $t(`app.orderStatus.${order.status}`) }}</Badge>
             </div>
-            <p class="mt-1 text-sm text-slate-500">{{ $t('app.orderPage.placedAt', {date: formatWhen(order.created_at)}) }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ $t('app.orderPage.placedAt', {date: formatDateTime(order.created_at)}) }}</p>
             <p v-if="order.status === 'awaiting_shipping_fee'" class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $t('app.orderPage.awaitingShippingInfo') }}</p>
-            <p v-if="order.status === 'pending_payment' && order.expires_at" class="mt-3 rounded-md bg-sky-50 p-3 text-sm text-sky-800">{{ $t('app.orderPage.payBefore', {date: formatWhen(order.expires_at)}) }}</p>
+            <p v-if="order.status === 'pending_payment' && order.expires_at" class="mt-3 rounded-md bg-sky-50 p-3 text-sm text-sky-800">{{ $t('app.orderPage.payBefore', {date: formatDateTime(order.expires_at)}) }}</p>
             <div v-if="returnedFromGateway && order.can_submit_payment" class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-green-50 p-3 text-sm text-green-800">
               <span>{{ $t('app.orderPage.onlineReturned') }}</span>
               <Button size="sm" variant="outline" :disabled="busy" @click="refreshStatus">{{ $t('app.orderPage.refreshStatus') }}</Button>
@@ -448,7 +445,7 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
             <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.history') }}</h2>
             <ul class="space-y-1">
               <li v-for="e in visibleEvents" :key="e.id" class="flex flex-wrap gap-x-2">
-                <span class="text-slate-500">{{ formatWhen(e.created_at) }}</span>
+                <span class="text-slate-500">{{ formatDateTime(e.created_at) }}</span>
                 <span>{{ eventLabel(e.action) }}</span>
                 <span v-if="e.note" class="text-slate-500">· {{ e.note }}</span>
               </li>
@@ -539,7 +536,7 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
                   </div>
                   <div class="space-y-1">
                     <Label for="pf-date">{{ $t('app.orderPage.paidOn') }}</Label>
-                    <Input id="pf-date" v-model="proof.paid_on" type="date" :max="todayISO()"/>
+                    <ElementsDateTimeInput id="pf-date" v-model="proof.paid_on" :max="todayISO()"/>
                   </div>
                 </div>
                 <div class="space-y-1">

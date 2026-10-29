@@ -213,7 +213,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <Label for="pay-date">Tanggal bayar *</Label>
-              <Input id="pay-date" v-model="payment.paid_on" type="date" :max="todayISO()"/>
+              <ElementsDateTimeInput id="pay-date" v-model="payment.paid_on" :max="todayISO()"/>
             </div>
             <div class="space-y-1">
               <Label for="pay-method">Metode</Label>

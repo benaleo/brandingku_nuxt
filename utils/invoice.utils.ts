@@ -31,11 +31,8 @@ export const formatRupiah = (value: number) =>
 
 export const formatBps = (bps: number) => `${String(Math.round(bps) / 100).replace('.', ',')}%`
 
-export const formatInvoiceDate = (date: string) => {
-  if (!date) return '-'
-  const d = new Date(`${date.slice(0, 10)}T00:00:00`)
-  return Number.isNaN(d.getTime()) ? date : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+// invoice dates are calendar days (yyyy-mm-dd)
+export const formatInvoiceDate = (date: string) => formatDateOnly(date)
 
 export const todayISO = () => {
   const d = new Date()

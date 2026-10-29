@@ -10,7 +10,7 @@ const route = useRoute()
 const token = computed(() => String(route.params.token || ''))
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 const { getInquiryThread, replyInquiry } = useInquiryResponseService()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 useHead(() => ({
   title: t('app.replyPage.metaTitle'),
@@ -44,8 +44,7 @@ const cleanError = (e: any) => {
   const tooLong = raw.match(/^pesan maksimal (\d+) karakter$/i)
   return tooLong ? t('app.replyPage.errors.tooLong', { max: tooLong[1] }) : raw
 }
-const formatDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString(locale.value === 'en' ? 'en-US' : 'id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : ''
+const formatDate = (iso?: string | null) => (iso ? formatDateTime(iso) : '')
 
 const isClosed = computed(() => thread.value?.status === 'closed')
 

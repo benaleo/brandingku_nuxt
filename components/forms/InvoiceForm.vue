@@ -177,12 +177,12 @@ async function submit() {
       <div class="form-grid">
         <div class="space-y-2">
           <Label for="inv-issue">Tanggal terbit</Label>
-          <Input id="inv-issue" v-model="form.issue_date" type="date"/>
+          <ElementsDateTimeInput id="inv-issue" v-model="form.issue_date"/>
           <p class="text-xs text-muted-foreground">Kosong = hari ini.</p>
         </div>
         <div class="space-y-2">
           <Label for="inv-due">{{ dueLabel }}</Label>
-          <Input id="inv-due" v-model="form.due_date" type="date"/>
+          <ElementsDateTimeInput id="inv-due" v-model="form.due_date"/>
           <p class="text-xs text-muted-foreground">Kosong = sesuai pengaturan invoice.</p>
         </div>
       </div>

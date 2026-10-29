@@ -245,7 +245,7 @@ function apply(settings: AppSetting[]) {
   descriptions.value = Object.fromEntries(settings.map(s => [s.key, s.description]))
   reset()
   const latest = settings.filter(s => KEYS.includes(s.key)).reduce((m, s) => (s.updated_at > m ? s.updated_at : m), '')
-  lastUpdated.value = latest ? new Date(latest).toLocaleString() : ''
+  lastUpdated.value = latest ? formatDateTime(latest) : ''
 }
 
 function reset() {

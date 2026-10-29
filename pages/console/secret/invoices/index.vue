@@ -36,11 +36,11 @@
       </select>
       <label class="flex items-center gap-2 text-sm text-muted-foreground">
         Dari
-        <input v-model="dateFrom" type="date" class="h-9 rounded-md border bg-background px-2 text-sm text-foreground"/>
+        <ElementsDateTimeInput v-model="dateFrom" class="w-40" input-class="h-9"/>
       </label>
       <label class="flex items-center gap-2 text-sm text-muted-foreground">
         s/d
-        <input v-model="dateTo" type="date" class="h-9 rounded-md border bg-background px-2 text-sm text-foreground"/>
+        <ElementsDateTimeInput v-model="dateTo" class="w-40" input-class="h-9"/>
       </label>
     </AppFilterTable>
 

@@ -184,12 +184,12 @@ async function submit() {
       <div class="form-grid">
         <div class="space-y-2">
           <Label for="v-start">Mulai</Label>
-          <Input id="v-start" v-model="form.starts_at" type="datetime-local"/>
+          <ElementsDateTimeInput id="v-start" v-model="form.starts_at" with-time/>
           <p class="text-xs text-muted-foreground">Kosong = langsung berlaku.</p>
         </div>
         <div class="space-y-2">
           <Label for="v-end">Berakhir</Label>
-          <Input id="v-end" v-model="form.ends_at" type="datetime-local"/>
+          <ElementsDateTimeInput id="v-end" v-model="form.ends_at" with-time/>
           <p class="text-xs text-muted-foreground">Kosong = tanpa batas waktu.</p>
         </div>
         <div class="space-y-2">

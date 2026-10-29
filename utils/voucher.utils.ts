@@ -17,8 +17,7 @@ export const describeVoucherDiscount = (v: Pick<Voucher, 'type' | 'value' | 'max
   return formatRupiah(v.value)
 }
 
-const formatDateTimeShort = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
+const formatDateTimeShort = (iso?: string | null) => (iso ? formatDateTime(iso) : '')
 
 export const describeVoucherPeriod = (v: Pick<Voucher, 'starts_at' | 'ends_at'>) => {
   if (!v.starts_at && !v.ends_at) return 'Tanpa batas waktu'
@@ -27,13 +26,13 @@ export const describeVoucherPeriod = (v: Pick<Voucher, 'starts_at' | 'ends_at'>)
   return `${formatDateTimeShort(v.starts_at)} – ${formatDateTimeShort(v.ends_at)}`
 }
 
-// <input type="datetime-local"> works in local time without a zone; the API takes ISO timestamps
+// <DateTimeInput with-time> works in local time without a zone; the API takes ISO timestamps
 export const toDateTimeLocal = (iso?: string | null) => {
   if (!iso) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 export const fromDateTimeLocal = (value: string) => (value ? new Date(value).toISOString() : null)

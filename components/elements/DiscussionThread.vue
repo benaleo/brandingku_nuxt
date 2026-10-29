@@ -118,8 +118,6 @@ const authorLabel = (m: DiscussionMessage) => {
   if (props.viewer === 'customer' && m.author_role === 'customer') return t('app.discussion.you')
   return m.author_role === 'staff' ? t('app.discussion.staffName', { name: m.author_name }) : t('app.discussion.customerName', { name: m.author_name })
 }
-const formatWhen = (iso: string) =>
-  new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
 const formatSize = (bytes: number) => {
   const fmt = new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'id-ID', { maximumFractionDigits: 1 })
   return bytes >= 1024 * 1024 ? `${fmt.format(bytes / 1024 / 1024)} MB` : `${fmt.format(Math.max(1, Math.round(bytes / 1024)))} KB`
@@ -154,7 +152,7 @@ const viewing = ref<DiscussionAttachment | null>(null)
       <div v-for="m in messages" :key="m.id" class="flex" :class="isMine(m) ? 'justify-end' : 'justify-start'">
         <div class="max-w-[85%] min-w-0">
           <p class="mb-0.5 text-[11px] text-muted-foreground" :class="isMine(m) && 'text-right'">
-            <span class="font-medium text-foreground">{{ authorLabel(m) }}</span> · {{ formatWhen(m.created_at) }}
+            <span class="font-medium text-foreground">{{ authorLabel(m) }}</span> · {{ formatDateTime(m.created_at) }}
           </p>
           <div
             class="rounded-2xl"

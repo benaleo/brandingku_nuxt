@@ -38,7 +38,7 @@
               </p>
             </div>
             <div class="flex shrink-0 flex-col items-end gap-1">
-              <span class="text-xs text-muted-foreground">{{ formatTime(thread.last_message.created_at) }}</span>
+              <span class="text-xs text-muted-foreground">{{ formatDateTime(thread.last_message.created_at) }}</span>
               <span
                   v-if="thread.unread > 0"
                   class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold text-white"
@@ -75,9 +75,6 @@ onMounted(() => {
   start(reload)
 })
 watch(unreadOnly, reload)
-
-const formatTime = (iso: string) =>
-  new Date(iso).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})
 
 useHead({title: pageTitle})
 

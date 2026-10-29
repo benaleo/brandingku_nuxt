@@ -19,7 +19,7 @@
             <div>
               <NuxtLink :to="`/console/secret/orders/${c.order_id}/detail`" class="font-semibold text-primary hover:underline">{{ c.order_code }}</NuxtLink>
               <span class="ml-2 text-muted-foreground">{{ c.customer_name }}</span>
-              <p class="text-xs text-muted-foreground">{{ formatDate(c.created_at) }} · minta {{ RESOLUTION[c.resolution] }}</p>
+              <p class="text-xs text-muted-foreground">{{ formatDateTime(c.created_at) }} · minta {{ RESOLUTION[c.resolution] }}</p>
             </div>
             <span class="rounded-full px-2 py-0.5 text-xs font-medium" :class="STATUS_STYLE[c.status]">{{ STATUS[c.status] }}</span>
           </div>
@@ -102,7 +102,6 @@ const canUpdate = computed(() => canAction(route.path, 'update'))
 const service = useAftercareService()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 const fileUrl = (path: string) => (path.startsWith('http') ? path : `${STORAGE_URL}${path}`)
-const formatDate = (iso: string) => new Date(iso).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})
 
 const status = ref('open')
 const claims = ref<GuaranteeClaim[]>([])

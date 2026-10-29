@@ -10,7 +10,7 @@ import type { Order, OrderProgress, OrderProgressFile } from '~/types/order.type
 const props = defineProps<{ order: Order; viewer: 'customer' | 'staff'; busy?: boolean }>()
 const emit = defineEmits<{ review: [progressId: number, approve: boolean, note: string] }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 const PRODUCTION = ['mockup', 'sample', 'mass_production', 'qc', 'ready_to_ship'] as const
 // steps the customer approves before the next one starts
@@ -34,8 +34,6 @@ const steps = computed<Step[]>(() => {
 // the approval step waiting for the customer's answer
 const pending = computed(() => [...props.order.progress].reverse().find(p => p.stage === props.order.production_stage && needsApproval(p.stage) && !p.decision))
 
-const formatWhen = (iso: string) =>
-  new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
 const fileUrl = (f: OrderProgressFile) => (f.path.startsWith('http') ? f.path : `${STORAGE_URL}${f.path}`)
 const isImage = (f: OrderProgressFile) => f.content_type.startsWith('image/')
 
@@ -82,7 +80,7 @@ defineExpose({ resetReview: () => { revising.value = false; revisionNote.value =
 
           <div v-for="entry in step.entries" :key="entry.id" class="mt-2 rounded-lg border bg-slate-50 p-3">
             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-              <span>{{ formatWhen(entry.created_at) }}</span>
+              <span>{{ formatDateTime(entry.created_at) }}</span>
               <span
                 v-if="needsApproval(entry.stage) && entry.decision"
                 class="rounded-full px-2 py-0.5 font-medium"

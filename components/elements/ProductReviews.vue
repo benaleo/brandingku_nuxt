@@ -21,8 +21,6 @@ onMounted(async () => {
   }
 })
 
-const formatDate = (iso: string) =>
-  new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', { dateStyle: 'medium' }).format(new Date(iso))
 </script>
 
 <template>
@@ -42,7 +40,7 @@ const formatDate = (iso: string) =>
             <p class="font-semibold text-slate-900">{{ r.name }}</p>
             <p v-if="r.job" class="text-xs text-slate-500">{{ r.job }}</p>
           </div>
-          <span class="text-xs text-slate-400">{{ formatDate(r.created_at) }}</span>
+          <span class="text-xs text-slate-400">{{ formatDay(r.created_at) }}</span>
         </div>
         <ElementsStarRating :model-value="r.rating" class="mt-2" />
         <p class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-700">{{ r.content }}</p>

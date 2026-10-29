@@ -31,12 +31,12 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
         <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium" :class="statusMeta.class">{{ statusMeta.label }}</span>
-        <p v-if="inquiry.closed_at" class="mt-1 text-xs text-muted-foreground">Ditutup {{ new Date(inquiry.closed_at).toLocaleString() }}</p>
+        <p v-if="inquiry.closed_at" class="mt-1 text-xs text-muted-foreground">Ditutup {{ formatDateTime(inquiry.closed_at) }}</p>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Created At</label>
-        <p class="text-gray-900">{{ new Date(inquiry.created_at).toLocaleString() }}</p>
+        <p class="text-gray-900">{{ formatDateTime(inquiry.created_at) }}</p>
       </div>
 
       <div class="md:col-span-2">
@@ -146,12 +146,12 @@
             </span>
           </header>
           <p v-if="r.direction === 'inbound'" class="mt-1 text-xs text-muted-foreground">
-            {{ new Date(r.created_at).toLocaleString() }} · {{ r.sent_by || 'Pelanggan' }} ({{ r.from_email }})
+            {{ formatDateTime(r.created_at) }} · {{ r.sent_by || 'Pelanggan' }} ({{ r.from_email }})
           </p>
           <p v-else class="mt-1 text-xs text-muted-foreground">
-            {{ new Date(r.created_at).toLocaleString() }} · dari {{ r.from_email || '-' }} ke {{ r.to_email }}
+            {{ formatDateTime(r.created_at) }} · dari {{ r.from_email || '-' }} ke {{ r.to_email }}
             <template v-if="r.sent_by"> · oleh {{ r.sent_by }}</template>
-            <template v-if="r.reply_expires_at"> · link balasan berlaku sampai {{ new Date(r.reply_expires_at).toLocaleString() }}</template>
+            <template v-if="r.reply_expires_at"> · link balasan berlaku sampai {{ formatDateTime(r.reply_expires_at) }}</template>
           </p>
           <p v-if="r.error_message" class="mt-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{{ r.error_message }}</p>
           <div class="response-body mt-3 text-sm" v-html="sanitize(r.body)" />
