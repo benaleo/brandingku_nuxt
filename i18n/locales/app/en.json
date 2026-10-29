@@ -69,7 +69,8 @@
     "testimonials": {
       "title": "What Our Clients Say",
       "empty": "No testimonials available yet.",
-      "score": "out of 5 · {count} reviews"
+      "score": "out of 5 · {count} reviews",
+      "next": "Next testimonial"
     },
     "faq": {
       "title": "Popular Questions",

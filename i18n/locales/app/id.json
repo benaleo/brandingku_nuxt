@@ -69,7 +69,8 @@
     "testimonials": {
       "title": "Apa Kata Klien Kami",
       "empty": "Belum ada testimonial tersedia.",
-      "score": "dari 5 · {count} ulasan"
+      "score": "dari 5 · {count} ulasan",
+      "next": "Testimoni berikutnya"
     },
     "faq": {
       "title": "Pertanyaan Populer",
