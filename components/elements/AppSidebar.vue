@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
 import {
@@ -24,6 +25,9 @@ import {useAftercareService} from '~/services/aftercare.service'
 
 const route = useRoute()
 const router = useRouter()
+// on phones the menu is a sheet; it closes once a link has been followed
+const { setOpenMobile } = useSidebar()
+watch(() => route.path, () => setOpenMobile(false))
 const { menus: secretConsoleMenu, can } = useConsoleAccess()
 const CHAT_HREF = '/console/secret/chat'
 const { unreadCount } = useChatUnreadCount(() => {

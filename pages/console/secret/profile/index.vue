@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
+import { LogOut } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
 import { useProfileService, type MyProfile } from '~/services/profile.service'
 
 definePageMeta({ layout: 'console-secret' })
@@ -20,6 +22,11 @@ const load = async () => {
   finally { loading.value = false }
 }
 onMounted(load)
+
+const logout = () => {
+  useCookie('token').value = null
+  window.location.href = '/'
+}
 
 const saveProfile = async (values: { name: string; phone?: string; address?: string; avatarFile: File | null }) => {
   if (!access.value?.user_id) return
@@ -52,7 +59,13 @@ const changePassword = async (newPassword: string) => {
 <template>
   <div class="space-y-6">
     <ElementsAppBreadcrumb />
-    <div><h1 class="text-2xl font-bold">Profile</h1><p class="mt-1 text-sm text-muted-foreground">Kelola informasi akun dan password Anda.</p></div>
+    <div class="flex items-start justify-between gap-3">
+      <div><h1 class="text-2xl font-bold">Profile</h1><p class="mt-1 text-sm text-muted-foreground">Kelola informasi akun dan password Anda.</p></div>
+      <!-- phones have no avatar menu, so logging out happens here -->
+      <Button variant="outline" class="shrink-0 text-red-600 hover:text-red-700 min-[769px]:hidden" @click="logout">
+        <LogOut class="size-4"/> Keluar
+      </Button>
+    </div>
 
     <FormsProfileForm v-if="!loading" :profile="profile" :saving="saving" @submit="saveProfile" />
 

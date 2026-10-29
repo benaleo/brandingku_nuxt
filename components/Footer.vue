@@ -58,7 +58,7 @@
 
     <!-- Copyright Notice & Language Selection -->
     <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto text-sm text-gray-400">
-      <p class="text-center">{{ $t('app.footer.copyright') }}</p>
+      <ElementsCopyright class="text-center" />
       <div role="group" :aria-label="$t('app.language.switch')" class="flex items-center gap-2">
         <button
           @click="changeLanguage('id')"

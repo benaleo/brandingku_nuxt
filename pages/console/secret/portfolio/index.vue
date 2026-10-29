@@ -7,11 +7,7 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/portfolio/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex-1">
-        <!-- <FieldXSelectSimple label="Kategori" name="category" :options="categoryOptions" placeholder="Pilih Kategori" v-model="selectedCategory"/> -->
-      </div>
-    </AppFilterTable>
+    <AppFilterTable v-model="keyword"/>
 
 
     <!-- Table -->

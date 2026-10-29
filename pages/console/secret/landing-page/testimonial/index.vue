@@ -7,24 +7,30 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/landing-page/testimonial/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex flex-1 flex-wrap gap-2">
-        <select v-model="placement" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Tampil di">
+    <AppFilterTable v-model="keyword"
+      :filters="{ placement, source, status }"
+      :filter-defaults="{ placement: '', source: '', status: '' }"
+      @apply="(f) => { placement = f.placement; source = f.source; status = f.status }"
+    >
+      <template #default="{ draft }">
+      <div class="flex flex-col gap-3">
+        <select v-model="draft.placement" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Tampil di">
           <option value="">Semua tempat</option>
           <option value="landing_page">Landing page</option>
           <option value="product">Halaman produk</option>
         </select>
-        <select v-model="source" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Sumber">
+        <select v-model="draft.source" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Sumber">
           <option value="">Semua sumber</option>
           <option value="customer">Ulasan customer</option>
           <option value="console">Dibuat di console</option>
         </select>
-        <select v-model="status" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Status">
+        <select v-model="draft.status" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Status">
           <option value="">Semua status</option>
           <option value="active">Aktif</option>
           <option value="inactive">Tidak aktif</option>
         </select>
       </div>
+      </template>
     </AppFilterTable>
     <p class="mt-1 text-xs text-muted-foreground">Ulasan customer masuk sebagai tidak aktif. Aktifkan lewat edit agar tampil; ulasan yang customer tidak setujui tidak bisa diaktifkan.</p>
 

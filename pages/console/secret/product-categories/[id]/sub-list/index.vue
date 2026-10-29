@@ -7,9 +7,7 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="`${basePath}/add`" />
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex-1"></div>
-    </AppFilterTable>
+    <AppFilterTable v-model="keyword"/>
 
     <!-- Data Table -->
     <div class="mt-2">

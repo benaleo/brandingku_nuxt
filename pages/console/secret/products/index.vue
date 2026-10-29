@@ -7,8 +7,13 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword" search-width-class="sm:w-52">
-      <div class="flex w-full flex-wrap items-center gap-3">
+    <AppFilterTable v-model="keyword"
+      :filters="{ selectedCategory, selectedHighlight, selectedActive }"
+      :filter-defaults="{ selectedCategory: '', selectedHighlight: 'all', selectedActive: 'all' }"
+      @apply="(f) => { selectedCategory = f.selectedCategory; selectedHighlight = f.selectedHighlight; selectedActive = f.selectedActive }"
+    >
+      <template #default="{ draft }">
+      <div class="flex flex-col gap-3">
         <FieldXSelectWithGroupParent
           name="category_filter"
           placeholder="Semua kategori"
@@ -16,14 +21,15 @@
           emptyMessage="Kategori tidak ditemukan."
           clearable
           clearLabel="Semua kategori"
-          v-model="selectedCategory"
+          v-model="draft.selectedCategory"
           :options="categoryOptions"
           :loading="categoryLoading"
-          itemClass="w-full sm:w-52"
+          itemClass="w-full"
         />
-        <FieldXSelectSimple class="w-full sm:w-40" :options="highlightOptions" placeholder="Semua highlight" v-model="selectedHighlight"/>
-        <FieldXSelectSimple class="w-full sm:w-36" :options="activeOptions" placeholder="Semua status" v-model="selectedActive"/>
+        <FieldXSelectSimple class="w-full" :options="highlightOptions" placeholder="Semua highlight" v-model="draft.selectedHighlight"/>
+        <FieldXSelectSimple class="w-full" :options="activeOptions" placeholder="Semua status" v-model="draft.selectedActive"/>
       </div>
+      </template>
     </AppFilterTable>
 
 

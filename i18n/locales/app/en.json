@@ -102,7 +102,7 @@
         "sustainability": "Sustainability",
         "shippingPolicy": "Shipping Policy"
       },
-      "copyright": "© 2024 Brandingku Merchandise. All rights reserved."
+      "copyright": "© {year} Brandingku Merchandise. All rights reserved."
     },
     "language": {
       "switch": "Change Language",

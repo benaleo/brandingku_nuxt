@@ -18,16 +18,22 @@
       </button>
     </div>
 
-    <AppFilterTable v-model="keyword" placeholder="Cari kode, customer, email…">
-      <select v-model="type" aria-label="Filter jenis" class="h-9 rounded-md border bg-background px-3 text-sm">
+    <AppFilterTable v-model="keyword" placeholder="Cari kode, customer, email…"
+      :filters="{ type, status }"
+      :filter-defaults="{ type: '', status: '' }"
+      @apply="(f) => { type = f.type; status = f.status }"
+    >
+      <template #default="{ draft }">
+      <select v-model="draft.type" aria-label="Filter jenis" class="h-9 rounded-md border bg-background px-3 text-sm">
         <option value="">Semua jenis</option>
         <option value="purchase">Pembelian langsung</option>
         <option value="quotation">Permintaan penawaran</option>
       </select>
-      <select v-model="status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
+      <select v-model="draft.status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
         <option value="">Semua status</option>
         <option v-for="(label, value) in ORDER_STATUS_LABELS" :key="value" :value="value">{{ label }}</option>
       </select>
+      </template>
     </AppFilterTable>
 
     <div class="mt-6">

@@ -3,8 +3,14 @@
     <AppBreadcrumb/>
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/email-list/add'"/>
 
-    <AppFilterTable v-model="keyword" placeholder="Cari email, sender, provider…">
-      <FieldXSelectSimple class="w-full sm:w-40" :options="statusOptions" placeholder="Semua status" v-model="selectedStatus"/>
+    <AppFilterTable v-model="keyword" placeholder="Cari email, sender, provider…"
+      :filters="{ selectedStatus }"
+      :filter-defaults="{ selectedStatus: 'all' }"
+      @apply="(f) => { selectedStatus = f.selectedStatus }"
+    >
+      <template #default="{ draft }">
+      <FieldXSelectSimple class="w-full" :options="statusOptions" placeholder="Semua status" v-model="draft.selectedStatus"/>
+      </template>
     </AppFilterTable>
 
     <div class="mt-2">

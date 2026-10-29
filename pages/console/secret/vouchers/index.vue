@@ -3,11 +3,17 @@
     <AppBreadcrumb/>
     <AppTableHeader :pageTitle="pageTitle" create-path="/console/secret/vouchers/add"/>
 
-    <AppFilterTable v-model="keyword" placeholder="Cari kode atau nama…">
-      <select v-model="status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
+    <AppFilterTable v-model="keyword" placeholder="Cari kode atau nama…"
+      :filters="{ status }"
+      :filter-defaults="{ status: '' }"
+      @apply="(f) => { status = f.status }"
+    >
+      <template #default="{ draft }">
+      <select v-model="draft.status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
         <option value="">Semua status</option>
         <option v-for="(s, value) in VOUCHER_STATUS" :key="value" :value="value">{{ s[0] }}</option>
       </select>
+      </template>
     </AppFilterTable>
 
     <div class="mt-6">

@@ -25,23 +25,29 @@
       </button>
     </div>
 
-    <AppFilterTable v-model="keyword" placeholder="Cari nomor, customer, email…">
-      <select v-model="type" aria-label="Filter tipe" class="h-9 rounded-md border bg-background px-3 text-sm">
+    <AppFilterTable v-model="keyword" placeholder="Cari nomor, customer, email…"
+      :filters="{ type, status, dateFrom, dateTo }"
+      :filter-defaults="{ type: '', status: '', dateFrom: '', dateTo: '' }"
+      @apply="(f) => { type = f.type; status = f.status; dateFrom = f.dateFrom; dateTo = f.dateTo }"
+    >
+      <template #default="{ draft }">
+      <select v-model="draft.type" aria-label="Filter tipe" class="h-9 rounded-md border bg-background px-3 text-sm">
         <option value="">Semua tipe</option>
         <option v-for="(label, value) in INVOICE_TYPE_LABELS" :key="value" :value="value">{{ label }}</option>
       </select>
-      <select v-model="status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
+      <select v-model="draft.status" aria-label="Filter status" class="h-9 rounded-md border bg-background px-3 text-sm">
         <option value="">Semua status</option>
         <option v-for="(s, value) in INVOICE_STATUS" :key="value" :value="value">{{ s[0] }}</option>
       </select>
       <label class="flex items-center gap-2 text-sm text-muted-foreground">
         Dari
-        <ElementsDateTimeInput v-model="dateFrom" class="w-40" input-class="h-9"/>
+        <ElementsDateTimeInput v-model="draft.dateFrom" class="flex-1" input-class="h-9"/>
       </label>
       <label class="flex items-center gap-2 text-sm text-muted-foreground">
         s/d
-        <ElementsDateTimeInput v-model="dateTo" class="w-40" input-class="h-9"/>
+        <ElementsDateTimeInput v-model="draft.dateTo" class="flex-1" input-class="h-9"/>
       </label>
+      </template>
     </AppFilterTable>
 
     <div class="mt-6">

@@ -17,6 +17,7 @@ import {
   useVueTable,
 } from "@tanstack/vue-table"
 import { computed } from 'vue'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 type PaginationProp = { page: number; limit: number; total: number }
 // overrides for the built-in English copy, e.g. translated labels on public pages
@@ -130,42 +131,46 @@ const onChangeLimit = (e: Event) => {
         </TableBody>
       </Table>
     </div>
-    <div class="flex items-center justify-between py-4 gap-4">
+    <!-- one row on wide screens; on phones the summary sits above a row of page size and arrows -->
+    <div class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div v-if="props.labels?.summary" class="text-sm text-muted-foreground">
         {{ props.labels.summary((pg?.page ?? 0) + 1, totalPages, pg?.total ?? 0) }}
       </div>
       <div v-else class="text-sm text-muted-foreground">
-        Page
-        <span class="font-medium">{{ (pg?.page ?? 0) + 1 }}</span>
-        of
-        <span class="font-medium">{{ totalPages }}</span>
-        • Total
-        <span class="font-medium">{{ pg?.total ?? 0 }}</span>
-        items
+        Halaman <span class="font-medium text-foreground">{{ (pg?.page ?? 0) + 1 }}</span> dari
+        <span class="font-medium text-foreground">{{ totalPages }}</span> ·
+        <span class="font-medium text-foreground">{{ pg?.total ?? 0 }}</span> data
       </div>
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-2">
-          <label class="text-sm">{{ props.labels?.rowsPerPage ?? 'Rows per page' }}</label>
-          <select class="border rounded px-2 py-1 text-sm" :value="pg?.limit" @change="onChangeLimit">
+      <div class="flex items-center justify-between gap-2 sm:justify-end">
+        <label class="flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+          {{ props.labels?.rowsPerPage ?? 'Per halaman' }}
+          <select class="h-8 rounded-md border bg-background px-2 text-sm text-foreground" :value="pg?.limit" @change="onChangeLimit">
             <option v-for="opt in limits" :key="opt" :value="opt">{{ opt }}</option>
           </select>
+        </label>
+        <div class="flex items-center gap-1">
+          <Button
+              variant="outline"
+              size="icon"
+              class="size-8"
+              :aria-label="props.labels?.previous ?? 'Sebelumnya'"
+              :disabled="props.loading || !canPrev"
+              @click="onPrev"
+          >
+            <ChevronLeft class="size-4"/>
+          </Button>
+          <span class="min-w-12 text-center text-sm tabular-nums">{{ (pg?.page ?? 0) + 1 }} / {{ totalPages }}</span>
+          <Button
+              variant="outline"
+              size="icon"
+              class="size-8"
+              :aria-label="props.labels?.next ?? 'Berikutnya'"
+              :disabled="props.loading || !canNext"
+              @click="onNext"
+          >
+            <ChevronRight class="size-4"/>
+          </Button>
         </div>
-        <Button
-            variant="outline"
-            size="sm"
-            :disabled="props.loading || !canPrev"
-            @click="onPrev"
-        >
-          {{ props.labels?.previous ?? 'Previous' }}
-        </Button>
-        <Button
-            variant="outline"
-            size="sm"
-            :disabled="props.loading || !canNext"
-            @click="onNext"
-        >
-          {{ props.labels?.next ?? 'Next' }}
-        </Button>
       </div>
     </div>
   </div>
