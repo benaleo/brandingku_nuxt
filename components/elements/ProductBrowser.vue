@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SkeletonProductGrid from "~/components/skeletons/SkeletonProductGrid.vue";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "vue-router";
 import { ref, computed, onMounted, nextTick, watch } from "vue";
@@ -288,11 +289,12 @@ const goToPage = (p1: number) => {
 
 <template>
   <div>
-  <section class="app-container px-4 pb-16 pt-6 sm:px-6 md:pt-4 lg:px-8">
+  <!-- inside a page that pads its own content (the category page) the list adds none -->
+  <section class="pb-16 pt-6 md:pt-4" :class="scoped ? '' : 'app-container px-4 sm:px-6 lg:px-8'">
     <div ref="listTop" class="scroll-mt-28">
       <h2 class="text-2xl font-bold capitalize text-gray-900 sm:text-3xl">{{ title || $t('app.productPage.listTitle') }}</h2>
       <p class="mt-1 text-sm text-gray-500">
-        <template v-if="loading && !totalItems">{{ $t('app.productPage.loading') }}</template>
+        <template v-if="loading">{{ $t('app.productPage.loading') }}</template>
         <template v-else>{{ $t('app.productPage.found', { count: totalItems }, totalItems) }}</template>
       </p>
 
@@ -382,24 +384,12 @@ const goToPage = (p1: number) => {
     </div>
 
     <!-- MARK : GRID -->
-    <div
-      v-if="loading && !(products || []).length"
-      class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6"
-    >
-      <div v-for="i in 8" :key="i" class="overflow-hidden rounded-2xl border bg-white">
-        <div class="aspect-square animate-pulse bg-gray-100" />
-        <div class="space-y-2 p-3 sm:p-4">
-          <div class="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-          <div class="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
-          <div class="h-4 w-1/3 animate-pulse rounded bg-gray-100" />
-        </div>
-      </div>
-    </div>
+    <!-- skeleton on every load, filter and page changes included -->
+    <SkeletonProductGrid v-if="loading" class="mt-6" />
 
     <div
       v-else-if="(products || []).length"
-      class="mt-6 grid grid-cols-2 gap-3 transition-opacity sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6"
-      :class="{ 'opacity-60': loading }"
+      class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6"
     >
       <article
         v-for="product in products"

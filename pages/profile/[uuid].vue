@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Bell, CheckCircle2, ChevronRight, Clock, Heart, LogOut, Mail, MapPin, Package, Phone, Receipt, ShoppingCart, Wallet } from 'lucide-vue-next'
+import { Bell, CheckCircle2, ChevronRight, Clock, Heart, LayoutDashboard, LogOut, Mail, MapPin, Package, Phone, Receipt, ShoppingCart, Wallet } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useOrderService } from '~/services/order.service'
 import type { MyOrderSummary, Order } from '~/types/order.type'
 
@@ -46,8 +47,14 @@ const isMe = computed(() => !!token.value && getSecureIdFromToken(token.value) =
 // the session ends on the server too; a failed call still signs out here
 const { logout: endSession } = useAuth()
 const loggingOut = ref(false)
+const logoutOpen = ref(false)
+// same rule as the console guard: every role but user may open the console
+const isStaff = computed(() => {
+  const role = token.value ? decodeToken(token.value)?.role : ''
+  return isMe.value && !!role && role !== 'user'
+})
 async function logout() {
-  if (!window.confirm(t('app.profileMenu.logoutConfirm'))) return
+  logoutOpen.value = false
   loggingOut.value = true
   try {
     await endSession()
@@ -119,11 +126,27 @@ useHead(() => ({
             <Button as-child variant="outline" class="flex-1 sm:flex-none">
               <NuxtLink to="/wishlist"><Heart class="size-4" /> {{ $t('app.profileMenu.wishlist') }}</NuxtLink>
             </Button>
-            <Button v-if="isMe" variant="outline" class="flex-1 text-red-600 hover:text-red-700 sm:flex-none" :disabled="loggingOut" @click="logout">
+            <Button v-if="isStaff" as-child variant="outline" class="flex-1 sm:flex-none">
+              <NuxtLink to="/console/secret/dashboard"><LayoutDashboard class="size-4" /> {{ $t('app.profileMenu.console') }}</NuxtLink>
+            </Button>
+            <Button v-if="isMe" variant="outline" class="flex-1 text-red-600 hover:text-red-700 sm:flex-none" :disabled="loggingOut" @click="logoutOpen = true">
               <LogOut class="size-4" /> {{ $t('app.profileMenu.logout') }}
             </Button>
           </div>
         </section>
+
+        <AlertDialog v-model:open="logoutOpen">
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{{ $t('app.profileMenu.logoutConfirm') }}</AlertDialogTitle>
+              <AlertDialogDescription>{{ $t('app.profileMenu.logoutDescription') }}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{{ $t('app.profileMenu.cancel') }}</AlertDialogCancel>
+              <AlertDialogAction class="bg-red-600 hover:bg-red-700" @click="logout">{{ $t('app.profileMenu.logout') }}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <section class="mt-4 grid grid-cols-2 gap-3 md:mt-6 md:gap-4 lg:grid-cols-4" :aria-label="$t('app.profilePage.statsLabel')">
           <div v-for="s in stats" :key="s.key" class="min-w-0 rounded-xl border bg-white p-4 shadow-sm md:p-5">

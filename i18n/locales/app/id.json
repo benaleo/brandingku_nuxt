@@ -16,6 +16,7 @@
       "loadingCategories": "Memuat kategori...",
       "cart": "Keranjang",
       "account": "Akun Pengguna",
+      "login": "Masuk",
       "wishlist": "Wishlist"
     },
     "hero": {
@@ -1033,7 +1034,10 @@
     "profileMenu": {
       "wishlist": "Wishlist",
       "logout": "Keluar",
-      "logoutConfirm": "Keluar dari akun ini?"
+      "logoutConfirm": "Keluar dari akun ini?",
+      "console": "Console",
+      "logoutDescription": "Anda akan keluar dari akun ini. Lanjutkan?",
+      "cancel": "Batal"
     }
   }
 }

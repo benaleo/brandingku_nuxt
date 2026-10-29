@@ -59,7 +59,7 @@ const onTouchEnd = (e: TouchEvent) => {
 </script>
 
 <template>
-  <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
+  <div ref="target" class="w-full overflow-x-clip px-4 py-12 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-12">
       <h2 class="text-3xl font-bold text-center text-gray-800" :class="score?.count ? 'mb-3' : 'mb-12'">{{ $t('app.testimonials.title') }}</h2>
       <!-- the overall score of the testimonials shown here -->
@@ -140,8 +140,8 @@ const onTouchEnd = (e: TouchEvent) => {
               <ElementsTestimonialCard :testimonial="t" />
             </CarouselItem>
           </CarouselContent>
-          <CarouselPrevious class="-left-4 bg-white shadow-md lg:-left-12" />
-          <CarouselNext class="-right-4 bg-white shadow-md lg:-right-12" />
+          <CarouselPrevious class="-left-4 bg-white shadow-md xl:-left-12" />
+          <CarouselNext class="-right-4 bg-white shadow-md xl:-right-12" />
         </Carousel>
 
         <!-- phones: a stacked deck; the next button floats under the front card, a swipe works too -->

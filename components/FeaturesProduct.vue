@@ -50,6 +50,17 @@ const tabs = computed(() => [
   },
 ]);
 
+// cards per view at each breakpoint, matching the CarouselItem basis classes; the arrows only
+// show where there are more products than fit
+const ARROW_CLASSES: [number, string, string][] = [
+  [2, 'inline-flex', 'hidden'],
+  [3, 'sm:inline-flex', 'sm:hidden'],
+  [4, 'md:inline-flex', 'md:hidden'],
+  [5, 'lg:inline-flex', 'lg:hidden'],
+  [6, 'xl:inline-flex', 'xl:hidden'],
+];
+const arrowClass = (count: number) => ARROW_CLASSES.map(([perView, show, hide]) => (count > perView ? show : hide)).join(' ');
+
 const filteredProducts = (type: string) => {
   if (type === "populer") return data.value.filter((p) => p.is_highlight);
   if (type === "rekomendasi")
@@ -130,18 +141,18 @@ async function quickAdd(product: FeaturedProductItem) {
                   v-if="loading || isInitialLoad"
                   v-for="n in 5"
                   :key="`skeleton-${n}`"
-                  class="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  class="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
                 >
                   <div class="p-1">
                     <Card class="py-0">
                       <CardHeader class="relative p-0 aspect-square overflow-hidden">
                         <Skeleton class="w-full aspect-square rounded-t-lg" />
                       </CardHeader>
-                      <CardContent class="p-4 space-y-3">
-                        <Skeleton class="h-5 w-3/4" />
-                        <Skeleton class="h-4 w-1/2" />
-                        <div class="flex justify-between items-center mt-4">
-                          <Skeleton class="h-5 w-20" />
+                      <CardContent class="p-3 space-y-2">
+                        <Skeleton class="h-4 w-3/4" />
+                        <Skeleton class="h-3 w-1/2" />
+                        <div class="flex justify-between items-center mt-3">
+                          <Skeleton class="h-4 w-16" />
                         </div>
                       </CardContent>
                     </Card>
@@ -153,7 +164,7 @@ async function quickAdd(product: FeaturedProductItem) {
                   v-else
                   v-for="product in filteredProducts(val.key)"
                   :key="product.id"
-                  class="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  class="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
                 >
                   <div class="p-1">
                     <Card
@@ -205,15 +216,15 @@ async function quickAdd(product: FeaturedProductItem) {
                           </Button>
                         </div>
                       </CardHeader>
-                      <CardContent class="p-4">
-                        <h3 class="font-medium">{{ product.name }}</h3>
-                        <p class="text-sm text-gray-500 mt-1">
+                      <CardContent class="p-3">
+                        <h3 class="line-clamp-2 text-sm font-medium">{{ product.name }}</h3>
+                        <p class="mt-0.5 truncate text-xs text-gray-500">
                           {{ product.category }}
                         </p>
-                        <div class="flex justify-between items-center mt-4">
-                          <span class="font-bold"
+                        <div class="flex justify-between items-center mt-2">
+                          <span class="text-sm font-bold"
                             >Rp. {{ product.price }}
-                            <span class="text-sm text-gray-500"
+                            <span class="text-xs text-gray-500"
                               >{{ $t('app.products.perPcs') }}</span
                             ></span
                           >
@@ -224,8 +235,8 @@ async function quickAdd(product: FeaturedProductItem) {
                 </CarouselItem>
               </CarouselContent>
               <!-- keep arrows inside the carousel; the default -left/-right-12 overflows the page -->
-              <CarouselPrevious class="left-2 bg-white/90 shadow-md" />
-              <CarouselNext class="right-2 bg-white/90 shadow-md" />
+              <CarouselPrevious class="left-2 bg-white/90 shadow-md" :class="arrowClass(filteredProducts(val.key).length)" />
+              <CarouselNext class="right-2 bg-white/90 shadow-md" :class="arrowClass(filteredProducts(val.key).length)" />
             </Carousel>
           </TabsContent>
         </Tabs>

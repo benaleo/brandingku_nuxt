@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, Check, MessageCircle, Minus, Plus } from "lucide-vue-next";
+import { ArrowLeftIcon, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const route = useRoute();
@@ -32,7 +32,7 @@ const { token, createWishlist } = useWishlist();
 
 const handleAddToWishlist = async () => {
   if (!token.value) {
-    router.push("/console/auth");
+    router.push({ path: "/console/auth", query: { redirect: route.fullPath } });
     return;
   }
 
@@ -169,6 +169,11 @@ const handleBuyNow = () => {
 const { add: addToCart } = useCart();
 const adding = ref(false);
 const handleAddToCart = async () => {
+  // guests sign in first and come back to this product
+  if (!authToken.value) {
+    router.push({ path: "/console/auth", query: { redirect: route.fullPath } });
+    return;
+  }
   const variant = selectedAdditional.value;
   if (!variant) {
     toast.error(t("app.cartPage.selectVariant"));
@@ -326,7 +331,7 @@ definePageMeta({
 </script>
 
 <template>
-  <HeaderProduct :title="detail?.name || ''" />
+  <HeaderProduct :title="detail?.name || (error ? $t('app.productPage.detail.product') : '')" />
 
   <!-- back fixed button -->
   <button
@@ -338,7 +343,46 @@ definePageMeta({
   </button>
 
   <div class="bg-white app-container px-4 pt-8 pb-28 md:pt-10 lg:pb-12">
-    <div v-if="loading" class="flex justify-center">{{ $t('app.productPage.detail.loading') }}</div>
+    <!-- skeleton until the product arrives -->
+    <div v-if="loading || (!detail && !error)" class="space-y-8" role="status" :aria-label="$t('app.productPage.detail.loading')">
+      <Skeleton class="h-4 w-56" />
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+        <div class="-mx-4 space-y-3 sm:mx-0">
+          <Skeleton class="aspect-square w-full rounded-none sm:rounded-xl" />
+          <div class="flex gap-2 px-4 sm:px-0">
+            <Skeleton v-for="i in 4" :key="i" class="size-16 rounded-lg" />
+          </div>
+        </div>
+        <div class="space-y-6 pr-0 md:pr-12">
+          <div class="space-y-2">
+            <Skeleton class="h-8 w-3/4" />
+            <Skeleton class="h-4 w-1/3" />
+          </div>
+          <Skeleton class="h-9 w-40" />
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-16" />
+            <div class="flex gap-2">
+              <Skeleton v-for="i in 3" :key="i" class="h-9 w-20 rounded-full" />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-16" />
+            <Skeleton class="h-9 w-[220px]" />
+          </div>
+          <Skeleton class="h-9 w-36" />
+          <div class="hidden gap-3 lg:flex">
+            <Skeleton class="h-9 flex-1" />
+            <Skeleton class="size-9" />
+            <Skeleton class="size-9" />
+          </div>
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-full" />
+            <Skeleton class="h-4 w-full" />
+            <Skeleton class="h-4 w-2/3" />
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-else-if="error" class="flex flex-col items-center gap-4 py-10 text-center">
       <p class="text-lg font-semibold text-gray-900">
         {{ error === "Product not found" ? $t('app.productPage.detail.notFound') : $t('app.productPage.detail.loadFailed') }}
@@ -598,13 +642,13 @@ definePageMeta({
               </Button>
             </template>
             <template v-else>
-              <Button variant="outline" class="h-11 flex-1 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
               <Button class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" :disabled="adding" @click="handleBuyNow">{{ $t('app.productPage.detail.buyNow') }}</Button>
+              <Button variant="outline" :aria-label="$t('app.productPage.detail.addToCart')" :title="$t('app.productPage.detail.addToCart')" class="h-11 w-11 shrink-0 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-9" :disabled="adding" @click="handleAddToCart">
+                <ShoppingCart class="size-5" />
+              </Button>
             </template>
-            <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-              </svg>
+            <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" :title="$t('app.productPage.wishlistAdd')" class="h-11 w-11 shrink-0 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-9" @click="handleAddToWishlist">
+              <Heart class="size-5" />
             </Button>
           </div>
 

@@ -4,10 +4,13 @@
   >
     <component
       :is="tag"
+      v-if="title"
       class="max-w-3xl text-center text-3xl font-bold leading-tight text-white drop-shadow-lg sm:text-4xl md:text-5xl"
     >
-      {{ title || 'Header' }}
+      {{ title }}
     </component>
+    <!-- the title is still loading -->
+    <span v-else class="block h-9 w-2/3 max-w-md animate-pulse rounded-lg bg-white/30 sm:h-10 md:h-12" aria-hidden="true" />
     <!-- wave sits 1px below the edge so the gradient never peeks through -->
     <svg
       class="absolute inset-x-0 -bottom-px block h-16 w-full sm:h-20 md:h-28"

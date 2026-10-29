@@ -18,8 +18,11 @@
               >
                 <div class="grid grid-cols-3 gap-4">
                   <div v-for="category in categories.filter(cat => cat.sub_categories && cat.sub_categories.length > 0)" :key="category.id" class="space-y-2">
-                    <h3 class="font-semibold text-gray-800 hover:text-blue-600 cursor-pointer border-b pb-2 border-slate-200">
-                      {{ category.name.toUpperCase() }}
+                    <!-- the parent opens its own category page, sub categories included -->
+                    <h3 class="border-b border-slate-200 pb-2 font-semibold text-gray-800">
+                      <NuxtLink :to="`/category/${category.slug || category.id}`" class="block hover:text-green-600 hover:underline">
+                        {{ category.name.toUpperCase() }}
+                      </NuxtLink>
                     </h3>
                     <div class="space-y-1">
                       <a 
@@ -33,7 +36,7 @@
                     </div>
                   </div>
                   <div class="space-y-2">
-                    <h3 class="font-semibold text-gray-800 hover:text-blue-600 cursor-pointer border-b pb-2 border-slate-200">
+                    <h3 class="border-b border-slate-200 pb-2 font-semibold text-gray-800">
                       {{ $t('app.nav.other') }}
                     </h3>
                     <div class="space-y-1">
@@ -262,14 +265,14 @@
 
         <div class="shrink-0 space-y-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/cart')">
+            <button v-if="token" type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/cart')">
               <ShoppingCart class="size-4 shrink-0" /> {{ $t('app.nav.cart') }}<span v-if="cartCount"> ({{ cartCount }})</span>
             </button>
-            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/wishlist')">
+            <button v-if="token" type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="router.push('/wishlist')">
               <Heart class="size-4 shrink-0" /> {{ $t('app.nav.wishlist') }}
             </button>
             <button type="button" class="col-span-2 inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-green-50" @click="handleUserClick">
-              <User class="size-4 shrink-0" /> {{ $t('app.nav.account') }}
+              <User class="size-4 shrink-0" /> {{ token ? $t('app.nav.account') : $t('app.nav.login') }}
             </button>
           </div>
           <Button class="h-11 w-full bg-green-600 hover:bg-green-700" @click="router.push('/product')">{{ $t('app.nav.searchProduct') }}</Button>

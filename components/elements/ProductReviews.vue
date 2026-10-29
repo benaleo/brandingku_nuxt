@@ -38,7 +38,7 @@ const share = (count: number) => (summary.value?.count ? (count / summary.value.
 <template>
   <section v-if="summary?.count" class="mt-10" aria-labelledby="product-reviews-title">
     <h2 id="product-reviews-title" class="text-xl font-semibold text-slate-900">{{ $t('app.reviews.title') }}</h2>
-    <div class="mt-4 grid gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
+    <div class="mt-4 grid min-w-0 grid-cols-1 gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
       <!-- score and breakdown; each star row filters the list -->
       <div class="h-fit rounded-xl border bg-white p-5 shadow-sm">
         <div class="flex items-end gap-3">
@@ -69,11 +69,11 @@ const share = (count: number) => (summary.value?.count ? (count / summary.value.
         </ul>
       </div>
 
-      <div>
-        <div class="flex flex-wrap items-center gap-2" role="group" :aria-label="$t('app.reviews.filterLabel')">
+      <div class="min-w-0">
+        <div class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" :aria-label="$t('app.reviews.filterLabel')">
           <button
             type="button"
-            class="rounded-full border px-3 py-1 text-sm"
+            class="shrink-0 rounded-full border px-3 py-1 text-sm"
             :class="stars === null ? 'border-green-600 bg-green-600 text-white' : 'hover:bg-slate-50'"
             :aria-pressed="stars === null"
             @click="filter(null)"
@@ -82,7 +82,7 @@ const share = (count: number) => (summary.value?.count ? (count / summary.value.
             v-for="n in [5, 4, 3, 2, 1]"
             :key="n"
             type="button"
-            class="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm"
+            class="inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-sm"
             :class="stars === n ? 'border-green-600 bg-green-600 text-white' : 'hover:bg-slate-50'"
             :aria-pressed="stars === n"
             @click="filter(n)"

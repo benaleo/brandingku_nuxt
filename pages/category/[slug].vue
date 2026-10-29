@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SkeletonProductGrid from "~/components/skeletons/SkeletonProductGrid.vue";
 import {useRoute} from 'vue-router'
 import {computed, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
@@ -232,6 +233,16 @@ definePageMeta({
         :category-id="activeCategoryId"
         :title="selectedSubCategory?.name || $t('app.categoryPage.detail.products')"
       />
+      <!-- the category is still loading: the list's heading and cards as placeholders -->
+      <section v-else-if="categoryLoading" class="pb-16 pt-6 md:pt-4" aria-hidden="true">
+        <Skeleton class="h-8 w-48" />
+        <Skeleton class="mt-2 h-4 w-32" />
+        <div class="mt-4 flex gap-2">
+          <Skeleton class="h-10 flex-1 sm:max-w-xs" />
+          <Skeleton class="h-10 w-24" />
+        </div>
+        <SkeletonProductGrid class="mt-6" />
+      </section>
     </div>
    </div>
 
