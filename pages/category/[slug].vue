@@ -96,12 +96,11 @@ const currentCategorySlug = computed(() => selectedSubCategory.value?.slug || sl
 
 // "Request Catalog": the selected sub category's catalog, else the parent's; without one, ask in live chat
 const { openChat } = useChatWidget()
-const activeCatalog = computed(() => {
-  const sub = selectedSubCategory.value
-  if (sub?.catalog_file) return { url: sub.catalog_file, name: sub.catalog_file_name }
-  if (category.value?.catalog_file) return { url: category.value.catalog_file, name: category.value.catalog_file_name }
-  return null
-})
+// a stored file downloads; a link (e.g. Google Drive) opens in a new tab
+const catalogOf = (c?: { catalog_file: string; catalog_file_name: string; catalog_url?: string } | null) =>
+  c?.catalog_file ? { url: c.catalog_file, name: c.catalog_file_name, download: true }
+    : c?.catalog_url ? { url: c.catalog_url, name: '', download: false } : null
+const activeCatalog = computed(() => catalogOf(selectedSubCategory.value) || catalogOf(category.value))
 const requestCatalog = () =>
   openChat(t('app.categoryPage.detail.requestCatalogMessage', { name: selectedSubCategory.value?.name || category.value?.name || '' }).trim())
 
@@ -254,8 +253,8 @@ definePageMeta({
             :href="activeCatalog.url"
             target="_blank"
             rel="noopener"
-            :download="activeCatalog.name"
-            :title="activeCatalog.name"
+            :download="activeCatalog.download ? activeCatalog.name : undefined"
+            :title="activeCatalog.name || undefined"
             class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
           >
             <Download class="size-5 shrink-0" />

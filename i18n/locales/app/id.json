@@ -158,7 +158,9 @@
         "subFallback": "Memilih merchandise yang tepat bukan hanya soal branding, tetapi juga pesan yang Anda sampaikan. Koleksi {name} kami berfokus pada material berkualitas yang awet bertahun-tahun, bukan hanya hitungan minggu. Dari teknologi vakum hingga pengiriman netral karbon, kami membantu perusahaan Anda memberi dampak tanpa meninggalkan jejak.",
         "sourcing": "Pelajari sumber material kami →",
         "sustainability": "98% RATING KEBERLANJUTAN"
-      }
+      },
+      "catalog": "Katalog",
+      "downloadCatalogOf": "Unduh katalog {name}"
     },
     "common": {
       "close": "Tutup",

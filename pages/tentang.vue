@@ -154,48 +154,6 @@
       </div>
     </section>
 
-    <!-- Meet the Visionaries Section -->
-    <section class="ps py-20 bg-gray-50">
-      <div class="container mx-auto px-6">
-        <div class="flex justify-between items-center mb-12">
-          <div>
-            <h2 class="text-4xl font-bold mb-4 text-gray-800">{{ $t('app.aboutPage.teamTitle') }}</h2>
-            <p class="text-lg text-gray-600">{{ $t('app.aboutPage.teamSubtitle') }}</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Team Member 1 -->
-          <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-1.png" alt="Sarah Johnson" class="w-full rounded-md mx-auto mb-4 object-cover" />
-            <h4 class="text-lg font-semibold text-gray-800">Sarah Johnson</h4>
-            <p class="text-gray-600">{{ $t('app.aboutPage.roles.creativeDirector') }}</p>
-          </div>
-
-          <!-- Team Member 2 -->
-          <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-2.png" alt="Michael Chen" class="w-full rounded-md mx-auto mb-4 object-cover" />
-            <h4 class="text-lg font-semibold text-gray-800">Michael Chen</h4>
-            <p class="text-gray-600">{{ $t('app.aboutPage.roles.brandStrategist') }}</p>
-          </div>
-
-          <!-- Team Member 3 -->
-          <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-3.png" alt="Emily Rodriguez" class="w-full rounded-md mx-auto mb-4 object-cover" />
-            <h4 class="text-lg font-semibold text-gray-800">Emily Rodriguez</h4>
-            <p class="text-gray-600">{{ $t('app.aboutPage.roles.designLead') }}</p>
-          </div>
-
-          <!-- Team Member 4 -->
-          <div class="p-2 rounded-xl text-center">
-            <img src="/images/about/person-4.png" alt="David Kim" class="w-full rounded-md mx-auto mb-4 object-cover" />
-            <h4 class="text-lg font-semibold text-gray-800">David Kim</h4>
-            <p class="text-gray-600">{{ $t('app.aboutPage.roles.operationsManager') }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Call to Action Section -->
     <section class="ps py-20 bg-green-600 text-white">
       <div class="container mx-auto px-6 text-center">
@@ -207,9 +165,10 @@
           <button class="px-8 py-4 bg-black/80 text-white rounded-lg hover:bg-green-800 transition-colors font-semibold">
             {{ $t('app.aboutPage.ctaStart') }}
           </button>
-          <button class="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
+          <!-- each category offers its own catalog for download -->
+          <NuxtLink to="/category" class="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
             {{ $t('app.aboutPage.ctaCatalog') }}
-          </button>
+          </NuxtLink>
         </div>
       </div>
     </section>

@@ -30,11 +30,10 @@
 
       <!-- Categories Grid: 2 columns on phones, 3 on tablets, 4 on desktop -->
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
+        <div v-for="category in categories" :key="category.id" class="relative">
         <NuxtLink
-          v-for="category in categories"
-          :key="category.id"
           :to="category.slug.startsWith('/') ? category.slug : `/category/${category.slug}`"
-          class="group flex flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+          class="group flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
         >
           <div class="aspect-square overflow-hidden bg-slate-800">
             <img
@@ -56,6 +55,19 @@
             <ArrowRight class="size-4 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5 group-hover:text-green-700" />
           </div>
         </NuxtLink>
+        <!-- the category's catalog: a stored file downloads, a link opens in a new tab -->
+        <a
+          v-if="category.catalog"
+          :href="category.catalog.url"
+          target="_blank"
+          rel="noopener"
+          :download="category.catalog.download ? '' : undefined"
+          class="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-green-700 shadow-md ring-1 ring-black/5 transition hover:bg-green-600 hover:text-white"
+          :aria-label="$t('app.categoryPage.downloadCatalogOf', { name: category.name })"
+        >
+          <Download class="size-4" /> {{ $t('app.categoryPage.catalog') }}
+        </a>
+        </div>
       </div>
 
       <!-- Empty State -->
@@ -100,13 +112,15 @@ interface Category {
   name: string
   image: string
   product_count: number
+  catalog: { url: string; download: boolean } | null
 }
 
 // Import service
 import { useProductCategoryService } from '~/services/product-category.service'
-import { ArrowRight } from 'lucide-vue-next'
+import { ArrowRight, Download } from 'lucide-vue-next'
 
 const { t } = useI18n()
+const config = useRuntimeConfig()
 
 // State
 const categories = ref<Category[]>([])
@@ -133,7 +147,9 @@ const fetchCategories = async () => {
       slug: item.slug,
       name: item.name,
       image: item.image,
-      product_count: item.product_count
+      product_count: item.product_count,
+      catalog: item.catalog_file ? { url: `${config.public.STORAGE_URL}${item.catalog_file}`, download: true }
+        : item.catalog_url ? { url: item.catalog_url, download: false } : null,
     }))
   } catch (err: any) {
     console.error('Error fetching categories:', err)

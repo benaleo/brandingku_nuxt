@@ -86,6 +86,8 @@ export type ProductCategory = {
     catalog_file?: string
     catalog_file_name?: string
     catalog_file_size?: number
+    // a link elsewhere (e.g. Google Drive) used instead of a file
+    catalog_url?: string
 }
 
 export type ProductCategoryRequest = {

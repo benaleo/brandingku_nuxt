@@ -79,7 +79,12 @@ const clearImage = (slot: ImageSlot) => {
   else { landingImageFile.value = null; landingImage.value = ''; removeLandingImage.value = true }
 }
 
-// downloadable catalog shown by the "Request Catalog" button on the public category page
+// the catalog behind the "Request Catalog" button on the public category page: an uploaded
+// file, or a link to it elsewhere (e.g. Google Drive); saving one source removes the other
+const catalogMode = ref<'file' | 'link'>('file')
+const catalogUrl = ref('')
+const savedCatalogUrl = ref('')
+const catalogUrlValid = computed(() => !catalogUrl.value.trim() || /^https?:\/\/[^\s/]+\.[^\s]+$/i.test(catalogUrl.value.trim()))
 const CATALOG_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx']
 const MAX_CATALOG_MB = 50
 const catalog = ref<{ file: string; name: string; size: number } | null>(null)
@@ -119,6 +124,13 @@ const clearCatalog = () => {
 
 // runs after the category itself is saved, so new categories get their id first
 const syncCatalog = async (id: number | string) => {
+  if (catalogMode.value === 'link') {
+    const link = catalogUrl.value.trim()
+    if (link !== savedCatalogUrl.value || (link && catalog.value)) await service.setCategoryCatalogUrl(id, link)
+    return
+  }
+  // back to a file: the old link goes away
+  if (savedCatalogUrl.value) await service.setCategoryCatalogUrl(id, '')
   if (catalogFile.value) {
     catalogProgress.value = 0
     try {
@@ -158,6 +170,8 @@ const setFieldsFromDetail = (val: any) => {
   is_active.value = Boolean(val.is_active) || false
   is_landing_page.value = Boolean(val.is_landing_page) || false
   catalog.value = val.catalog_file ? { file: val.catalog_file, name: val.catalog_file_name || 'katalog', size: Number(val.catalog_file_size) || 0 } : null
+  savedCatalogUrl.value = catalogUrl.value = val.catalog_url || ''
+  catalogMode.value = val.catalog_url && !val.catalog_file ? 'link' : 'file'
 
   // Update form values
   setFieldValue('name', name.value)
@@ -216,6 +230,10 @@ watch(name, (newVal) => {
 
 const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
   let savedId: number | string | undefined = isCreate ? undefined : (resolvedEditId.value as any)
+  if (catalogMode.value === 'link' && !catalogUrlValid.value) {
+    toast.error('Link katalog harus diawali http:// atau https://')
+    return
+  }
   const brandingProblem = brandingForm.value?.problem()
   if (brandingProblem) {
     toast.error(`Harga branding ${brandingProblem}`)
@@ -399,8 +417,38 @@ const handleBack = () => {
     </FormsFormSection>
     <FormsFormSection
       title="Katalog"
-      description="File yang diunduh pengunjung lewat tombol Request Catalog di halaman kategori. PDF, Word atau Excel, maksimal 50 MB."
+      description="Dibuka pengunjung lewat tombol Request Catalog di halaman kategori: unggah file (PDF, Word atau Excel, maksimal 50 MB) atau cantumkan link-nya, mis. Google Drive."
     >
+      <div role="radiogroup" aria-label="Sumber katalog" class="inline-flex rounded-lg border p-1">
+        <label
+          v-for="opt in ([{ value: 'file', label: 'Unggah file' }, { value: 'link', label: 'Link (Google Drive, dll.)' }] as const)"
+          :key="opt.value"
+          class="cursor-pointer rounded-md px-3 py-1.5 text-sm"
+          :class="catalogMode === opt.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
+        >
+          <input v-model="catalogMode" type="radio" name="catalog-mode" :value="opt.value" class="sr-only" :disabled="disabled">
+          {{ opt.label }}
+        </label>
+      </div>
+      <div v-if="catalogMode === 'link'" class="space-y-1">
+        <label for="catalog-url" class="text-sm font-medium">Link katalog</label>
+        <input
+          id="catalog-url"
+          v-model="catalogUrl"
+          type="url"
+          inputmode="url"
+          placeholder="https://drive.google.com/file/d/…"
+          class="form-input"
+          :class="!catalogUrlValid && 'border-red-500'"
+          :aria-invalid="!catalogUrlValid || undefined"
+          :disabled="disabled"
+        >
+        <p class="text-xs" :class="catalogUrlValid ? 'text-muted-foreground' : 'text-red-600'">
+          {{ catalogUrlValid ? 'Pastikan akses link terbuka untuk siapa saja. Kosongkan untuk menghapus.' : 'Link harus diawali http:// atau https://' }}
+        </p>
+        <p v-if="catalog && catalogUrl.trim()" class="text-xs text-amber-700">File katalog yang sudah diunggah akan dihapus saat disimpan.</p>
+      </div>
+      <template v-else>
       <input
         ref="catalogInput"
         type="file"
@@ -456,6 +504,8 @@ const handleBack = () => {
         </div>
         <p class="text-xs text-muted-foreground">Mengunggah katalog… {{ catalogProgress }}%</p>
       </div>
+      <p v-if="savedCatalogUrl" class="text-xs text-amber-700">Link katalog saat ini akan dihapus saat disimpan.</p>
+      </template>
     </FormsFormSection>
     <FormsFormSection title="Harga branding default" description="Harga per pcs tiap metode branding untuk produk di kategori ini. Produk bisa memakai harga sendiri.">
       <CategoryBrandingForm

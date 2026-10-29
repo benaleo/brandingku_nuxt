@@ -14,6 +14,8 @@ export interface SubCategory {
   is_active: boolean
   catalog_file: string
   catalog_file_name: string
+  // a link elsewhere (e.g. Google Drive) used instead of a file
+  catalog_url: string
 }
 
 export interface ProductCategoryBySlug {
@@ -26,6 +28,7 @@ export interface ProductCategoryBySlug {
   meta_description: string
   catalog_file: string
   catalog_file_name: string
+  catalog_url: string
   sub: SubCategory[]
 }
 
@@ -97,6 +100,7 @@ export const useGetProductCategoryBySlug = (slug: string) => {
             meta_description
             catalog_file
             catalog_file_name
+            catalog_url
             sub {
               name
               description
@@ -107,6 +111,7 @@ export const useGetProductCategoryBySlug = (slug: string) => {
               is_active
               catalog_file
               catalog_file_name
+              catalog_url
             }
           }
         }

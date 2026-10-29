@@ -146,6 +146,7 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     catalog_file
                     catalog_file_name
                     catalog_file_size
+                    catalog_url
                     parent_id
                     sub_categories {
                         id
@@ -201,6 +202,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                         name
                         image
                         product_count
+                        catalog_file
+                        catalog_url
                     }
                     page_info {
                         has_next_page
@@ -220,6 +223,8 @@ export const useProductCategoryService = (opts?: { autoFetchParents?: boolean })
                     name: string
                     image: string
                     product_count: number
+                    catalog_file: string
+                    catalog_url: string
                 }>
                 page_info: {
                     has_next_page: boolean
@@ -636,6 +641,12 @@ const deleteCategoryCatalog = async (id: number | string) => {
     await gqlFetch(mutation, { id: Number(id) }, { auth: true })
 }
 
+// a catalog link replaces the stored file; an empty url clears the link
+const setCategoryCatalogUrl = async (id: number | string, url: string) => {
+    const mutation = `mutation setProductCategoryCatalogUrl($id: Int!, $url: String!) { setProductCategoryCatalogUrl(id: $id, url: $url) { id } }`
+    await gqlFetch(mutation, { id: Number(id), url }, { auth: true })
+}
+
 return {
     // GraphQL list state (backward-compatible shape for the page)
     datas,
@@ -661,6 +672,7 @@ return {
     getProductCategoriesPage,
     uploadCategoryCatalog,
     deleteCategoryCatalog,
+    setCategoryCatalogUrl,
     createProductCategory,
     createProductCategoryWithSubs,
     updateProductCategory,
