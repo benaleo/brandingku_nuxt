@@ -635,13 +635,15 @@
       "progress_sample": "Sample sent for approval",
       "sample_approved": "Sample approved",
       "sample_revision": "Sample changes requested",
-      "progress_mass_production": "Mass production done",
+      "progress_mass_production": "Mass production sent for approval",
       "progress_qc": "Quality check done",
       "progress_ready_to_ship": "Ready to ship",
       "thank_you_sent": "Thank-you email sent",
       "progress_mockup": "Mockup sent for approval",
       "mockup_approved": "Mockup approved",
-      "mockup_revision": "Mockup changes requested"
+      "mockup_revision": "Mockup changes requested",
+      "mass_production_approved": "Mass production approved",
+      "mass_production_revision": "Changes requested before mass production"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -922,24 +924,28 @@
       "revisionNote": "Requested changes",
       "approve": {
         "mockup": "Approve mockup",
-        "sample": "Approve sample"
+        "sample": "Approve sample",
+        "mass_production": "Approve mass production"
       },
       "requestRevision": "Request changes",
-      "revisionPlaceholder": "Describe what should change in the sample",
+      "revisionPlaceholder": "Describe what should change",
       "sendRevision": "Send change request",
       "approvedToast": {
         "mockup": "Mockup approved, our team moves on to the sample",
-        "sample": "Sample approved, mass production starts"
+        "sample": "Sample approved, our team prepares mass production",
+        "mass_production": "Mass production approved, our team starts producing"
       },
       "revisionToast": "Change request sent",
       "viewFile": "View {name}",
       "preparing": {
         "mockup": "Our designers are preparing the mockup.",
-        "sample": "Our team is preparing the sample."
+        "sample": "Our team is preparing the sample.",
+        "mass_production": "Our team is preparing mass production."
       },
       "waitingYou": {
         "mockup": "The mockup is waiting for your approval.",
-        "sample": "The sample is waiting for your approval."
+        "sample": "The sample is waiting for your approval.",
+        "mass_production": "Mass production is waiting for your approval."
       },
       "waitingCustomer": "Waiting for the customer's answer."
     },

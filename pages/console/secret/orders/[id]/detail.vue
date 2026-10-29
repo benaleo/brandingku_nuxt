@@ -83,7 +83,7 @@
       </section>
       <ElementsOrderProgressTimeline v-if="order.type === 'quotation' && order.production_stage" :order="order" viewer="staff">
         <template #[progressSlot]>
-          <p v-if="approvalWaiting" class="mt-2 text-xs text-muted-foreground">{{ stepName }} baru bisa dikirim setelah customer menjawab yang sebelumnya.</p>
+          <p v-if="approvalWaiting" class="mt-2 text-xs text-muted-foreground">Menunggu jawaban customer untuk {{ stepName.toLowerCase() }}; pengajuan berikutnya bisa dikirim setelah dijawab.</p>
           <form v-else-if="canUpdate && order.status === 'processing' && progressStep" class="mt-3 space-y-3 rounded-lg border border-dashed p-3" @submit.prevent="submitProgress">
             <p v-if="progressStep === 'ready_to_ship' && order.payment_plan === 'dp'" class="text-xs text-teal-700">Tagihan pelunasan dibuat dan dikirim ke customer otomatis setelah tahap ini.</p>
             <div class="space-y-1">
@@ -282,7 +282,7 @@ const next = computed(() => {
 
 const EVENT_LABELS: Record<string, string> = {
   payment_plan_chosen: 'Pembayaran pertama dipilih', progress_sample: 'Sample dikirim', sample_approved: 'Sample disetujui',
-  sample_revision: 'Revisi sample diminta', progress_mockup: 'Mockup dikirim', mockup_approved: 'Mockup disetujui', mockup_revision: 'Revisi mockup diminta', progress_mass_production: 'Produksi massal selesai', progress_qc: 'Quality check selesai',
+  sample_revision: 'Revisi sample diminta', progress_mockup: 'Mockup dikirim', mockup_approved: 'Mockup disetujui', mockup_revision: 'Revisi mockup diminta', progress_mass_production: 'Produksi massal diajukan', mass_production_approved: 'Produksi massal disetujui', mass_production_revision: 'Perubahan sebelum produksi massal diminta', progress_qc: 'Quality check selesai',
   progress_ready_to_ship: 'Siap kirim', thank_you_sent: 'Email terima kasih terkirim', thank_you_failed: 'Email terima kasih gagal',
 }
 const STEP_NAME: Record<ProductionStep, string> = {
@@ -290,17 +290,18 @@ const STEP_NAME: Record<ProductionStep, string> = {
 }
 const STEP_SUBMIT: Record<ProductionStep, string> = {
   mockup: 'Kirim mockup ke customer',
-  sample: 'Kirim sample ke customer', mass_production: 'Tandai produksi massal selesai', qc: 'Tandai quality check selesai', ready_to_ship: 'Tandai siap kirim',
+  sample: 'Kirim sample ke customer', mass_production: 'Minta persetujuan produksi massal', qc: 'Tandai quality check selesai', ready_to_ship: 'Tandai siap kirim',
 }
 const progressStep = computed(() => {
   const s = order.value?.production_stage
   return s && s !== 'done' ? s : null
 })
 const progressSlot = computed(() => `current-${order.value?.production_stage || ''}`)
-// mockup and sample need files and the customer's answer before the next one can be sent
+// mockup and sample need files; they and mass production wait for the customer's answer before the next request
 const stepName = computed(() => (progressStep.value ? STEP_NAME[progressStep.value] : ''))
+const APPROVAL_STEPS: ProductionStep[] = ['mockup', 'sample', 'mass_production']
 const needsFiles = computed(() => progressStep.value === 'mockup' || progressStep.value === 'sample')
-const approvalWaiting = computed(() => needsFiles.value && !!order.value?.progress.some(p => p.stage === progressStep.value && !p.decision))
+const approvalWaiting = computed(() => APPROVAL_STEPS.includes(progressStep.value as ProductionStep) && !!order.value?.progress.some(p => p.stage === progressStep.value && !p.decision))
 const progressFiles = ref<File[]>([])
 const progressNote = ref('')
 function pickProgressFiles(picked: File[]) {

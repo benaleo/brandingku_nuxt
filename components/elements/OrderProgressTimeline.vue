@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import type { Order, OrderProgress, OrderProgressFile } from '~/types/order.type'
 
 // production of a quotation order after its first payment: the admin reports each step,
-// the customer approves the mockup and the sample. viewer=customer shows their answer buttons.
+// the customer approves the mockup, the sample and the start of mass production. viewer=customer shows their answer buttons.
 const props = defineProps<{ order: Order; viewer: 'customer' | 'staff'; busy?: boolean }>()
 const emit = defineEmits<{ review: [progressId: number, approve: boolean, note: string] }>()
 
@@ -14,7 +14,7 @@ const { t, locale } = useI18n()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 const PRODUCTION = ['mockup', 'sample', 'mass_production', 'qc', 'ready_to_ship'] as const
 // steps the customer approves before the next one starts
-const APPROVAL = ['mockup', 'sample']
+const APPROVAL = ['mockup', 'sample', 'mass_production']
 const needsApproval = (stage: string) => APPROVAL.includes(stage)
 
 type Step = { key: string; state: 'done' | 'current' | 'upcoming'; entries: OrderProgress[] }
@@ -31,7 +31,7 @@ const steps = computed<Step[]>(() => {
   list.push({ key: 'completed', state: o.status === 'completed' ? 'done' : shipped ? 'current' : 'upcoming', entries: [] })
   return list
 })
-// the mockup or sample waiting for the customer's answer
+// the approval step waiting for the customer's answer
 const pending = computed(() => [...props.order.progress].reverse().find(p => p.stage === props.order.production_stage && needsApproval(p.stage) && !p.decision))
 
 const formatWhen = (iso: string) =>
@@ -88,7 +88,8 @@ defineExpose({ resetReview: () => { revising.value = false; revisionNote.value =
                 class="rounded-full px-2 py-0.5 font-medium"
                 :class="entry.decision === 'approved' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'"
               >{{ $t(`app.production.decision.${entry.decision}`) }}</span>
-              <span v-else-if="needsApproval(entry.stage)" class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800">{{ $t('app.production.decision.waiting') }}</span>
+              <!-- mass production reported before it needed approval has no answer and no badge -->
+              <span v-else-if="entry.id === pending?.id" class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800">{{ $t('app.production.decision.waiting') }}</span>
             </div>
             <p v-if="entry.note" class="mt-1 whitespace-pre-wrap break-words text-slate-700">{{ entry.note }}</p>
             <div v-if="entry.files.length" class="mt-2 flex flex-wrap gap-2">
@@ -113,7 +114,7 @@ defineExpose({ resetReview: () => { revising.value = false; revisionNote.value =
             </p>
           </div>
 
-          <!-- the customer answers the mockup or sample waiting for them -->
+          <!-- the customer answers the approval step waiting for them -->
           <div v-if="viewer === 'customer' && order.can_review_progress && pending && step.key === pending.stage" class="mt-3 space-y-2">
             <div class="flex flex-wrap gap-2">
               <Button size="sm" class="bg-green-600 hover:bg-green-700" :disabled="busy" @click="answer(true)">

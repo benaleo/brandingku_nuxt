@@ -468,6 +468,8 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
         </div>
 
         <aside class="space-y-6 lg:self-stretch">
+          <!-- with nothing to pay, the summary and proofs follow the page down from lg up instead -->
+          <div class="space-y-6" :class="!canPay && 'lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:rounded-xl'">
           <section class="rounded-xl border bg-white p-5 text-sm shadow-sm">
             <h2 class="mb-3 font-semibold">{{ $t('app.orderPage.summary') }}</h2>
             <dl v-if="inv" class="space-y-1.5">
@@ -503,6 +505,7 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
               </li>
             </ul>
           </section>
+          </div>
 
           <Button v-if="order.can_cancel" variant="outline" class="w-full text-red-600" :disabled="busy" @click="askConfirm('cancel')">{{ $t('app.orderPage.cancel') }}</Button>
           <!-- from lg up the payment card follows the page down while the main column scrolls -->

@@ -635,13 +635,15 @@
       "progress_sample": "Sample dikirim untuk disetujui",
       "sample_approved": "Sample disetujui",
       "sample_revision": "Revisi sample diminta",
-      "progress_mass_production": "Produksi massal selesai",
+      "progress_mass_production": "Produksi massal diajukan untuk disetujui",
       "progress_qc": "Quality check selesai",
       "progress_ready_to_ship": "Pesanan siap kirim",
       "thank_you_sent": "Email terima kasih dikirim",
       "progress_mockup": "Mockup dikirim untuk disetujui",
       "mockup_approved": "Mockup disetujui",
-      "mockup_revision": "Revisi mockup diminta"
+      "mockup_revision": "Revisi mockup diminta",
+      "mass_production_approved": "Produksi massal disetujui",
+      "mass_production_revision": "Perubahan sebelum produksi massal diminta"
     },
     "checkoutPage": {
       "metaTitle": "Checkout",
@@ -922,24 +924,28 @@
       "revisionNote": "Catatan revisi",
       "approve": {
         "mockup": "Setujui mockup",
-        "sample": "Setujui sample"
+        "sample": "Setujui sample",
+        "mass_production": "Setujui produksi massal"
       },
       "requestRevision": "Minta revisi",
-      "revisionPlaceholder": "Tulis apa yang perlu diubah dari sample",
+      "revisionPlaceholder": "Tulis apa yang perlu diubah",
       "sendRevision": "Kirim permintaan revisi",
       "approvedToast": {
         "mockup": "Mockup disetujui, tim kami lanjut membuat sample",
-        "sample": "Sample disetujui, produksi massal dimulai"
+        "sample": "Sample disetujui, tim kami menyiapkan produksi massal",
+        "mass_production": "Produksi massal disetujui, tim kami mulai produksi"
       },
       "revisionToast": "Permintaan revisi terkirim",
       "viewFile": "Lihat {name}",
       "preparing": {
         "mockup": "Tim desain sedang menyiapkan mockup.",
-        "sample": "Tim kami sedang menyiapkan sample."
+        "sample": "Tim kami sedang menyiapkan sample.",
+        "mass_production": "Tim kami sedang menyiapkan produksi massal."
       },
       "waitingYou": {
         "mockup": "Mockup menunggu persetujuan kamu.",
-        "sample": "Sample menunggu persetujuan kamu."
+        "sample": "Sample menunggu persetujuan kamu.",
+        "mass_production": "Produksi massal menunggu persetujuan kamu."
       },
       "waitingCustomer": "Menunggu jawaban customer."
     },
