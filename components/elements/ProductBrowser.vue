@@ -289,7 +289,8 @@ const goToPage = (p1: number) => {
 
 <template>
   <div>
-  <section class="app-container px-4 pb-16 pt-6 sm:px-6 md:pt-4 lg:px-8">
+  <!-- inside a page that pads its own content (the category page) the list adds none -->
+  <section class="pb-16 pt-6 md:pt-4" :class="scoped ? '' : 'app-container px-4 sm:px-6 lg:px-8'">
     <div ref="listTop" class="scroll-mt-28">
       <h2 class="text-2xl font-bold capitalize text-gray-900 sm:text-3xl">{{ title || $t('app.productPage.listTitle') }}</h2>
       <p class="mt-1 text-sm text-gray-500">
