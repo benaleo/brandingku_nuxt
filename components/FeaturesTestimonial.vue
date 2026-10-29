@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useTestimonialService } from '~/services/testimonial.service'
+import { useAftercareService } from '~/services/aftercare.service'
+import type { ReviewSummary } from '~/types/aftercare.type'
 import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
 
 // active landing page testimonials, customers' published reviews among them
 const { datas: testimonials, loading, reFetch } = useTestimonialService({ is_active: true, placement: 'landing_page', limit: 6 })
+const { locale } = useI18n()
+const { getTestimonialSummary } = useAftercareService()
+const score = ref<ReviewSummary | null>(null)
 const isInitialLoad = ref(true)
 const shouldLoad = ref(false)
 
@@ -16,7 +21,10 @@ const { target } = useIntersectionObserver(() => {
 
 const loadTestimonials = async () => {
   if (!shouldLoad.value) return
-  await reFetch()
+  await Promise.all([
+    reFetch(),
+    getTestimonialSummary('landing_page').then(s => { score.value = s }).catch(() => {}),
+  ])
   isInitialLoad.value = false
 }
 </script>
@@ -24,7 +32,13 @@ const loadTestimonials = async () => {
 <template>
   <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-12">
-      <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">{{ $t('app.testimonials.title') }}</h2>
+      <h2 class="text-3xl font-bold text-center text-gray-800" :class="score?.count ? 'mb-3' : 'mb-12'">{{ $t('app.testimonials.title') }}</h2>
+      <!-- the overall score of the testimonials shown here -->
+      <div v-if="score?.count" class="mb-12 flex flex-wrap items-center justify-center gap-2 text-gray-700">
+        <span class="text-2xl font-bold tabular-nums">{{ score.average.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}</span>
+        <ElementsStarRating :model-value="score.average" size="md" />
+        <span class="text-sm text-gray-500">{{ $t('app.testimonials.score', { count: score.count }) }}</span>
+      </div>
       
       <div v-if="loading || isInitialLoad" class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- Skeleton Card 1 -->

@@ -72,7 +72,8 @@
     },
     "testimonials": {
       "title": "What Our Clients Say",
-      "empty": "No testimonials available yet."
+      "empty": "No testimonials available yet.",
+      "score": "out of 5 · {count} reviews"
     },
     "faq": {
       "title": "Popular Questions",
@@ -1012,7 +1013,11 @@
     },
     "reviews": {
       "title": "Customer reviews",
-      "count": "{count} reviews"
+      "count": "{count} reviews",
+      "filterAll": "All",
+      "filterLabel": "Filter by stars",
+      "latest": "Latest {count} reviews",
+      "emptyFilter": "No {stars}-star reviews yet."
     },
     "avatar": {
       "change": "Change profile photo",

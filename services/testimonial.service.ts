@@ -6,7 +6,8 @@ import type { PageInfo } from "~/types/Pagination";
 const FIELDS = "id name job content rating orders is_active placement product_id product_name order_id public_consent created_at";
 const toTestimonial = (t: Omit<Testimonial, "id"> & { id: number }): Testimonial => ({ ...t, id: String(t.id) });
 
-type TestimonialParams = { keyword?: string; is_active?: boolean; placement?: string; product_id?: number; source?: string; limit?: number };
+// stars: ratings from that many stars up to the next (4 -> 4 and 4.5)
+type TestimonialParams = { keyword?: string; is_active?: boolean; placement?: string; product_id?: number; source?: string; stars?: number; limit?: number };
 
 // initial: list filters set before the first fetch, without triggering one
 export const useTestimonialService = (initial: TestimonialParams = {}) => {
@@ -28,8 +29,8 @@ export const useTestimonialService = (initial: TestimonialParams = {}) => {
     error.value = null;
     try {
       const query = `
-        query GetTestimonials($page: Int!, $limit: Int!, $is_active: Boolean, $placement: String, $product_id: Int, $source: String) {
-          getTestimonials(pagination: { page: $page, limit: $limit }, is_active: $is_active, placement: $placement, product_id: $product_id, source: $source) {
+        query GetTestimonials($page: Int!, $limit: Int!, $is_active: Boolean, $placement: String, $product_id: Int, $source: String, $stars: Int) {
+          getTestimonials(pagination: { page: $page, limit: $limit }, is_active: $is_active, placement: $placement, product_id: $product_id, source: $source, stars: $stars) {
             items { ${FIELDS} }
             page_info {
               current_page
@@ -57,6 +58,7 @@ export const useTestimonialService = (initial: TestimonialParams = {}) => {
         placement: params.placement || null,
         product_id: params.product_id ?? null,
         source: params.source || null,
+        stars: params.stars ?? null,
       };
 
       const res = await gqlFetch<{

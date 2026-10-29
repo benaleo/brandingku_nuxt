@@ -72,7 +72,8 @@
     },
     "testimonials": {
       "title": "Apa Kata Klien Kami",
-      "empty": "Belum ada testimonial tersedia."
+      "empty": "Belum ada testimonial tersedia.",
+      "score": "dari 5 · {count} ulasan"
     },
     "faq": {
       "title": "Pertanyaan Populer",
@@ -1012,7 +1013,11 @@
     },
     "reviews": {
       "title": "Ulasan pelanggan",
-      "count": "{count} ulasan"
+      "count": "{count} ulasan",
+      "filterAll": "Semua",
+      "filterLabel": "Saring berdasarkan bintang",
+      "latest": "{count} ulasan terbaru",
+      "emptyFilter": "Belum ada ulasan {stars} bintang."
     },
     "avatar": {
       "change": "Ganti foto profil",

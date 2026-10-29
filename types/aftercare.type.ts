@@ -55,6 +55,8 @@ export interface OrderAftercare {
 export interface ReviewSummary {
   count: number
   average: number
+  // 5 stars down to 1; a half star counts with the whole star below it
+  distribution: { stars: number; count: number }[]
 }
 
 export type ReviewInput = { placement: TestimonialPlacement; product_id?: number | null; rating: number; content: string; public_consent: boolean }

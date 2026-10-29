@@ -36,10 +36,13 @@ export const useAftercareService = () => {
     gqlFetch(`mutation submitReview($code: String!, $input: ReviewInput!) { submitReview(code: $code, input: $input) { id } }`,
       { code, input }, { auth: true })
 
-  const getProductReviewSummary = async (productId: number) => {
-    const res = await gqlFetch<{ getProductReviewSummary: ReviewSummary }>(
-      `query reviewSummary($product: Int!) { getProductReviewSummary(product_id: $product) { count average } }`, { product: productId })
-    return res.getProductReviewSummary
+  // rating of the active testimonials on the landing page, or on a product's page
+  const getTestimonialSummary = async (placement: 'landing_page' | 'product', productId?: number) => {
+    const res = await gqlFetch<{ getTestimonialSummary: ReviewSummary }>(
+      `query testimonialSummary($placement: String!, $product: Int) {
+        getTestimonialSummary(placement: $placement, product_id: $product) { count average distribution { stars count } }
+      }`, { placement, product: productId ?? null })
+    return res.getTestimonialSummary
   }
 
   // console
@@ -70,7 +73,7 @@ export const useAftercareService = () => {
   }
 
   return {
-    getMyAftercare, getOrderAftercare, claimGuarantee, submitReview, getProductReviewSummary,
+    getMyAftercare, getOrderAftercare, claimGuarantee, submitReview, getTestimonialSummary,
     getGuaranteeClaims, decideGuaranteeClaim, resolveGuaranteeClaim, getConsoleCounts,
   }
 }
