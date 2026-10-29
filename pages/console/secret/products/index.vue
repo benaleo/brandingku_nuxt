@@ -7,35 +7,47 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex-1">
-        <!-- <FieldXSelectSimple label="Kategori" name="category" :options="categoryOptions" placeholder="Pilih Kategori" v-model="selectedCategory"/> -->
+    <AppFilterTable v-model="keyword"
+      :filters="{ selectedCategory, selectedHighlight, selectedActive }"
+      :filter-defaults="{ selectedCategory: '', selectedHighlight: 'all', selectedActive: 'all' }"
+      @apply="(f) => { selectedCategory = f.selectedCategory; selectedHighlight = f.selectedHighlight; selectedActive = f.selectedActive }"
+    >
+      <template #default="{ draft }">
+      <div class="flex flex-col gap-3">
+        <FieldXSelectWithGroupParent
+          name="category_filter"
+          placeholder="Semua kategori"
+          searchPlaceholder="Cari kategori..."
+          emptyMessage="Kategori tidak ditemukan."
+          clearable
+          clearLabel="Semua kategori"
+          v-model="draft.selectedCategory"
+          :options="categoryOptions"
+          :loading="categoryLoading"
+          itemClass="w-full"
+        />
+        <FieldXSelectSimple class="w-full" :options="highlightOptions" placeholder="Semua highlight" v-model="draft.selectedHighlight"/>
+        <FieldXSelectSimple class="w-full" :options="activeOptions" placeholder="Semua status" v-model="draft.selectedActive"/>
       </div>
+      </template>
     </AppFilterTable>
 
 
     <!-- Table -->
     <div class="mt-6">
-      <div v-if="loading" class="text-center py-4">
-        <div class="grid grid-cols-2">
-          <Skeleton />
-        </div>
-      </div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">
+      <div v-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-else-if="hasProducts">
+      <div v-else>
         <DatatablesDataTable
             :columns="productColumns"
-            :data="dataList || []"
-            :meta="{ handleDelete, handleProductGalleries }"
+            :data="dataList"
+            :loading="loading"
+            :meta="tableMeta"
             :pagination="paginationData"
             @page-change="onPageChange"
             @limit-change="onLimitChange"
         />
-      </div>
-      <div v-else class="text-center py-4">
-        No products found
       </div>
     </div>
   </div>
@@ -45,10 +57,15 @@
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
 import {productColumns} from '~/components/datatables/productColumns'
 import {useProductService} from '~/services/product.service'
-import {computed, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
+import {refDebounced} from '@vueuse/core'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import {toast} from "vue-sonner";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
+import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue";
+import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
+import {useOptionProductCategories} from "~/composables/useOptionProductCategories";
+import type { ProductGallery } from "~/types/products.type";
 
 const {
   datas,
@@ -61,17 +78,48 @@ const {
   setParams,
   params,
   deleteProductById,
-  updateProductGalleries,
-} = useProductService(true)
+} = useProductService(true, undefined, { sortBy: 'updated_at,desc' })
 
-console.log('loading', loading.value)
+// Filter options (empty category / 'all' clears the filter)
+const selectedCategory = ref<string>('')
+const selectedHighlight = ref<string>('all')
+const selectedActive = ref<string>('all')
 
-const hasProducts = computed(() => {
-  return Array.isArray(datas.value) && datas.value.length > 0
+const { options: categoryOptions, loading: categoryLoading, fetch: fetchCategoryOptions } = useOptionProductCategories()
+onMounted(fetchCategoryOptions)
+
+const highlightOptions = [
+  { id: 'all', label: 'Semua highlight' },
+  { id: 'yes', label: 'Highlight' },
+  { id: 'no', label: 'Bukan highlight' },
+]
+const activeOptions = [
+  { id: 'all', label: 'Semua status' },
+  { id: 'yes', label: 'Aktif' },
+  { id: 'no', label: 'Nonaktif' },
+]
+const toBool = (v: string) => (v === 'yes' ? true : v === 'no' ? false : undefined)
+
+// any filter change goes back to the first page; setParams refetches via the service watcher
+watch([selectedCategory, selectedHighlight, selectedActive], ([category, highlight, active]) => {
+  pagination.value.page = 0
+  setParams({
+    category_id: category ? Number(category) : null,
+    is_highlight: toBool(highlight),
+    is_active: toBool(active),
+  })
 })
+const keyword = ref<string>('')
+const debouncedKeyword = refDebounced(keyword, 200)
 
+// keyword filtering is client-side on the loaded page, so typing never triggers a refetch
 const dataList = computed(() => {
-  return datas.value || []
+  const list = datas.value || []
+  const kw = debouncedKeyword.value.trim().toLowerCase()
+  if (!kw) return list
+  return list.filter((x: any) =>
+    (x.name || '').toLowerCase().includes(kw) || (x.slug || '').toLowerCase().includes(kw)
+  )
 })
 
 const paginationData = computed(() => ({
@@ -88,40 +136,6 @@ const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
 
-// Filter options
-const selectedCategory = ref<string | number | undefined>()
-const keyword = ref<string>('')
-const isFetch = ref<boolean>(false)
-
-// Watch keyword to trigger search with minimum 3 characters
-watch(keyword, (newValue: string) => {
-  console.log('index.vue keyword changed:', newValue)
-  if (newValue && newValue.length >= 3) {
-    isFetch.value = true
-    // If 3 or more characters, set keyword param
-    setParams({keyword: newValue})
-    reFetch()
-  } else {
-    // If less than 3 characters, clear keyword param
-    if (isFetch.value) {
-      setParams({keyword: undefined})
-      reFetch()
-      isFetch.value = false
-    }
-  }
-})
-
-// Watch selectedCategory and trigger server-side filter
-watch(selectedCategory, (val: any) => {
-  console.log('selectedCategory changed:', val)
-  if (val === 'all' || val === undefined || val === '') {
-    setParams({category: undefined}) // Remove category param to show all
-  } else {
-    setParams({category: val})
-  }
-  reFetch()
-})
-
 const handleDelete = async (id: string) => {
   try {
     await deleteProductById(id)
@@ -134,25 +148,30 @@ const handleDelete = async (id: string) => {
   }
 }
 
-const handleProductGalleries = async (id: string, fileUrl: string[], removeIds: string[]) => {
+const handleProductGalleries = async (id: string, createdGalleries: ProductGallery[], removeIds: string[]) => {
   try {
-    await updateProductGalleries(id, {
-      newFileUrl: fileUrl,
-      removeIds: removeIds
-    })
+    const removed = new Set(removeIds.map(String))
+    datas.value = (datas.value || []).map((product: any) => {
+      if (String(product.id) !== String(id)) return product
 
-    console.log("payload", {
-      newFileUrl: fileUrl,
-      removeIds: removeIds
-    })
+      const existingGalleries = (product.galleries || []).filter((gallery: ProductGallery) => !removed.has(String(gallery.id)))
+      const galleries = [...existingGalleries, ...createdGalleries].sort((a, b) => Number(a.orders) - Number(b.orders))
+      const image = product.image || galleries[0]?.image || ''
 
-    toast.success('Berhasil mengupdate gambar')
-    await reFetch()
+      return {
+        ...product,
+        image,
+        galleries,
+      }
+    })
   } catch (error) {
     console.error('Error updating product image:', error)
     toast.error('Gagal mengupdate gambar')
   }
 }
+
+// stable reference so typing in the search box doesn't re-render every table row
+const tableMeta = { handleDelete, handleProductGalleries }
 
 const pageTitle = 'Produk';
 

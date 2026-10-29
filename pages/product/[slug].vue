@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon } from "lucide-vue-next";
+import { ArrowLeftIcon, Check, MessageCircle, Minus, Plus } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const slug = computed(() => String(route.params.slug || ""));
 const {
   data: detail,
@@ -43,6 +45,8 @@ const selectedColor = ref<string>("");
 // variant is taken from additional name
 const selectedVariantName = ref<string>("");
 
+const namedVariants = computed(() => (detail.value?.additionals || []).filter((a) => a.name?.trim()));
+
 // compute selected additional by name
 const selectedAdditional = computed(() => {
   const adds = detail.value?.additionals || [];
@@ -57,32 +61,148 @@ const formatIDR = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-const displayedPrice = computed(() => {
-  const a = selectedAdditional.value;
-  if (!a) return detail.value ? detail.value.price : 0;
-  const base = Number(a.price) || 0;
-  const disc = Number(a.discount) || 0;
-  let final = base;
-  if (disc > 0) {
-    final =
-      String(a.discount_type).toUpperCase() === "PERCENTAGE"
-        ? base - (base * disc) / 100
-        : base - disc;
-  }
-  return Math.max(0, Math.floor(final));
-});
+// branding methods picked by the customer; several can be combined
+const selectedBrandings = ref<number[]>([]);
+const brandingOptions = computed(() => detail.value?.brandings || []);
+const chosenBrandings = computed(() => brandingOptions.value.filter((b) => selectedBrandings.value.includes(b.id)));
+const brandingMin = computed(() => chosenBrandings.value.reduce((least, b) => Math.max(least, brandingMinQty(b.tiers)), 0));
 
-const displayedOriginal = computed(() => {
+// quantity starts at the variant's MOQ and never goes below it or a chosen branding's minimum
+const variantMoq = computed(() => Math.max(1, Number(selectedAdditional.value?.moq) || 1));
+const minQty = computed(() => Math.max(variantMoq.value, brandingMin.value));
+const quantity = ref(1);
+watch(variantMoq, (moq) => { quantity.value = Math.max(moq, brandingMin.value); }, { immediate: true });
+
+// another product starts again from its own minimum
+watch(() => detail.value?.id, () => { quantity.value = minQty.value; });
+
+// branding cost per piece at the current quantity
+const brandingUnit = computed(() =>
+  chosenBrandings.value.reduce((sum, b) => sum + (brandingPriceAt(b.tiers, quantity.value) ?? 0), 0)
+);
+const brandingLabel = (b: { tiers: { min_qty: number; price: number }[] }) => {
+  const price = brandingPriceAt(b.tiers, quantity.value);
+  if (price == null) return t("app.productPage.detail.brandingMin", { qty: brandingMinQty(b.tiers) });
+  return price > 0 ? t("app.productPage.detail.brandingPerPcs", { price: formatIDR(price) }) : t("app.productPage.detail.brandingFree");
+};
+const toggleBranding = (b: { id: number; name: string; tiers: { min_qty: number; price: number }[] }) => {
+  if (selectedBrandings.value.includes(b.id)) {
+    selectedBrandings.value = selectedBrandings.value.filter((id) => id !== b.id);
+    return;
+  }
+  selectedBrandings.value = [...selectedBrandings.value, b.id];
+  const least = Math.min(brandingMinQty(b.tiers), 100000);
+  if (quantity.value < least) {
+    quantity.value = least;
+    toast.info(t("app.productPage.detail.brandingRaised", { qty: least, name: b.name }));
+  }
+};
+
+// the variant discount applied to a price per piece, rounded down like the server
+const applyDiscount = (base: number) => {
   const a = selectedAdditional.value;
-  if (!a) return detail.value?.originalPrice || null;
-  const base = Number(a.price) || 0;
-  const disc = Number(a.discount) || 0;
-  if (disc <= 0) return null;
+  const disc = Number(a?.discount) || 0;
+  if (!a || disc <= 0) return Math.max(0, Math.floor(base));
   const final =
     String(a.discount_type).toUpperCase() === "PERCENTAGE"
       ? base - (base * disc) / 100
       : base - disc;
-  return final < base ? Math.floor(base) : null;
+  return Math.max(0, Math.floor(final));
+};
+
+// price per piece for a quantity: the wholesale tier with the largest minimum not above it
+const tierBase = (qty: number) => {
+  const a = selectedAdditional.value;
+  let best = Number(a?.price) || 0;
+  let bestMin = 0;
+  for (const t of a?.price_tiers || []) {
+    if (t.min_qty <= qty && t.min_qty > bestMin) {
+      best = t.price;
+      bestMin = t.min_qty;
+    }
+  }
+  return best;
+};
+
+// every price row of the selected variant: default first, then wholesale tiers
+const priceRows = computed(() => {
+  const a = selectedAdditional.value;
+  if (!a?.price_tiers?.length) return [];
+  const rows = [{ from: 1, price: applyDiscount(Number(a.price) || 0) }];
+  for (const t of a.price_tiers) rows.push({ from: t.min_qty, price: applyDiscount(t.price) });
+  return rows.map((r, i) => ({ ...r, to: i + 1 < rows.length ? rows[i + 1].from - 1 : null }));
+});
+
+const displayedPrice = computed(() => {
+  const a = selectedAdditional.value;
+  if (!a) return detail.value ? detail.value.price : 0;
+  return applyDiscount(tierBase(quantity.value));
+});
+
+// no price set: the customer has to ask the admin
+const isAskAdmin = computed(() => displayedPrice.value <= 0);
+
+// while typing, follow valid numbers so the price per piece updates live; @change clamps
+const previewQuantity = (value: string) => {
+  const n = Math.floor(Number(value));
+  if (Number.isFinite(n) && n >= minQty.value && n <= 100000) quantity.value = n;
+};
+const setQuantity = (value: number | string) => {
+  const n = Math.floor(Number(value));
+  quantity.value = Number.isFinite(n) ? Math.min(Math.max(n, minQty.value), 100000) : minQty.value;
+};
+
+// buy now skips the cart; guests sign in first and come back to the same checkout
+const authToken = useCookie<string | null>("token", { sameSite: "lax" });
+const handleBuyNow = () => {
+  const variant = selectedAdditional.value;
+  if (!variant) {
+    toast.error(t("app.cartPage.selectVariant"));
+    return;
+  }
+  const branding = brandingKey(selectedBrandings.value);
+  const target = `/checkout?item=${variant.id}&qty=${quantity.value}${branding ? `&branding=${branding}` : ""}`;
+  if (authToken.value) router.push(target);
+  else router.push({ path: "/console/auth", query: { redirect: target } });
+};
+
+const { add: addToCart } = useCart();
+const adding = ref(false);
+const handleAddToCart = async () => {
+  const variant = selectedAdditional.value;
+  if (!variant) {
+    toast.error(t("app.cartPage.selectVariant"));
+    return;
+  }
+  adding.value = true;
+  try {
+    await addToCart(Number(variant.id), quantity.value, undefined, selectedBrandings.value);
+    toast.success(t("app.cartPage.added", { name: detail.value?.name || variant.name }));
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
+  } finally {
+    adding.value = false;
+  }
+};
+const { openChat } = useChatWidget();
+const askAdmin = () => {
+  const name = detail.value?.name || "";
+  const variant = selectedVariantName.value ? ` (${selectedVariantName.value})` : "";
+  openChat(t("app.productPage.detail.askPriceMessage", { name, variant }));
+};
+
+// the default price, struck through when a discount or wholesale tier makes it cheaper
+const displayedOriginal = computed(() => {
+  const a = selectedAdditional.value;
+  if (!a) return detail.value?.originalPrice || null;
+  const base = Math.floor(Number(a.price) || 0);
+  return displayedPrice.value < base ? base : null;
+});
+
+const activeRow = computed(() => {
+  const rows = priceRows.value;
+  for (let i = rows.length - 1; i >= 0; i--) if (rows[i].from <= quantity.value) return i;
+  return 0;
 });
 
 const displayedStock = computed(() =>
@@ -124,6 +244,18 @@ const variantAttributes = computed<{ key: string; value: string }[] | null>(
   }
 );
 
+// colour variants take precedence over colour attributes on the price variants
+const colorOptions = computed<string[]>(() => {
+  const named = detail.value?.colorVariants?.map((c) => c.name) || [];
+  if (named.length) return named;
+  return variantColors.value?.length ? variantColors.value : detail.value?.colors || [];
+});
+// the gallery shows the chosen colour's picture, or the main image when it has none
+const focusImage = computed(() => {
+  const img = detail.value?.colorVariants?.find((c) => c.name === selectedColor.value)?.image;
+  return img ? `${STORAGE_URL}${img}` : undefined;
+});
+
 const variantColors = computed<string[] | null>(() => {
   const attrs = variantAttributes.value;
   if (!attrs) return null;
@@ -152,8 +284,10 @@ watch(
   detail,
   (v) => {
     if (!v) return;
-    if (!selectedColor.value && (v.colors?.length || 0) > 0)
-      selectedColor.value = v.colors?.[0] || "";
+    // product colour variants first, else colours from the variant attributes
+    if (!selectedColor.value) {
+      selectedColor.value = v.colorVariants?.[0]?.name || v.colors?.[0] || "";
+    }
     // default variant: first additional name
     if (!selectedVariantName.value && (v.additionals?.length || 0) > 0) {
       selectedVariantName.value = v.additionals?.[0]?.name || "";
@@ -162,21 +296,26 @@ watch(
   { immediate: true }
 );
 
-// when variant changes, adjust selectedColor to first variant color if available
+// when variant changes, adjust selectedColor to first variant color if available;
+// product colour variants are independent of the price variant and stay as chosen
 watch(selectedVariantName, () => {
+  if (detail.value?.colorVariants?.length) return;
   if (variantColors.value && variantColors.value.length) {
     selectedColor.value = variantColors.value[0] || "";
   }
 });
 
 useHead(() => ({
+  // lifts the chat widget above the mobile action bar
+  htmlAttrs: { class: "has-bottom-bar" },
   title: detail.value?.name
-    ? `${detail.value.name} - Brandingku`
-    : "Product - Brandingku",
+    ? t("app.productPage.detail.metaTitle", { name: detail.value.name })
+    : t("app.productPage.detail.metaFallback"),
 }));
 
 // Handle same-route param changes
 watch(slug, (val) => {
+  selectedBrandings.value = [];
   setSlug(val);
   refetch();
 });
@@ -194,24 +333,32 @@ definePageMeta({
     class="group fixed right-5 lg:right-20 top-24 z-50 p-4 bg-green-200 hover:bg-green-400 rounded-full flex gap-2"
     @click="handleBack"
   >
-    <span class="group-hover:block hidden">Back</span>
+    <span class="group-hover:block hidden">{{ $t('app.productPage.detail.back') }}</span>
     <ArrowLeftIcon class="w-6 h-6" />
   </button>
 
-  <div class="bg-white app-container md:pt-28 px-4 py-8 md:py-12">
-    <div v-if="loading" class="flex justify-center">Loading...</div>
-    <div v-else-if="error" class="flex justify-center text-red-500">
-      {{ error }}
+  <div class="bg-white app-container px-4 pt-8 pb-28 md:pt-10 lg:pb-12">
+    <div v-if="loading" class="flex justify-center">{{ $t('app.productPage.detail.loading') }}</div>
+    <div v-else-if="error" class="flex flex-col items-center gap-4 py-10 text-center">
+      <p class="text-lg font-semibold text-gray-900">
+        {{ error === "Product not found" ? $t('app.productPage.detail.notFound') : $t('app.productPage.detail.loadFailed') }}
+      </p>
+      <NuxtLink
+        to="/product"
+        class="inline-flex items-center justify-center rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
+      >
+        {{ $t('app.productPage.detail.browseAll') }}
+      </NuxtLink>
     </div>
 
     <div v-else-if="detail" class="space-y-8">
       
     <!-- Breadcrumb -->
     <div class="app-container mx-auto text-sm text-gray-500">
-      <NuxtLink to="/" class="hover:text-primary">Home</NuxtLink>
+      <NuxtLink to="/" class="hover:text-primary">{{ $t('app.productPage.detail.home') }}</NuxtLink>
       <span class="mx-1">/</span>
       <span class="hover:text-primary">{{
-        detail.category || "Product"
+        detail.category || $t('app.productPage.detail.product')
       }}</span>
       <span class="mx-1">/</span>
       <span class="text-primary">{{ detail.name }}</span>
@@ -219,10 +366,11 @@ definePageMeta({
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <!-- Gallery -->
-        <div>
+        <div class="-mx-4 sm:mx-0">
           <AtomsProductThumbnail
             :images="detail.images.map((img: string) => `${STORAGE_URL}${img}`)"
-            :class="'sticky top-20'"
+            :focus="focusImage"
+            class="lg:sticky lg:top-24"
           />
         </div>
 
@@ -237,7 +385,10 @@ definePageMeta({
 
           <!-- Price -->
           <div class="mt-6 flex items-center gap-3">
-            <span class="text-3xl font-bold">
+            <span v-if="isAskAdmin" class="text-2xl font-bold text-green-600 md:text-3xl">
+              {{ $t('app.productPage.detail.priceAskAdmin') }}
+            </span>
+            <span v-else class="text-3xl font-bold">
               {{ formatIDR(displayedPrice) }}
             </span>
             <span
@@ -247,20 +398,41 @@ definePageMeta({
               {{ formatIDR(displayedOriginal as number) }}
             </span>
           </div>
+          <p v-if="!isAskAdmin && brandingUnit > 0" class="mt-1 text-sm text-gray-700">
+            {{ $t('app.productPage.detail.brandingTotal', { branding: formatIDR(brandingUnit), total: formatIDR(displayedPrice + brandingUnit) }) }}
+          </p>
 
-          <!-- Color (depends on selected variant) -->
-          <div
-            v-if="
-              (variantColors && variantColors.length) || detail.colors?.length
-            "
-            class="mt-8"
-          >
-            <h3 class="text-sm font-medium mb-2">Color</h3>
-            <div class="flex gap-2 flex-wrap">
+          <!-- Color: the product's colour variants, else colours from the selected variant's attributes -->
+          <div v-if="colorOptions.length" class="mt-8">
+            <h3 class="text-sm font-medium mb-2">
+              {{ $t('app.productPage.detail.color') }}<span v-if="selectedColor" class="font-normal text-gray-500">: {{ selectedColor }}</span>
+            </h3>
+            <div v-if="detail.colorVariants.length" class="flex flex-wrap gap-2">
               <button
-                v-for="color in variantColors && variantColors.length
-                  ? variantColors
-                  : detail.colors"
+                v-for="c in detail.colorVariants"
+                :key="c.name"
+                type="button"
+                :title="c.name"
+                :aria-label="c.name"
+                :aria-pressed="c.name === selectedColor"
+                class="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm transition-all"
+                :class="c.name === selectedColor ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 hover:border-gray-300'"
+                @click="selectedColor = c.name"
+              >
+                <img
+                  v-if="c.image"
+                  :src="`${STORAGE_URL}${c.image}`"
+                  alt=""
+                  class="size-7 rounded-full object-cover"
+                  loading="lazy"
+                />
+                <span v-else class="size-7 rounded-full bg-gray-100"></span>
+                {{ c.name }}
+              </button>
+            </div>
+            <div v-else class="flex gap-2 flex-wrap">
+              <button
+                v-for="color in colorOptions"
                 :key="color"
                 @click="selectedColor = color"
                 class="px-3 py-1.5 border rounded-full text-sm transition-all"
@@ -278,41 +450,158 @@ definePageMeta({
 
           <!-- Variant (from additional name) -->
           <div v-if="detail.additionals?.length" class="mt-6">
-            <h3 class="text-sm font-medium mb-2">Variant</h3>
-            <Select v-model="selectedVariantName">
-              <SelectTrigger class="w-[220px]">
-                <SelectValue placeholder="Select a variant" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="a in detail.additionals"
-                  :key="a.id"
-                  :value="a.name"
+            <!-- an unnamed variant cannot be a select option (empty values throw and break navigation) -->
+            <template v-if="namedVariants.length">
+              <h3 class="text-sm font-medium mb-2">{{ $t('app.productPage.detail.variant') }}</h3>
+              <Select v-model="selectedVariantName">
+                <SelectTrigger class="w-[220px]">
+                  <SelectValue :placeholder="$t('app.productPage.detail.selectVariant')" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="a in namedVariants"
+                    :key="a.id"
+                    :value="a.name"
+                  >
+                    {{ a.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </template>
+            <!-- branding methods, priced per piece at the chosen quantity -->
+            <div v-if="brandingOptions.length" class="mt-6">
+              <h3 class="text-sm font-medium">{{ $t('app.productPage.detail.branding') }}</h3>
+              <p class="mb-2 text-xs text-gray-500">{{ $t('app.productPage.detail.brandingHint') }}</p>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                  v-for="b in brandingOptions"
+                  :key="b.id"
+                  type="button"
+                  :aria-pressed="selectedBrandings.includes(b.id)"
+                  class="flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors"
+                  :class="selectedBrandings.includes(b.id) ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-gray-300'"
+                  @click="toggleBranding(b)"
                 >
-                  {{ a.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                  <span
+                    class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border"
+                    :class="selectedBrandings.includes(b.id) ? 'border-green-600 bg-green-600 text-white' : 'border-gray-300 bg-white'"
+                  >
+                    <Check v-if="selectedBrandings.includes(b.id)" class="size-3" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="flex items-baseline justify-between gap-2">
+                      <span class="font-medium text-gray-900">{{ b.name }}</span>
+                      <span
+                        class="shrink-0 text-xs font-semibold"
+                        :class="brandingPriceAt(b.tiers, quantity) == null ? 'text-amber-700' : 'text-green-700'"
+                      >{{ brandingLabel(b) }}</span>
+                    </span>
+                    <span v-if="b.description" class="mt-0.5 block text-xs text-gray-500">{{ b.description }}</span>
+                    <span v-if="b.tiers.length > 1" class="mt-0.5 block text-xs text-gray-500">{{ describeBrandingTiers(b.tiers) }}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div v-if="selectedAdditional" class="mt-4">
+              <h3 class="text-sm font-medium mb-2">{{ $t('app.cartPage.quantity') }}</h3>
+              <div class="inline-flex items-center rounded-md border">
+                <button
+                  type="button"
+                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                  :aria-label="$t('app.cartPage.decrease')"
+                  :disabled="quantity <= minQty"
+                  @click="setQuantity(quantity - 1)"
+                >
+                  <Minus class="size-4" />
+                </button>
+                <input
+                  :value="quantity"
+                  type="number"
+                  inputmode="numeric"
+                  :min="minQty"
+                  :aria-label="$t('app.cartPage.quantity')"
+                  class="h-9 w-20 border-x text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  @input="previewQuantity(($event.target as HTMLInputElement).value)"
+                  @change="setQuantity(($event.target as HTMLInputElement).value)"
+                />
+                <button
+                  type="button"
+                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50"
+                  :aria-label="$t('app.cartPage.increase')"
+                  @click="setQuantity(quantity + 1)"
+                >
+                  <Plus class="size-4" />
+                </button>
+              </div>
+              <p v-if="minQty > 1" class="mt-1 text-xs text-gray-500">{{ $t('app.cartPage.minQty', { moq: minQty }) }}</p>
+              <p v-if="!isAskAdmin && (quantity > 1 || brandingUnit > 0)" class="mt-1 text-sm text-gray-700">
+                {{ $t('app.productPage.detail.subtotalFor', { qty: quantity, total: formatIDR((displayedPrice + brandingUnit) * quantity) }) }}
+              </p>
+            </div>
+
+            <!-- wholesale price list of the selected variant -->
+            <div v-if="priceRows.length" class="mt-4 max-w-sm overflow-hidden rounded-lg border">
+              <p class="bg-gray-50 px-3 py-2 text-sm font-medium">{{ $t('app.productPage.detail.wholesale') }}</p>
+              <table class="w-full text-sm">
+                <thead class="text-left text-xs text-gray-500">
+                  <tr>
+                    <th class="px-3 py-1.5 font-normal">{{ $t('app.productPage.detail.wholesaleQty') }}</th>
+                    <th class="px-3 py-1.5 text-right font-normal">{{ $t('app.productPage.detail.wholesalePrice') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(row, i) in priceRows"
+                    :key="row.from"
+                    class="cursor-pointer border-t"
+                    :class="i === activeRow ? 'bg-green-50 font-semibold text-green-800' : 'hover:bg-gray-50'"
+                    :aria-current="i === activeRow ? 'true' : undefined"
+                    @click="setQuantity(row.from)"
+                  >
+                    <td class="px-3 py-1.5">
+                      {{ row.to ? $t('app.productPage.detail.qtyRange', { from: row.from, to: row.to }) : $t('app.productPage.detail.qtyFrom', { from: row.from }) }}
+                    </td>
+                    <td class="px-3 py-1.5 text-right">{{ formatIDR(row.price) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <div class="mt-3 text-sm text-gray-700 space-y-1">
               <div>
-                <span class="text-gray-500">Stock:</span>
+                <span class="text-gray-500">{{ $t('app.productPage.detail.stock') }}</span>
                 <span class="font-medium">{{ displayedStock }}</span>
               </div>
               <div v-if="displayedMoq != null">
-                <span class="text-gray-500">MOQ:</span>
+                <span class="text-gray-500">{{ $t('app.productPage.detail.moq') }}</span>
                 <span class="font-medium">{{ displayedMoq }}</span>
               </div>
               <div v-if="displayedDiscountInfo">
-                <span class="text-gray-500">Discount:</span>
+                <span class="text-gray-500">{{ $t('app.productPage.detail.discount') }}</span>
                 <span class="font-medium">{{ displayedDiscountInfo }}</span>
               </div>
             </div>
           </div>
 
           <!-- Add to Cart -->
-          <div class="mt-8 flex items-center gap-6">
-            <Button class="flex-1">Add to Cart</Button>
-            <Button variant="outline" class="border-green-200 text-green-700 hover:bg-green-50" @click="handleAddToWishlist">
+          <!-- fixed action bar on mobile, inline from lg -->
+          <div
+            class="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur lg:static lg:z-auto lg:mt-8 lg:gap-6 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
+          >
+            <template v-if="isAskAdmin">
+              <Button variant="outline" class="h-11 flex-1 gap-2 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" @click="askAdmin">
+                <MessageCircle class="h-4 w-4" />
+                {{ $t('app.productPage.detail.askAdmin') }}
+              </Button>
+              <Button v-if="selectedAdditional" class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" @click="handleBuyNow">
+                {{ $t('app.productPage.detail.requestQuote') }}
+              </Button>
+            </template>
+            <template v-else>
+              <Button variant="outline" class="h-11 flex-1 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
+              <Button class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" :disabled="adding" @click="handleBuyNow">{{ $t('app.productPage.detail.buyNow') }}</Button>
+            </template>
+            <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
               </svg>
@@ -320,16 +609,16 @@ definePageMeta({
           </div>
 
           <!-- Stock Status -->
-          <div class="mt-6 text-sm text-gray-600">
+          <div v-if="!isAskAdmin" class="mt-6 text-sm text-gray-600">
             <div class="flex items-center gap-2">
-              <span v-if="displayedStock > 0">In stock and ready to ship</span>
-              <span v-else>Out of stock</span>
+              <span v-if="displayedStock > 0">{{ $t('app.productPage.detail.inStock') }}</span>
+              <span v-else>{{ $t('app.productPage.detail.outOfStock') }}</span>
             </div>
           </div>
 
           <!-- Description -->
           <div v-if="detail.description" class="mt-8">
-            <h3 class="font-medium mb-3">Description</h3>
+            <h3 class="font-medium mb-3">{{ $t('app.productPage.detail.description') }}</h3>
             <div
               v-html="detail.description"
               class="prose prose-stone prose-a:text-primary prose-a:no-underline prose-a:hover:underline"
@@ -344,23 +633,28 @@ definePageMeta({
             "
             class="mt-8 pt-6 border-t"
           >
-            <h3 class="font-medium mb-3">Specifications</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+            <h3 class="font-medium mb-3">{{ $t('app.productPage.detail.specifications') }}</h3>
+            <div class="flex flex-col">
               <div
                 v-for="(kv, idx) in variantAttributes &&
                 variantAttributes.length
                   ? variantAttributes
                   : detail.details"
                 :key="idx"
-                class="flex justify-between border-b py-2"
+                class="flex justify-between gap-4 border-b py-2"
               >
-                <span class="text-gray-500">{{ kv.key }}</span>
-                <span class="font-medium">{{ kv.value }}</span>
+                <span class="shrink-0 text-gray-500">{{ kv.key }}</span>
+                <span class="text-right font-medium">{{ kv.value }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <ElementsProductReviews v-if="Number((detail as any).id)" :key="(detail as any).id" :product-id="Number((detail as any).id)" />
+
+      <!-- client projects that used this product -->
+      <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" linked-only />
     </div>
   </div>
 </template>

@@ -13,7 +13,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
 
     // State mimicking useApiFetch interface
     const datas = ref<any>(fetchResult ? [] : null)
-    const loading = ref<boolean>(false)
+    const loading = ref<boolean>(Boolean(fetchResult || dataId))
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
@@ -46,7 +46,8 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                             title
                             subtitle
                             client
-                            galleries { id portfolio_id file created_at }
+                            product_id
+                            galleries { id portfolio_id file orders created_at }
                             is_active
                             deleted_at
                             created_at
@@ -122,7 +123,8 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                         title
                         subtitle
                         client
-                        galleries { id portfolio_id file created_at }
+                        product_id
+                        galleries { id portfolio_id file orders created_at }
                         is_active
                         deleted_at
                         created_at
@@ -165,6 +167,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                 $title: String!
                 $subtitle: String
                 $client: String
+                $product_id: Int
                 $is_active: Boolean!
             ) {
                 createPortfolio(
@@ -172,6 +175,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                     title: $title
                     subtitle: $subtitle
                     client: $client
+                    product_id: $product_id
                     is_active: $is_active
                 ) {
                     id
@@ -185,6 +189,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             title: payload.title,
             subtitle: payload.subtitle ?? null,
             client: payload.client ?? null,
+            product_id: payload.product_id ? Number(payload.product_id) : null,
             is_active: Boolean(payload.is_active),
         }
         
@@ -199,7 +204,8 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             const galleryService = usePortfolioGalleryService()
             for (const gallery of payload.galleries) {
                 await galleryService.createPortfolioGallery({
-                    ...gallery,
+                    file: gallery.file,
+                    orders: Number(gallery.orders) || 0,
                     portfolio_id: portfolioId
                 })
             }
@@ -218,6 +224,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                 $title: String,
                 $subtitle: String,
                 $client: String,
+                $product_id: Int,
                 $is_active: Boolean
             ) {
                 updatePortfolio(
@@ -226,6 +233,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                     title: $title,
                     subtitle: $subtitle,
                     client: $client,
+                    product_id: $product_id,
                     is_active: $is_active
                 ) {
                     id
@@ -240,9 +248,22 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             title: payload.title,
             subtitle: payload.subtitle ?? null,
             client: payload.client ?? null,
+            product_id: payload.product_id ? Number(payload.product_id) : null,
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
         const res = await gqlFetch<{ updatePortfolio: { id: string; category: string; title: string } }>(mutation, variables, { auth: true })
+
+        // Delete galleries removed in the form; the backend also removes their files from storage
+        if (payload.removed_gallery_ids?.length) {
+            const galleryService = usePortfolioGalleryService()
+            for (const galleryId of payload.removed_gallery_ids as string[]) {
+                try {
+                    await galleryService.deletePortfolioGallery(Number(galleryId))
+                } catch (e) {
+                    console.error('[updatePortfolioById] delete gallery failed:', galleryId, e)
+                }
+            }
+        }
 
         // Handle galleries update/create if any
         if (payload.galleries?.length) {
@@ -253,17 +274,17 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
                     const idStr = String(gallery.id ?? '')
                     const hasId = /^\d+$/.test(idStr)
                     if (hasId) {
-                        // Update existing gallery (if needed)
-                        // Note: GraphQL schema doesn't have updatePortfolioGallery, so we might need to handle this differently
-                        // For now, we'll skip updating existing galleries
+                        // existing gallery: only its position can change
+                        await galleryService.updatePortfolioGallery(Number(idStr), Number(gallery.orders) || 0)
                     } else {
-                        // Create new gallery for this portfolio
                         await galleryService.createPortfolioGallery({
                             file: gallery.file,
+                            orders: Number(gallery.orders) || 0,
                             portfolio_id: Number(id)
                         })
                     }
                 } catch (e) {
+                    console.error('[updatePortfolioById] save gallery failed:', gallery.id, e)
                 }
             }
         }

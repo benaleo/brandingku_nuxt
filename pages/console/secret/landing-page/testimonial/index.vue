@@ -7,23 +7,43 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/landing-page/testimonial/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex-1">
+    <AppFilterTable v-model="keyword"
+      :filters="{ placement, source, status }"
+      :filter-defaults="{ placement: '', source: '', status: '' }"
+      @apply="(f) => { placement = f.placement; source = f.source; status = f.status }"
+    >
+      <template #default="{ draft }">
+      <div class="flex flex-col gap-3">
+        <select v-model="draft.placement" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Tampil di">
+          <option value="">Semua tempat</option>
+          <option value="landing_page">Landing page</option>
+          <option value="product">Halaman produk</option>
+        </select>
+        <select v-model="draft.source" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Sumber">
+          <option value="">Semua sumber</option>
+          <option value="customer">Ulasan customer</option>
+          <option value="console">Dibuat di console</option>
+        </select>
+        <select v-model="draft.status" class="h-9 rounded-md border bg-background px-2 text-sm" aria-label="Status">
+          <option value="">Semua status</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Tidak aktif</option>
+        </select>
       </div>
+      </template>
     </AppFilterTable>
+    <p class="mt-1 text-xs text-muted-foreground">Ulasan customer masuk sebagai tidak aktif. Aktifkan lewat edit agar tampil; ulasan yang customer tidak setujui tidak bisa diaktifkan.</p>
 
     <!-- Data Table -->
     <div class="mt-2">
-      <div v-if="loading" class="text-center py-4">
-        Loading testimonials...
-      </div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">
+      <div v-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-if="!loading">
+      <div v-else>
         <DatatablesDataTable
             :columns="testimonialColumns"
             :data="testimonialList || []"
+            :loading="loading"
             :pagination="paginationData"
             :meta="{ handleDelete }"
             @page-change="onPageChange"
@@ -59,6 +79,9 @@ const {
   reFetch
 } = useTestimonialService()
 
+// The initial list request starts on mount; show its skeleton during SSR too.
+loading.value = true
+
 const testimonialList = computed(() => {
   return datas.value || []
 })
@@ -88,6 +111,18 @@ const handleDelete = async (id: string) => {
     toast.error('Gagal menghapus data')
   }
 }
+
+const placement = ref('')
+const source = ref('')
+const status = ref('')
+watch([placement, source, status], () => {
+  pagination.value.page = 0
+  setParams({
+    placement: placement.value || undefined,
+    source: source.value || undefined,
+    is_active: status.value ? status.value === 'active' : undefined,
+  })
+})
 
 // Load data when component mounts
 onMounted(() => {

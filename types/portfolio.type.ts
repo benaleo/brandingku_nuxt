@@ -4,6 +4,7 @@ export interface Portfolio {
   title: string;
   subtitle?: string;
   client?: string;
+  product_id?: number | null;
   galleries: PortfolioGallery[];
   is_active: boolean;
   deleted_at?: string;
@@ -15,6 +16,7 @@ export interface PortfolioGallery {
   id: number;
   portfolio_id: number;
   file: string;
+  orders: number;
   created_at: string;
 }
 

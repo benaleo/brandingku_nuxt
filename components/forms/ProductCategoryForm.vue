@@ -11,6 +11,8 @@ import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import FieldXVueEditor from '~/components/forms/fields/FieldXVueEditor.vue'
 import FormButton from "~/components/atoms/FormButton.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
+import CategoryImageField from "~/components/forms/CategoryImageField.vue";
+import CategoryBrandingForm from "~/components/forms/CategoryBrandingForm.vue";
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
 import type { ProductCategoryRequest } from '~/types/products.type';
 import { useFileToBase64 } from '~/composables/useFileToBase64'
@@ -44,7 +46,7 @@ const formSchema = toTypedSchema(z.object({
   is_landing_page: z.coerce.boolean(),
 }))
 
-const { isFieldDirty, setFieldValue, handleSubmit } = useForm({
+const { isFieldDirty, setFieldValue, handleSubmit, values: formValues } = useForm({
   validationSchema: formSchema,
 })
 
@@ -55,17 +57,100 @@ const sub_categories = ref<string[]>([])
 const is_active = ref(false)
 const is_landing_page = ref(false)
 
+// image: card on /category · cover: hero of /category/<slug> · landingImage: home page block
 const image = ref('')
 const imageFile = ref<File | null>(null)
 const cover = ref('')
 const coverFile = ref<File | null>(null)
+const landingImage = ref('')
+const landingImageFile = ref<File | null>(null)
+const removeLandingImage = ref(false)
 
-const imageInput: Ref<HTMLInputElement | null> = ref(null)
-const coverInput: Ref<HTMLInputElement | null> = ref(null)
+type ImageSlot = 'image' | 'cover' | 'landing'
+const setImage = (slot: ImageSlot, file: File) => {
+  const url = URL.createObjectURL(file)
+  if (slot === 'image') { imageFile.value = file; image.value = url }
+  else if (slot === 'cover') { coverFile.value = file; cover.value = url }
+  else { landingImageFile.value = file; landingImage.value = url; removeLandingImage.value = false }
+}
+const clearImage = (slot: ImageSlot) => {
+  if (slot === 'image') { imageFile.value = null; image.value = '' }
+  else if (slot === 'cover') { coverFile.value = null; cover.value = '' }
+  else { landingImageFile.value = null; landingImage.value = ''; removeLandingImage.value = true }
+}
+
+// the catalog behind the "Request Catalog" button on the public category page: an uploaded
+// file, or a link to it elsewhere (e.g. Google Drive); saving one source removes the other
+const catalogMode = ref<'file' | 'link'>('file')
+const catalogUrl = ref('')
+const savedCatalogUrl = ref('')
+const catalogUrlValid = computed(() => !catalogUrl.value.trim() || /^https?:\/\/[^\s/]+\.[^\s]+$/i.test(catalogUrl.value.trim()))
+const CATALOG_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx']
+const MAX_CATALOG_MB = 50
+const catalog = ref<{ file: string; name: string; size: number } | null>(null)
+const catalogFile = ref<File | null>(null)
+const removeCatalog = ref(false)
+const catalogProgress = ref<number | null>(null)
+const catalogInput: Ref<HTMLInputElement | null> = ref(null)
+
+const formatBytes = (bytes: number) =>
+  bytes >= 1 << 20 ? `${(bytes / (1 << 20)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
+
+const pickCatalog = (file?: File | null) => {
+  if (!file) return
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  if (!CATALOG_EXTENSIONS.includes(ext)) {
+    toast.error('Katalog harus berupa PDF, Word (.doc/.docx) atau Excel (.xls/.xlsx)')
+    return
+  }
+  if (file.size > MAX_CATALOG_MB * 1024 * 1024) {
+    toast.error(`Ukuran katalog maksimal ${MAX_CATALOG_MB} MB`)
+    return
+  }
+  catalogFile.value = file
+  removeCatalog.value = false
+}
+
+const onCatalogChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  pickCatalog(target.files?.[0])
+  target.value = ''
+}
+
+const clearCatalog = () => {
+  if (catalogFile.value) catalogFile.value = null
+  else removeCatalog.value = true
+}
+
+// runs after the category itself is saved, so new categories get their id first
+const syncCatalog = async (id: number | string) => {
+  if (catalogMode.value === 'link') {
+    const link = catalogUrl.value.trim()
+    if (link !== savedCatalogUrl.value || (link && catalog.value)) await service.setCategoryCatalogUrl(id, link)
+    return
+  }
+  // back to a file: the old link goes away
+  if (savedCatalogUrl.value) await service.setCategoryCatalogUrl(id, '')
+  if (catalogFile.value) {
+    catalogProgress.value = 0
+    try {
+      await service.uploadCategoryCatalog(id, catalogFile.value, (p) => { catalogProgress.value = p })
+    } finally {
+      catalogProgress.value = null
+    }
+  } else if (removeCatalog.value && catalog.value) {
+    await service.deleteCategoryCatalog(id)
+  }
+}
 
 const disabled = currentPath.includes("/detail")
 const isCreate = currentPath.includes("/add")
 let isApiUpdate = false
+
+// default branding prices; saved after the category so a new one has its id
+const brandingForm = ref<InstanceType<typeof CategoryBrandingForm> | null>(null)
+const brandingCategoryId = computed(() => isCreate ? null : Number(detail.value?.id ?? resolvedEditId.value) || null)
+const brandingParentId = computed(() => props.parentId ?? (detail.value as any)?.parent_id ?? null)
 
 const setFieldsFromDetail = (val: any) => {
   isApiUpdate = true
@@ -81,8 +166,12 @@ const setFieldsFromDetail = (val: any) => {
   
   image.value = val.image ? STORAGE_URL + val.image : ''
   cover.value = val.cover ? STORAGE_URL + val.cover : ''
+  landingImage.value = val.landing_image ? STORAGE_URL + val.landing_image : ''
   is_active.value = Boolean(val.is_active) || false
   is_landing_page.value = Boolean(val.is_landing_page) || false
+  catalog.value = val.catalog_file ? { file: val.catalog_file, name: val.catalog_file_name || 'katalog', size: Number(val.catalog_file_size) || 0 } : null
+  savedCatalogUrl.value = catalogUrl.value = val.catalog_url || ''
+  catalogMode.value = val.catalog_url && !val.catalog_file ? 'link' : 'file'
 
   // Update form values
   setFieldValue('name', name.value)
@@ -122,56 +211,12 @@ watch(
   { immediate: true }
 )
 
-const onImageChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    imageFile.value = target.files[0]
-    image.value = URL.createObjectURL(imageFile.value)
-  }
-}
-
-const onCoverChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    coverFile.value = target.files[0]
-    cover.value = URL.createObjectURL(coverFile.value)
-  }
-}
-
-const removeImage = () => {
-  image.value = ''
-  imageFile.value = null
-}
-
-const removeCover = () => {
-  cover.value = ''
-  coverFile.value = null
-}
-
-const handleDrop = (event: DragEvent, type: 'image' | 'cover') => {
-  event.preventDefault()
-  const files = event.dataTransfer?.files
-  if (files && files[0] && files[0].type.startsWith('image/')) {
-    if (type === 'image') {
-      imageFile.value = files[0]
-      image.value = URL.createObjectURL(files[0])
-    } else {
-      coverFile.value = files[0]
-      cover.value = URL.createObjectURL(files[0])
-    }
-  }
-}
-
-const handleDragOver = (event: DragEvent) => {
-  event.preventDefault()
-}
-
 const updateSlugFromName = (nameValue: string | undefined) => {
-  // Only auto-generate slug when creating a new record
-  if (!isCreate || !nameValue || isApiUpdate) {
+  // Child slugs follow the name on both create and edit.
+  if ((!isCreate && !props.isChild) || isApiUpdate) {
     return
   }
-  const newSlug = nameValue
+  const newSlug = (nameValue || '').trim()
     .toLowerCase()
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_]/g, '')
@@ -181,9 +226,19 @@ const updateSlugFromName = (nameValue: string | undefined) => {
 
 watch(name, (newVal) => {
   if (!isApiUpdate) updateSlugFromName(newVal)
-})
+}, { flush: 'sync' })
 
 const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) => {
+  let savedId: number | string | undefined = isCreate ? undefined : (resolvedEditId.value as any)
+  if (catalogMode.value === 'link' && !catalogUrlValid.value) {
+    toast.error('Link katalog harus diawali http:// atau https://')
+    return
+  }
+  const brandingProblem = brandingForm.value?.problem()
+  if (brandingProblem) {
+    toast.error(`Harga branding ${brandingProblem}`)
+    return
+  }
   try {
     if (isCreate) {
       const payload = { 
@@ -211,6 +266,10 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           console.log('[create] cover base64 length:', payload.cover.length)
         }
       }
+      if (payload.is_landing_page && landingImageFile.value) {
+        const { convertToBase64 } = useFileToBase64()
+        payload.landing_image = await convertToBase64(landingImageFile.value)
+      }
       if (props.isChild && props.parentId) {
         const childPayload: any = {
           name: payload.name,
@@ -218,13 +277,14 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           description: payload.description,
           image: payload.image,
           cover: payload.cover,
+          landing_image: payload.landing_image,
           is_landing_page: payload.is_landing_page,
           is_active: payload.is_active,
         }
-        await service.createChildCategory(Number(props.parentId), childPayload)
+        savedId = (await service.createChildCategory(Number(props.parentId), childPayload))?.id
         toast.success('Child category created successfully!')
       } else {
-        await service.createProductCategoryWithSubs(payload)
+        savedId = (await service.createProductCategoryWithSubs(payload))?.id
         toast.success('Product category created successfully!')
       }
     } else {
@@ -257,6 +317,12 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
       } else {
         delete payload.cover
       }
+      if (landingImageFile.value) {
+        const { convertToBase64 } = useFileToBase64()
+        payload.landing_image = await convertToBase64(landingImageFile.value)
+      } else if (removeLandingImage.value) {
+        payload.landing_image = ''
+      }
       if (props.isChild && resolvedEditId.value) {
         const childPayload: any = {
           name: payload.name!,
@@ -264,6 +330,7 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
           description: payload.description!,
           image: payload.image,
           cover: payload.cover,
+          landing_image: payload.landing_image,
           is_landing_page: payload.is_landing_page,
           is_active: payload.is_active,
           sub_categories: payload.sub_categories || [],
@@ -275,12 +342,26 @@ const handleSubmitForm = handleSubmit(async (values : ProductCategoryRequest) =>
         toast.success('Product category updated successfully!')
       }
     }
-    router.push(getPathWithoutIdInForm(currentPath))
   } catch (error) {
     toast.error('Failed to create product category')
     console.error(error)
+    return
   }
-})
+  if (savedId != null) {
+    try {
+      await syncCatalog(savedId)
+    } catch (error: any) {
+      // the category is already saved; report the catalog problem but still leave the form
+      toast.error(`Kategori tersimpan, tetapi katalog gagal disimpan: ${error?.message || error}`)
+    }
+    try {
+      await brandingForm.value?.save(Number(brandingCategoryId.value ?? savedId))
+    } catch (error: any) {
+      toast.error(`Kategori tersimpan, tetapi harga branding gagal disimpan: ${cartErrorMessage(error, 'coba lagi')}`)
+    }
+  }
+  router.push(getPathWithoutIdInForm(currentPath))
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))
@@ -288,15 +369,20 @@ const handleBack = () => {
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <div class="pb-4 flex items-end w-full">
+  <form class="editor-form" @submit.prevent="handleSubmitForm">
+    <FormsFormSection title="Informasi kategori" description="Kelola nama, alamat halaman, dan deskripsi kategori.">
+    <div class="form-url">
       <p class="text-sm font-bold italic">
         {{ config.public.BASE_URL }} /category/
       </p>
       <!-- Slug -->
-      <FieldXText name="slug" label="" placeholder="Enter slug" v-model="slug" :disabled="disabled"
-        :isFieldDirty="isFieldDirty('slug')" :item-class="'inline-flex'" :input-class="'h-6'" />
+      <FieldXText name="slug" label="" placeholder="Slug otomatis dari nama" v-model="slug" :disabled="disabled || props.isChild"
+        :isFieldDirty="isFieldDirty('slug')" :item-class="'min-w-0 flex-1'" :input-class="'h-10'" />
     </div>
+
+    <p v-if="props.isChild" class="text-sm text-muted-foreground">
+      Slug dibuat otomatis dari nama. Jika sudah digunakan, akhiran unik akan ditambahkan saat disimpan.
+    </p>
 
     <!-- Name -->
     <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
@@ -306,96 +392,132 @@ const handleBack = () => {
     <FieldXVueEditor name="description" label="Description" placeholder="Enter description" :disabled="disabled"
       v-model="description" :validate-on-blur="!isFieldDirty('description')" />
 
-    <!-- Image -->
-    <div class="space-y-2">
-      <label class="text-sm font-medium">Image</label>
-      <div 
-        class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
-        :class="{ 'opacity-50 cursor-not-allowed': disabled }"
-        @drop="(e) => !disabled && handleDrop(e, 'image')"
-        @dragover="(e) => !disabled && handleDragOver(e)"
-        @click="!disabled && imageInput?.click()"
-      >
-        <input 
-          ref="imageInput"
-          type="file" 
-          @change="onImageChange" 
-          accept="image/*" 
-          :disabled="disabled" 
-          class="hidden"
+    </FormsFormSection>
+    <FormsFormSection title="Gambar kategori" description="Setiap gambar dipakai di tempat yang berbeda di website.">
+      <div class="grid gap-6 md:grid-cols-2">
+        <CategoryImageField
+          label="Gambar daftar kategori"
+          hint="Kartu kategori di halaman /category."
+          aspect="aspect-square"
+          :preview="image"
+          :disabled="disabled"
+          @select="(f) => setImage('image', f)"
+          @remove="clearImage('image')"
         />
-        
-        <div v-if="!image" class="space-y-2">
-          <div class="mx-auto w-12 h-12 text-gray-400">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
-              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <p class="text-sm text-gray-600">Drag and drop image here, or click to select</p>
-          <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-        </div>
-        
-        <div v-else class="relative inline-block">
-          <img :src="image" alt="Preview" class="max-w-xs max-h-48 object-cover rounded-lg" />
-          <button 
-            v-if="!disabled"
-            type="button"
-            @click.stop="removeImage"
-            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cover -->
-    <div class="space-y-2">
-      <label class="text-sm font-medium">Cover</label>
-      <div 
-        class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
-        :class="{ 'opacity-50 cursor-not-allowed': disabled }"
-        @drop="(e) => !disabled && handleDrop(e, 'cover')"
-        @dragover="(e) => !disabled && handleDragOver(e)"
-        @click="!disabled && coverInput?.click()"
-      >
-        <input 
-          ref="coverInput"
-          type="file" 
-          @change="onCoverChange" 
-          accept="image/*" 
-          :disabled="disabled" 
-          class="hidden"
+        <CategoryImageField
+          label="Cover halaman detail"
+          :hint="`Latar hero di halaman /category/${slug || 'slug'}.`"
+          aspect="aspect-video"
+          :preview="cover"
+          :disabled="disabled"
+          @select="(f) => setImage('cover', f)"
+          @remove="clearImage('cover')"
         />
-        
-        <div v-if="!cover" class="space-y-2">
-          <div class="mx-auto w-12 h-12 text-gray-400">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
-              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <p class="text-sm text-gray-600">Drag and drop cover image here, or click to select</p>
-          <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-        </div>
-        
-        <div v-else class="relative inline-block">
-          <img :src="cover" alt="Cover Preview" class="max-w-xs max-h-48 object-cover rounded-lg" />
-          <button 
-            v-if="!disabled"
-            type="button"
-            @click.stop="removeCover"
-            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
       </div>
-    </div>
-
+    </FormsFormSection>
+    <FormsFormSection
+      title="Katalog"
+      description="Dibuka pengunjung lewat tombol Request Catalog di halaman kategori: unggah file (PDF, Word atau Excel, maksimal 50 MB) atau cantumkan link-nya, mis. Google Drive."
+    >
+      <div role="radiogroup" aria-label="Sumber katalog" class="inline-flex rounded-lg border p-1">
+        <label
+          v-for="opt in ([{ value: 'file', label: 'Unggah file' }, { value: 'link', label: 'Link (Google Drive, dll.)' }] as const)"
+          :key="opt.value"
+          class="cursor-pointer rounded-md px-3 py-1.5 text-sm"
+          :class="catalogMode === opt.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
+        >
+          <input v-model="catalogMode" type="radio" name="catalog-mode" :value="opt.value" class="sr-only" :disabled="disabled">
+          {{ opt.label }}
+        </label>
+      </div>
+      <div v-if="catalogMode === 'link'" class="space-y-1">
+        <label for="catalog-url" class="text-sm font-medium">Link katalog</label>
+        <input
+          id="catalog-url"
+          v-model="catalogUrl"
+          type="url"
+          inputmode="url"
+          placeholder="https://drive.google.com/file/d/…"
+          class="form-input"
+          :class="!catalogUrlValid && 'border-red-500'"
+          :aria-invalid="!catalogUrlValid || undefined"
+          :disabled="disabled"
+        >
+        <p class="text-xs" :class="catalogUrlValid ? 'text-muted-foreground' : 'text-red-600'">
+          {{ catalogUrlValid ? 'Pastikan akses link terbuka untuk siapa saja. Kosongkan untuk menghapus.' : 'Link harus diawali http:// atau https://' }}
+        </p>
+        <p v-if="catalog && catalogUrl.trim()" class="text-xs text-amber-700">File katalog yang sudah diunggah akan dihapus saat disimpan.</p>
+      </div>
+      <template v-else>
+      <input
+        ref="catalogInput"
+        type="file"
+        class="hidden"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        :disabled="disabled"
+        @change="onCatalogChange"
+      />
+      <!-- pending or stored file -->
+      <div
+        v-if="catalogFile || (catalog && !removeCatalog)"
+        class="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 p-3"
+      >
+        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-green-100 text-xs font-bold uppercase text-green-700">
+          {{ (catalogFile?.name || catalog?.name || '').split('.').pop() }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium">{{ catalogFile?.name || catalog?.name }}</p>
+          <p class="text-xs text-muted-foreground">
+            {{ formatBytes(catalogFile?.size || catalog?.size || 0) }}
+            <template v-if="catalogFile"> · akan diunggah saat disimpan</template>
+          </p>
+        </div>
+        <a
+          v-if="!catalogFile && catalog"
+          :href="`${STORAGE_URL}${catalog.file}`"
+          target="_blank"
+          rel="noopener"
+          class="text-sm font-medium text-green-700 underline"
+        >Unduh</a>
+        <template v-if="!disabled">
+          <button type="button" class="rounded-md border px-3 py-1.5 text-sm hover:bg-muted" @click="catalogInput?.click()">Ganti</button>
+          <button type="button" class="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50" @click="clearCatalog">
+            {{ catalogFile && catalog && !removeCatalog ? 'Batal ganti' : 'Hapus' }}
+          </button>
+        </template>
+      </div>
+      <div
+        v-else
+        class="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400"
+        :class="disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
+        @click="!disabled && catalogInput?.click()"
+        @dragover.prevent
+        @drop.prevent="(e) => !disabled && pickCatalog(e.dataTransfer?.files?.[0])"
+      >
+        <p class="text-sm text-gray-600">Tarik & lepas file katalog ke sini, atau klik untuk memilih</p>
+        <p class="mt-1 text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX · maksimal 50 MB</p>
+        <p v-if="removeCatalog" class="mt-2 text-xs text-red-600">Katalog lama akan dihapus saat disimpan.</p>
+      </div>
+      <div v-if="catalogProgress !== null" class="space-y-1">
+        <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div class="h-2 rounded-full bg-green-600 transition-all" :style="{ width: `${catalogProgress}%` }" />
+        </div>
+        <p class="text-xs text-muted-foreground">Mengunggah katalog… {{ catalogProgress }}%</p>
+      </div>
+      <p v-if="savedCatalogUrl" class="text-xs text-amber-700">Link katalog saat ini akan dihapus saat disimpan.</p>
+      </template>
+    </FormsFormSection>
+    <FormsFormSection title="Harga branding default" description="Harga per pcs tiap metode branding untuk produk di kategori ini. Produk bisa memakai harga sendiri.">
+      <CategoryBrandingForm
+        v-if="isCreate || detail"
+        ref="brandingForm"
+        :key="brandingCategoryId ?? 'new'"
+        :category-id="brandingCategoryId"
+        :parent-id="brandingParentId"
+        :disabled="disabled"
+      />
+    </FormsFormSection>
+    <FormsFormSection title="Pengaturan kategori" description="Atur subkategori dan visibilitasnya di website.">
     <!-- Sub Category -->
     <FormField v-if="!props.hideSubCategories" v-slot="{ componentField }" name="sub_categories">
       <FormItem>
@@ -422,12 +544,27 @@ const handleBack = () => {
     <FieldXCheckbox name="is_landing_page" label="Is Landing Page" v-model="is_landing_page" :disabled="disabled"
       :isFieldDirty="isFieldDirty('is_landing_page')" />
 
+    <!-- only categories shown on the home page need their own landing image -->
+    <!-- read the form value: FieldXCheckbox updates vee-validate, not its local v-model -->
+    <div v-if="formValues.is_landing_page" class="max-w-xs">
+      <CategoryImageField
+        label="Gambar landing page"
+        hint="Ikon kategori di beranda. Jika kosong, memakai gambar daftar kategori."
+        aspect="aspect-square"
+        :preview="landingImage"
+        :disabled="disabled"
+        @select="(f) => setImage('landing', f)"
+        @remove="clearImage('landing')"
+      />
+    </div>
+
 
     <!-- Is Active -->
     <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled"
       :isFieldDirty="isFieldDirty('is_active')" />
 
 
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

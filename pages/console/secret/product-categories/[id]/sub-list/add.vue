@@ -2,7 +2,7 @@
   <div>
     <AppBreadcrumb />
     <AppTableHeader :pageTitle="pageTitle" :create-path="''" />
-    <div class="max-w-3xl">
+    <div class="w-full min-w-0">
       <ProductCategoryForm :isChild="true" :parentId="parentId" :hideSubCategories="true" />
     </div>
   </div>

@@ -74,7 +74,8 @@ onMounted(async () => {
     setFieldsFromDetail(props.detail)
   } else if (!isCreate && resolvedEditId.value) {
     try {
-      await loadDetail(Number(resolvedEditId.value))
+      const client = await loadDetail(Number(resolvedEditId.value))
+      setFieldsFromDetail(client)
     } catch (e) {
       console.error('Failed to load client detail', e)
     }
@@ -132,7 +133,7 @@ const handleSubmitForm = handleSubmit(async (values: ClientRequest) => {
     toast.error('Failed to submit client form')
     console.error(error)
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))
@@ -152,8 +153,9 @@ useHead({
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
-    <div class="grid md:grid-cols-2 gap-2">
+  <form class="editor-form" @submit.prevent="handleSubmitForm">
+    <FormsFormSection title="Informasi client" description="Kelola nama, logo, dan urutan client di halaman utama.">
+    <div class="form-grid">
     <!-- Name -->
     <FieldXText name="name" label="Name" placeholder="Enter name" v-model="name" :disabled="disabled"
       :isFieldDirty="isFieldDirty('name')" />
@@ -166,7 +168,7 @@ useHead({
     <!-- Logo -->
     <div class="space-y-2">
       <label class="text-sm font-medium">Logo</label>
-      <input type="file" @change="onImageChange" accept="image/*" :disabled="disabled" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+      <input type="file" @change="onImageChange" accept="image/*,.heic,.heif" :disabled="disabled" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
       <img v-if="image" :src="image" alt="Preview" class="max-w-xs max-h-32 object-cover" />
     </div>
     
@@ -176,6 +178,7 @@ useHead({
       :isFieldDirty="isFieldDirty('is_active')" />
 
 
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

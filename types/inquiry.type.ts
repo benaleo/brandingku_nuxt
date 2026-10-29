@@ -8,6 +8,7 @@ export interface Inquiry {
   status: string;
   created_at: string;
   created_by: string;
+  closed_at?: string | null;
 }
 
 export interface InquiryConnection {

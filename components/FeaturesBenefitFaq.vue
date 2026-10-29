@@ -2,7 +2,9 @@
 import { ref } from 'vue'
 import { useBenefitService } from "~/services/benefit.service";
 import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
+import { getLangValue } from '~/utils/global.utils'
 
+const { locale } = useI18n()
 const { datas: benefits, loading, error, reFetch } = useBenefitService();
 const shouldLoad = ref(false)
 const isInitialLoad = ref(true)
@@ -42,10 +44,10 @@ useHead({
 <template>
   <div ref="target" class="w-full px-4 py-12" style="font-family: 'Plus Jakarta Sans', sans-serif;">
     <div class="container max-w-3xl mx-auto py-12">
-      <h2 class="text-2xl font-bold text-center mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">Pertanyaan Populer</h2>
+      <h2 class="text-2xl font-bold text-center mb-6" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ $t('app.faq.title') }}</h2>
 
       <div v-if="loading || isInitialLoad" class="text-center py-4">
-        <p style="font-family: 'Plus Jakarta Sans', sans-serif;">Memuat pertanyaan...</p>
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ $t('app.faq.loading') }}</p>
       </div>
 
       <div v-else-if="error" class="text-center py-4 text-red-500">
@@ -59,10 +61,10 @@ useHead({
           :value="benefit.id"
         >
           <AccordionTrigger class="hover:bg-slate-100 px-4 rounded-md text-left" style="font-family: 'Plus Jakarta Sans', sans-serif;">
-            {{ benefit.question }}
+            {{ getLangValue(benefit.question, locale) }}
           </AccordionTrigger>
           <AccordionContent>
-            <p class="text-gray-600 px-6 py-4 pb-2 border-x border-gray-200" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ benefit.answer }}</p>
+            <p class="text-gray-600 px-6 py-4 pb-2 border-x border-gray-200" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ getLangValue(benefit.answer, locale) }}</p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

@@ -1,5 +1,31 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+@layer components {
+  .editor-form {
+    @apply w-full min-w-0 max-w-none space-y-6 text-foreground;
+  }
+  .form-actions {
+    @apply flex w-full flex-col-reverse gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-end sm:px-6;
+  }
+  .form-grid {
+    @apply grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2;
+  }
+  .form-url {
+    @apply flex min-w-0 flex-col gap-2 rounded-xl border border-border bg-muted/40 p-3 sm:flex-row sm:items-center;
+  }
+  .form-url > * { min-width: 0; overflow-wrap: anywhere; }
+  .editor-form input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  .editor-form textarea {
+    @apply w-full min-w-0 rounded-lg;
+  }
+  .editor-form input[type='file']:not(.hidden) {
+    @apply block w-full min-w-0 rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground;
+  }
+  .editor-form img { max-width: 100%; }
+  .editor-form .ql-container { min-height: 12rem; height: auto; }
+  .editor-form .ql-editor { min-height: 12rem; overflow-wrap: anywhere; }
+}
 /*---break---*/
 @custom-variant dark (&:is(.dark *));
 

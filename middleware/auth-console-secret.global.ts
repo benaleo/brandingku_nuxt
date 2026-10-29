@@ -1,65 +1,23 @@
-import { defineNuxtRouteMiddleware, useCookie, navigateTo } from 'nuxt/app'
-
-export default defineNuxtRouteMiddleware((to) => {
-  const token = useCookie('token')
-  
-  // Block access to /console/secret if not logged in
-  if (to.path.startsWith('/console/secret')) {
-    if (!token.value) {
-      return navigateTo('/console/auth')
-    }
-    
-    // Decode JWT token to check user role
-    try {
-      const tokenParts = token.value.split('.')
-      if (tokenParts.length !== 3) {
-        return navigateTo('/console/auth')
-      }
-      
-      const payload = tokenParts[1]
-      if (!payload) {
-        return navigateTo('/console/auth')
-      }
-      
-      const decodedToken = JSON.parse(atob(payload))
-      const userRole = decodedToken.role
-      
-      // Block users with 'user' role from accessing console/secret/*
-      if (userRole === 'user') {
-        return navigateTo('/')
-      }
-    } catch (error) {
-      // If token decoding fails, redirect to auth
-      return navigateTo('/console/auth')
-    }
+export default defineNuxtRouteMiddleware(async (to) => {
+  const secret = to.path.startsWith('/console/secret')
+  const auth = to.path.startsWith('/console/auth')
+  if (!secret && !auth) return
+  const token = useCookie<string | null>('token')
+  const access = useConsoleAccess()
+  if (!token.value) {
+    access.clear()
+    if (secret) return navigateTo('/console/auth')
+    return
   }
-  
-  // Block access to /console/auth if already logged in
-  if (to.path.startsWith('/console/auth')) {
-    if (token.value) {
-      try {
-        // Decode JWT token to check user role
-        const tokenParts = token.value.split('.')
-        if (tokenParts.length === 3) {
-          const payload = tokenParts[1]
-          if (payload) {
-            const decodedToken = JSON.parse(atob(payload))
-            const userRole = decodedToken.role
-            
-            // Redirect based on user role
-            if (userRole === 'user') {
-              return navigateTo('/')
-            } else {
-              return navigateTo('/console/secret/dashboard')
-            }
-          }
-        }
-        // Fallback to dashboard if token decoding fails
-        return navigateTo('/console/secret/dashboard')
-      } catch (error) {
-        // If token decoding fails, redirect to dashboard
-        return navigateTo('/console/secret/dashboard')
-      }
-    }
+  try {
+    await access.refresh()
+  } catch {
+    if (secret) return navigateTo('/console/auth')
+    return
+  }
+  if (auth) return navigateTo(access.firstRoute.value)
+  if (!access.canVisit(to.path)) {
+    if (to.path !== access.firstRoute.value) return navigateTo(access.firstRoute.value)
+    return abortNavigation()
   }
 })

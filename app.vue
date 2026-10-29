@@ -1,9 +1,12 @@
 <template>
-  <Toaster rich-colors />
+  <UiToaster rich-colors />
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
+  <ChatWidget />
+  <ElementsGlobalLoading />
 </template>
 
 <script setup lang="ts">
+import ChatWidget from "~/components/chat/ChatWidget.vue";
 </script>

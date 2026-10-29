@@ -5,10 +5,11 @@ export const useGql = () => {
     const GRAPHQL_ENDPOINT = `/api/gql`
     const token = useCookie<string | null>('token', { sameSite: 'lax' })
 
-    const gqlFetch = async <T>(query: string, variables?: Record<string, any>, opts?: { auth?: boolean }): Promise<T> => {
+    const gqlFetch = async <T>(query: string, variables?: Record<string, any>, opts?: { auth?: boolean; headers?: Record<string, string>; timeout?: number }): Promise<T> => {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            'Accept': '*/*'
+            'Accept': '*/*',
+            ...opts?.headers,
         }
         if (opts?.auth && token.value) headers['Authorization'] = `Bearer ${token.value}`
 
@@ -20,14 +21,16 @@ export const useGql = () => {
                 // Ensure we fail fast if server responds with non-JSON/HTML
                 responseType: 'json',
                 retry: 0,
-                timeout: 20000,
+                timeout: opts?.timeout ?? 20000,
             })
 
             // Validate GraphQL response shape
             if (res && typeof res === 'object') {
                 if (Array.isArray(res.errors) && res.errors.length) {
                     const msg = res.errors.map((e: any) => e?.message || 'GraphQL error').join(', ')
-                    throw new Error(msg)
+                    const error = new Error(msg) as Error & { code?: string }
+                    error.code = res.errors[0]?.extensions?.code
+                    throw error
                 }
                 if ('data' in res) {
                     return res.data as T
@@ -38,7 +41,7 @@ export const useGql = () => {
         } catch (err: any) {
             // Bubble up with context
             const msg = err?.message || String(err)
-            throw new Error(`[GQL] Request failed: ${msg}`)
+            throw new Error(`[GQL] Request failed: ${msg}`, { cause: err })
         }
     }
 

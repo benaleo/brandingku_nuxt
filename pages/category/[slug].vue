@@ -2,14 +2,17 @@
 import {useRoute} from 'vue-router'
 import {computed, ref, watch} from 'vue'
 import {useGetProductCategoryBySlug, type SubCategory} from '~/services/landing-page.service'
-import {useGetProductsWithCategorySlug} from '~/composables/useGetProductsWithCategorySlug'
+import {Check, ChevronDown, Download, MessageCircle, SlidersHorizontal, X} from 'lucide-vue-next'
+import {Dialog, DialogContent, DialogDescription, DialogTitle} from '~/components/ui/dialog'
 
 const route = useRoute()
+const { t } = useI18n()
 const slug = route.params.slug as string
 const subSlug = computed(() => route.query.sub as string | undefined)
 
 const selectedFilter = ref('All')
 const selectedSubCategory = ref<SubCategory | null>(null)
+const pickerOpen = ref(false)
 
 const {
   data: category,
@@ -17,22 +20,24 @@ const {
   error: categoryError
 } = useGetProductCategoryBySlug(slug)
 
-// Reactive category slug for product fetching
-const currentCategorySlug = computed(() => selectedSubCategory.value?.slug || slug)
 
-const {
-  products,
-  pageInfo,
-  loading: productsLoading,
-  error: productsError,
-  loadMore,
-  fetchProducts
-} = useGetProductsWithCategorySlug(currentCategorySlug)
+// "Request Catalog": the selected sub category's catalog, else the parent's; without one, ask in live chat
+const { openChat } = useChatWidget()
+// a stored file downloads; a link (e.g. Google Drive) opens in a new tab
+const catalogOf = (c?: { catalog_file: string; catalog_file_name: string; catalog_url?: string } | null) =>
+  c?.catalog_file ? { url: c.catalog_file, name: c.catalog_file_name, download: true }
+    : c?.catalog_url ? { url: c.catalog_url, name: '', download: false } : null
+const activeCatalog = computed(() => catalogOf(selectedSubCategory.value) || catalogOf(category.value))
+const requestCatalog = () =>
+  openChat(t('app.categoryPage.detail.requestCatalogMessage', { name: selectedSubCategory.value?.name || category.value?.name || '' }).trim())
+
+// products of the chosen sub category, else of the whole category (its sub categories included)
+const activeCategoryId = computed(() => selectedSubCategory.value?.id || category.value?.id || null)
 
 const subCategories = computed(() => category.value?.sub || [])
 
 const pageTitle = computed(() => {
-  return category.value?.meta_title || category.value?.name || 'Category'
+  return category.value?.meta_title || category.value?.name || t('app.categoryPage.detail.fallbackTitle')
 })
 
 const pageDescription = computed(() => {
@@ -90,170 +95,143 @@ definePageMeta({
   <div class="bg-gray-100">
     <!-- Header Section with dynamic banner -->
     <!-- Loading State -->
-    <div v-if="categoryLoading" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
-      <div class="relative max-w-4xl mx-auto pt-24">
+    <div v-if="categoryLoading" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white px-4 pt-28 pb-24 sm:px-8 md:pt-36 md:pb-28">
+      <div class="relative max-w-4xl mx-auto">
         <div class="h-12 bg-white/20 rounded w-1/2 mb-4 animate-pulse"></div>
         <div class="h-6 bg-white/20 rounded w-3/4 mb-6 animate-pulse"></div>
-        <div class="flex gap-4">
-          <div class="h-12 bg-white/20 rounded w-40 animate-pulse"></div>
-          <div class="h-12 bg-white/20 rounded w-40 animate-pulse"></div>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <div class="h-12 bg-white/20 rounded sm:w-44 animate-pulse"></div>
+          <div class="h-12 bg-white/20 rounded sm:w-44 animate-pulse"></div>
         </div>
       </div>
     </div>
     
     <!-- Error State -->
-    <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 py-16 px-8 rounded-lg mb-8">
+    <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 px-4 pt-28 pb-16 sm:px-8 md:pt-36">
       <div class="relative max-w-4xl mx-auto text-center">
-        <h1 class="text-4xl font-bold mb-4">Category Not Found</h1>
-        <p class="text-xl mb-6">{{ categoryError }}</p>
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">{{ $t('app.categoryPage.detail.notFound') }}</h1>
+        <p class="text-lg md:text-xl mb-6 break-words">{{ categoryError }}</p>
         <button @click="$router.push('/')" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
-          Back to Home
+          {{ $t('app.categoryPage.detail.backHome') }}
         </button>
       </div>
     </div>
     
     <!-- Category Header -->
-    <div v-else-if="category" class="relative bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-8 rounded-lg mb-8">
-      <div v-if="category.banner_image" class="absolute inset-0 overflow-hidden rounded-lg">
-        <img :src="category.banner_image" alt="" class="w-full h-full object-cover opacity-30"/>
+    <!-- top padding clears the fixed navbar; bottom padding leaves room for the overlapping filter strip -->
+    <div v-else-if="category" class="relative overflow-hidden bg-gradient-to-r from-green-600 to-green-800 text-white px-4 pt-28 pb-24 sm:px-8 md:pt-36 md:pb-28">
+      <!-- hero uses the category cover; older categories without one keep the list image -->
+      <div v-if="category.cover_image || category.banner_image" class="absolute inset-0">
+        <img :src="category.cover_image || category.banner_image" alt="" class="w-full h-full object-cover opacity-30"/>
       </div>
-      <div class="relative max-w-4xl mx-auto pt-24">
-        <h1 class="text-4xl font-bold mb-4">{{ category.name }}</h1>
+      <div class="relative max-w-4xl mx-auto">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 break-words">{{ category.name }}</h1>
         <div
-          class="text-xl mb-6 text-green-100 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-200"
+          class="text-base sm:text-lg md:text-xl mb-6 text-green-100 break-words [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-200"
           v-html="category.description"
         ></div>
-        <div class="flex gap-4">
-          <button class="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors">
-            Explore Collection
-          </button>
-          <button class="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors">
-            Request Catalog
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <a
+            href="#products"
+            class="inline-flex items-center justify-center bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+          >
+            {{ $t('app.categoryPage.detail.explore') }}
+          </a>
+          <a
+            v-if="activeCatalog"
+            :href="activeCatalog.url"
+            target="_blank"
+            rel="noopener"
+            :download="activeCatalog.download ? activeCatalog.name : undefined"
+            :title="activeCatalog.name || undefined"
+            class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
+          >
+            <Download class="size-5 shrink-0" />
+            {{ $t('app.categoryPage.detail.requestCatalog') }}
+          </a>
+          <button
+            v-else
+            type="button"
+            class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
+            @click="requestCatalog"
+          >
+            <MessageCircle class="size-5 shrink-0" />
+            {{ $t('app.categoryPage.detail.requestCatalog') }}
           </button>
         </div>
       </div>
     </div>
 
-   <div class="relative container mx-auto">
-     <!-- Category Filter Navigation -->
-    <div class="absolute top-[-70px] left-0 right-0 mb-8 bg-white py-4 px-2 rounded-lg">
+   <div class="relative app-container px-4 md:px-6">
+     <!-- Category Filter Navigation: overlaps the bottom of the hero -->
+    <div class="relative z-10 -mt-14 md:-mt-16 rounded-xl bg-white py-3 px-2 shadow-sm">
       <!-- Loading State for Filters -->
-      <div v-if="categoryLoading" class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
-        <div v-for="n in 12" :key="n" class="h-8 bg-gray-200 rounded-full w-42 animate-pulse snap-start"></div>
+      <div v-if="categoryLoading" class="px-2">
+        <div class="h-11 w-full animate-pulse rounded-lg bg-gray-200"></div>
       </div>
-      <!-- Actual Filters -->
-      <div v-else class="flex gap-2 justify-start overflow-x-auto scrollbar-hide pl-4 snap-x snap-mandatory">
-        <button 
-          v-for="filter in categoryFilters" 
-          :key="filter"
-          @click="handleFilterClick(filter)"
-          :class="[
-            'px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap snap-start',
-            selectedFilter === filter 
-              ? 'bg-green-600 text-white' 
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          ]"
+      <!-- the chosen sub category; the list opens in a popup -->
+      <div v-else class="flex items-center gap-2 px-2">
+        <button
+          type="button"
+          class="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border bg-white px-4 py-2.5 text-left text-sm font-medium hover:border-green-600"
+          :aria-label="$t('app.categoryPage.detail.chooseCategory')"
+          @click="pickerOpen = true"
         >
-          {{ filter }}
+          <span class="flex min-w-0 items-center gap-2">
+            <SlidersHorizontal class="size-4 shrink-0 text-green-700" />
+            <span class="truncate capitalize">{{ selectedSubCategory?.name || $t('app.categoryPage.detail.chooseCategory') }}</span>
+          </span>
+          <ChevronDown class="size-4 shrink-0 text-gray-500" />
+        </button>
+        <button
+          v-if="selectedSubCategory"
+          type="button"
+          class="flex shrink-0 items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+          @click="handleFilterClick('All')"
+        >
+          <X class="size-4" /> {{ $t('app.categoryPage.detail.resetFilter') }}
         </button>
       </div>
     </div>
 
+    <Dialog v-model:open="pickerOpen">
+      <DialogContent class="max-h-[85dvh] overflow-y-auto sm:max-w-md">
+        <DialogTitle>{{ $t('app.categoryPage.detail.chooseCategory') }}</DialogTitle>
+        <DialogDescription class="sr-only">{{ category?.name }}</DialogDescription>
+        <ul class="space-y-1">
+          <li v-for="filter in categoryFilters" :key="filter">
+            <button
+              type="button"
+              class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm capitalize transition-colors"
+              :class="selectedFilter === filter ? 'bg-green-50 font-semibold text-green-700' : 'hover:bg-gray-100'"
+              :aria-pressed="selectedFilter === filter"
+              @click="handleFilterClick(filter); pickerOpen = false"
+            >
+              <span>{{ filter === 'All' ? $t('app.categoryPage.detail.all') : filter }}</span>
+              <Check v-if="selectedFilter === filter" class="size-4 shrink-0" />
+            </button>
+          </li>
+        </ul>
+        <button
+          v-if="selectedSubCategory"
+          type="button"
+          class="mt-2 w-full rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+          @click="handleFilterClick('All'); pickerOpen = false"
+        >
+          {{ $t('app.categoryPage.detail.resetFilter') }}
+        </button>
+      </DialogContent>
+    </Dialog>
 
-    <!-- Products Section -->
-    <div class="mb-12 pt-12 max-w-6xl mx-auto">
-      <h2 class="text-3xl font-bold mb-8 text-center">{{ selectedSubCategory?.name || 'Products' }}</h2>
-      
-      <!-- Initial Loading State (Skeleton) -->
-      <div v-if="productsLoading && products.length === 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div v-for="n in 8" :key="n" class="bg-white border rounded-lg overflow-hidden animate-pulse">
-          <div class="w-full h-48 bg-gray-200"></div>
-          <div class="p-4">
-            <div class="h-4 bg-gray-200 rounded mb-2"></div>
-            <div class="h-3 bg-gray-200 rounded mb-3"></div>
-            <div class="flex justify-between items-center">
-              <div class="h-4 bg-gray-200 rounded w-20"></div>
-              <div class="h-8 bg-gray-200 rounded w-24"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Loading More State -->
-      <div v-else-if="productsLoading && products.length > 0" class="text-center py-4">
-        <div class="inline-flex items-center space-x-2 text-green-600">
-          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Loading more products...</span>
-        </div>
-      </div>
-      
-      <!-- Error State -->
-      <div v-else-if="productsError" class="text-center py-12">
-        <p class="text-red-600 mb-4">{{ productsError }}</p>
-        <button @click="loadMore" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
-          Try Again
-        </button>
-      </div>
-      
-      <!-- Empty State -->
-      <div v-else-if="!productsLoading && !productsError && products.length === 0" class="flex flex-col items-center justify-center py-12">
-        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-          </svg>
-        </div>
-        <p class="text-2xl font-semibold text-gray-800 mb-3">No products found in this category yet.</p>
-        <p class="text-gray-600 text-center mb-6 max-w-md">We're currently updating our collection with fresh, eco-friendly designs. Why not explore our other sustainable categories or check back soon?</p>
-        <div class="flex space-x-4">
-          <NuxtLink to="/products" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg">
-            Browse All Products
-          </NuxtLink>
-          <button class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors text-lg">
-            Contact Sales for Custom Requests
-          </button>
-        </div>
-      </div>
-      
-      <!-- Products Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <NuxtLink 
-          v-for="product in products" 
-          :key="product.id"
-          :to="`/product/${product.slug}`"
-          class="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow block group"
-        >
-        <div class="aspect-square p-4 bg-gray-100">
-          <img :src="product.image" alt="" class="aspect-square object-cover rounded-md"/>
-        </div>
-          <div class="p-4 bg-gray-100">
-            <h3 class="text-lg font-semibold mb-2 group-hover:text-green-600 transition-colors">{{ product.name }}</h3>
-            <p class="text-gray-600 text-sm mb-3 line-clamp-3" v-html="product.description?.substring(0, 200) + (product.description?.length > 200 ? '...' : '')"></p>
-            <div class="flex justify-between items-center">
-              <span class="text-xl font-bold text-green-600" :class="product.additionals?.[0]?.price ? '' : 'opacity-0'">Rp {{ (product.additionals?.[0]?.price || 0).toLocaleString() }}</span>
-              <button 
-                @click.prevent
-                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
-              >
-                Add to Quote
-              </button>
-            </div>
-          </div>
-        </NuxtLink>
-      </div>
-      
-      <!-- Load More Button -->
-      <div v-if="!productsLoading && !productsError && pageInfo?.has_next_page" class="text-center mt-8">
-        <button 
-          @click="loadMore" 
-          :disabled="productsLoading"
-          class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {{ productsLoading ? 'Loading...' : 'Load More Products' }}
-        </button>
-      </div>
+
+    <!-- the same product list as /product, kept to this category or the chosen sub category -->
+    <div id="products" class="scroll-mt-24 pt-4">
+      <ElementsProductBrowser
+        v-if="activeCategoryId"
+        :key="category?.id"
+        :category-id="activeCategoryId"
+        :title="selectedSubCategory?.name || $t('app.categoryPage.detail.products')"
+      />
     </div>
    </div>
 
@@ -264,15 +242,15 @@ definePageMeta({
           <img :src="selectedSubCategory.cover || selectedSubCategory.image" :alt="selectedSubCategory.name" class=" object-contains rounded-lg"/>
         </div>
         <div class="flex-1">
-          <h2 class="text-3xl font-bold mb-4">{{ selectedSubCategory.name }} that matters.</h2>
+          <h2 class="text-3xl font-bold mb-4">{{ $t('app.categoryPage.detail.subTitle', { name: selectedSubCategory.name }) }}</h2>
           <div 
             class="text-gray-700 mb-6 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_a]:underline [&_a]:text-green-600"
-            v-html="selectedSubCategory.description || `<p>Choosing the right merchandise isn't just about branding; it's about the message you send. Our ${selectedSubCategory.name.toLowerCase()} collection focuses on high-quality materials that last years, not weeks. From vacuum-sealed technology to carbon-neutral shipping, we help your company make an impact without the footprint.</p>`"
+            v-html="selectedSubCategory.description || `<p>${$t('app.categoryPage.detail.subFallback', { name: selectedSubCategory.name.toLowerCase() })}</p>`"
           ></div>
-          <a href="#" class="text-green-600 font-semibold hover:underline">Learn about our sourcing →</a>
+          <a href="#" class="text-green-600 font-semibold hover:underline">{{ $t('app.categoryPage.detail.sourcing') }}</a>
           <div class="mt-4">
             <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block font-semibold">
-              98% SUSTAINABILITY RATING
+              {{ $t('app.categoryPage.detail.sustainability') }}
             </div>
           </div>
         </div>

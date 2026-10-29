@@ -9,22 +9,19 @@ import { useRouter } from "vue-router";
 import { usePortfolioService } from "~/services/portfolio.service";
 import { useFileToBase64 } from "~/composables/useFileToBase64";
 import { useAuth } from "~/composables/useAuth";
-import { usePortfolioCategories } from "~/composables/usePortfolioCategories";
-import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
+import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
+import { useOptionProducts } from "~/composables/useOptionProducts";
 import FieldXSelect from "~/components/forms/fields/FieldXSelect.vue";
-import { Button } from "~/components/ui/button";
+import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import type { PortfolioGallery } from "~/types/portfolio.type";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
-import PortfolioGalleryForm from "./PortfolioGalleryForm.vue";
-import FieldXArea from "./fields/FieldXArea.vue";
-import Label from "../ui/label/Label.vue";
+import GalleryMultiUploadForm from "./GalleryMultiUploadForm.vue";
+import FormButton from "../atoms/FormButton.vue";
 
 const router = useRouter();
 const { token } = useAuth();
 const currentPath = router.currentRoute.value.path;
 const id = getIdFromPath(router.currentRoute.value.path);
-const config = useRuntimeConfig();
-const STORAGE_URL = config.public.STORAGE_URL;
 
 // Ensure user is authenticated
 if (!token.value) {
@@ -39,11 +36,21 @@ const statusOptions = [
 ];
 
 const { datas, loading, error, reFetch, createPortfolio, updatePortfolioById } = usePortfolioService(false, id);
-const { options: categoryOptions, loading: categoriesLoading, error: categoriesError, fetch: fetchCategories } = usePortfolioCategories();
+const { options: productCategoryOptions, loading: categoriesLoading, error: categoriesError, fetch: fetchCategories } = useOptionProductCategories();
+const { options: productOptions, loading: productsLoading, error: productsError, fetch: fetchProducts } = useOptionProducts();
+
+// portfolio.category is a plain string; store "Parent / Child" so same-named sub categories stay distinct
+const categoryOptions = computed(() =>
+  productCategoryOptions.value.map((o) => ({
+    ...o,
+    id: o.parentName ? `${o.parentName} / ${o.label}` : o.label,
+    categoryId: Number(o.id),
+  }))
+);
 
 const isEdit = computed(() => !!id && id !== 'add');
-
-const categoryInitialized = ref(false);
+const config = useRuntimeConfig();
+const STORAGE_URL = config.public.STORAGE_URL;
 
 // Fetch categories on mount
 onMounted(() => {
@@ -56,15 +63,8 @@ const formSchema = toTypedSchema(
     title: z.string().min(1, "Title is required"),
     subtitle: z.string().nullable().optional(),
     client: z.string().nullable().optional(),
+    product_id: z.string().nullable().optional(),
     is_active: z.coerce.boolean(),
-    galleries: z
-      .array(
-        z.object({
-          id: z.coerce.string().optional(),
-          file: z.string().optional(),
-        })
-      )
-      .optional(),
   })
 );
 
@@ -80,13 +80,35 @@ const {
     title: "",
     subtitle: "",
     client: "",
+    product_id: "",
     is_active: true,
-    galleries: [],
   },
 });
 
-// For dynamic galleries (managed locally; synced to payload on submit)
-const galleries = ref<PortfolioGallery[]>([]);
+// product list follows the selected category; the stored category string is mapped back to its id
+const selectedCategory = computed(() =>
+  categoryOptions.value.find((o) => o.id === formValues.category)
+);
+
+watch(
+  () => selectedCategory.value?.id,
+  async () => {
+    const category = selectedCategory.value;
+    await fetchProducts(category?.categoryId ?? null, category?.label);
+    // drop a product that does not belong to the newly selected category
+    if (!productsError.value && formValues.product_id && !productOptions.value.some((o) => o.id === formValues.product_id)) {
+      setFieldValue("product_id", "");
+    }
+  }
+);
+
+// galleries are managed locally and sent with the payload on submit
+const galleries = ref<(PortfolioGallery & { _raw?: string })[]>([]);
+// existing gallery ids removed in the form; deleted (with their stored files) on save
+const removedGalleryIds = ref<string[]>([]);
+
+const toDisplayUrl = (file: string) =>
+  !file || file.startsWith("http") || file.startsWith("data:") ? file : `${STORAGE_URL}${file}`;
 
 // Load existing data when editing
 watch(loading, (isLoading) => {
@@ -97,60 +119,23 @@ watch(loading, (isLoading) => {
     setFieldValue("subtitle", portfolio.subtitle || "");
     setFieldValue("client", portfolio.client || "");
     setFieldValue("is_active", portfolio.is_active ?? true);
-    galleries.value = portfolio.galleries?.map((g: PortfolioGallery) => ({ ...g, id: g.id.toString() })) || [];
+    setFieldValue("category", portfolio.category || "");
+    setFieldValue("product_id", portfolio.product_id ? String(portfolio.product_id) : "");
+    galleries.value = (portfolio.galleries || []).map((g: PortfolioGallery) => ({
+      ...g,
+      id: String(g.id),
+      file: toDisplayUrl(g.file),
+    }));
   }
 });
-
-// Initialize category value for edit mode after options are loaded.
-// Supports legacy stored value where category might be saved as label.
-watch(
-  [datas, categoryOptions],
-  ([datasVal, optsVal]) => {
-    if (categoryInitialized.value) return;
-    if (!isEdit.value) return;
-    if (!datasVal) return;
-    if (!optsVal?.length) return;
-
-    const raw = String(datasVal.category ?? '');
-    // Since we now store the label as value, try to match by label directly
-    const matched = optsVal.find(
-      (opt: any) => String(opt.label) === raw
-    );
-    const finalValue = matched ? String(matched.label) : raw;
-    setFieldValue('category', finalValue);
-    categoryInitialized.value = true;
-  },
-  { immediate: true }
-);
-
-// Watch for category changes to ensure form values are updated
-watch(() => formValues.category, (newValue) => {
-  if (newValue !== undefined && newValue !== null) {
-    setFieldValue('category', newValue);
-  }
-}, { deep: true });
-
-// Force reactivity for category field
-const categoryValue = computed({
-  get: () => formValues.category,
-  set: (value) => setFieldValue('category', value)
-});
-
-
-// Watch galleries changes to sync with form
-watch(galleries, (newGalleries) => {
-  const formGalleries = newGalleries.map(g => ({
-    id: g.id.toString(),
-    file: g.file
-  }));
-  setFieldValue("galleries", formGalleries);
-}, { deep: true });
 
 const onSubmit = handleSubmit(async (values) => {
   try {
     const payload = {
       ...values,
-      galleries: galleries.value,
+      // new items send raw base64; existing items only update their order
+      galleries: galleries.value.map((g) => ({ id: g.id, orders: g.orders, file: g._raw || "" })),
+      removed_gallery_ids: removedGalleryIds.value,
     };
 
     if (isEdit.value) {
@@ -167,24 +152,9 @@ const onSubmit = handleSubmit(async (values) => {
     console.error("Error saving portfolio:", error);
     toast.error(error.message || "Failed to save portfolio");
   }
-});
+}, notifyFormValidationError);
 
-const addGallery = () => {
-  galleries.value.push({
-    id: Date.now(),
-    portfolio_id: 0,
-    file: "",
-    created_at: new Date().toISOString(),
-  });
-};
-
-const removeGallery = (index: number) => {
-  galleries.value.splice(index, 1);
-};
-
-const updateGallery = (index: number, gallery: PortfolioGallery) => {
-  galleries.value[index] = gallery;
-};
+const handleBack = () => navigateTo("/console/secret/portfolio");
 
 const pageTitle = computed(() => {
   return isEdit.value ? 'Edit Portfolio' : 'Add Portfolio'
@@ -200,21 +170,37 @@ useHead({
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="min-w-0 w-full">
 
     <!-- Form -->
-    <form @submit="onSubmit" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form @submit="onSubmit" class="editor-form">
+      <FormsFormSection title="Informasi portfolio" description="Ceritakan proyek dan client yang terlibat.">
+      <div class="form-grid">
         <!-- Category -->
-        <FieldXSelect
+        <FieldXSelectWithGroupParent
           name="category"
           label="Category"
-          placeholder="Select portfolio category"
+          placeholder="Select category"
+          searchPlaceholder="Search category..."
+          emptyMessage="No category found."
           :options="categoryOptions"
           :loading="categoriesLoading"
-          value-field="label"
-          label-field="label"
-          required
+          :error="categoriesError !== null"
+        />
+
+        <!-- Product (optional, filtered by category) -->
+        <FieldXSelectWithGroupParent
+          name="product_id"
+          label="Product"
+          :placeholder="selectedCategory ? 'Select product (optional)' : 'Select category first'"
+          searchPlaceholder="Search product..."
+          emptyMessage="No product in this category."
+          :options="productOptions"
+          :loading="productsLoading"
+          :error="productsError !== null"
+          :disabled="!selectedCategory"
+          clearable
+          clearLabel="Tanpa product"
         />
 
         <!-- Title -->
@@ -252,46 +238,17 @@ useHead({
         />
       </div>
 
-      <!-- Galleries Section -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <Label class="text-base font-medium">Gallery Images</Label>
-          <Button type="button" variant="outline" size="sm" @click="addGallery">
-            Add Image
-          </Button>
-        </div>
+      </FormsFormSection>
+      <FormsFormSection title="Galeri proyek" description="Tambahkan foto untuk menampilkan hasil pekerjaan.">
+      <GalleryMultiUploadForm
+        v-model="galleries"
+        v-model:removedIds="removedGalleryIds"
+        image-key="file"
+        title="Gallery Images"
+      />
 
-        <div v-if="galleries.length === 0" class="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-          <p class="text-gray-500">No gallery images added yet</p>
-          <p class="text-sm text-gray-400 mt-1">Click "Add Image" to upload images</p>
-        </div>
-
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <PortfolioGalleryForm
-            v-for="(gallery, index) in galleries"
-            :key="gallery.id"
-            :gallery="gallery"
-            :index="index"
-            @update="updateGallery"
-            @remove="removeGallery"
-          />
-        </div>
-      </div>
-
-      <!-- Submit Buttons (Only One Set) -->
-      <div class="flex justify-end gap-3 pt-4 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          class="px-6"
-          @click="() => navigateTo('/console/secret/portfolio')"
-        >
-          Batal
-        </Button>
-        <Button type="submit" class="px-6" :disabled="loading">
-          Simpan
-        </Button>
-      </div>
+      </FormsFormSection>
+      <FormButton :handleBack="handleBack" />
     </form>
   </div>
 </template>

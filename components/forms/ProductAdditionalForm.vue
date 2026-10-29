@@ -149,12 +149,42 @@ watch(
 // Note: Do not emit on every deep change to avoid focus loss while typing.
 // We only emit on structural operations (add/remove/apply JSON).
 
+// wholesale price rows: "from N pcs, Rp X per piece"
+function addTier(additional: ProductAdditional) {
+  const tiers = additional.price_tiers || []
+  const lastQty = tiers.length ? Number(tiers[tiers.length - 1].min_qty) || 0 : 0
+  const lastPrice = tiers.length ? Number(tiers[tiers.length - 1].price) || 0 : Number(additional.price) || 0
+  additional.price_tiers = [...tiers, { min_qty: Math.max(lastQty * 2, 50), price: lastPrice }]
+  queueEmit()
+}
+
+function removeTier(additional: ProductAdditional, idx: number) {
+  additional.price_tiers = (additional.price_tiers || []).filter((_, i) => i !== idx)
+  queueEmit()
+}
+
+// shown under each row; the server refuses the same mistakes on save
+function tierProblem(additional: ProductAdditional, idx: number): string {
+  const tiers = additional.price_tiers || []
+  const t = tiers[idx]
+  const qty = Number(t?.min_qty) || 0
+  const price = Number(t?.price) || 0
+  if (qty < 2) return "Minimal 2 pcs (1 pcs memakai harga default)"
+  if (tiers.some((o, i) => i !== idx && Number(o.min_qty) === qty)) return "Qty sudah dipakai baris lain"
+  if (price < 1) return "Harga wajib diisi"
+  const cheaperBefore = [Number(additional.price) || 0, ...tiers.filter((o) => Number(o.min_qty) < qty).map((o) => Number(o.price) || 0)]
+    .filter((p) => p > 0)
+  if (cheaperBefore.length && price > Math.min(...cheaperBefore)) return "Tidak boleh lebih mahal dari harga untuk qty lebih kecil"
+  return ""
+}
+
 function addAdditional() {
   list.value.push({
     _uniqueKey: `new-${Date.now()}-${Math.random()}`,
     name: "",
     price: 0,
-    moq: 0,
+    moq: 1,
+    price_tiers: [],
     stock: 0,
     discount: 0,
     discount_type: "AMOUNT",
@@ -321,16 +351,16 @@ async function pasteJson(addIdx: number) {
 
 <template>
   <div class="w-full">
-    <div class="flex justify-between items-center mb-2">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="font-bold">Additionals</h3>
       <Button type="button" @click="addAdditional">Add Additional</Button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+    <div class="grid w-full min-w-0 grid-cols-1 gap-6 2xl:grid-cols-2">
       <div
         v-for="(additional, addIdx) in list"
         :key="additional.id ?? additional._uniqueKey"
-        class="border rounded p-4 relative w-full"
+        class="relative min-w-0 w-full rounded-xl border border-border bg-muted/20 p-4 sm:p-5"
       >
         <Button
           type="button"
@@ -350,20 +380,44 @@ async function pasteJson(addIdx: number) {
             />
           </div>
           <div class="w-full">
-            <label class="form-label mb-2">Price</label>
-            <Input
-              type="number"
-              placeholder="Price"
-              v-model.number="additional.price"
-            />
-          </div>
-          <div class="w-full">
             <label class="form-label mb-2">MOQ</label>
             <Input
               type="number"
-              placeholder="MOQ"
+              min="1"
+              placeholder="1"
               v-model.number="additional.moq"
             />
+          </div>
+
+          <!-- default price, then wholesale prices by quantity -->
+          <div class="col-span-2 rounded-lg border bg-background p-3">
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <label class="form-label">Harga</label>
+              <Button type="button" variant="outline" size="sm" :disabled="(additional.price_tiers?.length || 0) >= 20" @click="addTier(additional)">
+                <Plus class="size-4" /> Tambah harga grosir
+              </Button>
+            </div>
+            <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_36px] items-center gap-2 text-xs text-muted-foreground">
+              <span>Mulai qty (pcs)</span><span>Harga per pcs</span><span></span>
+            </div>
+            <div class="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_36px] items-center gap-2">
+              <Input :model-value="1" disabled aria-label="Qty harga default" />
+              <Input type="number" min="0" placeholder="Harga default" aria-label="Harga default" v-model.number="additional.price" />
+              <span class="text-center text-xs text-muted-foreground">default</span>
+            </div>
+            <div v-for="(tier, tierIdx) in additional.price_tiers || []" :key="tierIdx" class="mt-2">
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_36px] items-center gap-2">
+                <Input type="number" min="2" placeholder="50" :aria-label="`Qty grosir ${tierIdx + 1}`" v-model.number="tier.min_qty" />
+                <Input type="number" min="1" placeholder="25000" :aria-label="`Harga grosir ${tierIdx + 1}`" v-model.number="tier.price" />
+                <Button type="button" variant="ghost" size="icon" class="size-9 text-muted-foreground hover:text-red-600" :aria-label="`Hapus harga grosir ${tierIdx + 1}`" @click="removeTier(additional, tierIdx)">
+                  <X class="size-4" />
+                </Button>
+              </div>
+              <p v-if="tierProblem(additional, tierIdx)" class="mt-1 text-xs text-red-600">{{ tierProblem(additional, tierIdx) }}</p>
+            </div>
+            <p class="mt-2 text-xs text-muted-foreground">
+              Qty di bawah harga grosir pertama memakai harga default. Contoh: 50 pcs → Rp 25.000, 250 pcs → Rp 23.000; pembeli 60 pcs dapat Rp 25.000, 300 pcs dapat Rp 23.000.
+            </p>
           </div>
           <div class="w-full">
             <label class="form-label mb-2">Stock</label>
@@ -398,7 +452,7 @@ async function pasteJson(addIdx: number) {
             <Card class="pt-0">
               <CardContent class="pt-4">
                 <!-- JSON toolbar -->
-                <div class="flex items-center justify-end gap-2 mb-3">
+                <div class="mb-3 flex flex-wrap items-center justify-end gap-2">
                   <Button type="button" variant="outline" size="sm" @click="copyJson(addIdx)">
                     <Copy class="h-4 w-4 mr-2" />
                   </Button>

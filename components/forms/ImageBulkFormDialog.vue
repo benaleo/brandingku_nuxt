@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { type PropType, ref, onMounted } from 'vue'
+import { type PropType, ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { XIcon, Trash2Icon } from 'lucide-vue-next'
 import type {ProductGallery} from "~/types/products.type";
@@ -19,7 +19,7 @@ const STORAGE_URL = config.public.STORAGE_URL
 
 const props = defineProps({
   submit: {
-    type: Function as PropType<(fileUrls: string[], removeIds: string[]) => void | Promise<void>>,
+    type: Function as PropType<(createdGalleries: ProductGallery[], removeIds: string[]) => void | Promise<void>>,
     required: false,
   },
   bucket: {
@@ -27,7 +27,7 @@ const props = defineProps({
     default: 'images'
   },
   productId: {
-    type: String,
+    type: [String, Number],
     required: true
   },
   galleries: {
@@ -38,12 +38,18 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+const isOpen = ref(false)
 const files = ref<FileWithPreview[]>([])
 const dragActive = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const removeIds = ref<string[]>([])
 const galleries = ref<ProductGallery[]>([...props.galleries])
 const isUploading = ref(false)
+
+watch(() => props.galleries, (value) => {
+  galleries.value = [...(value || [])]
+  removeIds.value = []
+}, { deep: true })
 
 function removeGalleryItem(galleryItem: ProductGallery) {
   if (galleryItem.id) {
@@ -70,7 +76,7 @@ function onFileChange(e: Event) {
 
 function addFiles(newFiles: File[]) {
   for (const file of newFiles) {
-    if (!file.type.startsWith('image/')) continue
+    if (!file.type.startsWith('image/') && !/\.hei[cf]$/i.test(file.name)) continue
     
     const preview = URL.createObjectURL(file)
     files.value.push({
@@ -108,7 +114,7 @@ async function handleSubmit() {
   isUploading.value = true
 
   try {
-    const createdIds: number[] = []
+    const createdGalleries: ProductGallery[] = []
     let deletedCount = 0
     const failedUploads: string[] = []
     const { convertToBase64 } = useFileToBase64()
@@ -125,14 +131,14 @@ async function handleSubmit() {
             orders: idx,
             product_id: Number(props.productId)
           })
-          if (created?.id) createdIds.push(Number(created.id))
+          if (created?.id) createdGalleries.push(created)
         } catch (err) {
           console.error(`Error creating gallery for ${fileItem.file.name}:`, err)
           failedUploads.push(fileItem.file.name)
         }
       }
       if (failedUploads.length > 0) {
-        toast.warning(`${failedUploads.length} image(s) failed to upload. ${createdIds.length} image(s) uploaded successfully.`)
+        toast.warning(`${failedUploads.length} image(s) failed to upload. ${createdGalleries.length} image(s) uploaded successfully.`)
       }
     }
 
@@ -150,20 +156,22 @@ async function handleSubmit() {
 
     // Optional callback (backward compatibility)
     if (props.submit) {
-      await props.submit([], removeIds.value)
+      await props.submit(createdGalleries, removeIds.value)
     }
     
     files.value.forEach(f => URL.revokeObjectURL(f.preview))
     files.value = []
     removeIds.value = []
+    galleries.value = [...props.galleries, ...createdGalleries]
+    isOpen.value = false
     emit('close')
     
-    if (createdIds.length > 0 && deletedCount > 0) {
-      toast.success(`Successfully updated images (${createdIds.length} added, ${deletedCount} removed)`)
-    } else if (createdIds.length > 0) {
-      toast.success(`Successfully uploaded ${createdIds.length} image${createdIds.length > 1 ? 's' : ''}`)
+    if (createdGalleries.length > 0 && deletedCount > 0) {
+      toast.success(`Image berhasil ditambahkan (${createdGalleries.length} ditambahkan, ${deletedCount} dihapus)`)
+    } else if (createdGalleries.length > 0) {
+      toast.success('Image berhasil ditambahkan')
     } else if (deletedCount > 0) {
-      toast.success(`Successfully removed ${deletedCount} image${deletedCount > 1 ? 's' : ''}`)
+      toast.success(`Image berhasil dihapus (${deletedCount})`)
     }
   } catch (error: any) {
     console.error('Error during operation:', error)
@@ -175,11 +183,11 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <Dialog>
+  <Dialog v-model:open="isOpen">
     <DialogTrigger as-child>
       <slot />
     </DialogTrigger>
-    <DialogContent class="sm:max-w-[425px]">
+    <DialogContent class="w-[calc(100%-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Upload Images</DialogTitle>
         <DialogDescription>
@@ -188,7 +196,7 @@ async function handleSubmit() {
       </DialogHeader>
       <form @submit.prevent="handleSubmit">
         <!-- Existing gallery previews -->
-        <div v-if="galleries.length > 0" class="w-full grid grid-cols-3 gap-2 mb-4">
+        <div v-if="galleries.length > 0" class="w-full grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           <div v-for="gallery in galleries" :key="gallery.id" class="relative">
             <img :src="gallery.image ? `${STORAGE_URL}${gallery.image}` : ''" alt="Gallery preview" class="w-full h-24 object-cover rounded shadow"/>
             <button 
@@ -214,14 +222,14 @@ async function handleSubmit() {
           <input
             ref="fileInput"
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             multiple
             class="hidden"
             @change="onFileChange"
             :disabled="isUploading"
           />
           
-          <div v-if="files.length > 0" class="w-full grid grid-cols-3 gap-2 mb-2">
+          <div v-if="files.length > 0" class="w-full grid grid-cols-2 sm:grid-cols-3 gap-3 mb-2">
             <div v-for="file in files" :key="file.id" class="relative">
               <img :src="file.preview" class="w-full h-24 object-cover rounded shadow" />
               <button
@@ -242,7 +250,7 @@ async function handleSubmit() {
           </div>
         </div>
         
-        <div class="mt-4 flex justify-between">
+        <div class="mt-6 flex flex-wrap justify-end gap-3 border-t pt-4">
           <div class="text-sm text-gray-500">
             {{ files.length + galleries.length }} image{{ files.length + galleries.length !== 1 ? 's' : '' }} selected
           </div>

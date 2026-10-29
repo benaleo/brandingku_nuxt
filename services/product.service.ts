@@ -3,22 +3,27 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useGql } from '~/composables/useGql'
 import { useProductAdditionalService } from '~/services/product-additional.service'
 import { useProductGalleriesService } from '~/services/product-galleries.service'
+import { useBrandingService } from '~/services/branding.service'
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
 
-export const useProductService = (fetchResult?: boolean, dataId?: string) => {
+type ProductListParams = { keyword?: string; category_id?: number | null; is_active?: boolean; is_highlight?: boolean; sortBy?: string }
+
+export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; params?: ProductListParams } = {}) => {
     const { gqlFetch } = useGql()
+    const brandingService = useBrandingService()
     const config = useRuntimeConfig()
     const BASE_URL = config.public.API_URL
     const url = `${BASE_URL}/cms/v1/product${dataId ? `/${dataId}` : ''}`
 
     // State mimicking useApiFetch interface
     const datas = ref<any>(fetchResult ? [] : null)
-    const loading = ref<boolean>(false)
+    const loading = ref<boolean>(Boolean(fetchResult || dataId))
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
-    const params = reactive<{ keyword?: string; category_id?: number | null; is_active?: boolean } >({})
+    // initial params go in here so they do not trigger a second fetch via the watcher
+    const params = reactive<ProductListParams>({ ...options.params })
 
     const changePage = (newPage: number) => {
         pagination.value.page = newPage
@@ -32,15 +37,19 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         Object.assign(params, newParams)
     }
 
+    // ignore responses that arrive after a newer request (fast typing in search)
+    let requestSeq = 0
+
     // GraphQL queries
     const fetchProducts = async () => {
         if (!fetchResult) return
+        const seq = ++requestSeq
         loading.value = true
         error.value = null
         try {
             const query = `
-                query getProducts($page: Int!, $limit: Int!, $category_id: Int, $is_active: Boolean) {
-                    getProducts(pagination: { page: $page, limit: $limit }, category_id: $category_id, is_active: $is_active) {
+                query getProducts($page: Int!, $limit: Int!, $sortBy: String, $keyword: String, $category_id: Int, $is_active: Boolean, $is_highlight: Boolean) {
+                    getProducts(pagination: { page: $page, limit: $limit, sortBy: $sortBy }, keyword: $keyword, category_id: $category_id, is_active: $is_active, is_highlight: $is_highlight) {
                         items {
                             id
                             name
@@ -85,9 +94,18 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             const serverLimit = pagination.value.limit || 10
             const res = await gqlFetch<{ getProducts: { items: Product[]; page_info: any } }>(
                 query,
-                { page: serverPage, limit: serverLimit, ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}), ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}) },
+                {
+                    page: serverPage,
+                    limit: serverLimit,
+                    ...((params.sortBy || options.sortBy) ? { sortBy: params.sortBy || options.sortBy } : {}),
+                    ...(params.keyword?.trim() ? { keyword: params.keyword.trim() } : {}),
+                    ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}),
+                    ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}),
+                    ...(params.is_highlight != null ? { is_highlight: Boolean(params.is_highlight) } : {}),
+                },
                 { auth: true }
             )
+            if (seq !== requestSeq) return
             let list = (res?.getProducts?.items || []) as any[]
 
             // Apply client-side keyword filter for compatibility with useProductList
@@ -113,9 +131,9 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
 
             datas.value = list
         } catch (e: any) {
-            error.value = e?.message || 'Failed to load products'
+            if (seq === requestSeq) error.value = e?.message || 'Failed to load products'
         } finally {
-            loading.value = false
+            if (seq === requestSeq) loading.value = false
         }
     }
 
@@ -143,6 +161,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         is_active
                         is_wishlisted
                         galleries { id image orders }
+                        colors { id product_id name image orders }
                         additionals {
                             id
                             name
@@ -152,6 +171,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                             discount
                             discount_type
                             attributes
+                            price_tiers { min_qty price }
                         }
                         created_at
                         updated_at
@@ -184,6 +204,21 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         if (p.page !== undefined) changePage(p.page)
         if (p.limit) changeLimit(p.limit)
         return refetch()
+    }
+
+    // replaces the product's colour list; a colour with a new file sends it as base64
+    const saveProductColors = async (productId: number, colors: { id?: string; name: string; image?: string }[]) => {
+        const mutation = `
+            mutation saveProductColors($productId: Int!, $colors: [ProductColorInput!]!) {
+                saveProductColors(product_id: $productId, colors: $colors) { id name image orders }
+            }
+        `
+        const input = colors.map((c) => ({
+            id: c.id ? Number(c.id) : null,
+            name: c.name,
+            image: c.image ?? '',
+        }))
+        await gqlFetch(mutation, { productId, colors: input }, { auth: true, timeout: 60000 })
     }
 
     const createProduct = async (payload: any) => {
@@ -238,10 +273,14 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
         if (payload.additionals?.length) {
             const additionalService = useProductAdditionalService()
             for (const additional of payload.additionals) {
-                await additionalService.createProductAdditional({
-                    ...additional,
+                const { price_tiers, ...fields } = additional
+                const created: any = await additionalService.createProductAdditional({
+                    ...fields,
                     product_id: productId
                 })
+                if (Array.isArray(price_tiers) && price_tiers.length && created?.id) {
+                    await additionalService.saveProductPriceTiers(Number(created.id), price_tiers)
+                }
             }
         }
         
@@ -254,6 +293,14 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                     product_id: productId
                 })
             }
+        }
+
+        if (Array.isArray(payload.colors) && payload.colors.length) {
+            await saveProductColors(productId, payload.colors)
+        }
+
+        if (Array.isArray(payload.brandings) && payload.brandings.length) {
+            await brandingService.saveProductBrandings(productId, payload.brandings)
         }
         
         return res?.createProduct
@@ -306,6 +353,18 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
             is_active: payload.is_active != null ? Boolean(payload.is_active) : null,
         }
         const res = await gqlFetch<{ updateProduct: { id: string; name: string; slug: string } }>(mutation, variables, { auth: true })
+
+        // Delete galleries removed in the form; the backend also removes their files from storage
+        if (payload.removed_gallery_ids?.length) {
+            const galleryService = useProductGalleriesService()
+            for (const galleryId of payload.removed_gallery_ids as string[]) {
+                try {
+                    await galleryService.deleteProductGallery(Number(galleryId))
+                } catch (e) {
+                    console.error('[updateProductById] delete gallery failed:', galleryId, e)
+                }
+            }
+        }
 
         // Handle galleries update/create if any
         if (payload.galleries?.length) {
@@ -362,13 +421,18 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                         attributes: typeof add.attributes === 'string' ? add.attributes : '[]',
                     }
 
+                    let variantId = hasId ? Number(add.id) : 0
                     if (hasId) {
                         await additionalService.updateProductAdditional(Number(add.id), normalized)
                     } else {
-                        await additionalService.createProductAdditional({
+                        const created: any = await additionalService.createProductAdditional({
                             ...normalized,
                             product_id: Number(id),
                         })
+                        variantId = Number(created?.id) || 0
+                    }
+                    if (variantId && Array.isArray(add.price_tiers)) {
+                        await additionalService.saveProductPriceTiers(variantId, add.price_tiers)
                     }
                 }
 
@@ -380,7 +444,18 @@ export const useProductService = (fetchResult?: boolean, dataId?: string) => {
                     }
                 }
             } catch (e) {
+                // a rejected price (e.g. a wholesale price above the default) must reach the form
+                throw e
             }
+        }
+
+        if (Array.isArray(payload.colors)) {
+            await saveProductColors(Number(id), payload.colors)
+        }
+
+        // undefined when the branding list never loaded: leave the saved offers alone
+        if (Array.isArray(payload.brandings)) {
+            await brandingService.saveProductBrandings(Number(id), payload.brandings)
         }
 
         return res?.updateProduct

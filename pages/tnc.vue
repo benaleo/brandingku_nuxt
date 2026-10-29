@@ -4,20 +4,20 @@
     <header class="bg-gradient-to-r from-green-600 to-green-700 text-white pt-32">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div class="text-center">
-          <p class="text-sm font-medium uppercase tracking-wider mb-4">LEGAL INFORMATION</p>
-          <h1 class="text-4xl font-bold mb-6">Terms & Conditions</h1>
+          <p class="text-sm font-medium uppercase tracking-wider mb-4">{{ $t('app.tncPage.eyebrow') }}</p>
+          <h1 class="text-4xl font-bold mb-6">{{ $t('app.tncPage.title') }}</h1>
           <p class="text-xl text-green-100 max-w-3xl mx-auto mb-8">
-            Please read these terms and conditions carefully before using our service. By using our service, you agree to be bound by these terms.
+            {{ $t('app.tncPage.intro') }}
           </p>
           <div class="flex justify-center space-x-4">
             <a href="#terms-of-use" class="bg-white text-green-700 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors">
-              Terms of Use
+              {{ $t('app.tncPage.sections.terms') }}
             </a>
             <a href="#privacy-policy" class="bg-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-900 transition-colors">
-              Privacy Policy
+              {{ $t('app.tncPage.sections.privacy') }}
             </a>
             <a href="#shipping-returns" class="bg-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-900 transition-colors">
-              Shipping & Returns
+              {{ $t('app.tncPage.sections.shipping') }}
             </a>
           </div>
         </div>
@@ -30,19 +30,19 @@
         <!-- Table of Contents -->
         <aside class="relative w-64 flex-shrink-0">
           <nav class="sticky" style="top: 7rem">
-            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Table of Contents</h3>
+            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">{{ $t('app.tncPage.toc') }}</h3>
             <ul class="space-y-2">
               <li>
-                <a href="#terms-of-use" class="toc-link text-gray-600 hover:text-blue-800 text-sm">Terms of Use</a>
+                <a href="#terms-of-use" class="toc-link text-gray-600 hover:text-blue-800 text-sm">{{ $t('app.tncPage.sections.terms') }}</a>
               </li>
               <li>
-                <a href="#privacy-policy" class="toc-link text-gray-600 hover:text-gray-800 text-sm">Privacy Policy</a>
+                <a href="#privacy-policy" class="toc-link text-gray-600 hover:text-gray-800 text-sm">{{ $t('app.tncPage.sections.privacy') }}</a>
               </li>
               <li>
-                <a href="#shipping-returns" class="toc-link text-gray-600 hover:text-gray-800 text-sm">Shipping & Returns</a>
+                <a href="#shipping-returns" class="toc-link text-gray-600 hover:text-gray-800 text-sm">{{ $t('app.tncPage.sections.shipping') }}</a>
               </li>
               <li>
-                <a href="#intellectual-property" class="toc-link text-gray-600 hover:text-gray-800 text-sm">Intellectual Property</a>
+                <a href="#intellectual-property" class="toc-link text-gray-600 hover:text-gray-800 text-sm">{{ $t('app.tncPage.sections.ip') }}</a>
               </li>
             </ul>
           </nav>
@@ -51,26 +51,26 @@
         <!-- Content Area -->
         <div class="flex-1">
           <div class="bg-white rounded-lg shadow-sm p-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-8">Terms & Conditions</h1>
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">{{ $t('app.tncPage.title') }}</h2>
 
             <!-- Terms of Use Section -->
             <section id="terms-of-use" class="mb-12 section-observer">
               <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-6 transition-all duration-300">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Terms of Use</h2>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">{{ $t('app.tncPage.sections.terms') }}</h2>
               <div class="prose prose-gray max-w-none">
                 <p class="text-gray-700 mb-4">
-                  Welcome to BrandinKu. These Terms and Conditions govern your use of our website and services. By accessing or using our platform, you agree to be bound by these terms.
+                  {{ $t('app.tncPage.terms.p1') }}
                 </p>
                 <p class="text-gray-700 mb-4">
-                  BrandinKu provides a platform for users to discover, purchase, and manage branding products and services. We are committed to ensuring a safe and transparent environment for all our users.
+                  {{ $t('app.tncPage.terms.p2') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">1. Account Registration</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.terms.accountTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  To access certain features of our platform, you must register for an account. You agree to provide accurate, current, and complete information during registration and to update such information to keep it accurate, current, and complete.
+                  {{ $t('app.tncPage.terms.accountText') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">2. User Responsibilities</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.terms.responsibilitiesTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.
+                  {{ $t('app.tncPage.terms.responsibilitiesText') }}
                 </p>
               </div>
               </div>
@@ -79,18 +79,18 @@
             <!-- Privacy Policy Section -->
             <section id="privacy-policy" class="mb-12 section-observer">
               <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-6 transition-all duration-300">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Privacy Policy</h2>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">{{ $t('app.tncPage.sections.privacy') }}</h2>
               <div class="prose prose-gray max-w-none">
                 <p class="text-gray-700 mb-4">
-                  Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our services.
+                  {{ $t('app.tncPage.privacy.p1') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">Information We Collect</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.privacy.collectTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us for support. This may include your name, email address, payment information, and other personal details.
+                  {{ $t('app.tncPage.privacy.collectText') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">How We Use Your Information</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.privacy.useTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  We use the information we collect to provide, maintain, and improve our services, process transactions, send you technical notices and support messages, and communicate with you about products, services, and promotional offers.
+                  {{ $t('app.tncPage.privacy.useText') }}
                 </p>
               </div>
               </div>
@@ -99,18 +99,18 @@
             <!-- Shipping & Returns Section -->
             <section id="shipping-returns" class="mb-12 section-observer">
               <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-6 transition-all duration-300">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Shipping & Returns</h2>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">{{ $t('app.tncPage.sections.shipping') }}</h2>
               <div class="prose prose-gray max-w-none">
                 <p class="text-gray-700 mb-4">
-                  We want you to be completely satisfied with your purchase. If you're not happy with your order, we offer a straightforward return and refund policy.
+                  {{ $t('app.tncPage.shipping.p1') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">Shipping Policy</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.shipping.shippingTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  Orders are typically processed within 1-2 business days. Standard shipping takes 5-7 business days, while express shipping takes 2-3 business days. Shipping costs are calculated at checkout based on your location and selected shipping method.
+                  {{ $t('app.tncPage.shipping.shippingText') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">Return Policy</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.shipping.returnTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  You may return unused items in their original packaging within 30 days of delivery for a full refund. Please contact our customer service team to initiate a return. Refunds are processed within 5-7 business days after we receive the returned items.
+                  {{ $t('app.tncPage.shipping.returnText') }}
                 </p>
               </div>
               </div>
@@ -119,18 +119,18 @@
             <!-- Intellectual Property Section -->
             <section id="intellectual-property" class="mb-12 section-observer">
               <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-6 transition-all duration-300">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Intellectual Property</h2>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">{{ $t('app.tncPage.sections.ip') }}</h2>
               <div class="prose prose-gray max-w-none">
                 <p class="text-gray-700 mb-4">
-                  All content, features, and functionality of the BrandinKu platform are owned by BrandinKu and are protected by copyright, trademark, and other intellectual property laws.
+                  {{ $t('app.tncPage.ip.p1') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">Content and Trademarks</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.ip.trademarksTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  The BrandinKu name, logos, and all related graphics are trademarks of BrandinKu. You may not use our trademarks without our prior written consent.
+                  {{ $t('app.tncPage.ip.trademarksText') }}
                 </p>
-                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">User-Generated Content</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">{{ $t('app.tncPage.ip.ugcTitle') }}</h3>
                 <p class="text-gray-700 mb-4">
-                  By submitting content to our platform, you grant us a non-exclusive, royalty-free license to use, reproduce, and display such content for the purpose of operating and improving our services.
+                  {{ $t('app.tncPage.ip.ugcText') }}
                 </p>
               </div>
               </div>
@@ -140,23 +140,23 @@
             <section class="mb-8 bg-blue-50 rounded-lg p-6">
               <div class="flex items-center justify-between">
                 <div>
-                  <h3 class="text-lg font-semibold text-gray-900 mb-2">Need help?</h3>
-                  <p class="text-gray-700">Have questions about our terms? We're here to help.</p>
+                  <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ $t('app.tncPage.helpTitle') }}</h3>
+                  <p class="text-gray-700">{{ $t('app.tncPage.helpText') }}</p>
                 </div>
                 <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  Contact Support
+                  {{ $t('app.tncPage.contactSupport') }}
                 </button>
               </div>
             </section>
 
             <!-- Footer Info -->
             <div class="border-t border-gray-200 pt-6 flex justify-between items-center">
-              <p class="text-sm text-gray-500">Last updated: March 26, 2026</p>
+              <p class="text-sm text-gray-500">{{ $t('app.tncPage.lastUpdated') }}</p>
               <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                Download PDF
+                {{ $t('app.tncPage.downloadPdf') }}
               </a>
             </div>
           </div>
@@ -167,13 +167,15 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 // Page metadata
-useHead({
-  title: 'Terms & Conditions - BrandinKu',
+useHead(() => ({
+  title: t('app.tncPage.metaTitle'),
   meta: [
-    { name: 'description', content: 'Read BrandinKu\'s Terms and Conditions to understand your rights and responsibilities when using our platform.' }
+    { name: 'description', content: t('app.tncPage.metaDescription') }
   ]
-})
+}))
 
 // Active section highlighting
 onMounted(() => {

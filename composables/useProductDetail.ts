@@ -8,6 +8,8 @@ export type ProductDetail = {
   category?: string
   description?: string
   images: string[]
+  // colour variants with the image each one shows (its own, or the main product image)
+  colorVariants: { name: string; image: string }[]
   price: number
   originalPrice?: number | null
   colors: string[]
@@ -23,7 +25,11 @@ export type ProductDetail = {
     discount: number
     discount_type: string
     attributes: string
+    // wholesale prices, lowest quantity first
+    price_tiers: { min_qty: number; price: number }[]
   }>
+  // branding methods the customer can choose, each priced per piece from a minimum quantity
+  brandings: { id: number; name: string; description: string; tiers: { min_qty: number; price: number }[] }[]
 }
 
 export const useProductDetail = (initialSlug: string) => {
@@ -55,6 +61,7 @@ export const useProductDetail = (initialSlug: string) => {
             is_recommended
             is_upsell
             galleries { id image orders }
+            colors { id name image orders }
             additionals {
               id
               name
@@ -64,21 +71,31 @@ export const useProductDetail = (initialSlug: string) => {
               discount
               discount_type
               attributes
+              price_tiers { min_qty price }
             }
+            brandings { branding_method_id name description tiers { min_qty price } }
             created_at
             updated_at
           }
         }
       `
       const res = await gqlFetch<{ getProductDetailSlug: any }>(query, { slug: slug.value }, { auth: true })
-      const p = res?.getProductDetailSlug || []
+      // the API answers an unknown slug with null
+      const p = res?.getProductDetailSlug
       if (!p) throw new Error('Product not found')
 
-      // Sort galleries
+      // images: main image, then galleries, then colour pictures, each path once
       const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
       galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
-      const images: string[] = galleries.map((g: any) => g?.image).filter(Boolean)
-      if (!images.length && p.image) images.push(p.image)
+      const colorRows = (Array.isArray(p.colors) ? [...p.colors] : [])
+        .sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
+      const images: string[] = []
+      for (const img of [p.image, ...galleries.map((g: any) => g?.image), ...colorRows.map((c: any) => c?.image)]) {
+        if (img && !images.includes(img)) images.push(img)
+      }
+      const colorVariants = colorRows
+        .filter((c: any) => c?.name)
+        .map((c: any) => ({ name: String(c.name), image: c.image || p.image || '' }))
 
       // Compute pricing from additionals
       let minBase = Infinity
@@ -137,6 +154,7 @@ export const useProductDetail = (initialSlug: string) => {
         category: p?.category?.name,
         description: p?.description,
         images,
+        colorVariants,
         price: Number(minAfter.toFixed(2)),
         originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
         colors,
@@ -151,7 +169,18 @@ export const useProductDetail = (initialSlug: string) => {
           stock: Number(a.stock) || 0,
           discount: Number(a.discount) || 0,
           discount_type: String(a.discount_type || 'AMOUNT'),
-          attributes: typeof a.attributes === 'string' ? a.attributes : '[]'
+          attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
+          price_tiers: (a.price_tiers || [])
+            .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
+            .sort((x: any, y: any) => x.min_qty - y.min_qty),
+        })),
+        brandings: (p.brandings || []).map((b: any) => ({
+          id: Number(b.branding_method_id),
+          name: String(b.name || ''),
+          description: String(b.description || ''),
+          tiers: (b.tiers || [])
+            .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
+            .sort((x: any, y: any) => x.min_qty - y.min_qty),
         })),
       }
     } catch (e: any) {

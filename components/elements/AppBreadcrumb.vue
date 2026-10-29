@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { secretConsoleMenu } from '~/utils/list.menu'
 
 const route = useRoute()
+const { menus: secretConsoleMenu, firstRoute } = useConsoleAccess()
 
 // Find current page info from menu structure
 const getBreadcrumbs = () => {
@@ -11,12 +11,12 @@ const getBreadcrumbs = () => {
   // Add dashboard as first breadcrumb
   breadcrumbs.push({
     name: 'Dashboard',
-    href: '/console/secret/dashboard'
+    href: firstRoute.value
   })
   
   // Find current menu item
-  for (const group of secretConsoleMenu) {
-    const matchingItem = group.sub.find(item => route.path.startsWith(item.href || ''))
+  for (const group of secretConsoleMenu.value) {
+    const matchingItem = group.sub.find(item => item.href !== '/' && (route.path === item.href || route.path.startsWith(item.href + '/')))
     
     if (matchingItem) {
       // Only add group if it has multiple items
@@ -38,7 +38,7 @@ const getBreadcrumbs = () => {
   return breadcrumbs
 }
 
-const breadcrumbs = getBreadcrumbs()
+const breadcrumbs = computed(getBreadcrumbs)
 </script>
 
 <template>

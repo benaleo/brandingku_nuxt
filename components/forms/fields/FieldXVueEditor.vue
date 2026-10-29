@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { vAutoAnimate } from '@formkit/auto-animate/vue'
-import { defineAsyncComponent, ref, onMounted } from 'vue'
+import QuillEditor from '~/components/editor/QuillEditor.vue'
 
 const props = defineProps({
   name: {
@@ -45,18 +45,6 @@ const props = defineProps({
   }
 })
 
-const QuillEditor = defineAsyncComponent(async () => {
-  const { QuillEditor } = await import('@vueup/vue-quill')
-  return QuillEditor
-})
-
-const cssLoaded = ref(false)
-
-onMounted(async () => {
-  await import('@vueup/vue-quill/dist/vue-quill.snow.css')
-  cssLoaded.value = true
-})
-
 const editorOptions = {
   placeholder: props.placeholder,
   readOnly: props.disabled,
@@ -79,7 +67,7 @@ const editorOptions = {
               theme="snow"
               :options="editorOptions"
               @update:content="(val: string) => componentField['onUpdate:modelValue']?.(val)"
-              @blur="(e) => componentField['onBlur']?.(e)"
+              @blur="() => componentField['onBlur']?.(new Event('blur'))"
             />
             <template #fallback>
               <div class="border rounded p-4 bg-gray-50 text-gray-500">

@@ -13,13 +13,16 @@ import ImageUploadField from "~/components/forms/ImageSingleUploadField.vue";
 import FieldXCheckbox from "~/components/forms/fields/FieldXCheckbox.vue";
 import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import FormButton from "../atoms/FormButton.vue";
-import type { ProductAdditional, ProductGallery } from "~/types/products.type";
+import type { ProductAdditional, ProductColorDraft, ProductGallery } from "~/types/products.type";
 import FieldXText from "~/components/forms/fields/FieldXText.vue";
 import ProductAdditionalForm from "~/components/forms/ProductAdditionalForm.vue";
 import { useOptionProductCategories } from "~/composables/useOptionProductCategories";
-import ProductGalleryForm from "./ProductGalleryForm.vue";
+import GalleryMultiUploadForm from "./GalleryMultiUploadForm.vue";
+import ProductColorForm from "./ProductColorForm.vue";
+import ProductBrandingForm from "./ProductBrandingForm.vue";
 import FieldXArea from "./fields/FieldXArea.vue";
 import Label from "../ui/label/Label.vue";
+import QuillEditor from "~/components/editor/QuillEditor.vue";
 
 const router = useRouter();
 const { token } = useAuth();
@@ -34,7 +37,7 @@ if (!token.value) {
   navigateTo("/login");
 }
 
-const { datas, loading, error, reFetch } = useProductService(false, id);
+const { datas, loading, error, reFetch, createProduct, updateProductById } = useProductService(false, id);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -58,6 +61,7 @@ const formSchema = toTypedSchema(
           discount: z.coerce.number().int("Discount must be an integer"),
           discount_type: z.string().min(1, "Discount type is required"),
           attributes: z.string().optional().default(""),
+          price_tiers: z.array(z.object({ min_qty: z.coerce.number(), price: z.coerce.number() })).optional(),
         })
       )
       .min(1, "At least one additional is required"),
@@ -85,11 +89,12 @@ const {
       {
         name: "",
         price: 0,
-        moq: 0,
+        moq: 1,
         stock: 0,
         discount: 0,
         discount_type: "AMOUNT",
         attributes: "[]",
+        price_tiers: [],
       },
     ],
   },
@@ -98,8 +103,6 @@ const {
 // For dynamic additionals (managed locally; synced to payload on submit)
 const additionals = ref([...(formValues.additionals as ProductAdditional[])]);
 
-const name = ref("");
-const slug = ref("");
 const description = ref("");
 const image = ref("");
 const image_file = ref<File | null>(null);
@@ -150,6 +153,12 @@ if (!isCreate) {
 
 // Galleries with proper synchronization and image path handling
 const galleries = ref<ProductGallery[]>([]);
+// existing gallery ids removed in the form; deleted (with their stored files) on save
+const removedGalleryIds = ref<string[]>([]);
+// colour variants; each may carry its own picture
+const colors = ref<ProductColorDraft[]>([]);
+// branding methods offered, saved after the product
+const brandingForm = ref<InstanceType<typeof ProductBrandingForm> | null>(null);
 
 // Watch for API data load and set fields ONCE when available
 const initialized = ref(false);
@@ -161,8 +170,6 @@ const stopInitWatch = watch(
       initialized.value = true;
       // Defer mutations to avoid synchronous recursive updates
       setTimeout(async () => {
-        name.value = datasVal.name || "";
-        slug.value = datasVal.slug || "";
         description.value = datasVal.description || "";
         await nextTick();
         image.value = datasVal.image ? `${STORAGE_URL}${datasVal.image}` : "";
@@ -186,6 +193,14 @@ const stopInitWatch = watch(
           })
         );
 
+        colors.value = (datasVal.colors || []).map((c: any, i: number) => ({
+          key: i + 1,
+          id: c.id != null ? String(c.id) : undefined,
+          name: c.name || "",
+          image: c.image ? `${STORAGE_URL}${c.image}` : "",
+          file: null,
+        }));
+
         const processedAdditionals = (datasVal.additionals || []).map(
           (add: any) => {
             const rawAttr =
@@ -208,6 +223,10 @@ const stopInitWatch = watch(
               discount: Number(add.discount) || 0,
               discount_type: add.discount_type || "AMOUNT",
               attributes,
+              price_tiers: (add.price_tiers || []).map((t: any) => ({
+                min_qty: Number(t.min_qty) || 0,
+                price: Number(t.price) || 0,
+              })),
             };
           }
         );
@@ -215,8 +234,8 @@ const stopInitWatch = watch(
         console.log("Form data loaded from API:", processedAdditionals);
         ready.value = true;
         // Ensure vee-validate sees values loaded from API
-        try { setFieldValue('name', name.value ?? ''); } catch {}
-        try { setFieldValue('slug', slug.value ?? ''); } catch {}
+        setFieldValue('name', datasVal.name || '');
+        setFieldValue('slug', datasVal.slug || '');
         // Ensure vee-validate sees the description value loaded from API
         try { setFieldValue('description', description.value ?? ''); } catch {}
         try { setFieldValue('product_category_id', product_category_id.value ?? ''); } catch {}
@@ -233,23 +252,7 @@ const stopInitWatch = watch(
   { immediate: true, flush: "post" }
 );
 
-// Keep vee-validate values in sync with local refs
-watch(
-  () => name.value,
-  (val) => {
-    try { setFieldValue('name', val ?? ''); } catch {}
-  },
-  { flush: 'post' }
-);
-
-watch(
-  () => slug.value,
-  (val) => {
-    try { setFieldValue('slug', val ?? ''); } catch {}
-  },
-  { flush: 'post' }
-);
-
+// name and slug live only in vee-validate (FieldXText binds through componentField)
 watch(
   () => product_category_id.value,
   (val) => {
@@ -320,17 +323,12 @@ const generateSlug = (str: string) => {
 };
 
 watch(
-  () => name.value,
+  () => formValues.name,
   (newName) => {
     // Only auto-generate slug when creating a new product.
     if (!isCreate) return;
-    if (newName) {
-      slug.value = generateSlug(newName);
-    } else {
-      slug.value = "";
-    }
-  },
-  { immediate: true }
+    setFieldValue("slug", newName ? generateSlug(newName) : "");
+  }
 );
 
 const handleSubmitForm = handleSubmit(
@@ -360,8 +358,8 @@ const handleSubmitForm = handleSubmit(
       is_active: formValues.is_active,
     });
     const submitData: any = {
-      name: name.value,
-      slug: slug.value || generateSlug(name.value),
+      name: submittedValues.name,
+      slug: submittedValues.slug || generateSlug(submittedValues.name),
       description: description.value,
       image: image.value,
       product_category_id: product_category_id.value,
@@ -383,6 +381,10 @@ const handleSubmitForm = handleSubmit(
           typeof (add as any).attributes === "string"
             ? (add as any).attributes
             : "[]",
+        price_tiers: ((add as any).price_tiers || []).map((t: any) => ({
+          min_qty: Math.floor(Number(t.min_qty) || 0),
+          price: Math.floor(Number(t.price) || 0),
+        })),
       })),
       galleries: galleries.value,
     };
@@ -450,11 +452,38 @@ const handleSubmitForm = handleSubmit(
         }
       }
 
+      // colours: a new file goes up as base64, a stored picture is sent back as its path
+      const blankColor = colors.value.findIndex((c) => !c.name.trim());
+      if (blankColor >= 0) {
+        toast.error(`Nama warna ke-${blankColor + 1} wajib diisi`);
+        return;
+      }
+      const brandingProblem = brandingForm.value?.problem();
+      if (brandingProblem) {
+        toast.error(`Layanan branding ${brandingProblem}`);
+        return;
+      }
+      submitData.brandings = brandingForm.value?.payload();
+      const { convertToBase64: colorToBase64 } = useFileToBase64();
+      submitData.colors = await Promise.all(
+        colors.value.map(async (c) => {
+          let img = "";
+          if (c.file) {
+            const b64 = await colorToBase64(c.file);
+            const comma = b64.indexOf(",");
+            img = b64.startsWith("data:") && comma >= 0 ? b64.slice(comma + 1) : b64;
+          } else if (c.image.startsWith(STORAGE_URL)) {
+            img = c.image.slice(STORAGE_URL.length);
+          }
+          return { id: c.id, name: c.name.trim(), image: img };
+        })
+      );
+
       console.log(submitData);
 
       // First save the form data
       if (isCreate) {
-        await useProductService().createProduct({
+        await createProduct({
           name: submitData.name,
           slug: submitData.slug,
           description: submitData.description,
@@ -466,6 +495,8 @@ const handleSubmitForm = handleSubmit(
           is_active: submitData.is_active,
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
+          colors: submitData.colors,
+          brandings: submitData.brandings,
         });
         toast.success("Product created successfully!");
       } else {
@@ -473,7 +504,7 @@ const handleSubmitForm = handleSubmit(
           id,
           data: submitData
         })
-        await useProductService().updateProductById(id, {
+        await updateProductById(id, {
           name: submitData.name,
           slug: submitData.slug,
           description: submitData.description,
@@ -485,6 +516,9 @@ const handleSubmitForm = handleSubmit(
           is_active: submitData.is_active,
           additionals: submitData.additionals,
           galleries: submitData.galleries || [],
+          removed_gallery_ids: removedGalleryIds.value,
+          colors: submitData.colors,
+          brandings: submitData.brandings,
         });
         toast.success("Product updated successfully!");
       }
@@ -493,22 +527,14 @@ const handleSubmitForm = handleSubmit(
 
       // Navigate back
       router.push(getPathWithoutIdInForm(currentPath));
-    } catch (e) {
-      toast.error("Failed to save product");
+    } catch (e: any) {
+      // GraphQL errors arrive as "[GQL] Request failed: <message>"
+      const msg = String(e?.message || "").replace(/^\[GQL\] Request failed:\s*/, "");
+      toast.error(msg || "Failed to save product");
       console.error(e);
     }
   },
-  (errors) => {
-    try {
-      const firstField = Object.keys(errors || {})[0];
-      const firstMsg = firstField ? (errors as any)[firstField]?.[0] : null;
-      toast.error(firstMsg || "Please fix validation errors before submitting");
-      console.warn("Form validation errors:", errors);
-    } catch (err) {
-      toast.error("Please fix validation errors before submitting");
-      console.warn("Form validation errors:", errors);
-    }
-  }
+  notifyFormValidationError
 );
 
 const imageUploading = ref(false);
@@ -526,10 +552,11 @@ function handleBack() {
 <template>
   <form
     v-if="ready"
-    class="w-full space-y-6 flex flex-wrap"
+    class="editor-form"
     @submit.prevent="handleSubmitForm"
   >
-    <div class="pb-4 flex items-end w-full">
+    <FormsFormSection title="Informasi produk" description="Lengkapi nama, alamat halaman, dan deskripsi produk.">
+    <div class="form-url">
       <p class="text-sm font-bold italic">
         {{ config.public.BASE_URL }} /product/
       </p>
@@ -538,11 +565,10 @@ function handleBack() {
         name="slug"
         label=""
         placeholder="Enter slug"
-        v-model="slug"
         :disabled="disabled"
         :isFieldDirty="isFieldDirty('slug')"
-        :item-class="'inline-flex'"
-        :input-class="'h-6'"
+        :item-class="'min-w-0 flex-1'"
+        :input-class="'h-10'"
       />
     </div>
 
@@ -551,13 +577,12 @@ function handleBack() {
       name="name"
       label="Name"
       placeholder="Enter name"
-      v-model="name"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('name')"
     />
 
     <!-- Description -->
-    <div class="w-full mb-6">
+    <div class="min-w-0 w-full space-y-2">
     <Label for="description">Description</Label>
       <ClientOnly>
         <QuillEditor
@@ -568,7 +593,8 @@ function handleBack() {
         />
       </ClientOnly>
     </div>
-    <div class="w-full mb-12"> </div>
+    </FormsFormSection>
+    <FormsFormSection title="Foto produk" description="Pilih gambar utama dan lengkapi galeri produk.">
     <!-- Image -->
     <ImageUploadField
       v-model:fileUrl="image"
@@ -580,11 +606,28 @@ function handleBack() {
       @delete="handleImageDelete"
     />
 
-    <!-- Additionals Section -->
-    <ProductAdditionalForm v-model="additionals" />
-
     <!-- Galleries Section -->
-    <ProductGalleryForm v-model="galleries" />
+    <GalleryMultiUploadForm v-model="galleries" v-model:removedIds="removedGalleryIds" :disabled="disabled" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Varian warna" description="Tambahkan pilihan warna. Gambar per warna opsional; tanpa gambar, warna memakai gambar utama produk.">
+      <ProductColorForm v-model="colors" :fallback-image="image" :disabled="disabled" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Varian & harga" description="Kelola pilihan produk, harga, stok, dan atributnya.">
+      <ProductAdditionalForm v-model="additionals" />
+    </FormsFormSection>
+
+    <FormsFormSection title="Layanan branding" description="Pilih metode branding yang tersedia untuk produk ini. Harga mengikuti kategori, atau isi harga khusus produk.">
+      <ProductBrandingForm
+        ref="brandingForm"
+        :product-id="isCreate ? null : Number(id) || null"
+        :category-id="Number(product_category_id) || null"
+        :disabled="disabled"
+      />
+    </FormsFormSection>
+
+    <FormsFormSection title="Kategori & visibilitas" description="Tentukan kategori dan posisi produk di website.">
 
     <!-- Product Categories -->
     <!-- 
@@ -607,9 +650,10 @@ function handleBack() {
       :error="errorCategory !== null"
       :disabled="disabled"
       :isFieldDirty="isFieldDirty('product_category_id')"
-      itemClass="w-full md:w-1/2"
+      itemClass="w-full"
     />
 
+    <div class="form-grid">
     <!-- Is Highlight -->
     <FieldXCheckbox
       name="is_highlight"
@@ -646,6 +690,8 @@ function handleBack() {
       :isFieldDirty="isFieldDirty('is_active')"
     />
 
+    </div>
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack" />
   </form>

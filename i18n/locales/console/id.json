@@ -1,0 +1,18 @@
+{
+  "console": {
+    "common": {
+      "save": "Simpan",
+      "cancel": "Batal",
+      "delete": "Hapus",
+      "edit": "Ubah",
+      "create": "Tambah Baru",
+      "search": "Cari...",
+      "filter": "Filter",
+      "loading": "Memuat...",
+      "actions": "Aksi",
+      "status": "Status",
+      "success": "Berhasil",
+      "error": "Terjadi kesalahan"
+    }
+  }
+}

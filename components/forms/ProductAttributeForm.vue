@@ -81,7 +81,7 @@ const handleSubmitForm = handleSubmit(async (values) => {
     toast.error('Failed to create product attribute')
     console.error(error)
   }
-})
+}, notifyFormValidationError)
 
 const handleBack = () => {
   router.push(getPathWithoutIdInForm(currentPath))
@@ -95,7 +95,9 @@ defineOptions({
 </script>
 
 <template>
-  <form class="w-full space-y-6" @submit.prevent="handleSubmitForm">
+  <form class="editor-form" @submit.prevent="handleSubmitForm">
+    <FormsFormSection title="Atribut produk" description="Atur nama dan kategori atribut untuk melengkapi informasi produk.">
+    <div class="form-grid">
     <!-- Name -->
     <FieldXText
         name="name"
@@ -115,9 +117,11 @@ defineOptions({
         :isFieldDirty="isFieldDirty('category')"
     />
 
+    </div>
     <!-- Is Active -->
     <FieldXCheckbox name="is_active" label="Is Active" v-model="is_active" :disabled="disabled" :isFieldDirty="isFieldDirty('is_active')"/>
 
+    </FormsFormSection>
     <!-- Form Button -->
     <FormButton :handleBack="handleBack"/>
   </form>

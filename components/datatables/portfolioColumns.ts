@@ -44,8 +44,8 @@ export const portfolioColumns: ColumnDef<Portfolio>[] = [
             const firstImage = galleries[0];
             const src = firstImage?.file || '/images/no-image.jpg';
             
-            return h('div', {class: 'flex items-center gap-2'}, [
-                h(DialogViewImage, {src: src.startsWith('http') ? src : `${STORAGE_URL}/${src}`, alt: 'Portfolio Image', class: 'w-12 h-12 object-cover rounded'}),
+            return h('div', {class: 'flex items-center gap-2 overflow-hidden h-[60px]'}, [
+                h(DialogViewImage, {src: src.startsWith('http') ? src : `${STORAGE_URL}${src}`, alt: 'Portfolio Image', class: 'max-w-[150px] max-h-[60px] object-contain rounded'}),
                 h('span', {class: 'text-sm text-gray-600'}, `${galleries.length} image${galleries.length > 1 ? 's' : ''}`)
             ]);
         },
@@ -65,7 +65,7 @@ export const portfolioColumns: ColumnDef<Portfolio>[] = [
         accessorKey: 'updated_at',
         header: 'Timestamp',
         cell: ({row}) => {
-            return new Date(row.original.updated_at).toLocaleString()
+            return formatDateTime(row.original.updated_at)
         },
     },
     {

@@ -30,6 +30,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/icon',
     '@nuxtjs/apollo',
+    '@nuxtjs/i18n',
     // Only include NuxtHub when deploying to Cloudflare-compatible presets.
     ...(isCloudflarePreset ? ['@nuxthub/core'] as const : []),
     (_options, nuxt) => {
@@ -42,6 +43,29 @@ export default defineNuxtConfig({
       })
     },
   ],
+
+  i18n: {
+    defaultLocale: 'id',
+    strategy: 'no_prefix',
+    lazy: true,
+    langDir: 'locales',
+    locales: [
+      {
+        code: 'id',
+        language: 'id-ID',
+        name: 'Bahasa Indonesia',
+        files: ['app/id.json', 'console/id.json'],
+      },
+      {
+        code: 'en',
+        language: 'en-US',
+        name: 'English',
+        files: ['app/en.json', 'console/en.json'],
+      },
+    ],
+    // everyone starts in Indonesian; plugins/language.ts restores a visitor's own choice
+    detectBrowserLanguage: false,
+  },
 
   nitro: {
     preset: process.env.NITRO_PRESET || 'node-server',
@@ -88,8 +112,6 @@ export default defineNuxtConfig({
       BASE_URL: process.env.NUXT_PUBLIC_BASE_URL || '',
       API_URL: process.env.NUXT_PUBLIC_API_URL || '',
       STORAGE_URL: process.env.NUXT_PUBLIC_STORAGE_URL || '',
-      supabaseUrl: process.env.SUPABASE_URL || '',
-      supabaseKey: process.env.SUPABASE_KEY || '',
       graphqlPath: process.env.NUXT_PUBLIC_GRAPHQL_PATH || '/query',
     }
   }

@@ -1,0 +1,18 @@
+{
+  "console": {
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create New",
+      "search": "Search...",
+      "filter": "Filter",
+      "loading": "Loading...",
+      "actions": "Actions",
+      "status": "Status",
+      "success": "Success",
+      "error": "An error occurred"
+    }
+  }
+}

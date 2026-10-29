@@ -1,405 +1,114 @@
 <script setup lang="ts">
-import { computed, h, ref, watchEffect } from "vue";
-import type { ColumnDef } from "@tanstack/vue-table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {computed, onMounted, ref, watch} from 'vue'
+import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
+import {useOrderService} from '~/services/order.service'
+import type {Order, OrderStatus} from '~/types/order.type'
 
-type OrderStatus = "SHIPPED" | "PROCESSING" | "DELIVERED";
+definePageMeta({layout: 'default'})
 
-type Order = {
-  id: string;
-  date: string;
-  status: OrderStatus;
-  total: number;
-  invoiceUrl?: string;
-};
+const {t, locale} = useI18n()
+const router = useRouter()
+const token = useCookie<string | null>('token', {sameSite: 'lax'})
+const {getMyOrders} = useOrderService()
 
-definePageMeta({
-  layout: "default",
-});
+useHead(() => ({title: t('app.orderHistoryPage.metaTitle')}))
 
-watchEffect(() => {
-  useHead({
-    title: "Order History",
-  });
-});
+const STATUSES: OrderStatus[] = [
+  'awaiting_shipping_fee', 'pending_payment', 'paid', 'requested', 'quoted', 'revision_requested', 'accepted',
+  'processing', 'shipped', 'completed', 'rejected', 'cancelled', 'expired',
+]
+const orders = ref<Order[]>([])
+const total = ref(0)
+const loading = ref(true)
+const status = ref('')
+const page = ref(1)
+const limit = 10
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
-const router = useRouter();
+const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'id-ID', {day: 'numeric', month: 'short', year: 'numeric'})
+const itemSummary = (o: Order) => o.items.map(i => `${i.product_name} (${i.variant_name}) × ${i.quantity}`).join(', ')
 
-const searchOrderId = ref("");
-const dateFrom = ref("");
-const dateTo = ref("");
+let requestId = 0
+async function load() {
+  const current = ++requestId
+  loading.value = true
+  try {
+    const res = await getMyOrders(page.value, limit, status.value)
+    if (current !== requestId) return
+    orders.value = res.items
+    total.value = res.page_info.total_items
+  } catch (e) {
+    if (current !== requestId) return
+    console.error('Failed to load orders', e)
+    orders.value = []
+  } finally {
+    if (current === requestId) loading.value = false
+  }
+}
 
-const page = ref(0);
-const limit = ref(10);
+// a filter change on a later page resets the page; the page watcher then does the single load
+watch(status, () => {
+  if (page.value !== 1) page.value = 1
+  else load()
+})
+watch(page, load)
 
-const orders = ref<Order[]>([
-  {
-    id: "#BK-90231",
-    date: "2024-10-24",
-    status: "SHIPPED",
-    total: 1240,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-89912",
-    date: "2024-10-18",
-    status: "PROCESSING",
-    total: 450.5,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-89540",
-    date: "2024-09-29",
-    status: "DELIVERED",
-    total: 2890,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-88210",
-    date: "2024-08-15",
-    status: "DELIVERED",
-    total: 720,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-87002",
-    date: "2024-08-05",
-    status: "SHIPPED",
-    total: 310,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-86011",
-    date: "2024-07-28",
-    status: "DELIVERED",
-    total: 1550,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-85888",
-    date: "2024-07-14",
-    status: "PROCESSING",
-    total: 200,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-85004",
-    date: "2024-06-20",
-    status: "DELIVERED",
-    total: 980,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-84001",
-    date: "2024-06-02",
-    status: "SHIPPED",
-    total: 640,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-83017",
-    date: "2024-05-22",
-    status: "DELIVERED",
-    total: 399,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-82003",
-    date: "2024-05-03",
-    status: "DELIVERED",
-    total: 1299,
-    invoiceUrl: "#",
-  },
-  {
-    id: "#BK-81019",
-    date: "2024-04-14",
-    status: "SHIPPED",
-    total: 500,
-    invoiceUrl: "#",
-  },
-]);
-
-const filteredOrders = computed(() => {
-  const keyword = searchOrderId.value.trim().toLowerCase();
-  const from = dateFrom.value ? new Date(dateFrom.value) : null;
-  const to = dateTo.value ? new Date(dateTo.value) : null;
-
-  return orders.value.filter((o) => {
-    const matchesKeyword = !keyword || o.id.toLowerCase().includes(keyword);
-
-    const d = new Date(o.date);
-    const matchesFrom = !from || d >= from;
-    const matchesTo = !to || d <= to;
-
-    return matchesKeyword && matchesFrom && matchesTo;
-  });
-});
-
-const pagedOrders = computed(() => {
-  const start = page.value * limit.value;
-  const end = start + limit.value;
-  return filteredOrders.value.slice(start, end);
-});
-
-const pagination = computed(() => ({
-  page: page.value,
-  limit: limit.value,
-  total: filteredOrders.value.length,
-}));
-
-const shippedThisMonth = computed(() => {
-  const now = new Date();
-  const m = now.getMonth();
-  const y = now.getFullYear();
-
-  return filteredOrders.value.filter((o) => {
-    if (o.status !== "SHIPPED") return false;
-    const d = new Date(o.date);
-    return d.getMonth() === m && d.getFullYear() === y;
-  }).length;
-});
-
-const totalOrders = computed(() => filteredOrders.value.length);
-const inProcessing = computed(
-  () => filteredOrders.value.filter((o) => o.status === "PROCESSING").length,
-);
-
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
-
-const formatCurrency = (amount: number) => {
-  return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
-};
-
-const statusVariant = (status: OrderStatus) => {
-  if (status === "SHIPPED") return "default";
-  if (status === "PROCESSING") return "secondary";
-  return "secondary";
-};
-
-const columns: ColumnDef<Order, any>[] = [
-  {
-    accessorKey: "id",
-    header: () => "Order ID",
-    cell: ({ row }) => row.original.id,
-  },
-  {
-    accessorKey: "date",
-    header: () => "Date",
-    cell: ({ row }) => formatDate(row.original.date),
-  },
-  {
-    accessorKey: "status",
-    header: () => "Status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      return h(
-        Badge,
-        {
-          variant: statusVariant(status) as any,
-          class:
-            status === "SHIPPED"
-              ? "bg-green-100 text-green-700 hover:bg-green-100"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-100",
-        },
-        () => status,
-      );
-    },
-  },
-  {
-    accessorKey: "total",
-    header: () => "Total",
-    cell: ({ row }) => formatCurrency(row.original.total),
-  },
-  {
-    id: "action",
-    header: () => "Action",
-    cell: ({ row }) => {
-      const url = row.original.invoiceUrl || "#";
-      return h(
-        Button,
-        {
-          variant: "ghost" as any,
-          class: "text-green-700 hover:text-green-800",
-          onClick: () => window.open(url, "_blank"),
-        },
-        () => "Invoice",
-      );
-    },
-  },
-];
-
-const onPageChange = (next: number) => {
-  page.value = next;
-};
-
-const onLimitChange = (next: number) => {
-  limit.value = next;
-  page.value = 0;
-};
-
-const onResetFilters = () => {
-  searchOrderId.value = "";
-  dateFrom.value = "";
-  dateTo.value = "";
-  page.value = 0;
-};
-
-watchEffect(() => {
-  const maxPage = Math.max(
-    0,
-    Math.ceil(filteredOrders.value.length / limit.value) - 1,
-  );
-  if (page.value > maxPage) page.value = maxPage;
-});
-
-const onGoHome = () => router.push("/");
+onMounted(() => {
+  if (!token.value) {
+    router.replace({path: '/console/auth', query: {redirect: '/profile/order-histories'}})
+    return
+  }
+  load()
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="app-container py-8">
-      <div class="pt-24">
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <button class="hover:text-primary" type="button" @click="onGoHome">
-            Home
-          </button>
-          <span>/</span>
-          <span class="text-primary">Order History</span>
+  <div class="min-h-screen bg-gradient-to-b from-green-50 via-white to-white">
+    <div class="app-container px-4 md:px-6 pt-28 pb-16">
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 md:text-3xl">{{ $t('app.orderHistoryPage.title') }}</h1>
+          <p class="mt-1 text-sm text-slate-600">{{ $t('app.orderHistoryPage.subtitle') }}</p>
         </div>
-
-        <div class="mt-6">
-          <h1 class="text-4xl font-bold tracking-tight text-gray-900">
-            Order History
-          </h1>
-          <p class="mt-2 text-gray-600 max-w-2xl">
-            Manage your recent merchandise orders, track shipments, and download
-            invoices for your corporate records.
-          </p>
-        </div>
-
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent class="p-6">
-              <p class="text-xs tracking-wide text-gray-500">TOTAL ORDERS</p>
-              <p class="mt-2 text-3xl font-bold text-green-700">
-                {{ totalOrders }}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent class="p-6">
-              <p class="text-xs tracking-wide text-gray-500">IN PROCESSING</p>
-              <p class="mt-2 text-3xl font-bold text-rose-700">
-                {{ inProcessing }}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent class="p-6">
-              <p class="text-xs tracking-wide text-gray-500">
-                SHIPPED THIS MONTH
-              </p>
-              <p class="mt-2 text-3xl font-bold text-green-700">
-                {{ shippedThisMonth }}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card class="mt-8">
-          <CardContent class="p-6">
-            <div
-              class="flex flex-col lg:flex-row lg:items-end gap-4 lg:justify-between"
-            >
-              <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
-                <div class="grid gap-2">
-                  <label class="text-sm text-gray-600">From</label>
-                  <Input
-                    v-model="dateFrom"
-                    type="date"
-                    class="w-full sm:w-[180px]"
-                  />
-                </div>
-                <div class="grid gap-2">
-                  <label class="text-sm text-gray-600">To</label>
-                  <Input
-                    v-model="dateTo"
-                    type="date"
-                    class="w-full sm:w-[180px]"
-                  />
-                </div>
-              </div>
-
-              <div class="grid gap-2">
-                <label class="text-sm text-gray-600">Search Order ID</label>
-                <Input
-                  v-model="searchOrderId"
-                  placeholder="e.g. #BK-90231"
-                  class="w-full lg:w-[260px]"
-                />
-              </div>
-
-              <div class="mt-4 flex justify-end">
-                <Button variant="outline" type="button" @click="onResetFilters"
-                  >Reset Filter</Button
-                >
-              </div>
-            </div>
-
-            <div class="mt-6">
-              <DatatablesDataTable
-                :columns="columns"
-                :data="pagedOrders"
-                :pagination="pagination"
-                @page-change="onPageChange"
-                @limit-change="onLimitChange"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card class="bg-green-800 text-white overflow-hidden">
-            <CardContent class="p-6 flex flex-col h-full">
-              <h3 class="text-2xl font-bold">Need help with an order?</h3>
-              <p class="mt-2 text-white/90 max-w-md">
-                Our concierge team is available 24/7 to assist with tracking,
-                returns, or volume adjustments.
-              </p>
-              <div class="mt-6">
-                <Button variant="secondary">Contact Support</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card class="bg-green-50 overflow-hidden">
-            <CardContent class="p-6 flex flex-col h-full">
-              <h3 class="text-2xl font-bold text-gray-900">
-                Sustainability Impact
-              </h3>
-              <p class="mt-2 text-gray-600 max-w-md">
-                Your orders this year have contributed to planting 12 trees and
-                reducing 45kg of carbon emissions.
-              </p>
-              <div class="mt-6">
-                <Button variant="outline">View Eco-Report</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <select v-model="status" :aria-label="$t('app.orderHistoryPage.columns.status')" class="h-10 rounded-md border bg-white px-3 text-sm">
+          <option value="">{{ $t('app.orderHistory.allStatuses') }}</option>
+          <option v-for="s in STATUSES" :key="s" :value="s">{{ $t(`app.orderStatus.${s}`) }}</option>
+        </select>
       </div>
+
+      <p v-if="loading" class="py-10 text-center text-slate-500">{{ $t('app.orderHistory.loading') }}</p>
+      <div v-else-if="!orders.length" class="mx-auto max-w-md rounded-xl border bg-white p-8 text-center shadow-sm">
+        <p class="text-slate-700">{{ $t('app.orderHistory.empty') }}</p>
+        <Button class="mt-6 bg-green-600 hover:bg-green-700" @click="router.push('/product')">{{ $t('app.orderHistory.shopNow') }}</Button>
+      </div>
+
+      <template v-else>
+        <ul class="space-y-3">
+          <li v-for="o in orders" :key="o.id">
+            <NuxtLink :to="`/orders/${o.access_token}`" class="flex flex-col gap-2 rounded-xl border bg-white p-4 shadow-sm transition hover:border-green-600 sm:flex-row sm:items-center sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-semibold text-slate-900">{{ o.code }}</span>
+                  <Badge :class="ORDER_STATUS_STYLE[o.status]">{{ $t(`app.orderStatus.${o.status}`) }}</Badge>
+                </div>
+                <p class="mt-1 truncate text-sm text-slate-600">{{ itemSummary(o) }}</p>
+                <p class="text-xs text-slate-500">{{ formatDate(o.created_at) }}</p>
+              </div>
+              <div class="shrink-0 text-left sm:text-right">
+                <p class="font-semibold">{{ formatIDR(orderListTotal(o)) }}</p>
+                <span class="text-sm text-green-700">{{ $t('app.orderHistory.view') }} →</span>
+              </div>
+            </NuxtLink>
+          </li>
+        </ul>
+        <div v-if="totalPages > 1" class="mt-6 flex items-center justify-center gap-3 text-sm">
+          <Button variant="outline" size="sm" :disabled="page <= 1" @click="page--">‹</Button>
+          <span>{{ page }} / {{ totalPages }}</span>
+          <Button variant="outline" size="sm" :disabled="page >= totalPages" @click="page++">›</Button>
+        </div>
+      </template>
     </div>
   </div>
 </template>

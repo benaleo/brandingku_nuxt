@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useFeaturedProduct } from "~/composables/useFeaturedProduct";
 import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
+import { toast } from "vue-sonner";
+import type { FeaturedProductItem } from "~/composables/useFeaturedProduct";
 
 const router = useRouter();
 const { data, loading, error, refetch } = useFeaturedProduct();
@@ -21,7 +23,7 @@ const shouldLoad = ref(false);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
-// Set up intersection observer to trigger data loading
+const { t } = useI18n();
 const { target } = useIntersectionObserver(() => {
   shouldLoad.value = true
   loadProducts()
@@ -36,12 +38,14 @@ const loadProducts = async () => {
 const tabs = computed(() => [
   {
     id: 1,
-    name: "populer",
+    key: "populer",
+    label: t("app.products.tabs.popular"),
     count: data.value.filter((p) => p.is_highlight).length,
   },
   {
     id: 2,
-    name: "rekomendasi",
+    key: "rekomendasi",
+    label: t("app.products.tabs.recommended"),
     count: data.value.filter((p) => p.is_recommended).length,
   },
 ]);
@@ -64,38 +68,57 @@ function goTo(slug: string) {
   if (!slug) return;
   router.push(`/product/${slug}`);
 }
+
+// products with several variants need a choice on the product page first
+const { add: addToCart } = useCart();
+const addingId = ref<string | null>(null);
+async function quickAdd(product: FeaturedProductItem) {
+  const variant = product.cartVariant;
+  if (!variant) {
+    goTo(product.slug);
+    return;
+  }
+  addingId.value = product.id;
+  try {
+    await addToCart(variant.id, variant.moq);
+    toast.success(t("app.cartPage.added", { name: product.name }));
+  } catch (e: any) {
+    toast.error(cartErrorMessage(e, t("app.cartPage.failed")));
+  } finally {
+    addingId.value = null;
+  }
+}
 </script>
 
 <template>
-  <div ref="target" class="w-full px-4 py-12 bg-[#F2F4F7]">
-    <div class="container max-w-6xl mx-auto py-12">
+  <div ref="target" class="w-full px-4 py-12 md:py-16 bg-[#F2F4F7]">
+    <div class="container max-w-6xl mx-auto py-4 md:py-8">
       <div v-if="error" class="text-center text-red-500">{{ error }}</div>
       <div v-else>
         <Tabs default-value="populer" class="w-full">
-          <TabsList
-            class="w-full flex justify-between items-end bg-transparent"
-          >
-            <div class="flex-1 max-w-[400px]">
-              <p class="text-2xl font-bold text-black">Katalog Terpilih</p>
-              <p>
-                Temukan berbagai pilihan merchandise yang paling diminati oleh
-                klien ternama kami.
+          <!-- heading stacks above the tabs on small screens -->
+          <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div class="max-w-xl">
+              <h2 class="text-2xl md:text-3xl font-bold text-black">{{ $t('app.products.title') }}</h2>
+              <p class="mt-1 text-gray-600">
+                {{ $t('app.products.description') }}
               </p>
             </div>
-            <div class="flex-shrink-0 bg-slate-100 rounded-lg p-2">
+            <TabsList class="h-auto w-fit shrink-0 bg-slate-100 p-1.5">
               <TabsTrigger
                 v-for="(trigger, index) in tabs"
                 :key="index"
-                :value="trigger.name"
+                :value="trigger.key"
+                class="px-3 py-1.5"
               >
-                {{ trigger.name.toLocaleUpperCase() }}
+                {{ trigger.label.toLocaleUpperCase() }}
               </TabsTrigger>
-            </div>
-          </TabsList>
+            </TabsList>
+          </div>
           <TabsContent
             v-for="(val, index) in tabs"
             :key="val.id"
-            :value="val.name"
+            :value="val.key"
           >
             <Carousel
               class="relative w-full"
@@ -107,7 +130,7 @@ function goTo(slug: string) {
                   v-if="loading || isInitialLoad"
                   v-for="n in 5"
                   :key="`skeleton-${n}`"
-                  class="md:basis-1/2 lg:basis-1/4"
+                  class="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
                   <div class="p-1">
                     <Card class="py-0">
@@ -128,9 +151,9 @@ function goTo(slug: string) {
                 <!-- Actual Product Cards -->
                 <CarouselItem
                   v-else
-                  v-for="product in filteredProducts(val.name)"
+                  v-for="product in filteredProducts(val.key)"
                   :key="product.id"
-                  class="md:basis-1/2 lg:basis-1/4"
+                  class="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
                   <div class="p-1">
                     <Card
@@ -175,9 +198,10 @@ function goTo(slug: string) {
                             variant="outline"
                             class="opacity-0 group-hover:opacity-100 transition-opacity"
                             size="sm"
-                            @click.stop
+                            :disabled="addingId === product.id"
+                            @click.stop="quickAdd(product)"
                           >
-                            Add to Cart
+                            {{ $t('app.products.addToCart') }}
                           </Button>
                         </div>
                       </CardHeader>
@@ -190,7 +214,7 @@ function goTo(slug: string) {
                           <span class="font-bold"
                             >Rp. {{ product.price }}
                             <span class="text-sm text-gray-500"
-                              >/pcs</span
+                              >{{ $t('app.products.perPcs') }}</span
                             ></span
                           >
                         </div>
@@ -199,8 +223,9 @@ function goTo(slug: string) {
                   </div>
                 </CarouselItem>
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              <!-- keep arrows inside the carousel; the default -left/-right-12 overflows the page -->
+              <CarouselPrevious class="left-2 bg-white/90 shadow-md" />
+              <CarouselNext class="right-2 bg-white/90 shadow-md" />
             </Carousel>
           </TabsContent>
         </Tabs>

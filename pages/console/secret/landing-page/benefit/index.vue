@@ -7,23 +7,18 @@
     <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/landing-page/benefit/add'"/>
 
     <!-- Filter -->
-    <AppFilterTable v-model="keyword">
-      <div class="flex-1">
-      </div>
-    </AppFilterTable>
+    <AppFilterTable v-model="keyword"/>
 
     <!-- Data Table -->
     <div class="mt-2">
-      <div v-if="loading" class="text-center py-4">
-        Loading benefits...
-      </div>
-      <div v-else-if="error" class="text-center py-4 text-red-500">
+      <div v-if="error" class="text-center py-4 text-red-500">
         {{ error }}
       </div>
-      <div v-if="!loading">
+      <div v-else>
         <DatatablesDataTable
             :columns="benefitColumns"
             :data="benefitList || []"
+            :loading="loading"
             :pagination="paginationData"
             :meta="{ handleDelete }"
             @page-change="onPageChange"
@@ -59,6 +54,9 @@ const {
   setParams,
   reFetch
 } = useBenefitService()
+
+// The initial list request starts on mount; show its skeleton during SSR too.
+loading.value = true
 
 const benefitList = computed(() => {
   return datas.value || []

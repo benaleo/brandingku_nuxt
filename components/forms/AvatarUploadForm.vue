@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-4">
+  <div class="editor-form">
+    <FormsFormSection title="Foto profil" description="Pilih foto untuk memperbarui avatar pengguna.">
     <div>
       <label for="userId" class="block text-sm font-medium text-gray-700">User ID</label>
       <input
@@ -13,7 +14,7 @@
 
     <div>
       <label class="block text-sm font-medium text-gray-700">Avatar</label>
-      <div class="mt-1 flex items-center">
+      <div class="mt-1 flex flex-wrap items-center gap-3">
         <input
           type="file"
           ref="fileInput"
@@ -47,6 +48,7 @@
     <div v-if="message" class="mt-2 text-sm" :class="messageType === 'success' ? 'text-green-600' : 'text-red-600'">
       {{ message }}
     </div>
+    </FormsFormSection>
   </div>
 </template>
 
@@ -54,6 +56,7 @@
 import { ref, watch, defineProps, defineEmits, withDefaults, computed } from 'vue';
 import { gql } from '@apollo/client';
 import { useMutation } from '@vue/apollo-composable';
+import { toast } from 'vue-sonner';
 
 // Define props with TypeScript interface
 const props = withDefaults(defineProps<{
@@ -100,6 +103,7 @@ const uploadAvatar = async () => {
   if (!userId.value) {
     message.value = 'Please enter a valid user ID';
     messageType.value = 'error';
+    toast.error(message.value);
     return;
   }
 
@@ -127,6 +131,7 @@ const uploadAvatar = async () => {
 
     message.value = 'Avatar updated successfully!';
     messageType.value = 'success';
+    toast.success(message.value);
     
     // Emit success event
     emit('success', result?.data?.updateUserAvatar);
@@ -141,6 +146,7 @@ const uploadAvatar = async () => {
     console.error('Error uploading avatar:', error);
     message.value = error?.message || 'Failed to upload avatar';
     messageType.value = 'error';
+    toast.error(getErrorMessage(error));
   } finally {
     isUploading.value = false;
   }

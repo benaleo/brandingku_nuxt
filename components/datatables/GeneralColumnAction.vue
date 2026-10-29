@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal } from 'lucide-vue-next'
 
 const router = useRouter()
+const { canAction } = useConsoleAccess()
 
 const props = defineProps<{
   data: {
@@ -15,13 +16,9 @@ const props = defineProps<{
   handleDelete: () => void | Promise<void>
 }>()
 
-const valIsDelete = props.isDelete ?? true
-const valIsView = props.isView ?? true
-const valIsEdit = props.isEdit ?? true
-
-function copy(id: string) {
-  navigator.clipboard.writeText(id)
-}
+const valIsDelete = computed(() => (props.isDelete ?? true) && canAction(router.currentRoute.value.path, 'delete'))
+const valIsView = computed(() => (props.isView ?? true) && canAction(router.currentRoute.value.path, 'index'))
+const valIsEdit = computed(() => (props.isEdit ?? true) && canAction(router.currentRoute.value.path, 'update'))
 
 import AppConfirmDeleteDialog from "~/components/elements/AppConfirmDeleteDialog.vue";
 </script>
@@ -36,9 +33,6 @@ import AppConfirmDeleteDialog from "~/components/elements/AppConfirmDeleteDialog
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-      <DropdownMenuItem @click="copy(data.id)">
-        Copy payment ID
-      </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem v-if="valIsView" @click="router.push(router.currentRoute.value.path + '/' + data.id + '/detail')">View Details</DropdownMenuItem>
       <DropdownMenuItem v-if="valIsEdit" @click="router.push(router.currentRoute.value.path + '/' + data.id + '/edit')">Edit</DropdownMenuItem>

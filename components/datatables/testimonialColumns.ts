@@ -1,6 +1,7 @@
 import type {ColumnDef} from '@tanstack/vue-table'
 import {h} from "vue";
 import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue";
+import StarRating from "~/components/elements/StarRating.vue";
 import type {Testimonial} from "~/types/testimonial.type";
 // Removed Button import; using simple anchor link for navigation
 
@@ -22,7 +23,7 @@ export const testimonialColumns: ColumnDef<Testimonial>[] = [
     },
     {
         accessorKey: 'job',
-        header: () => h('div', {class: 'text-left'}, 'Pekerjaan'),
+        header: () => h('div', {class: 'text-left'}, 'Pekerjaan / perusahaan'),
         cell: ({row}) => {
             return h('div', {class: 'text-left'}, row.getValue('job'))
         },
@@ -41,8 +42,28 @@ export const testimonialColumns: ColumnDef<Testimonial>[] = [
         cell: ({row}) => {
             const rating = row.getValue('rating') as number
             return h('div', {class: 'text-left flex items-center gap-1'}, [
-                h('span', {}, String(rating)),
-                h('span', {class: 'text-yellow-500'}, '★'.repeat(rating))
+                h('span', {}, rating.toLocaleString('id-ID')),
+                h(StarRating, {modelValue: rating}),
+            ])
+        },
+    },
+    {
+        accessorKey: 'placement',
+        header: () => h('div', {class: 'text-left'}, 'Tampil di'),
+        cell: ({row}) => {
+            const t = row.original
+            return h('div', {class: 'text-left'}, t.placement === 'product' ? `Produk: ${t.product_name}` : 'Landing page')
+        },
+    },
+    {
+        accessorKey: 'order_id',
+        header: () => h('div', {class: 'text-left'}, 'Sumber'),
+        cell: ({row}) => {
+            const t = row.original
+            if (!t.order_id) return h('div', {class: 'text-left text-muted-foreground'}, 'Console')
+            return h('div', {class: 'text-left space-y-0.5'}, [
+                h('a', {href: `/console/secret/orders/${t.order_id}/detail`, class: 'text-primary hover:underline'}, 'Ulasan customer'),
+                t.public_consent ? null : h('p', {class: 'text-xs text-red-600'}, 'Tidak setuju ditampilkan'),
             ])
         },
     },
