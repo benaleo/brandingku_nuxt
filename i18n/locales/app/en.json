@@ -31,26 +31,22 @@
     "services": {
       "title": "Our Services",
       "items": {
-        "premiumQuality": {
-          "name": "Premium Quality",
-          "description": "Only using the finest materials to ensure your merchandise is durable and elegant."
-        },
-        "fastProduction": {
-          "name": "Fast Production",
-          "description": "Efficient production systems enable on-time delivery matching your corporate deadlines."
-        },
-        "ecoFriendly": {
-          "name": "Eco Friendly",
-          "description": "Wide selection of eco-friendly products supporting corporate sustainability campaigns."
-        }
+        "bestService": "Guided from the first consultation until your order arrives.",
+        "freeLogoDesign": "Your logo made print-ready, with product mockups.",
+        "qualityCheck": "Materials and prints checked before shipping.",
+        "timelyProduction": "A clear schedule from the start, ready for your deadline.",
+        "ecoFriendly": "Eco-friendly products for your sustainability campaigns.",
+        "warranty": "Not as agreed? Claim the warranty and we sort it out."
       },
       "menu": {
         "bestService": "Best Service",
         "freeLogoDesign": "Free Logo Design",
         "qualityCheck": "Quality Check Process",
         "timelyProduction": "Timely Production",
-        "warranty": "Warranty"
-      }
+        "warranty": "Warranty",
+        "ecoFriendly": "Eco-friendly Products"
+      },
+      "seeAll": "See all services"
     },
     "categories": {
       "title": "Featured Categories",
@@ -444,7 +440,7 @@
     },
     "servicesPage": {
       "metaTitle": "Services - Brandingku",
-      "metaDescription": "Discover Brandingku's services: dedicated support, free logo design, quality checks, on-time production, and warranty for your corporate merchandise.",
+      "metaDescription": "Discover Brandingku's services: dedicated support, free logo design, quality checks, on-time production, eco-friendly products, and warranty for your corporate merchandise.",
       "eyebrow": "OUR SERVICES",
       "title": "Everything you need for memorable merchandise",
       "subtitle": "From the first idea to delivery, our team supports every step of creating your company's merchandise.",
@@ -481,6 +477,12 @@
           "p1": "Products made to the agreed specifications",
           "p2": "Fast handling of complaints",
           "p3": "Help resolving any product that doesn't match"
+        },
+        "ecoFriendly": {
+          "text": "We offer merchandise made from eco-friendly materials, so your brand campaign matches your company's sustainability commitment.",
+          "p1": "Recycled and biodegradable material options",
+          "p2": "Eco-friendly product recommendations within budget",
+          "p3": "Packaging with as little plastic as possible"
         }
       },
       "ctaTitle": "Ready to start your merchandise project?",

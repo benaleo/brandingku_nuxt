@@ -344,13 +344,7 @@ const handleUserClick = () => {
   }
 };
 
-const services = computed(() => [
-  { name: t('app.services.menu.bestService'), href: '/services#servis-terbaik' },
-  { name: t('app.services.menu.freeLogoDesign'), href: '/services#desain-logo' },
-  { name: t('app.services.menu.qualityCheck'), href: '/services#cek-kualitas' },
-  { name: t('app.services.menu.timelyProduction'), href: '/services#produksi-tepat-waktu' },
-  { name: t('app.services.menu.warranty'), href: '/services#garansi' }
-]);
+const services = computed(() => SERVICES.map(s => ({ name: t(`app.services.menu.${s.key}`), href: `/services#${s.id}` })));
 
 const getFromLocalStorage = (key: string) => {
   try {

@@ -31,26 +31,22 @@
     "services": {
       "title": "Layanan Kami",
       "items": {
-        "premiumQuality": {
-          "name": "Kualitas Premium",
-          "description": "Hanya menggunakan bahan baku terbaik untuk memastikan merchandise Anda tahan lama dan elegan."
-        },
-        "fastProduction": {
-          "name": "Produksi Cepat",
-          "description": "Sistem produksi yang efisien memungkinkan pengerjaan tepat waktu sesuai deadline korporasi Anda."
-        },
-        "ecoFriendly": {
-          "name": "Ramah Lingkungan",
-          "description": "Berbagai pilihan produk ramah lingkungan yang mendukung kampanye sustainability perusahaan."
-        }
+        "bestService": "Didampingi sejak konsultasi pertama hingga pesanan sampai.",
+        "freeLogoDesign": "Logo dirapikan agar siap cetak, lengkap dengan mockup.",
+        "qualityCheck": "Bahan dan hasil cetak diperiksa sebelum dikirim.",
+        "timelyProduction": "Jadwal jelas sejak awal, siap sesuai deadline Anda.",
+        "ecoFriendly": "Pilihan produk ramah lingkungan untuk kampanye sustainability.",
+        "warranty": "Produk tidak sesuai? Klaim garansi, kami bantu selesaikan."
       },
       "menu": {
         "bestService": "Servis Terbaik",
         "freeLogoDesign": "Desain Logo Gratis",
         "qualityCheck": "Proses Cek Kualitas",
         "timelyProduction": "Produksi tepat waktu",
-        "warranty": "Garansi"
-      }
+        "warranty": "Garansi",
+        "ecoFriendly": "Produk Ramah Lingkungan"
+      },
+      "seeAll": "Lihat semua layanan"
     },
     "categories": {
       "title": "Kategori Pilihan",
@@ -444,7 +440,7 @@
     },
     "servicesPage": {
       "metaTitle": "Layanan - Brandingku",
-      "metaDescription": "Kenali layanan Brandingku: servis terbaik, desain logo gratis, cek kualitas, produksi tepat waktu, dan garansi untuk merchandise korporat Anda.",
+      "metaDescription": "Kenali layanan Brandingku: servis terbaik, desain logo gratis, cek kualitas, produksi tepat waktu, produk ramah lingkungan, dan garansi untuk merchandise korporat Anda.",
       "eyebrow": "LAYANAN KAMI",
       "title": "Semua yang Anda butuhkan untuk merchandise yang berkesan",
       "subtitle": "Dari ide hingga barang sampai di tangan Anda, tim kami mendampingi setiap langkah pembuatan merchandise perusahaan Anda.",
@@ -481,6 +477,12 @@
           "p1": "Produk dibuat sesuai spesifikasi yang disepakati",
           "p2": "Penanganan keluhan yang cepat",
           "p3": "Bantuan penyelesaian untuk produk yang tidak sesuai"
+        },
+        "ecoFriendly": {
+          "text": "Kami menyediakan pilihan merchandise berbahan ramah lingkungan, sehingga kampanye brand Anda sejalan dengan komitmen sustainability perusahaan.",
+          "p1": "Pilihan bahan daur ulang dan mudah terurai",
+          "p2": "Rekomendasi produk ramah lingkungan sesuai anggaran",
+          "p3": "Kemasan yang minim plastik"
         }
       },
       "ctaTitle": "Siap memulai proyek merchandise Anda?",

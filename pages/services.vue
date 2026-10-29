@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import { BadgeCheck, Check, Headset, MessageCircle, PenTool, ShieldCheck, Timer } from 'lucide-vue-next'
+import { Check, MessageCircle } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const { openChat } = useChatWidget()
 
-// ids double as the anchors used by the navbar "Services" menu
-const services = [
-  { id: 'servis-terbaik', key: 'bestService', icon: Headset },
-  { id: 'desain-logo', key: 'freeLogoDesign', icon: PenTool },
-  { id: 'cek-kualitas', key: 'qualityCheck', icon: BadgeCheck },
-  { id: 'produksi-tepat-waktu', key: 'timelyProduction', icon: Timer },
-  { id: 'garansi', key: 'warranty', icon: ShieldCheck },
-]
+// ids double as the anchors used by the navbar "Services" menu and the landing page cards
+const services = SERVICES
 
 // section titles reuse the navbar menu labels so both always match
 const serviceName = (key: string) => t(`app.services.menu.${key}`)
