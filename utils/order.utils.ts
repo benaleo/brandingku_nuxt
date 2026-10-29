@@ -1,4 +1,8 @@
-import type { OrderStatus } from '~/types/order.type'
+import type { Order, OrderStatus } from '~/types/order.type'
+
+// a listed order's total: before the shipping fee is known the invoice total excludes it;
+// quotations show the quoted total
+export const orderListTotal = (o: Order) => o.invoice?.total ?? o.subtotal - o.discount_total
 
 export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
   awaiting_shipping_fee: 'bg-amber-100 text-amber-800',

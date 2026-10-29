@@ -1,6 +1,6 @@
 import { useGql } from '~/composables/useGql'
 import type { EmailAttachmentInput } from '~/types/admin-smtp.type'
-import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, Order, PaymentPlanInput, ProductionStep } from '~/types/order.type'
+import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, MyOrderSummary, Order, PaymentPlanInput, ProductionStep } from '~/types/order.type'
 
 const DOC_FIELDS = `
   id number type status public_token issue_date due_date total amount_due paid_amount
@@ -133,6 +133,18 @@ export const useOrderService = () => {
     return res.getMyOrders
   }
 
+  // the profile page: order counts, money paid and the running orders that changed last
+  const getMyOrderSummary = async () => {
+    const res = await gqlFetch<{ getMyOrderSummary: MyOrderSummary }>(
+      `query getMyOrderSummary {
+        getMyOrderSummary { total active completed total_paid active_orders { ${LIST_FIELDS} updated_at } }
+      }`,
+      {},
+      { auth: true },
+    )
+    return res.getMyOrderSummary
+  }
+
   // token: the order's access_token from the /orders/<token> URL
   const getMyOrder = async (token: string) => {
     const res = await gqlFetch<{ getMyOrder: Order }>(
@@ -251,7 +263,7 @@ export const useOrderService = () => {
   }
 
   return {
-    previewCheckout, placeOrder, requestQuotation, respondQuotation, startOnlinePayment, getMyOrders, getMyOrder, cancelMyOrder, submitPaymentProof,
+    previewCheckout, placeOrder, requestQuotation, respondQuotation, startOnlinePayment, getMyOrders, getMyOrderSummary, getMyOrder, cancelMyOrder, submitPaymentProof,
     previewPaymentPlan, choosePaymentPlan, reviewProgress,
     getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, createQuotationFromOrder, verifyPayment, rejectPayment,
     addOrderProgress,

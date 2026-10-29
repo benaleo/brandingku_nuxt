@@ -28,8 +28,6 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
 const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'id-ID', {day: 'numeric', month: 'short', year: 'numeric'})
-// before the shipping fee is known the invoice total excludes it; quotations show the quoted total
-const orderTotal = (o: Order) => o.invoice?.total ?? o.subtotal - o.discount_total
 const itemSummary = (o: Order) => o.items.map(i => `${i.product_name} (${i.variant_name}) × ${i.quantity}`).join(', ')
 
 let requestId = 0
@@ -99,7 +97,7 @@ onMounted(() => {
                 <p class="text-xs text-slate-500">{{ formatDate(o.created_at) }}</p>
               </div>
               <div class="shrink-0 text-left sm:text-right">
-                <p class="font-semibold">{{ formatIDR(orderTotal(o)) }}</p>
+                <p class="font-semibold">{{ formatIDR(orderListTotal(o)) }}</p>
                 <span class="text-sm text-green-700">{{ $t('app.orderHistory.view') }} →</span>
               </div>
             </NuxtLink>

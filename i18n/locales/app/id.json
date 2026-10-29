@@ -497,39 +497,38 @@
     "profilePage": {
       "metaTitle": "Profil - {name}",
       "loading": "Memuat profil...",
-      "tryAgain": "Coba Lagi",
-      "greeting": "Halo, {name}.",
-      "welcome": "Selamat datang kembali di dashboard keberlanjutan Anda",
-      "memberSince": "Member Sejak",
-      "itemsSaved": "Barang Diselamatkan",
-      "thisMonth": "Bulan ini",
-      "landfillDiverted": "Limbah Tidak ke TPA",
-      "totalImpact": "Total dampak",
-      "goalProgress": "Progres Target",
-      "activeOrders": "Pesanan Aktif",
-      "activeCount": "{count} Aktif",
-      "quantity": "Jumlah: {count}",
-      "estDelivery": "Estimasi tiba: {date}",
-      "statuses": {
-        "inProduction": "Dalam Produksi",
-        "processing": "Diproses"
+      "tryAgain": "Coba lagi",
+      "greeting": "Halo, {name}",
+      "memberSince": "Member sejak {date}",
+      "shopNow": "Belanja sekarang",
+      "statsLabel": "Ringkasan pesanan",
+      "stats": {
+        "total": "Total pesanan",
+        "active": "Sedang berjalan",
+        "completed": "Selesai",
+        "totalPaid": "Total dibayar"
       },
-      "viewAllOrders": "Lihat Semua Pesanan",
-      "proTitle": "Member Pro",
-      "proText": "Nikmati keuntungan eksklusif dan dukungan prioritas",
-      "perks": {
-        "freeShipping": "Gratis ongkir untuk semua pesanan",
-        "discount": "Diskon 15% untuk produk ramah lingkungan",
-        "prioritySupport": "Dukungan pelanggan prioritas"
+      "runningTitle": "Pesanan berjalan",
+      "viewAllOrders": "Lihat semua",
+      "noRunning": "Belum ada pesanan yang sedang berjalan.",
+      "ordersFailed": "Pesanan belum bisa dimuat.",
+      "moreItems": "+{count} produk lain",
+      "updated": "Diperbarui {date}",
+      "moreRunning": "{count} pesanan berjalan lainnya ada di riwayat pesanan.",
+      "account": "Data akun",
+      "fields": {
+        "email": "Email",
+        "phone": "Telepon",
+        "address": "Alamat"
       },
-      "recommended": "Rekomendasi Eco-Swag",
-      "badges": {
-        "new": "Baru",
-        "bestSeller": "Terlaris",
-        "ecoTech": "Eco Tech",
-        "popular": "Populer"
-      },
-      "addToCart": "Tambah ke keranjang"
+      "notSet": "Belum diisi",
+      "shortcuts": "Akses cepat",
+      "links": {
+        "orders": "Riwayat pesanan",
+        "notifications": "Notifikasi",
+        "wishlist": "Wishlist",
+        "cart": "Keranjang"
+      }
     },
     "orderHistoryPage": {
       "metaTitle": "Riwayat Pesanan - Brandingku",

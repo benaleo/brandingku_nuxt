@@ -10,7 +10,7 @@ Signed-in user area: the profile page addressed by uuid, and the order-history v
 
 | File | Description |
 |------|-------------|
-| `[uuid].vue` | `/profile/:uuid` (316 lines) — profile detail and editing, via `useUserProfile`. |
+| `[uuid].vue` | `/profile/:uuid` — account summary: the profile from `useUserProfile` plus `getMyOrderSummary` (order counts, total paid, the five running orders that changed last), account details and shortcuts. |
 | `order-histories.vue` | `/profile/order-histories` (405 lines) — the user's past orders. |
 
 ## For AI Agents

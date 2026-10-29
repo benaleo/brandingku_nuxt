@@ -497,39 +497,38 @@
     "profilePage": {
       "metaTitle": "Profile - {name}",
       "loading": "Loading profile...",
-      "tryAgain": "Try Again",
-      "greeting": "Hello, {name}.",
-      "welcome": "Welcome back to your sustainability dashboard",
-      "memberSince": "Member Since",
-      "itemsSaved": "Items Saved",
-      "thisMonth": "This month",
-      "landfillDiverted": "Landfill Diverted",
-      "totalImpact": "Total impact",
-      "goalProgress": "Goal Progress",
-      "activeOrders": "Active Orders",
-      "activeCount": "{count} Active",
-      "quantity": "Quantity: {count}",
-      "estDelivery": "Est. delivery: {date}",
-      "statuses": {
-        "inProduction": "In Production",
-        "processing": "Processing"
+      "tryAgain": "Try again",
+      "greeting": "Hello, {name}",
+      "memberSince": "Member since {date}",
+      "shopNow": "Shop now",
+      "statsLabel": "Order summary",
+      "stats": {
+        "total": "Total orders",
+        "active": "In progress",
+        "completed": "Completed",
+        "totalPaid": "Total paid"
       },
-      "viewAllOrders": "View All Orders",
-      "proTitle": "Pro Member",
-      "proText": "Enjoy exclusive benefits and priority support",
-      "perks": {
-        "freeShipping": "Free shipping on all orders",
-        "discount": "15% discount on eco-products",
-        "prioritySupport": "Priority customer support"
+      "runningTitle": "Orders in progress",
+      "viewAllOrders": "View all",
+      "noRunning": "No orders in progress yet.",
+      "ordersFailed": "Orders could not be loaded.",
+      "moreItems": "+{count} more products",
+      "updated": "Updated {date}",
+      "moreRunning": "{count} more orders in progress are in your order history.",
+      "account": "Account details",
+      "fields": {
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address"
       },
-      "recommended": "Recommended Eco-Swag",
-      "badges": {
-        "new": "New",
-        "bestSeller": "Best Seller",
-        "ecoTech": "Eco Tech",
-        "popular": "Popular"
-      },
-      "addToCart": "Add to cart"
+      "notSet": "Not set",
+      "shortcuts": "Shortcuts",
+      "links": {
+        "orders": "Order history",
+        "notifications": "Notifications",
+        "wishlist": "Wishlist",
+        "cart": "Cart"
+      }
     },
     "orderHistoryPage": {
       "metaTitle": "Order History - Brandingku",

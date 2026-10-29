@@ -172,7 +172,19 @@ export type Order = {
   updated_at: string
 }
 
-export type CheckoutItemInput = { product_additional_id: number; quantity: number; note?: string; branding_ids?: number[] }
+// the profile page's view of the signed-in account's orders
+export type MyOrderSummary = {
+  total: number
+  // not completed, rejected, cancelled or expired yet
+  active: number
+  completed: number
+  // received on the account's invoices, down payments and balances included
+  total_paid: number
+  // the running orders that changed last, at most 5
+  active_orders: Order[]
+}
+
+export type CheckoutItemInput ={ product_additional_id: number; quantity: number; note?: string; branding_ids?: number[] }
 
 export type CheckoutLine = {
   product_id: number

@@ -5,6 +5,7 @@ interface UserProfile {
   phone: string;
   address: string;
   avatar: string;
+  created_at: string;
 }
 
 export const useUserProfile = () => {
@@ -36,6 +37,7 @@ export const useUserProfile = () => {
             phone
             address
             avatar
+            created_at
           }
         }
       `;

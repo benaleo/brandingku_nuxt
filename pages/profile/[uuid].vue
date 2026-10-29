@@ -1,322 +1,209 @@
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { computed, onMounted, ref } from 'vue'
+import { Bell, CheckCircle2, ChevronRight, Clock, Heart, LogOut, Mail, MapPin, Package, Phone, Receipt, ShoppingCart, Wallet } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { useOrderService } from '~/services/order.service'
+import type { MyOrderSummary, Order } from '~/types/order.type'
 
-const route = useRoute();
-const { t, locale } = useI18n();
-const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'));
-const formatDate = (iso: string) =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString(dateLocale.value, { day: 'numeric', month: 'short', year: 'numeric' });
-const uuid = Array.isArray(route.params.uuid) ? route.params.uuid[0] : route.params.uuid;
-const { profile, loading, error, getUserProfile } = useUserProfile();
+definePageMeta({ layout: 'default' })
 
-// Authorization check - redirect to login if not authenticated
-const token = useCookie<string | null>('token', { sameSite: 'lax' });
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
+const { t, locale } = useI18n()
+const token = useCookie<string | null>('token', { sameSite: 'lax' })
+const uuid = Array.isArray(route.params.uuid) ? route.params.uuid[0] : route.params.uuid
+const { profile, loading, error, getUserProfile } = useUserProfile()
+const { getMyOrderSummary } = useOrderService()
 
-// Check authentication on mount
+const summary = ref<MyOrderSummary | null>(null)
+const summaryFailed = ref(false)
+
+async function load() {
+  if (!uuid) return
+  summaryFailed.value = false
+  const [, res] = await Promise.allSettled([getUserProfile(uuid), getMyOrderSummary()])
+  if (res.status === 'fulfilled') summary.value = res.value
+  else summaryFailed.value = true
+}
+
 onMounted(() => {
   if (!token.value) {
-    router.push('/console/auth');
-    return;
+    router.replace({ path: '/console/auth', query: { redirect: route.fullPath } })
+    return
   }
-  // Fetch user profile
-  if (uuid) {
-    getUserProfile(uuid);
-  }
-});
+  load()
+})
 
-// Hardcoded data for now (will be replaced with actual profile data)
-const profileData = computed(() => ({
-  name: profile.value?.name || "Alexandra",
-  email: profile.value?.email || "alexandra@example.com",
-  phone: profile.value?.phone || "+62 812-3456-7890",
-  address: profile.value?.address || "Jakarta, Indonesia",
-  avatar: profile.value?.avatar || "/images/avatars/alexandra.jpg",
-  sustainabilityMetrics: {
-    itemsSaved: 247,
-    landfillDiverted: 89.5,
-    goalProgress: 67
-  },
-  activeOrders: [
-    {
-      id: "ORD-001",
-      productName: "Eco-Friendly Tote Bag",
-      quantity: 50,
-      statusKey: "inProduction",
-      estimatedDelivery: "2024-04-15"
-    },
-    {
-      id: "ORD-002", 
-      productName: "Bamboo Water Bottle",
-      quantity: 100,
-      statusKey: "processing",
-      estimatedDelivery: "2024-04-20"
-    }
-  ],
-  isProMember: true,
-  recommendedProducts: [
-    {
-      id: 1,
-      name: "Recycled Notebook Set",
-      price: 45000,
-      image: "/images/products/notebook-set.jpg",
-      badgeKey: "new"
-    },
-    {
-      id: 2,
-      name: "Organic Cotton T-Shirt",
-      price: 120000,
-      image: "/images/products/cotton-shirt.jpg",
-      badgeKey: "bestSeller"
-    },
-    {
-      id: 3,
-      name: "Solar Power Bank",
-      price: 250000,
-      image: "/images/products/solar-bank.jpg",
-      badgeKey: "ecoTech"
-    },
-    {
-      id: 4,
-      name: "Biodegradable Phone Case",
-      price: 75000,
-      image: "/images/products/phone-case.jpg",
-      badgeKey: "popular"
-    }
-  ]
-}));
-
-definePageMeta({
-  layout: "default",
-});
-
-// placeholder join date until the API exposes one
+const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
+const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v || 0)
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString(dateLocale.value, { day: 'numeric', month: 'short', year: 'numeric' })
 const memberSince = computed(() =>
-  new Date(2024, 2, 1).toLocaleDateString(dateLocale.value, { month: 'long', year: 'numeric' })
-);
+  profile.value?.created_at ? new Date(profile.value.created_at).toLocaleDateString(dateLocale.value, { month: 'long', year: 'numeric' }) : '',
+)
+// only the account's own profile can change its photo
+const isMe = computed(() => !!token.value && getSecureIdFromToken(token.value) === uuid)
+
+// the session ends on the server too; a failed call still signs out here
+const { logout: endSession } = useAuth()
+const loggingOut = ref(false)
+async function logout() {
+  if (!window.confirm(t('app.profileMenu.logoutConfirm'))) return
+  loggingOut.value = true
+  try {
+    await endSession()
+  } catch {
+    // useAuth already cleared the token
+  }
+  await router.push('/')
+}
+
+const stats = computed(() => [
+  { key: 'total', icon: Package, tone: 'text-slate-500', value: String(summary.value?.total ?? 0) },
+  { key: 'active', icon: Clock, tone: 'text-amber-600', value: String(summary.value?.active ?? 0) },
+  { key: 'completed', icon: CheckCircle2, tone: 'text-green-600', value: String(summary.value?.completed ?? 0) },
+  { key: 'totalPaid', icon: Wallet, tone: 'text-sky-600', value: formatIDR(summary.value?.total_paid ?? 0) },
+])
+const itemsLine = (o: Order) => {
+  if (!o.items.length) return ''
+  const more = o.items.length > 1 ? ` ${t('app.profilePage.moreItems', { count: o.items.length - 1 })}` : ''
+  return o.items[0].product_name + more
+}
+const hiddenRunning = computed(() => (summary.value ? summary.value.active - summary.value.active_orders.length : 0))
+
+const accountFields = computed(() => [
+  { key: 'email', icon: Mail, value: profile.value?.email },
+  { key: 'phone', icon: Phone, value: profile.value?.phone },
+  { key: 'address', icon: MapPin, value: profile.value?.address },
+])
+const shortcuts = [
+  { key: 'orders', icon: Receipt, to: '/profile/order-histories' },
+  { key: 'notifications', icon: Bell, to: '/notifications' },
+  { key: 'wishlist', icon: Heart, to: '/wishlist' },
+  { key: 'cart', icon: ShoppingCart, to: '/cart' },
+]
 
 useHead(() => ({
-  title: t('app.profilePage.metaTitle', { name: profileData.value.name }),
-}));
+  title: t('app.profilePage.metaTitle', { name: profile.value?.name || '' }),
+}))
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Loading State -->
-    <div v-if="loading" class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">{{ $t('app.profilePage.loading') }}</p>
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <div class="text-red-600 mb-4">
-          <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <p class="text-gray-600 mb-2">{{ error }}</p>
-        <Button @click="uuid && getUserProfile(uuid)" variant="outline">{{ $t('app.profilePage.tryAgain') }}</Button>
-      </div>
-    </div>
-
-    <!-- Profile Content -->
-    <div v-else>
-      <!-- Header Section -->
-      <div class="bg-white shadow-sm border-b">
-      <div class="app-container py-6">
-        <div class="pt-24 flex items-center justify-between">
-          <div class="">
-            <h1 class="text-2xl font-bold text-gray-900">{{ $t('app.profilePage.greeting', { name: profileData.name }) }}</h1>
-            <p class="text-gray-600 mt-1">{{ $t('app.profilePage.welcome') }}</p>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div class="text-right">
-              <p class="text-sm text-gray-500">{{ $t('app.profilePage.memberSince') }}</p>
-              <p class="font-semibold">{{ memberSince }}</p>
-            </div>
-            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-              <span class="text-purple-600 font-bold">{{ profileData.name.charAt(0) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="app-container py-8">
-      <!-- Sustainability Metrics -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardContent class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-gray-500">{{ $t('app.profilePage.itemsSaved') }}</p>
-                <p class="text-3xl font-bold text-green-600">{{ profileData.sustainabilityMetrics.itemsSaved }}</p>
-                <p class="text-sm text-gray-600 mt-1">{{ $t('app.profilePage.thisMonth') }}</p>
-              </div>
-              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-gray-500">{{ $t('app.profilePage.landfillDiverted') }}</p>
-                <p class="text-3xl font-bold text-blue-600">{{ profileData.sustainabilityMetrics.landfillDiverted }}kg</p>
-                <p class="text-sm text-gray-600 mt-1">{{ $t('app.profilePage.totalImpact') }}</p>
-              </div>
-              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                </svg>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-gray-500">{{ $t('app.profilePage.goalProgress') }}</p>
-                <p class="text-3xl font-bold text-purple-600">{{ profileData.sustainabilityMetrics.goalProgress }}%</p>
-                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div class="bg-purple-600 h-2 rounded-full" :style="`width: ${profileData.sustainabilityMetrics.goalProgress}%`"></div>
-                </div>
-              </div>
-              <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Active Orders -->
-        <div class="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle class="flex items-center justify-between">
-                <span>{{ $t('app.profilePage.activeOrders') }}</span>
-                <Badge variant="secondary">{{ $t('app.profilePage.activeCount', { count: profileData.activeOrders.length }) }}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div class="space-y-4">
-                <div v-for="order in profileData.activeOrders" :key="order.id" class="border rounded-lg p-4">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="font-semibold">{{ order.productName }}</p>
-                      <p class="text-sm text-gray-500">{{ order.id }} - {{ $t('app.profilePage.quantity', { count: order.quantity }) }}</p>
-                      <p class="text-sm text-gray-600">{{ $t('app.profilePage.estDelivery', { date: formatDate(order.estimatedDelivery) }) }}</p>
-                    </div>
-                    <div class="text-right">
-                      <Badge :variant="order.statusKey === 'inProduction' ? 'default' : 'secondary'">
-                        {{ $t(`app.profilePage.statuses.${order.statusKey}`) }}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-4">
-                <Button variant="outline" class="w-full" @click="router.push('/profile/order-histories')">{{ $t('app.profilePage.viewAllOrders') }}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <!-- Pro Member Section -->
+  <div class="min-h-screen bg-gradient-to-b from-green-50 via-white to-white">
+    <div class="app-container px-4 pb-16 pt-28 md:px-6">
+      <div v-if="loading && !profile" class="flex min-h-[50vh] items-center justify-center text-center text-slate-500">
         <div>
-          <Card class="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-            <CardContent class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
-                <Badge variant="secondary" class="bg-white/20 text-white">PRO</Badge>
-              </div>
-              <h3 class="text-xl font-bold mb-2">{{ $t('app.profilePage.proTitle') }}</h3>
-              <p class="text-sm opacity-90 mb-4">{{ $t('app.profilePage.proText') }}</p>
-              <div class="space-y-2 text-sm">
-                <div class="flex items-center">
-                  <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                  </svg>
-                  {{ $t('app.profilePage.perks.freeShipping') }}
-                </div>
-                <div class="flex items-center">
-                  <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                  </svg>
-                  {{ $t('app.profilePage.perks.discount') }}
-                </div>
-                <div class="flex items-center">
-                  <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                  </svg>
-                  {{ $t('app.profilePage.perks.prioritySupport') }}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div class="mx-auto mb-4 size-10 animate-spin rounded-full border-2 border-green-600 border-b-transparent" />
+          <p>{{ $t('app.profilePage.loading') }}</p>
         </div>
       </div>
 
-      <!-- Recommended Eco-Swag -->
-      <div class="mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ $t('app.profilePage.recommended') }}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div v-for="product in profileData.recommendedProducts" :key="product.id" class="group">
-                <div class="relative overflow-hidden rounded-lg border">
-                  <div class="aspect-square bg-gray-100 relative">
-                    <img 
-                      :src="product.image" 
-                      :alt="product.name"
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onerror="this.src='/images/no-image.jpg'"
-                    />
-                    <Badge class="absolute top-2 left-2" variant="secondary">
-                      {{ $t(`app.profilePage.badges.${product.badgeKey}`) }}
-                    </Badge>
-                  </div>
-                  <div class="p-4">
-                    <h3 class="font-semibold text-sm mb-2 line-clamp-2">{{ product.name }}</h3>
-                    <div class="flex items-center justify-between">
-                      <p class="text-lg font-bold text-green-600">Rp {{ product.price.toLocaleString('id-ID') }}</p>
-                      <Button size="sm" variant="outline" :aria-label="$t('app.profilePage.addToCart')">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                      </Button>
+      <div v-else-if="error && !profile" class="mx-auto max-w-md rounded-xl border bg-white p-8 text-center shadow-sm">
+        <p class="text-slate-700">{{ error }}</p>
+        <Button variant="outline" class="mt-4" @click="load">{{ $t('app.profilePage.tryAgain') }}</Button>
+      </div>
+
+      <template v-else-if="profile">
+        <section class="flex flex-col gap-4 rounded-xl border bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between md:p-6">
+          <div class="flex min-w-0 items-center gap-4">
+            <ElementsProfileAvatar :avatar="profile.avatar" :name="profile.name" :editable="isMe" @updated="(path) => { if (profile) profile.avatar = path }" />
+            <div class="min-w-0">
+              <h1 class="truncate text-xl font-bold text-slate-900 md:text-2xl">{{ $t('app.profilePage.greeting', { name: profile.name }) }}</h1>
+              <p class="truncate text-sm text-slate-600">{{ profile.email }}</p>
+              <p v-if="memberSince" class="mt-0.5 text-xs text-slate-500">{{ $t('app.profilePage.memberSince', { date: memberSince }) }}</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
+            <Button as-child class="flex-1 bg-green-600 hover:bg-green-700 sm:flex-none">
+              <NuxtLink to="/product">{{ $t('app.profilePage.shopNow') }}</NuxtLink>
+            </Button>
+            <Button as-child variant="outline" class="flex-1 sm:flex-none">
+              <NuxtLink to="/wishlist"><Heart class="size-4" /> {{ $t('app.profileMenu.wishlist') }}</NuxtLink>
+            </Button>
+            <Button v-if="isMe" variant="outline" class="flex-1 text-red-600 hover:text-red-700 sm:flex-none" :disabled="loggingOut" @click="logout">
+              <LogOut class="size-4" /> {{ $t('app.profileMenu.logout') }}
+            </Button>
+          </div>
+        </section>
+
+        <section class="mt-4 grid grid-cols-2 gap-3 md:mt-6 md:gap-4 lg:grid-cols-4" :aria-label="$t('app.profilePage.statsLabel')">
+          <div v-for="s in stats" :key="s.key" class="min-w-0 rounded-xl border bg-white p-4 shadow-sm md:p-5">
+            <p class="flex items-center gap-2 text-xs font-medium text-slate-500 md:text-sm">
+              <component :is="s.icon" class="size-4 shrink-0" :class="s.tone" />
+              <span class="truncate">{{ $t(`app.profilePage.stats.${s.key}`) }}</span>
+            </p>
+            <p v-if="summary" class="mt-2 break-words text-lg font-bold text-slate-900 md:text-2xl">{{ s.value }}</p>
+            <p v-else-if="summaryFailed" class="mt-2 text-lg font-bold text-slate-300 md:text-2xl">—</p>
+            <p v-else class="mt-2 h-7 w-16 animate-pulse rounded bg-slate-100" />
+          </div>
+        </section>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-3">
+          <section class="rounded-xl border bg-white p-5 shadow-sm md:p-6 lg:col-span-2">
+            <div class="mb-2 flex items-center justify-between gap-3">
+              <h2 class="font-semibold text-slate-900">{{ $t('app.profilePage.runningTitle') }}</h2>
+              <NuxtLink to="/profile/order-histories" class="shrink-0 text-sm font-medium text-green-700 hover:underline">{{ $t('app.profilePage.viewAllOrders') }}</NuxtLink>
+            </div>
+
+            <p v-if="summaryFailed" class="py-6 text-center text-sm text-slate-500">
+              {{ $t('app.profilePage.ordersFailed') }}
+              <button type="button" class="font-medium text-green-700 hover:underline" @click="load">{{ $t('app.profilePage.tryAgain') }}</button>
+            </p>
+            <ul v-else-if="!summary" class="space-y-3 py-2">
+              <li v-for="i in 3" :key="i" class="h-16 animate-pulse rounded-lg bg-slate-100" />
+            </ul>
+            <div v-else-if="!summary.active_orders.length" class="mt-2 rounded-lg border border-dashed p-6 text-center text-sm text-slate-600">
+              {{ $t('app.profilePage.noRunning') }}
+            </div>
+            <template v-else>
+              <ul class="divide-y">
+                <li v-for="o in summary.active_orders" :key="o.id">
+                  <NuxtLink :to="`/orders/${o.access_token}`" class="-mx-2 flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-green-50">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="font-semibold text-slate-900">{{ o.code }}</span>
+                        <span class="rounded-full px-2 py-0.5 text-[11px] font-medium" :class="ORDER_STATUS_STYLE[o.status]">{{ $t(`app.orderStatus.${o.status}`) }}</span>
+                      </div>
+                      <p v-if="o.items.length" class="mt-0.5 truncate text-sm text-slate-600">{{ itemsLine(o) }}</p>
+                      <p class="text-xs text-slate-400">{{ $t('app.profilePage.updated', { date: formatDate(o.updated_at) }) }}</p>
                     </div>
+                    <p class="shrink-0 text-sm font-semibold text-slate-900">{{ formatIDR(orderListTotal(o)) }}</p>
+                    <ChevronRight class="size-4 shrink-0 text-slate-400" />
+                  </NuxtLink>
+                </li>
+              </ul>
+              <p v-if="hiddenRunning > 0" class="mt-2 text-xs text-slate-500">{{ $t('app.profilePage.moreRunning', { count: hiddenRunning }) }}</p>
+            </template>
+          </section>
+
+          <aside class="space-y-6">
+            <section class="rounded-xl border bg-white p-5 text-sm shadow-sm md:p-6">
+              <h2 class="mb-3 font-semibold text-slate-900">{{ $t('app.profilePage.account') }}</h2>
+              <dl class="space-y-3">
+                <div v-for="f in accountFields" :key="f.key" class="flex gap-3">
+                  <component :is="f.icon" class="mt-0.5 size-4 shrink-0 text-slate-400" />
+                  <div class="min-w-0">
+                    <dt class="text-xs text-slate-500">{{ $t(`app.profilePage.fields.${f.key}`) }}</dt>
+                    <dd class="break-words" :class="f.value ? 'text-slate-900' : 'text-slate-400'">{{ f.value || $t('app.profilePage.notSet') }}</dd>
                   </div>
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              </dl>
+            </section>
+
+            <nav class="rounded-xl border bg-white p-2 text-sm shadow-sm" :aria-label="$t('app.profilePage.shortcuts')">
+              <NuxtLink
+                v-for="l in shortcuts"
+                :key="l.key"
+                :to="l.to"
+                class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-700 transition-colors hover:bg-green-50 hover:text-green-800"
+              >
+                <component :is="l.icon" class="size-4 text-green-700" />
+                <span class="flex-1">{{ $t(`app.profilePage.links.${l.key}`) }}</span>
+                <ChevronRight class="size-4 text-slate-400" />
+              </NuxtLink>
+            </nav>
+          </aside>
+        </div>
+      </template>
     </div>
   </div>
 </template>
