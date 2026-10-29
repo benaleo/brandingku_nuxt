@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, Check, MessageCircle, Minus, Plus } from "lucide-vue-next";
+import { ArrowLeftIcon, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const route = useRoute();
@@ -32,7 +32,7 @@ const { token, createWishlist } = useWishlist();
 
 const handleAddToWishlist = async () => {
   if (!token.value) {
-    router.push("/console/auth");
+    router.push({ path: "/console/auth", query: { redirect: route.fullPath } });
     return;
   }
 
@@ -169,6 +169,11 @@ const handleBuyNow = () => {
 const { add: addToCart } = useCart();
 const adding = ref(false);
 const handleAddToCart = async () => {
+  // guests sign in first and come back to this product
+  if (!authToken.value) {
+    router.push({ path: "/console/auth", query: { redirect: route.fullPath } });
+    return;
+  }
   const variant = selectedAdditional.value;
   if (!variant) {
     toast.error(t("app.cartPage.selectVariant"));
@@ -598,13 +603,13 @@ definePageMeta({
               </Button>
             </template>
             <template v-else>
-              <Button variant="outline" class="h-11 flex-1 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" :disabled="adding" @click="handleAddToCart">{{ $t('app.productPage.detail.addToCart') }}</Button>
               <Button class="h-11 flex-1 bg-green-600 text-white hover:bg-green-700 lg:h-9" :disabled="adding" @click="handleBuyNow">{{ $t('app.productPage.detail.buyNow') }}</Button>
+              <Button variant="outline" :aria-label="$t('app.productPage.detail.addToCart')" :title="$t('app.productPage.detail.addToCart')" class="h-11 w-11 shrink-0 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-9" :disabled="adding" @click="handleAddToCart">
+                <ShoppingCart class="size-5" />
+              </Button>
             </template>
-            <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" class="h-11 w-11 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-auto" @click="handleAddToWishlist">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-              </svg>
+            <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" :title="$t('app.productPage.wishlistAdd')" class="h-11 w-11 shrink-0 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-9" @click="handleAddToWishlist">
+              <Heart class="size-5" />
             </Button>
           </div>
 
