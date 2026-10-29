@@ -5,6 +5,7 @@ import { useGql } from '~/composables/useGql'
 import { useRuntimeConfig } from '#app'
 
 export interface SubCategory {
+  id: number
   name: string
   description: string
   image: string
@@ -19,6 +20,7 @@ export interface SubCategory {
 }
 
 export interface ProductCategoryBySlug {
+  id: number
   slug: string
   name: string
   description: string
@@ -91,6 +93,7 @@ export const useGetProductCategoryBySlug = (slug: string) => {
       const query = `
         query GetProductCategoryBySlug($slug: String!) {
           getProductCategoryBySlug(slug: $slug) {
+            id
             slug
             name
             description
@@ -102,6 +105,7 @@ export const useGetProductCategoryBySlug = (slug: string) => {
             catalog_file_name
             catalog_url
             sub {
+              id
               name
               description
               image

@@ -155,7 +155,9 @@
         "subTitle": "{name} that matters.",
         "subFallback": "Choosing the right merchandise isn't just about branding; it's about the message you send. Our {name} collection focuses on high-quality materials that last years, not weeks. From vacuum-sealed technology to carbon-neutral shipping, we help your company make an impact without the footprint.",
         "sourcing": "Learn about our sourcing →",
-        "sustainability": "98% SUSTAINABILITY RATING"
+        "sustainability": "98% SUSTAINABILITY RATING",
+        "chooseCategory": "Choose a category",
+        "resetFilter": "Reset"
       },
       "catalog": "Catalog",
       "downloadCatalogOf": "Download the {name} catalog"

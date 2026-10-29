@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Phone, Mail, MapPin, Globe, Users, Clock, ArrowRight } from 'lucide-vue-next'
+import { Phone, Mail, MapPin, Globe, Users, Clock } from 'lucide-vue-next'
 import { useWebContactService } from '~/services/web-contact.service'
 
 // contact details are editable in the console Options menu and rendered server-side
@@ -79,7 +79,8 @@ const handleSubmit = async (e: Event) => {
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Hero Section -->
-    <section class="ps bg-linear-green relative text-white overflow-hidden min-h-screen ">
+    <!-- in normal flow on phones; the side picture shows from lg up -->
+    <section class="ps bg-linear-green relative overflow-hidden pb-40 pt-28 text-white lg:flex lg:min-h-screen lg:items-center lg:pb-48 lg:pt-32">
       <!-- Wave SVG at bottom -->
       <div class="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -87,19 +88,19 @@ const handleSubmit = async (e: Event) => {
         </svg>
       </div>
       
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 container mx-auto px-6 py-20 z-10">
+      <div class="container relative z-10 mx-auto px-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <div class="inline-block px-4 py-2 bg-white/20 rounded-full mb-6">
               <span class="text-sm font-semibold">{{ $t('app.contactPage.eyebrow') }}</span>
             </div>
-            <h1 class="text-5xl font-bold mb-6">{{ $t('app.contactPage.title') }}</h1>
-            <p class="text-xl leading-relaxed opacity-90">
+            <h1 class="mb-4 text-4xl font-bold leading-tight md:mb-6 md:text-5xl">{{ $t('app.contactPage.title') }}</h1>
+            <p class="text-base leading-relaxed opacity-90 md:text-xl">
               {{ $t('app.contactPage.subtitle') }}
             </p>
           </div>
-          <div class="relative flex justify-center">
-            <img src="/public/images/no-image.jpg" :alt="$t('app.contactPage.heroImageAlt')" class="max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
+          <div class="relative hidden justify-center lg:flex">
+            <img src="/images/no-image.jpg" :alt="$t('app.contactPage.heroImageAlt')" class="w-full max-w-[500px] rotate-3 rounded-lg shadow-2xl" />
             <div class="absolute bg-white text-green-600 px-4 py-3 rounded-lg shadow-lg" style="left: 70px; bottom: -15px">
               <div class="text-2xl font-bold">24/7</div>
               <div class="text-xs">{{ $t('app.contactPage.supportBadge') }}</div>
@@ -111,7 +112,7 @@ const handleSubmit = async (e: Event) => {
 
     <!-- Contact Cards -->
     <div class="max-w-7xl mx-auto px-4 mb-12">
-      <div class="relative z-1 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mt-[-7rem]">
+      <div class="relative z-10 mb-12 -mt-28 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         <!-- Call Card -->
         <div class="bg-white rounded-lg shadow-lg p-6 text-center">
           <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -148,7 +149,7 @@ const handleSubmit = async (e: Event) => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Contact Form -->
         <div class="lg:col-span-2">
-          <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="rounded-lg bg-white p-5 shadow-lg md:p-8">
             <h2 class="text-2xl font-bold mb-2">{{ $t('app.contactPage.formTitle') }}</h2>
             <p class="text-gray-600 mb-6">{{ $t('app.contactPage.formSubtitle') }}</p>
 
@@ -247,18 +248,6 @@ const handleSubmit = async (e: Event) => {
                 <div class="text-xs text-gray-600">{{ $t('app.contactPage.support247') }}</div>
               </div>
             </div>
-          </div>
-
-          <!-- Sustainable Report -->
-          <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-bold mb-3">{{ $t('app.contactPage.reportTitle') }}</h3>
-            <p class="text-gray-600 text-sm mb-4">
-              {{ $t('app.contactPage.reportText') }}
-            </p>
-            <a href="#" class="inline-flex items-center text-green-600 font-semibold hover:text-green-700">
-              {{ $t('app.contactPage.viewReport') }}
-              <ArrowRight class="w-4 h-4 ml-1" />
-            </a>
           </div>
         </div>
       </div>
