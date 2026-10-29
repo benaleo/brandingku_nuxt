@@ -780,6 +780,7 @@
       "proofHint": "Gambar atau PDF, maks. 5 MB",
       "moreDocuments": "Tampilkan dokumen lainnya ({count})",
       "fewerDocuments": "Tampilkan lebih sedikit",
+      "moreHistory": "Muat {count} riwayat lagi",
       "payBarDue": "Sisa tagihan {number}",
       "payNow": "Bayar sekarang",
       "viewProof": "Bukti",

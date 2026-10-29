@@ -780,6 +780,7 @@
       "proofHint": "Image or PDF, up to 5 MB",
       "moreDocuments": "Show other documents ({count})",
       "fewerDocuments": "Show less",
+      "moreHistory": "Load {count} more",
       "payBarDue": "Balance of {number}",
       "payNow": "Pay now",
       "viewProof": "Proof",

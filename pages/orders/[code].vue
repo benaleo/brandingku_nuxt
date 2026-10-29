@@ -194,6 +194,13 @@ const sortedDocs = computed(() => [...(order.value?.documents || [])].sort((a, b
 const visibleDocs = computed(() => sortedDocs.value.slice(0, docsShown.value))
 const docsHidden = computed(() => Math.max(0, sortedDocs.value.length - docsShown.value))
 
+// history newest first, five entries at a time
+const HISTORY_STEP = 5
+const historyShown = ref(HISTORY_STEP)
+const sortedEvents = computed(() => [...(order.value?.events || [])].reverse())
+const visibleEvents = computed(() => sortedEvents.value.slice(0, historyShown.value))
+const historyNext = computed(() => Math.min(HISTORY_STEP, sortedEvents.value.length - historyShown.value))
+
 // the first invoice the customer picked becomes payable right away
 function onPlanChosen(updated: Order) {
   order.value = updated
@@ -431,12 +438,23 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
           <section v-if="order.events.length" class="rounded-xl border bg-white p-5 text-sm shadow-sm">
             <h2 class="mb-2 font-semibold">{{ $t('app.orderPage.history') }}</h2>
             <ul class="space-y-1">
-              <li v-for="e in [...order.events].reverse()" :key="e.id" class="flex flex-wrap gap-x-2">
+              <li v-for="e in visibleEvents" :key="e.id" class="flex flex-wrap gap-x-2">
                 <span class="text-slate-500">{{ formatWhen(e.created_at) }}</span>
                 <span>{{ eventLabel(e.action) }}</span>
                 <span v-if="e.note" class="text-slate-500">· {{ e.note }}</span>
               </li>
             </ul>
+            <button
+              v-if="historyNext > 0"
+              type="button"
+              class="mt-3 w-full rounded-md border border-dashed py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+              @click="historyShown += HISTORY_STEP"
+            >
+              {{ $t('app.orderPage.moreHistory', {count: historyNext}) }}
+            </button>
+            <button v-else-if="historyShown > HISTORY_STEP" type="button" class="mt-2 w-full py-1 text-xs text-slate-500 hover:text-slate-700" @click="historyShown = HISTORY_STEP">
+              {{ $t('app.orderPage.fewerDocuments') }}
+            </button>
           </section>
 
           <ElementsDiscussionThread v-if="isQuote" subject-type="order" :subject-id="order.id" viewer="customer" />
