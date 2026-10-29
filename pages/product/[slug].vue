@@ -331,7 +331,7 @@ definePageMeta({
 </script>
 
 <template>
-  <HeaderProduct :title="detail?.name || ''" />
+  <HeaderProduct :title="detail?.name || (error ? $t('app.productPage.detail.product') : '')" />
 
   <!-- back fixed button -->
   <button
@@ -343,7 +343,46 @@ definePageMeta({
   </button>
 
   <div class="bg-white app-container px-4 pt-8 pb-28 md:pt-10 lg:pb-12">
-    <div v-if="loading" class="flex justify-center">{{ $t('app.productPage.detail.loading') }}</div>
+    <!-- skeleton until the product arrives -->
+    <div v-if="loading || (!detail && !error)" class="space-y-8" role="status" :aria-label="$t('app.productPage.detail.loading')">
+      <Skeleton class="h-4 w-56" />
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+        <div class="-mx-4 space-y-3 sm:mx-0">
+          <Skeleton class="aspect-square w-full rounded-none sm:rounded-xl" />
+          <div class="flex gap-2 px-4 sm:px-0">
+            <Skeleton v-for="i in 4" :key="i" class="size-16 rounded-lg" />
+          </div>
+        </div>
+        <div class="space-y-6 pr-0 md:pr-12">
+          <div class="space-y-2">
+            <Skeleton class="h-8 w-3/4" />
+            <Skeleton class="h-4 w-1/3" />
+          </div>
+          <Skeleton class="h-9 w-40" />
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-16" />
+            <div class="flex gap-2">
+              <Skeleton v-for="i in 3" :key="i" class="h-9 w-20 rounded-full" />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-16" />
+            <Skeleton class="h-9 w-[220px]" />
+          </div>
+          <Skeleton class="h-9 w-36" />
+          <div class="hidden gap-3 lg:flex">
+            <Skeleton class="h-9 flex-1" />
+            <Skeleton class="size-9" />
+            <Skeleton class="size-9" />
+          </div>
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-full" />
+            <Skeleton class="h-4 w-full" />
+            <Skeleton class="h-4 w-2/3" />
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-else-if="error" class="flex flex-col items-center gap-4 py-10 text-center">
       <p class="text-lg font-semibold text-gray-900">
         {{ error === "Product not found" ? $t('app.productPage.detail.notFound') : $t('app.productPage.detail.loadFailed') }}
