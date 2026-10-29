@@ -1033,7 +1033,10 @@
     "profileMenu": {
       "wishlist": "Wishlist",
       "logout": "Log out",
-      "logoutConfirm": "Log out of this account?"
+      "logoutConfirm": "Log out of this account?",
+      "console": "Console",
+      "logoutDescription": "You will be signed out of this account. Continue?",
+      "cancel": "Cancel"
     }
   }
 }
