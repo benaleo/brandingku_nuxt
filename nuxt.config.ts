@@ -8,6 +8,8 @@ export default defineNuxtConfig({
     enabled: false
   },
   css: ['~/assets/css/tailwind.css'],
+  // server sourcemaps push the Cloudflare bundle past the build machine's default Node heap
+  sourcemap: { server: false, client: false },
 
   vite: {
     plugins: [
