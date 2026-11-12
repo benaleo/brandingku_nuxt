@@ -27,7 +27,9 @@
       "description": "Kami menyediakan berbagai produk untuk memenuhi kebutuhan Anda. Hadirkan identitas brand Anda melalui pilihan merchandise berkualitas tinggi. Dari Tumbler hingga Fashion, kami siap mendukung kebutuhan korporasi Anda.",
       "ctaSearch": "Cari Produk",
       "ctaConsult": "Konsultasi",
-      "newArrival": "Produk Baru"
+      "newArrival": "Produk Baru",
+      "galleryPrev": "Gallery sebelumnya",
+      "galleryNext": "Gallery berikutnya"
     },
     "services": {
       "title": "Layanan Kami",
