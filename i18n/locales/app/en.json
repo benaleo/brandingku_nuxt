@@ -27,7 +27,9 @@
       "description": "We provide a wide range of products to meet your needs. Bring your brand identity to life through high-quality merchandise choices. From Tumblers to Fashion, we are ready to support your corporate needs.",
       "ctaSearch": "Browse Products",
       "ctaConsult": "Consultation",
-      "newArrival": "New Arrival"
+      "newArrival": "New Arrival",
+      "galleryPrev": "Previous gallery",
+      "galleryNext": "Next gallery"
     },
     "services": {
       "title": "Our Services",
