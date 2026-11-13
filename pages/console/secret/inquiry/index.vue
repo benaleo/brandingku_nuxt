@@ -74,6 +74,7 @@ const isFetch = ref<boolean>(false)
 watch(keyword, (newValue: string) => {
   if (newValue && newValue.length >= 3) {
     isFetch.value = true
+    pagination.value.page = 0
     setParams({keyword: newValue})
     reFetch()
   } else {

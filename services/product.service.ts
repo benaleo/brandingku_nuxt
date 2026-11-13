@@ -108,15 +108,6 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
             if (seq !== requestSeq) return
             let list = (res?.getProducts?.items || []) as any[]
 
-            // Apply client-side keyword filter for compatibility with useProductList
-            const kw = params.keyword?.toLowerCase()?.trim()
-            if (kw && kw.length >= 1) {
-                list = list.filter((x: any) =>
-                    (x.name || '').toLowerCase().includes(kw) ||
-                    (x.slug || '').toLowerCase().includes(kw)
-                )
-            }
-
             // Update pagination from server; keep local page 0-based
             pageInfo.value = res?.getProducts?.page_info || null
             if (pageInfo.value) {

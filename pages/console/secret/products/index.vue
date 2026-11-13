@@ -126,15 +126,13 @@ watch([selectedCategory, selectedHighlight, selectedActive], ([category, highlig
 const keyword = ref<string>('')
 const debouncedKeyword = refDebounced(keyword, 200)
 
-// keyword filtering is client-side on the loaded page, so typing never triggers a refetch
-const dataList = computed(() => {
-  const list = datas.value || []
-  const kw = debouncedKeyword.value.trim().toLowerCase()
-  if (!kw) return list
-  return list.filter((x: any) =>
-    (x.name || '').toLowerCase().includes(kw) || (x.slug || '').toLowerCase().includes(kw)
-  )
+// the keyword is searched by the API across the whole catalogue, not only the loaded page
+watch(debouncedKeyword, (kw) => {
+  pagination.value.page = 0
+  setParams({ keyword: kw.trim() || undefined })
 })
+
+const dataList = computed(() => datas.value || [])
 
 const paginationData = computed(() => ({
   page: pagination.value.page,

@@ -83,6 +83,7 @@ watch(keyword, (newValue: string) => {
   if (newValue && newValue.length >= 3) {
     isFetch.value = true
     // If 3 or more characters, set keyword param
+    pagination.value.page = 0
     setParams({keyword: newValue})
     reFetch()
   } else {

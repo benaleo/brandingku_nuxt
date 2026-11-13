@@ -54,7 +54,7 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
   const error = ref<string | null>(null);
   const pagination = ref({ page: 0, limit: 10, total: 0 });
   const pageInfo = ref<PageInfo | null>(null);
-  const params = reactive<{ status?: string }>({});
+  const params = reactive<{ status?: string; keyword?: string }>({});
 
   const detail = ref<ChatSession | null>(null);
   const messages = ref<ChatMessage[]>([]);
@@ -67,8 +67,8 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
     error.value = null;
     try {
       const query = `
-        query getChatSessions($pagination: PaginationInput, $status: String) {
-          getChatSessions(pagination: $pagination, status: $status) {
+        query getChatSessions($pagination: PaginationInput, $status: String, $keyword: String) {
+          getChatSessions(pagination: $pagination, status: $status, keyword: $keyword) {
             items { ${CHAT_SESSION_FIELDS} }
             page_info {
               current_page
@@ -88,6 +88,7 @@ export const useChatAdminService = (fetchResult?: boolean, sessionId?: number) =
       const variables = {
         pagination: { page: serverPage, limit: serverLimit, sortBy: "last_message_at,desc" },
         status: params.status,
+        keyword: params.keyword?.trim() || null,
       };
       const res = await gqlFetch<{ getChatSessions: ChatSessionConnection }>(
         query,

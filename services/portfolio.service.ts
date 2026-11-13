@@ -38,7 +38,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
         error.value = null
         try {
             const query = `
-                query getPortfolios($page: Int!, $limit: Int!, $is_active: Boolean) {
+                query getPortfolios($page: Int!, $limit: Int!, $is_active: Boolean, $keyword: String) {
                     getPortfolios(pagination: { page: $page, limit: $limit }, sort: { column: UPDATED_AT, direction: DESC }, is_active: $is_active) {
                         items {
                             id
@@ -71,24 +71,16 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
             const serverLimit = pagination.value.limit || 10
             const res = await gqlFetch<{ getPortfolios: PortfolioConnection }>(
                 query,
-                { 
-                    page: serverPage, 
-                    limit: serverLimit, 
-                    ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}) 
+                {
+                    page: serverPage,
+                    limit: serverLimit,
+                    ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}),
+                    keyword: params.keyword?.trim() || null,
+                    category: params.category || null,
                 },
                 { auth: true }
             )
             let list = (res?.getPortfolios?.items || []) as any[]
-
-            // Apply client-side keyword filter for compatibility
-            const kw = params.keyword?.toLowerCase()?.trim()
-            if (kw && kw.length >= 1) {
-                list = list.filter((x: any) =>
-                    (x.title || '').toLowerCase().includes(kw) ||
-                    (x.category || '').toLowerCase().includes(kw) ||
-                    (x.client || '').toLowerCase().includes(kw)
-                )
-            }
 
             // Update pagination from server; keep local page 0-based
             pageInfo.value = res?.getPortfolios?.page_info || null

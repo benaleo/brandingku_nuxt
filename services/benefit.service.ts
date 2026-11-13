@@ -21,7 +21,7 @@ export const useBenefitService = () => {
     error.value = null;
     try {
       const query = `
-        query GetBenefits($page: Int!, $limit: Int!, $is_active: Boolean) {
+        query GetBenefits($page: Int!, $limit: Int!, $is_active: Boolean, $keyword: String) {
           getBenefits(pagination: { page: $page, limit: $limit }, sort: { column: ORDERS, direction: ASC }, is_active: $is_active) {
             items {
               id
@@ -54,6 +54,7 @@ export const useBenefitService = () => {
         ...(params.is_active != null
           ? { is_active: Boolean(params.is_active) }
           : {}),
+        keyword: params.keyword?.trim() || null,
       };
 
       const res = await gqlFetch<{
@@ -80,12 +81,6 @@ export const useBenefitService = () => {
         // When API list doesn't include is_active, fallback to filter param or true
         is_active: params.is_active ?? true,
       }));
-
-      // benefit-side keyword filter (by name)
-      const kw = params.keyword?.toLowerCase()?.trim();
-      if (kw && kw.length >= 1) {
-        items = items.filter((x) => (x.name || "").toLowerCase().includes(kw));
-      }
 
       // Update pagination from server; keep local page 0-based
       pageInfo.value = res?.getBenefits?.page_info || null;

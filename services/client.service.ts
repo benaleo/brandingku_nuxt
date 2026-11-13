@@ -21,8 +21,8 @@ export const useClientService = () => {
     error.value = null
     try {
       const query = `
-        query GetClients($page: Int!, $limit: Int!, $is_active: Boolean) {
-          getClients(pagination: { page: $page, limit: $limit }, is_active: $is_active) {
+        query GetClients($page: Int!, $limit: Int!, $is_active: Boolean, $keyword: String) {
+          getClients(pagination: { page: $page, limit: $limit }, is_active: $is_active, keyword: $keyword) {
             items {
               id
               name
@@ -50,6 +50,7 @@ export const useClientService = () => {
         page: serverPage,
         limit: serverLimit,
         ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}),
+        keyword: params.keyword?.trim() || null,
       }
 
       const res = await gqlFetch<{
@@ -67,12 +68,6 @@ export const useClientService = () => {
         // When API list doesn't include is_active, fallback to filter param or true
         is_active: params.is_active ?? true,
       }))
-
-      // client-side keyword filter (by name)
-      const kw = params.keyword?.toLowerCase()?.trim()
-      if (kw && kw.length >= 1) {
-        items = items.filter((x) => (x.name || '').toLowerCase().includes(kw))
-      }
 
       // Update pagination from server; keep local page 0-based
       pageInfo.value = res?.getClients?.page_info || null

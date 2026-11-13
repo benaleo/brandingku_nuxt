@@ -21,8 +21,8 @@ export const useWebContactService = (fetchResult?: boolean, dataId?: string) => 
     error.value = null;
     try {
       const query = `
-        query getReportMessages($page: Int!, $limit: Int!) {
-          getReportMessages(pagination: {limit: $limit, page: $page}) {
+        query getReportMessages($page: Int!, $limit: Int!, $keyword: String) {
+          getReportMessages(pagination: {limit: $limit, page: $page}, keyword: $keyword) {
             items {
               id
               name
@@ -53,6 +53,7 @@ export const useWebContactService = (fetchResult?: boolean, dataId?: string) => 
       const variables: any = {
         page: serverPage,
         limit: serverLimit,
+        keyword: params.keyword?.trim() || null,
       };
 
       const res = await gqlFetch<{
@@ -73,16 +74,6 @@ export const useWebContactService = (fetchResult?: boolean, dataId?: string) => 
         created_at: it.created_at,
         created_by: it.created_by,
       }));
-
-      // keyword filter (by name, email, subject)
-      const kw = params.keyword?.toLowerCase()?.trim();
-      if (kw && kw.length >= 1) {
-        items = items.filter((x) =>
-          (x.name || "").toLowerCase().includes(kw) ||
-          (x.email || "").toLowerCase().includes(kw) ||
-          (x.subject || "").toLowerCase().includes(kw)
-        );
-      }
 
       // Update pagination from server; keep local page 0-based
       pageInfo.value = res?.getReportMessages?.page_info || null;

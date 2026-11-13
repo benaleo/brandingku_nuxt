@@ -32,7 +32,8 @@
 import AppBreadcrumb from "~/components/elements/AppBreadcrumb.vue"
 import {chatSessionColumns} from '~/components/datatables/chatSessionColumns'
 import {useChatAdminService} from '~/services/chat-admin.service'
-import {computed, ref} from 'vue'
+import {computed, ref, watch} from 'vue'
+import {refDebounced} from '@vueuse/core'
 import AppTableHeader from "~/components/elements/AppTableHeader.vue";
 import AppFilterTable from "~/components/elements/AppFilterTable.vue";
 
@@ -43,16 +44,12 @@ const {
   pagination,
   changePage,
   changeLimit,
+  setParams,
+  reFetch,
 } = useChatAdminService(true)
 
-const dataList = computed(() => {
-  const list = datas.value || []
-  const kw = keyword.value.trim().toLowerCase()
-  if (!kw || kw.length < 3) return list
-  return list.filter((s) =>
-    s.name?.toLowerCase().includes(kw) || s.contact_value?.toLowerCase().includes(kw)
-  )
-})
+// the keyword is searched by the API across every session, not only the loaded page
+const dataList = computed(() => datas.value || [])
 
 const paginationData = computed(() => ({
   page: pagination.value.page,
@@ -68,8 +65,13 @@ const onLimitChange = (limit: number) => {
   changeLimit(limit)
 }
 
-// Filter options (client-side — backend has no keyword search for chat sessions)
 const keyword = ref<string>('')
+const debouncedKeyword = refDebounced(keyword, 300)
+watch(debouncedKeyword, (value) => {
+  pagination.value.page = 0
+  setParams({ keyword: value.trim() || undefined })
+  reFetch()
+})
 
 const pageTitle = 'Live Chat';
 

@@ -29,8 +29,8 @@ export const useTestimonialService = (initial: TestimonialParams = {}) => {
     error.value = null;
     try {
       const query = `
-        query GetTestimonials($page: Int!, $limit: Int!, $is_active: Boolean, $placement: String, $product_id: Int, $source: String, $stars: Int) {
-          getTestimonials(pagination: { page: $page, limit: $limit }, is_active: $is_active, placement: $placement, product_id: $product_id, source: $source, stars: $stars) {
+        query GetTestimonials($page: Int!, $limit: Int!, $is_active: Boolean, $placement: String, $product_id: Int, $source: String, $stars: Int, $keyword: String) {
+          getTestimonials(pagination: { page: $page, limit: $limit }, is_active: $is_active, placement: $placement, product_id: $product_id, source: $source, stars: $stars, keyword: $keyword) {
             items { ${FIELDS} }
             page_info {
               current_page
@@ -59,6 +59,7 @@ export const useTestimonialService = (initial: TestimonialParams = {}) => {
         product_id: params.product_id ?? null,
         source: params.source || null,
         stars: params.stars ?? null,
+        keyword: params.keyword?.trim() || null,
       };
 
       const res = await gqlFetch<{
@@ -69,12 +70,6 @@ export const useTestimonialService = (initial: TestimonialParams = {}) => {
       }>(query, variables, { auth: true });
 
       let items: Testimonial[] = (res?.getTestimonials?.items || []).map(toTestimonial);
-
-      // testimonial-side keyword filter (by name)
-      const kw = params.keyword?.toLowerCase()?.trim();
-      if (kw && kw.length >= 1) {
-        items = items.filter((x) => (x.name || "").toLowerCase().includes(kw));
-      }
 
       // Update pagination from server; keep local page 0-based
       pageInfo.value = res?.getTestimonials?.page_info || null;
