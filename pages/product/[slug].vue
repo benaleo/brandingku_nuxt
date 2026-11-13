@@ -28,28 +28,59 @@ const {
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
-// branding samples: a vertical list that scrolls through the techniques; each thumbnail opens
-// a blurred preview. Only more than two techniques need the infinite loop.
+// Layanan branding: nama bisa diklik, satu thumbnail 150x150 berganti mengikuti pilihan dan
+// otomatis maju tiap 2 detik. Klik thumbnail membuka preview.
 type BrandingSample = { id: number; name: string; description: string; image: string };
-const activeSample = ref<BrandingSample | null>(null);
+const ROTATE_MS = 2000;
 const sampleList = computed<BrandingSample[]>(() => detail.value?.samples || []);
-const sampleMarquee = computed<BrandingSample[]>(() =>
-  sampleList.value.length > 2 ? [...sampleList.value, ...sampleList.value] : sampleList.value
-);
-const sampleMarqueeDuration = computed(() => `${Math.max(12, sampleList.value.length * 5)}s`);
-const openSample = (sample: BrandingSample) => { activeSample.value = sample };
-const closeSample = () => { activeSample.value = null };
+const currentIndex = ref(0);
+const currentSample = computed<BrandingSample | null>(() => sampleList.value[currentIndex.value] ?? null);
+const previewSample = ref<BrandingSample | null>(null);
 const sampleSrc = (path: string) => `${STORAGE_URL}${path}`;
 
-const onSampleKeydown = (event: KeyboardEvent) => {
-  if (event.key === "Escape") closeSample();
+let rotateTimer: ReturnType<typeof setInterval> | null = null;
+const stopRotation = () => {
+  if (rotateTimer) {
+    clearInterval(rotateTimer);
+    rotateTimer = null;
+  }
 };
-onMounted(() => window.addEventListener("keydown", onSampleKeydown));
+const startRotation = () => {
+  stopRotation();
+  if (!import.meta.client || sampleList.value.length < 2) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  rotateTimer = setInterval(() => {
+    if (document.hidden || previewSample.value) return;
+    currentIndex.value = (currentIndex.value + 1) % sampleList.value.length;
+  }, ROTATE_MS);
+};
+// a click restarts the two seconds so the chosen sample is readable
+const selectSample = (index: number) => {
+  currentIndex.value = index;
+  startRotation();
+};
+const openPreview = () => {
+  if (currentSample.value) previewSample.value = currentSample.value;
+};
+const closePreview = () => { previewSample.value = null };
+
+const onSampleKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Escape") closePreview();
+};
+onMounted(() => {
+  startRotation();
+  window.addEventListener("keydown", onSampleKeydown);
+});
 onBeforeUnmount(() => {
+  stopRotation();
   window.removeEventListener("keydown", onSampleKeydown);
   document.body.style.overflow = "";
 });
-watch(activeSample, (open) => {
+watch(sampleList, () => {
+  currentIndex.value = 0;
+  startRotation();
+});
+watch(previewSample, (open) => {
   if (import.meta.client) document.body.style.overflow = open ? "hidden" : "";
 });
 
@@ -685,45 +716,52 @@ definePageMeta({
             </div>
           </div>
 
-          <!-- Branding services: name on the left, 150x150 sample on the right -->
+          <!-- Layanan branding: klik nama untuk ganti sample, otomatis berganti tiap 2 detik -->
           <section v-if="sampleList.length" class="mt-8" aria-labelledby="branding-services-title">
             <h3 id="branding-services-title" class="mb-3 font-medium">
               {{ $t('app.productPage.detail.brandingServices') }}
             </h3>
             <div
-              class="branding-list relative overflow-hidden rounded-xl border bg-white"
-              :class="{ 'branding-list--animated': sampleList.length > 2 }"
-              :style="{ '--branding-duration': sampleMarqueeDuration }"
+              class="flex items-start justify-between gap-4 rounded-xl border bg-white p-4"
+              @mouseenter="stopRotation"
+              @mouseleave="startRotation"
+              @focusin="stopRotation"
+              @focusout="startRotation"
             >
-              <ul class="branding-list__track">
-                <li
-                  v-for="(sample, index) in sampleMarquee"
-                  :key="`${sample.id}-${index}`"
-                  class="flex items-center justify-between gap-4 border-b px-4 py-3 last:border-b-0"
-                >
-                  <div class="min-w-0">
-                    <p class="text-sm font-medium text-gray-900">{{ sample.name }}</p>
-                    <p v-if="sample.description" class="mt-0.5 line-clamp-2 text-xs text-gray-500">
-                      {{ sample.description }}
-                    </p>
-                  </div>
+              <ul class="min-w-0 flex-1">
+                <li v-for="(sample, index) in sampleList" :key="sample.id">
                   <button
                     type="button"
-                    class="shrink-0 overflow-hidden rounded-lg ring-1 ring-gray-200 transition hover:ring-green-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
-                    :aria-label="sample.name"
-                    @click="openSample(sample)"
+                    class="w-full rounded-lg px-2 py-1.5 text-left text-sm transition-colors"
+                    :class="index === currentIndex ? 'bg-green-50 font-medium text-green-800' : 'text-gray-700 hover:bg-gray-50'"
+                    :aria-pressed="index === currentIndex"
+                    @click="selectSample(index)"
                   >
-                    <img
-                      :src="sampleSrc(sample.image)"
-                      :alt="sample.name"
-                      width="150"
-                      height="150"
-                      loading="lazy"
-                      class="h-[150px] w-[150px] bg-gray-50 object-cover"
-                    />
+                    {{ sample.name }}
+                    <span v-if="sample.description" class="mt-0.5 block truncate text-xs font-normal text-gray-500">
+                      {{ sample.description }}
+                    </span>
                   </button>
                 </li>
               </ul>
+              <button
+                v-if="currentSample"
+                type="button"
+                class="shrink-0 self-center overflow-hidden rounded-lg ring-1 ring-gray-200 transition hover:ring-green-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                :aria-label="currentSample.name"
+                @click="openPreview"
+              >
+                <Transition name="sample-fade" mode="out-in">
+                  <img
+                    :key="currentSample.id"
+                    :src="sampleSrc(currentSample.image)"
+                    :alt="currentSample.name"
+                    width="150"
+                    height="150"
+                    class="h-[150px] w-[150px] bg-white object-contain"
+                  />
+                </Transition>
+              </button>
             </div>
           </section>
 
@@ -772,54 +810,40 @@ definePageMeta({
   <!-- preview of one branding sample -->
   <Teleport to="body">
     <div
-      v-if="activeSample"
+      v-if="previewSample"
       class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
-      :aria-label="activeSample.name"
-      @click.self="closeSample"
+      :aria-label="previewSample.name"
+      @click.self="closePreview"
     >
       <button
         type="button"
         class="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
         aria-label="Tutup"
-        @click="closeSample"
+        @click="closePreview"
       >
         <X class="size-5" />
       </button>
       <figure class="max-h-[88vh] max-w-[92vw]">
         <img
-          :src="sampleSrc(activeSample.image)"
-          :alt="activeSample.name"
+          :src="sampleSrc(previewSample.image)"
+          :alt="previewSample.name"
           class="max-h-[80vh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
         />
-        <figcaption class="mt-3 text-center text-sm text-white/90">{{ activeSample.name }}</figcaption>
+        <figcaption class="mt-3 text-center text-sm text-white/90">{{ previewSample.name }}</figcaption>
       </figure>
     </div>
   </Teleport>
 </template>
 
 <style scoped>
-.branding-list__track {
-  animation: none;
+.sample-fade-enter-active,
+.sample-fade-leave-active {
+  transition: opacity 0.15s ease;
 }
-.branding-list--animated {
-  max-height: 522px; /* three rows of a 150 px thumbnail plus padding */
-}
-.branding-list--animated .branding-list__track {
-  animation: branding-scroll var(--branding-duration, 24s) linear infinite;
-}
-.branding-list--animated:hover .branding-list__track,
-.branding-list--animated:focus-within .branding-list__track {
-  animation-play-state: paused;
-}
-@keyframes branding-scroll {
-  from { transform: translateY(0); }
-  to { transform: translateY(-50%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .branding-list--animated .branding-list__track {
-    animation: none;
-  }
+.sample-fade-enter-from,
+.sample-fade-leave-to {
+  opacity: 0;
 }
 </style>
