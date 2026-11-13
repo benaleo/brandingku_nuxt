@@ -28,6 +28,10 @@ export default defineEventHandler(async (event) => {
     else if (token) headers['Authorization'] = `Bearer ${token}`
     const guestId = getHeader(event, 'x-chat-guest-id')
     if (guestId) headers['X-Chat-Guest-Id'] = guestId
+  // forward the visitor address so the API's per-client rate limits see the real caller
+  // instead of the Cloudflare egress IP shared by every request
+  const clientIP = getHeader(event, 'cf-connecting-ip') || getHeader(event, 'x-forwarded-for') || ''
+  if (clientIP) headers['X-Forwarded-For'] = clientIP
 
     // Normalize upstream endpoint and detect potential recursion
     let upstream = ''

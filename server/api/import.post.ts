@@ -42,6 +42,10 @@ export default defineEventHandler(async (event) => {
   }
   if (reqAuth) headers['Authorization'] = reqAuth
   else if (token) headers['Authorization'] = `Bearer ${token}`
+  // forward the visitor address so the API's per-client rate limits see the real caller
+  // instead of the Cloudflare egress IP shared by every request
+  const clientIP = getHeader(event, 'cf-connecting-ip') || getHeader(event, 'x-forwarded-for') || ''
+  if (clientIP) headers['X-Forwarded-For'] = clientIP
 
   try {
     // `.raw` keeps the upstream status (202 queued, 200 dry run, 4xx/5xx errors).
@@ -55,6 +59,13 @@ export default defineEventHandler(async (event) => {
       retry: 0,
       responseType: 'json',
     })
+    // The API answers HTML (playground) when the import route does not exist yet, i.e. the
+    // backend still runs an older image. Report that instead of returning HTML as data.
+    const upstreamType = res.headers.get('content-type') || ''
+    if (!upstreamType.includes('application/json')) {
+      setResponseStatus(event, 502)
+      return { error: 'API masih versi lama dan belum mendukung import produk. Deploy ulang API (image terbaru) lalu coba lagi.' }
+    }
     setResponseStatus(event, res.status)
     return res._data
   } catch (err: any) {

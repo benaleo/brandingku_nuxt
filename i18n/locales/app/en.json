@@ -259,7 +259,10 @@
         "wholesalePrice": "Price per piece",
         "qtyRange": "{from} - {to} pcs",
         "qtyFrom": "{from}+ pcs",
-        "requestQuote": "Request a quotation"
+        "requestQuote": "Request a quotation",
+        "brandingSamples": "Branding Samples",
+        "brandingSamplesHint": "Example results of each branding technique for this product.",
+        "brandingServices": "Branding Services"
       },
       "quickViewDialog": {
         "category": "Category:",

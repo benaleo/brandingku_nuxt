@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart } from "lucide-vue-next";
+import { ArrowLeftIcon, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart, X } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const route = useRoute();
@@ -27,6 +27,31 @@ const {
 } = useProductDetail(slug.value);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+
+// branding samples: a vertical list that scrolls through the techniques; each thumbnail opens
+// a blurred preview. Only more than two techniques need the infinite loop.
+type BrandingSample = { id: number; name: string; description: string; image: string };
+const activeSample = ref<BrandingSample | null>(null);
+const sampleList = computed<BrandingSample[]>(() => detail.value?.samples || []);
+const sampleMarquee = computed<BrandingSample[]>(() =>
+  sampleList.value.length > 2 ? [...sampleList.value, ...sampleList.value] : sampleList.value
+);
+const sampleMarqueeDuration = computed(() => `${Math.max(12, sampleList.value.length * 5)}s`);
+const openSample = (sample: BrandingSample) => { activeSample.value = sample };
+const closeSample = () => { activeSample.value = null };
+const sampleSrc = (path: string) => `${STORAGE_URL}${path}`;
+
+const onSampleKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Escape") closeSample();
+};
+onMounted(() => window.addEventListener("keydown", onSampleKeydown));
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onSampleKeydown);
+  document.body.style.overflow = "";
+});
+watch(activeSample, (open) => {
+  if (import.meta.client) document.body.style.overflow = open ? "hidden" : "";
+});
 
 const { token, createWishlist } = useWishlist();
 
@@ -660,6 +685,48 @@ definePageMeta({
             </div>
           </div>
 
+          <!-- Branding services: name on the left, 150x150 sample on the right -->
+          <section v-if="sampleList.length" class="mt-8" aria-labelledby="branding-services-title">
+            <h3 id="branding-services-title" class="mb-3 font-medium">
+              {{ $t('app.productPage.detail.brandingServices') }}
+            </h3>
+            <div
+              class="branding-list relative overflow-hidden rounded-xl border bg-white"
+              :class="{ 'branding-list--animated': sampleList.length > 2 }"
+              :style="{ '--branding-duration': sampleMarqueeDuration }"
+            >
+              <ul class="branding-list__track">
+                <li
+                  v-for="(sample, index) in sampleMarquee"
+                  :key="`${sample.id}-${index}`"
+                  class="flex items-center justify-between gap-4 border-b px-4 py-3 last:border-b-0"
+                >
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900">{{ sample.name }}</p>
+                    <p v-if="sample.description" class="mt-0.5 line-clamp-2 text-xs text-gray-500">
+                      {{ sample.description }}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    class="shrink-0 overflow-hidden rounded-lg ring-1 ring-gray-200 transition hover:ring-green-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                    :aria-label="sample.name"
+                    @click="openSample(sample)"
+                  >
+                    <img
+                      :src="sampleSrc(sample.image)"
+                      :alt="sample.name"
+                      width="150"
+                      height="150"
+                      loading="lazy"
+                      class="h-[150px] w-[150px] bg-gray-50 object-cover"
+                    />
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </section>
+
           <!-- Description -->
           <div v-if="detail.description" class="mt-8">
             <h3 class="font-medium mb-3">{{ $t('app.productPage.detail.description') }}</h3>
@@ -701,4 +768,58 @@ definePageMeta({
       <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" linked-only />
     </div>
   </div>
+
+  <!-- preview of one branding sample -->
+  <Teleport to="body">
+    <div
+      v-if="activeSample"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="activeSample.name"
+      @click.self="closeSample"
+    >
+      <button
+        type="button"
+        class="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+        aria-label="Tutup"
+        @click="closeSample"
+      >
+        <X class="size-5" />
+      </button>
+      <figure class="max-h-[88vh] max-w-[92vw]">
+        <img
+          :src="sampleSrc(activeSample.image)"
+          :alt="activeSample.name"
+          class="max-h-[80vh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
+        />
+        <figcaption class="mt-3 text-center text-sm text-white/90">{{ activeSample.name }}</figcaption>
+      </figure>
+    </div>
+  </Teleport>
 </template>
+
+<style scoped>
+.branding-list__track {
+  animation: none;
+}
+.branding-list--animated {
+  max-height: 522px; /* three rows of a 150 px thumbnail plus padding */
+}
+.branding-list--animated .branding-list__track {
+  animation: branding-scroll var(--branding-duration, 24s) linear infinite;
+}
+.branding-list--animated:hover .branding-list__track,
+.branding-list--animated:focus-within .branding-list__track {
+  animation-play-state: paused;
+}
+@keyframes branding-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .branding-list--animated .branding-list__track {
+    animation: none;
+  }
+}
+</style>

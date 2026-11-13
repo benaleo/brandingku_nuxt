@@ -259,7 +259,10 @@
         "wholesalePrice": "Harga per pcs",
         "qtyRange": "{from} - {to} pcs",
         "qtyFrom": "≥ {from} pcs",
-        "requestQuote": "Minta penawaran"
+        "requestQuote": "Minta penawaran",
+        "brandingSamples": "Contoh Hasil Branding",
+        "brandingSamplesHint": "Contoh hasil tiap teknik branding untuk produk ini.",
+        "brandingServices": "Layanan Branding"
       },
       "quickViewDialog": {
         "category": "Kategori:",

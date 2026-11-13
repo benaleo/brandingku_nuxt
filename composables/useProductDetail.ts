@@ -30,6 +30,9 @@ export type ProductDetail = {
   }>
   // branding methods the customer can choose, each priced per piece from a minimum quantity
   brandings: { id: number; name: string; description: string; tiers: { min_qty: number; price: number }[] }[]
+  // example picture of each branding technique installed on the product; shown even before
+  // the branding prices are configured
+  samples: { id: number; name: string; description: string; image: string }[]
 }
 
 export const useProductDetail = (initialSlug: string) => {
@@ -74,6 +77,7 @@ export const useProductDetail = (initialSlug: string) => {
               price_tiers { min_qty price }
             }
             brandings { branding_method_id name description tiers { min_qty price } }
+            branding_samples { branding_method_id name description image }
             created_at
             updated_at
           }
@@ -182,6 +186,14 @@ export const useProductDetail = (initialSlug: string) => {
             .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
             .sort((x: any, y: any) => x.min_qty - y.min_qty),
         })),
+        samples: (p.branding_samples || [])
+          .filter((b: any) => b?.image)
+          .map((b: any) => ({
+            id: Number(b.branding_method_id),
+            name: String(b.name || ''),
+            description: String(b.description || ''),
+            image: String(b.image || ''),
+          })),
       }
     } catch (e: any) {
       error.value = e?.message || 'Failed to fetch product detail'

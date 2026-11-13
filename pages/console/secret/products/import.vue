@@ -217,7 +217,9 @@ const startImport = async () => {
     const handle = service.poll(result.job_id, onJobUpdate, {
       onError: (error) => {
         stopPoll = null
-        uploadError.value = importErrorMessage(error)
+        uploadError.value = error instanceof Error && error.message
+          ? error.message
+          : importErrorMessage(error)
         toast.error(uploadError.value)
       },
     })

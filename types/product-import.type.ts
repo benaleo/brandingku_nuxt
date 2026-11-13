@@ -85,7 +85,9 @@ export interface ProductImportPollOptions {
   intervalMs?: number
   /** Stops the loop when aborted, e.g. from `onBeforeUnmount`. */
   signal?: AbortSignal
-  /** Called once when a status request fails; the loop stops afterwards. */
+  /** Consecutive failed status requests tolerated before the loop gives up. Defaults to 8. */
+  maxConsecutiveFailures?: number
+  /** Called once when the loop gives up, e.g. the job no longer exists on the server. */
   onError?: (error: unknown) => void
 }
 
