@@ -4,7 +4,17 @@
     <AppBreadcrumb/>
 
     <!-- Table Header -->
-    <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'"/>
+    <AppTableHeader :pageTitle="pageTitle" :create-path="'/console/secret/products/add'">
+      <template #actions>
+        <UiButton
+          v-if="canVisit('/console/secret/products/import')"
+          variant="outline"
+          @click="router.push('/console/secret/products/import')"
+        >
+          <Upload class="size-4" /> Import Excel
+        </UiButton>
+      </template>
+    </AppTableHeader>
 
     <!-- Filter -->
     <AppFilterTable v-model="keyword"
@@ -66,6 +76,10 @@ import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue
 import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import {useOptionProductCategories} from "~/composables/useOptionProductCategories";
 import type { ProductGallery } from "~/types/products.type";
+import { Upload } from 'lucide-vue-next'
+
+const router = useRouter()
+const { canVisit } = useConsoleAccess()
 
 const {
   datas,

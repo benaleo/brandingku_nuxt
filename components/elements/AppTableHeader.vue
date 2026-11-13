@@ -18,7 +18,11 @@ const handleAdd = (path : string) => {
 <template>
   <div class="flex justify-between items-center mb-2">
     <h1 class="text-2xl font-bold mt-4">{{ pageTitle }}</h1>
-    <Button v-if="createPath && canVisit(createPath)" @click="handleAdd(createPath)" variant="primary">Tambah +</Button>
+    <div class="flex items-center gap-2">
+      <!-- extra page actions, rendered before the primary create button -->
+      <slot name="actions" />
+      <Button v-if="createPath && canVisit(createPath)" @click="handleAdd(createPath)" variant="primary">Tambah +</Button>
+    </div>
   </div>
 </template>
 
