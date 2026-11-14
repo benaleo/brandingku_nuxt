@@ -5,33 +5,35 @@ import StarRating from "~/components/elements/StarRating.vue";
 import type {Testimonial} from "~/types/testimonial.type";
 // Removed Button import; using simple anchor link for navigation
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const testimonialColumns: ColumnDef<Testimonial>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({row}) => {
-            const index = row.index + 1
+        cell: ({row, table}) => {
+            const index = row.index + 1 + rowOffsetOf(table)
             return index
         }
     },
     {
         accessorKey: 'name',
         header: () => h('div', {class: 'text-left'}, 'Nama'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return h('div', {class: 'text-left font-medium'}, row.getValue('name'))
         },
     },
     {
         accessorKey: 'job',
         header: () => h('div', {class: 'text-left'}, 'Pekerjaan / perusahaan'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return h('div', {class: 'text-left'}, row.getValue('job'))
         },
     },
     {
         accessorKey: 'content',
         header: () => h('div', {class: 'text-left'}, 'Konten'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const content = row.getValue('content') as string
             return h('div', {class: 'text-left max-w-[300px] truncate'}, content)
         },
@@ -39,7 +41,7 @@ export const testimonialColumns: ColumnDef<Testimonial>[] = [
     {
         accessorKey: 'rating',
         header: () => h('div', {class: 'text-left'}, 'Rating'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const rating = row.getValue('rating') as number
             return h('div', {class: 'text-left flex items-center gap-1'}, [
                 h('span', {}, rating.toLocaleString('id-ID')),
@@ -50,7 +52,7 @@ export const testimonialColumns: ColumnDef<Testimonial>[] = [
     {
         accessorKey: 'placement',
         header: () => h('div', {class: 'text-left'}, 'Tampil di'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const t = row.original
             return h('div', {class: 'text-left'}, t.placement === 'product' ? `Produk: ${t.product_name}` : 'Landing page')
         },
@@ -58,7 +60,7 @@ export const testimonialColumns: ColumnDef<Testimonial>[] = [
     {
         accessorKey: 'order_id',
         header: () => h('div', {class: 'text-left'}, 'Sumber'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const t = row.original
             if (!t.order_id) return h('div', {class: 'text-left text-muted-foreground'}, 'Console')
             return h('div', {class: 'text-left space-y-0.5'}, [
@@ -70,14 +72,14 @@ export const testimonialColumns: ColumnDef<Testimonial>[] = [
     {
         accessorKey: 'orders',
         header: () => h('div', {class: 'text-left'}, 'Urutan'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return h('div', {class: 'text-left'}, String(row.getValue('orders')))
         },
     },
     {
         accessorKey: 'is_active',
         header: () => h('div', {class: 'text-left'}, 'Status'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const isActive = row.getValue('is_active') as boolean
             return h('div', {class: 'text-left'}, [
                 h('span', {

@@ -4,12 +4,14 @@ import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue
 import type {Inquiry} from "~/types/inquiry.type";
 import { Badge } from '@/components/ui/badge'
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const inquiryColumns: ColumnDef<Inquiry>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({row}) => {
-            return row.index + 1
+        cell: ({row, table}) => {
+            return row.index + 1 + rowOffsetOf(table)
         }
     },
     {
@@ -19,7 +21,7 @@ export const inquiryColumns: ColumnDef<Inquiry>[] = [
     {
         accessorKey: 'status',
         header: 'Status',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const status = row.getValue('status') as string;
             const statuses: Record<string, [string, string]> = {
                 'pending': ['Baru', 'bg-yellow-100 text-yellow-800'],
@@ -42,7 +44,7 @@ export const inquiryColumns: ColumnDef<Inquiry>[] = [
     {
         accessorKey: 'created_at',
         header: 'Created At',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return formatDateTime(row.original.created_at)
         },
     },

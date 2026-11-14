@@ -7,19 +7,21 @@ import type {ProductCategory} from "~/types/products.type";
 // Removed Button import; using simple anchor link for navigation
 
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({row}) => {
-            const index = row.index + 1
+        cell: ({row, table}) => {
+            const index = row.index + 1 + rowOffsetOf(table)
             return index
         }
     },
     {
         accessorKey: 'image',
         header: () => h('div', {class: 'text-left'}, 'Image'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
             const src: string = row.getValue('image') ? `${STORAGE_URL}${row.getValue('image')}` : `/images/no-image.jpg`
             return h('div', {class: 'flex items-center justify-center overflow-hidden h-[60px]'}, [
@@ -30,14 +32,14 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
     {
         accessorKey: 'name',
         header: () => h('div', {class: 'text-left'}, 'Nama'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return h('div', {class: 'text-left font-medium'}, row.getValue('name'))
         },
     },
     {
         accessorKey: 'sub_categories',
         header: () => h('div', {class: 'text-left'}, 'Sub Categories'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const subCategories : string[] = row.getValue('sub_categories') ?? []
             return h('div', {
                 class: 'text-left font-medium rounded-md flex items-top flex-wrap space-x-1 space-y-1',
@@ -50,7 +52,7 @@ export const productCategoryColumns: ColumnDef<ProductCategory>[] = [
     {
         accessorKey: 'updated_at',
         header: 'Timestamp',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return h('div', {class: 'text-left'}, formatDateTime(row.original.updated_at))
         },
     },

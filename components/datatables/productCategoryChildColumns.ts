@@ -5,16 +5,18 @@ import AppConfirmDeleteDialog from '~/components/elements/AppConfirmDeleteDialog
 import type { ProductCategory } from '~/types/products.type'
 import GeneralColumnAction from './GeneralColumnAction.vue'
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const productCategoryChildColumns: ColumnDef<ProductCategory>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => row.index + 1,
+    cell: ({ row, table }) => row.index + 1 + rowOffsetOf(table),
   },
   {
     accessorKey: 'image',
     header: () => h('div', { class: 'text-left' }, 'Image'),
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
       const raw: string | null = row.getValue('image')
       const src: string = raw ? `${STORAGE_URL}${raw}` : '/images/no-image.jpg'

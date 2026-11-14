@@ -37,18 +37,20 @@ const flagCell = (
     ])
 }
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({row}) => {
-            return row.index + 1
+        cell: ({row, table}) => {
+            return row.index + 1 + rowOffsetOf(table)
         }
     },
     {
         accessorKey: 'image',
         header: () => h('div', {class: 'text-left'}, 'Image'),
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const config = useRuntimeConfig();
             const STORAGE_URL = config.public.STORAGE_URL;
             const image = row.getValue('image') as string | undefined
@@ -79,7 +81,7 @@ export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'updated_at',
         header: 'Timestamp',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return formatDateTime(row.original.updated_at)
         },
     },

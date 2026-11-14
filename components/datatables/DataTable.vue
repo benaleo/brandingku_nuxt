@@ -44,19 +44,26 @@ const emit = defineEmits<{
   (e: 'limit-change', limit: number): void
 }>()
 
+// normalize pagination to support passing a Ref or plain object
+const pg = computed<PaginationProp | undefined>(() => {
+  const p: any = props.pagination as any
+  return p && typeof p === 'object' && 'value' in p ? p.value : props.pagination
+})
+
+// the number of rows on the pages before this one, so an ID column can keep counting
+const rowOffset = computed(() => {
+  const current = pg.value
+  if (!current) return 0
+  return Math.max(0, current.page) * Math.max(1, current.limit)
+})
+
 const table = useVueTable({
   get data() { return props.data },
   get columns() { return props.columns },
   get manualPagination() { return !!props.pagination },
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
-  meta: props.meta,
-})
-
-// normalize pagination to support passing a Ref or plain object
-const pg = computed<PaginationProp | undefined>(() => {
-  const p: any = props.pagination as any
-  return p && typeof p === 'object' && 'value' in p ? p.value : props.pagination
+  get meta() { return { ...(props.meta ?? {}), rowOffset: rowOffset.value } },
 })
 
 const totalPages = computed(() => {
