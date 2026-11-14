@@ -50,6 +50,7 @@ export const useFeaturedProduct = () => {
                 discount
                 discount_type
                 attributes
+                is_active
               }
               created_at
               updated_at
@@ -75,10 +76,13 @@ export const useFeaturedProduct = () => {
         galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
         const image = galleries[0]?.image || p.image || undefined
 
+        // active variants only
+        const additionals = (p.additionals || []).filter((a: any) => a?.is_active !== false)
+
         // compute pricing (min base vs min discounted across additionals)
         let minBase = Infinity
         let minAfter = Infinity
-        for (const a of p.additionals || []) {
+        for (const a of additionals) {
           const base = Number(a?.price) || 0
           minBase = Math.min(minBase, base)
           let after = base
@@ -107,8 +111,8 @@ export const useFeaturedProduct = () => {
           is_upsell: !!p.is_upsell,
           price: Number(minAfter.toFixed(2)),
           originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
-          cartVariant: p.additionals?.length === 1 && Number(p.additionals[0]?.price) > 0
-            ? { id: Number(p.additionals[0].id), moq: Math.max(1, Number(p.additionals[0].moq) || 1) }
+          cartVariant: additionals.length === 1 && Number(additionals[0]?.price) > 0
+            ? { id: Number(additionals[0].id), moq: Math.max(1, Number(additionals[0].moq) || 1) }
             : null,
         }
       })

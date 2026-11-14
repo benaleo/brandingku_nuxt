@@ -16,6 +16,7 @@ export const useDashboardService = () => {
           orders_by_status { key count }
           top_products { product_id name image quantity revenue }
           recent_orders { id code type status customer_name total created_at }
+          profit { sales cost gross_profit orders previous_sales previous_gross_profit missing_cost_items }
           attention { payment_proofs awaiting_shipping_fee quotation_requests quotation_revisions guarantee_claims pending_testimonials open_inquiries unread_chats }
         }
       }`,

@@ -252,6 +252,7 @@ watch(() => props.categoryId, (id) => {
 // MARK : PRODUCT CARD
 const productMinPrice = (p: any) => {
   const prices = (Array.isArray(p?.additionals) ? p.additionals : [])
+    .filter((a: any) => a?.is_active !== false)
     .map((a: any) => Number(a?.price) || 0)
     .filter((n: number) => n > 0);
   return prices.length ? Math.min(...prices) : 0;

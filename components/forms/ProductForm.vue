@@ -61,6 +61,8 @@ const formSchema = toTypedSchema(
           discount: z.coerce.number().int("Discount must be an integer"),
           discount_type: z.string().min(1, "Discount type is required"),
           attributes: z.string().optional().default(""),
+          capital_price: z.coerce.number().int("Harga modal must be an integer").min(0).nullable().optional(),
+          is_active: z.boolean().optional().default(true),
           price_tiers: z.array(z.object({ min_qty: z.coerce.number(), price: z.coerce.number() })).optional(),
         })
       )
@@ -94,6 +96,8 @@ const {
         discount: 0,
         discount_type: "AMOUNT",
         attributes: "[]",
+        capital_price: null,
+        is_active: true,
         price_tiers: [],
       },
     ],
@@ -223,6 +227,8 @@ const stopInitWatch = watch(
               discount: Number(add.discount) || 0,
               discount_type: add.discount_type || "AMOUNT",
               attributes,
+              capital_price: add.capital_price ?? null,
+              is_active: add.is_active !== false,
               price_tiers: (add.price_tiers || []).map((t: any) => ({
                 min_qty: Number(t.min_qty) || 0,
                 price: Number(t.price) || 0,
@@ -381,6 +387,11 @@ const handleSubmitForm = handleSubmit(
           typeof (add as any).attributes === "string"
             ? (add as any).attributes
             : "[]",
+        capital_price:
+          (add as any).capital_price === "" || (add as any).capital_price == null
+            ? null
+            : Math.max(0, Math.floor(Number((add as any).capital_price) || 0)),
+        is_active: (add as any).is_active !== false,
         price_tiers: ((add as any).price_tiers || []).map((t: any) => ({
           min_qty: Math.floor(Number(t.min_qty) || 0),
           price: Math.floor(Number(t.price) || 0),

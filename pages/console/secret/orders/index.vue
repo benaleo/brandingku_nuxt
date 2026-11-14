@@ -1,7 +1,11 @@
 <template>
   <div>
     <AppBreadcrumb/>
-    <AppTableHeader :pageTitle="pageTitle"/>
+    <AppTableHeader :pageTitle="pageTitle">
+      <template #actions>
+        <Button v-if="canCreate" variant="primary" @click="router.push('/console/secret/orders/add')">Buat Order +</Button>
+      </template>
+    </AppTableHeader>
 
     <!-- what needs attention first -->
     <div class="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
@@ -63,6 +67,9 @@ import type {Order, OrderStatus} from '~/types/order.type'
 
 const pageTitle = 'Transaksi'
 const route = useRoute()
+const router = useRouter()
+const {canAction} = useConsoleAccess()
+const canCreate = computed(() => canAction(route.path, 'create'))
 const {getOrders, getOrderStatusCounts} = useOrderService()
 
 const rows = ref<Order[]>([])

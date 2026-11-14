@@ -189,6 +189,8 @@ function addAdditional() {
     discount: 0,
     discount_type: "AMOUNT",
     attributes: "[]",
+    capital_price: null,
+    is_active: true,
   });
   queueEmit()
 }
@@ -361,6 +363,7 @@ async function pasteJson(addIdx: number) {
         v-for="(additional, addIdx) in list"
         :key="additional.id ?? additional._uniqueKey"
         class="relative min-w-0 w-full rounded-xl border border-border bg-muted/20 p-4 sm:p-5"
+        :class="additional.is_active === false ? 'opacity-60 border-dashed' : ''"
       >
         <Button
           type="button"
@@ -371,7 +374,14 @@ async function pasteJson(addIdx: number) {
         >
           <Trash2 />
         </Button>
-        <div class="w-full grid grid-cols-2 gap-2 mt-4">
+        <div class="mt-4 flex items-center gap-3 pr-14">
+          <label class="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="checkbox" class="size-4 accent-primary" v-model="additional.is_active" />
+            Aktif
+          </label>
+          <span v-if="additional.is_active === false" class="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">Nonaktif</span>
+        </div>
+        <div class="w-full grid grid-cols-2 gap-2 mt-2">
           <div class="w-full">
             <label class="form-label mb-2">Name</label>
             <Input
@@ -418,6 +428,10 @@ async function pasteJson(addIdx: number) {
             <p class="mt-2 text-xs text-muted-foreground">
               Qty di bawah harga grosir pertama memakai harga default. Contoh: 50 pcs → Rp 25.000, 250 pcs → Rp 23.000; pembeli 60 pcs dapat Rp 25.000, 300 pcs dapat Rp 23.000.
             </p>
+          </div>
+          <div class="w-full">
+            <label class="form-label mb-2">Harga modal</label>
+            <Input type="number" min="0" placeholder="Harga modal (hanya admin)" v-model.number="additional.capital_price" />
           </div>
           <div class="w-full">
             <label class="form-label mb-2">Stock</label>

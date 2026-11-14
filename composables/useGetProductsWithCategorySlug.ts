@@ -14,6 +14,7 @@ export interface ProductWithCategory {
     image: string
     additionals: {
         price: number
+        is_active?: boolean
     }[]
     galleries: {
         image: string
@@ -73,6 +74,7 @@ export const useGetProductsWithCategorySlug = (categorySlug: string | Ref<string
                             image
                             additionals {
                                 price
+                                is_active
                             }
                             galleries {
                                 image

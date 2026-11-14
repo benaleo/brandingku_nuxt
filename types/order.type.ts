@@ -233,3 +233,21 @@ export type CheckoutInput = {
   shipping_postal_code?: string
   notes?: string
 }
+
+export type AdminOrderItemInput = { product_additional_id: number; quantity: number; branding_ids?: number[]; note?: string; unit_price?: number }
+
+export type AdminOrderInput = {
+  user_id: number
+  items: AdminOrderItemInput[]
+  delivery_method: 'delivery' | 'pickup'
+  customer_name: string
+  customer_phone: string
+  customer_company?: string
+  shipping_name?: string
+  shipping_phone?: string
+  shipping_address?: string
+  shipping_city?: string
+  shipping_postal_code?: string
+  notes?: string
+  voucher_code?: string
+}
