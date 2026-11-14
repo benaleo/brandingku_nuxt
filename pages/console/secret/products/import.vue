@@ -37,6 +37,12 @@ const isRunning = computed(() => job.value?.status === 'queued' || job.value?.st
 const isFinished = computed(() => job.value?.status === 'done' || job.value?.status === 'failed')
 const busy = computed(() => checking.value || starting.value || isRunning.value)
 
+const progressKnown = computed(() => {
+  const current = job.value;
+  if (!current) return false;
+  return current.status === 'done' || Number(current.total) > 0;
+});
+
 const progressPercent = computed(() => {
   const current = job.value
   if (!current) return 0
@@ -410,10 +416,19 @@ onBeforeUnmount(stopPolling)
             aria-valuemax="100"
             :aria-label="statusLabel"
           >
-            <div class="h-full rounded-full bg-blue-600 transition-all" :style="{ width: `${progressPercent}%` }" />
+            <div
+              v-if="progressKnown"
+              class="h-full rounded-full bg-blue-600 transition-all"
+              :style="{ width: `${progressPercent}%` }"
+            />
+            <!-- the row count arrives with the first snapshot; before that the bar is indeterminate -->
+            <div v-else class="h-full w-1/3 animate-pulse rounded-full bg-blue-400" />
           </div>
           <p class="text-xs text-muted-foreground">
-            {{ progressPercent }}% selesai — progres diperbarui otomatis setiap ±1,5 detik.
+            <template v-if="progressKnown">
+              {{ progressPercent }}% selesai — progres diperbarui otomatis setiap ±3 detik.
+            </template>
+            <template v-else>Menyiapkan impor…</template>
           </p>
         </div>
 

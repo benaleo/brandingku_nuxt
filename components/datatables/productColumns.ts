@@ -8,6 +8,35 @@ import { CircleCheck,CircleX } from 'lucide-vue-next';
 
 
 
+// a clickable on/off badge; the page asks for confirmation and calls the API
+const flagCell = (
+    key: 'is_highlight' | 'is_active',
+    value: unknown,
+    product: Product,
+    handler?: (product: Product) => void,
+) => {
+    const enabled = Boolean(value)
+    const label = key === 'is_highlight' ? 'highlight' : 'aktif'
+    return h('div', {class: 'flex items-center justify-center'}, [
+        h('button', {
+            type: 'button',
+            class: 'rounded-full p-1 transition hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600',
+            title: enabled ? `Nonaktifkan ${label}` : `Aktifkan ${label}`,
+            'aria-label': enabled ? `Nonaktifkan ${label}` : `Aktifkan ${label}`,
+            'aria-pressed': enabled ? 'true' : 'false',
+            disabled: !handler,
+            onClick: (event: MouseEvent) => {
+                event.stopPropagation()
+                handler?.(product)
+            },
+        }, [
+            enabled
+                ? h(CircleCheck, {class: 'text-green-500'})
+                : h(CircleX, {class: 'text-red-500'}),
+        ]),
+    ])
+}
+
 export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'id',
@@ -36,23 +65,15 @@ export const productColumns: ColumnDef<Product>[] = [
     {
         accessorKey: 'is_highlight',
         header: 'Highlight',
-        cell: ({row}) => {
-            return h('div', {class: 'flex items-center justify-center'}, [
-                row.getValue('is_highlight') ?
-                    h(CircleCheck, {class: 'text-green-500'}) :
-                    h(CircleX, {class: 'text-red-500'})
-            ])
+        cell: ({row, table}) => {
+            return flagCell('is_highlight', row.getValue('is_highlight'), row.original, table.options.meta?.toggleHighlight)
         }
     },
-     {
+    {
         accessorKey: 'is_active',
         header: 'Active',
-        cell: ({row}) => {
-            return h('div', {class: 'flex items-center justify-center'}, [
-                row.getValue('is_active') ?
-                    h(CircleCheck, {class: 'text-green-500'}) :
-                    h(CircleX, {class: 'text-red-500'})
-            ])
+        cell: ({row, table}) => {
+            return flagCell('is_active', row.getValue('is_active'), row.original, table.options.meta?.toggleActive)
         }
     },
     {

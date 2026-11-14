@@ -2,12 +2,54 @@
 import { useBrandingService } from "~/services/branding.service";
 import type { BrandingDefault, BrandingMethod, BrandingTier, ProductBrandingInput } from "~/types/branding.type";
 import BrandingTierEditor from "./BrandingTierEditor.vue";
+import { ImagePlus, Trash2 } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 
 // which branding methods a product offers; each uses its category's price unless the product
 // sets its own. The product form reads payload() and saves it after the product.
 const props = defineProps<{ productId?: number | null; categoryId?: number | null; disabled?: boolean }>();
 
-type Draft = { enabled: boolean; custom: boolean; tiers: BrandingTier[] };
+// upload holds a base64 picture chosen in this session; image is the stored path
+type Draft = { enabled: boolean; custom: boolean; tiers: BrandingTier[]; image: string; upload: string | null };
+
+const config = useRuntimeConfig();
+const STORAGE_URL = config.public.STORAGE_URL;
+const MAX_SAMPLE_BYTES = 2048 * 1024;
+const { convertToBase64 } = useFileToBase64();
+
+const samplePreview = (methodID: number): string => {
+  const draft = drafts.value[methodID];
+  if (!draft) return "";
+  if (draft.upload) return draft.upload;
+  return draft.image ? `${STORAGE_URL}${draft.image}` : "";
+};
+
+const pickSample = async (methodID: number, event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    toast.error("Contoh branding harus berupa gambar.");
+    return;
+  }
+  if (file.size > MAX_SAMPLE_BYTES) {
+    toast.error("Ukuran contoh branding maksimal 2 MB.");
+    return;
+  }
+  try {
+    drafts.value[methodID].upload = await convertToBase64(file);
+  } catch {
+    toast.error("Gambar tidak dapat dibaca.");
+  }
+};
+
+const clearSample = (methodID: number) => {
+  const draft = drafts.value[methodID];
+  if (!draft) return;
+  draft.upload = null;
+  draft.image = "";
+};
 
 const service = useBrandingService();
 const methods = ref<BrandingMethod[]>([]);
@@ -23,9 +65,15 @@ onMounted(async () => {
       props.productId ? service.getProductBrandings(props.productId) : Promise.resolve([]),
     ]);
     const byMethod: Record<number, Draft> = {};
-    for (const m of all) byMethod[m.id] = { enabled: false, custom: false, tiers: [] };
+    for (const m of all) byMethod[m.id] = { enabled: false, custom: false, tiers: [], image: "", upload: null };
     for (const b of offered) {
-      byMethod[b.branding_method_id] = { enabled: true, custom: b.custom_price, tiers: b.custom_price ? sortedTiers(b.tiers) : [] };
+      byMethod[b.branding_method_id] = {
+        enabled: true,
+        custom: b.custom_price,
+        tiers: b.custom_price ? sortedTiers(b.tiers) : [],
+        image: b.image || "",
+        upload: null,
+      };
     }
     // offered methods first, in their saved order, then the rest
     const rank = new Map(offered.map((b, i) => [b.branding_method_id, i]));
@@ -79,7 +127,11 @@ const payload = (): ProductBrandingInput[] | undefined => {
     .filter((m) => drafts.value[m.id]?.enabled)
     .map((m) => {
       const d = drafts.value[m.id]!;
-      return { branding_method_id: m.id, custom_tiers: d.custom ? sortedTiers(d.tiers) : [] };
+      return {
+        branding_method_id: m.id,
+        custom_tiers: d.custom ? sortedTiers(d.tiers) : [],
+        image: d.upload ?? d.image,
+      };
     });
 };
 
@@ -136,6 +188,48 @@ defineExpose({ payload, problem });
             Harga khusus produk ini
           </label>
           <BrandingTierEditor v-if="drafts[m.id]?.custom" v-model="drafts[m.id].tiers" :label="m.name" :disabled="props.disabled" />
+
+          <!-- contoh gambar teknik ini untuk produk tersebut -->
+          <div class="flex items-center gap-3 border-t pt-3">
+            <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white">
+              <img
+                v-if="samplePreview(m.id)"
+                :src="samplePreview(m.id)"
+                :alt="m.name"
+                class="h-full w-full object-contain"
+              />
+              <ImagePlus v-else class="size-6 text-muted-foreground" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs font-medium">Contoh gambar {{ m.name }}</p>
+              <p class="text-xs text-muted-foreground">JPG/PNG maks 2 MB — otomatis dikonversi ke WebP.</p>
+              <div class="mt-1 flex flex-wrap items-center gap-2">
+                <label
+                  class="inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-muted"
+                  :class="props.disabled ? 'pointer-events-none opacity-50' : ''"
+                >
+                  <ImagePlus class="size-3.5" />
+                  {{ samplePreview(m.id) ? "Ganti contoh" : "Unggah contoh" }}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    :disabled="props.disabled"
+                    @change="pickSample(m.id, $event)"
+                  />
+                </label>
+                <button
+                  v-if="samplePreview(m.id)"
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                  :disabled="props.disabled"
+                  @click="clearSample(m.id)"
+                >
+                  <Trash2 class="size-3.5" /> Hapus
+                </button>
+              </div>
+            </div>
+          </div>
         </template>
       </div>
     </div>

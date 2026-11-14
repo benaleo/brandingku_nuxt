@@ -13,6 +13,19 @@ const props = defineProps<{
 }>()
 
 const emblaMainApi = ref<CarouselApi>()
+const lightboxOpen = ref(false)
+const lightboxIndex = ref(0)
+// a drag ends with a click event; remember where the press started to ignore it
+let pressStart = { x: 0, y: 0 }
+const rememberPress = (event: PointerEvent) => {
+  pressStart = { x: event.clientX, y: event.clientY }
+}
+const openPreview = (index: number, event: MouseEvent) => {
+  // keyboard activation reports no coordinates; only a real pointer drag is ignored
+  if (event.detail > 0 && (Math.abs(event.clientX - pressStart.x) > 8 || Math.abs(event.clientY - pressStart.y) > 8)) return
+  lightboxIndex.value = index
+  lightboxOpen.value = true
+}
 const emblaThumbnailApi = ref<CarouselApi>()
 const selectedIndex = ref(0)
 
@@ -54,8 +67,12 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
     >
       <CarouselContent>
         <CarouselItem v-for="(image, index) in images" :key="index">
-          <div class="aspect-square overflow-hidden bg-gray-50 sm:rounded-xl sm:border">
-            <img :src="image" :alt="imageAlt ? imageAlt(index + 1) : $t('app.productPage.detail.imageAlt', { n: index + 1 })" class="h-full w-full object-cover" />
+          <div
+            class="aspect-square cursor-zoom-in overflow-hidden bg-gray-50 sm:rounded-xl sm:border"
+            @pointerdown="rememberPress"
+            @click="openPreview(index, $event)"
+          >
+            <img :src="image" :alt="imageAlt ? imageAlt(index + 1) : $t('app.productPage.detail.imageAlt', { n: index + 1 })" class="h-full w-full object-cover" draggable="false" />
           </div>
         </CarouselItem>
       </CarouselContent>
@@ -80,5 +97,11 @@ watchOnce(emblaMainApi, (emblaMainApi) => {
         </CarouselItem>
       </CarouselContent>
     </Carousel>
+    <ElementsImageLightbox
+      v-model:open="lightboxOpen"
+      v-model:index="lightboxIndex"
+      :images="images"
+      :alt="imageAlt ? imageAlt(lightboxIndex + 1) : undefined"
+    />
   </div>
 </template>

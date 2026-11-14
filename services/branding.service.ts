@@ -4,7 +4,7 @@ import type {
 } from '~/types/branding.type'
 
 const METHOD_FIELDS = 'id name description is_active orders created_at updated_at'
-const PRODUCT_BRANDING_FIELDS = 'branding_method_id name description tiers { min_qty price } custom_price is_active'
+const PRODUCT_BRANDING_FIELDS = 'branding_method_id name description image tiers { min_qty price } custom_price is_active'
 
 export const useBrandingService = () => {
   const { gqlFetch } = useGql()
@@ -87,7 +87,7 @@ export const useBrandingService = () => {
   const saveProductBrandings = async (productId: number, brandings: ProductBrandingInput[]) => {
     await gqlFetch(
       `mutation saveProductBrandings($id: Int!, $brandings: [ProductBrandingInput!]!) {
-        saveProductBrandings(product_id: $id, brandings: $brandings) { branding_method_id }
+        saveProductBrandings(product_id: $id, brandings: $brandings) { branding_method_id image }
       }`,
       { id: productId, brandings },
       { auth: true },
