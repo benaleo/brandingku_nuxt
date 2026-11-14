@@ -3,11 +3,13 @@ import { h } from 'vue'
 import GeneralColumnAction from '~/components/datatables/GeneralColumnAction.vue'
 import type { AdminSmtp } from '~/types/admin-smtp.type'
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const adminSmtpColumns: ColumnDef<AdminSmtp>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({ row }) => row.index + 1,
+        cell: ({ row, table }) => row.index + 1 + rowOffsetOf(table) + rowOffsetOf(table),
     },
     {
         accessorKey: 'email',
@@ -28,7 +30,7 @@ export const adminSmtpColumns: ColumnDef<AdminSmtp>[] = [
     {
         accessorKey: 'available_today',
         header: 'Kuota hari ini',
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             const { available_today: left, quota } = row.original
             const pct = quota > 0 ? Math.round((left / quota) * 100) : 0
             return h('div', { class: 'min-w-28' }, [

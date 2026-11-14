@@ -15,39 +15,41 @@ export type ProductAttribute = {
 }
 
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const productAttributeColumns: ColumnDef<ProductAttribute>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({row}) => {
-            return row.index + 1
+        cell: ({row, table}) => {
+            return row.index + 1 + rowOffsetOf(table)
         }
     },
     {
         accessorKey: 'category',
         header: () => h('div', { class: 'text-left' }, 'Kategori'),
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             return h('div', { class: 'text-left font-medium' }, row.getValue('category'))
         },
     },
     {
         accessorKey: 'name',
         header: () => h('div', { class: 'text-left' }, 'Nama'),
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             return h('div', { class: 'text-left font-medium' }, row.getValue('name'))
         },
     },
     {
         accessorKey: 'is_active',
         header: () => h('div', { class: 'text-left' }, 'Status'),
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             return h('div', { class: 'text-left font-medium' }, row.getValue('is_active') ? 'Active' : 'Inactive')
         },
     },
     {
         accessorKey: 'updated_at',
         header: 'Timestamp',
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             return formatDateTime(row.original.updated_at)
         },
     },

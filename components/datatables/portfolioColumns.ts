@@ -5,12 +5,14 @@ import GeneralColumnAction from "~/components/datatables/GeneralColumnAction.vue
 import type {Portfolio} from "~/types/portfolio.type";
 import { CircleCheck,CircleX } from 'lucide-vue-next';
 
+const rowOffsetOf = (table: any): number => Number(table?.options?.meta?.rowOffset ?? 0)
+
 export const portfolioColumns: ColumnDef<Portfolio>[] = [
     {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({row}) => {
-            return row.index + 1
+        cell: ({row, table}) => {
+            return row.index + 1 + rowOffsetOf(table)
         }
     },
     {
@@ -24,14 +26,14 @@ export const portfolioColumns: ColumnDef<Portfolio>[] = [
     {
         accessorKey: 'client',
         header: 'Client',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return row.getValue('client') || '-'
         }
     },
     {
         accessorKey: 'galleries',
         header: 'Images',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             const galleries = row.getValue('galleries') as any[];
             const config = useRuntimeConfig();
             const STORAGE_URL = config.public.STORAGE_URL;
@@ -53,7 +55,7 @@ export const portfolioColumns: ColumnDef<Portfolio>[] = [
     {
         accessorKey: 'is_active',
         header: 'Active',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return h('div', {class: 'flex items-center justify-center'}, [
                 row.getValue('is_active') ?
                     h(CircleCheck, {class: 'text-green-500'}) :
@@ -64,7 +66,7 @@ export const portfolioColumns: ColumnDef<Portfolio>[] = [
     {
         accessorKey: 'updated_at',
         header: 'Timestamp',
-        cell: ({row}) => {
+        cell: ({row, table}) => {
             return formatDateTime(row.original.updated_at)
         },
     },
