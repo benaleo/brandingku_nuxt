@@ -11,7 +11,7 @@ export const productCategoryChildColumns: ColumnDef<ProductCategory>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row, table }) => row.index + 1 + rowOffsetOf(table) + rowOffsetOf(table),
+    cell: ({ row, table }) => row.index + 1 + rowOffsetOf(table),
   },
   {
     accessorKey: 'image',
