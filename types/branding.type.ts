@@ -22,13 +22,16 @@ export type ProductBranding = {
   branding_method_id: number
   name: string
   description: string
+  // contoh gambar teknik ini untuk produk tersebut; kosong bila belum ada
+  image: string
   tiers: BrandingTier[]
   // tiers are the product's own price, not the category's
   custom_price: boolean
   is_active: boolean
 }
 
-export type ProductBrandingInput = { branding_method_id: number; custom_tiers?: BrandingTier[] }
+// image: base64 untuk unggah baru, path tersimpan untuk dipertahankan, kosong untuk menghapus
+export type ProductBrandingInput = { branding_method_id: number; custom_tiers?: BrandingTier[]; image?: string }
 
 // a branding chosen for a cart or checkout line, priced at the line's quantity
 export type LineBranding = { branding_method_id: number; name: string; unit_price: number; min_qty: number; available: boolean }
