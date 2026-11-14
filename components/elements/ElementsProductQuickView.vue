@@ -89,7 +89,7 @@ const chatAboutProduct = () => {
                   <div class="font-medium">{{ add?.name || $t('app.productPage.quickViewDialog.variantFallback') }}</div>
                   <div class="text-gray-500">{{ $t('app.productPage.detail.moq') }} {{ add?.moq ?? 0 }}</div>
                 </div>
-                <div class="font-semibold">Rp. {{ Number(add?.price || 0) }}</div>
+                <div v-if="Number(add?.price || 0) > 0" class="font-semibold">Rp. {{ Number(add?.price || 0) }}</div>
               </div>
             </div>
             <p v-else class="text-sm text-gray-500">{{ $t('app.productPage.quickViewDialog.noOptions') }}</p>

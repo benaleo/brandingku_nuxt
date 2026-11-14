@@ -39,7 +39,7 @@ export const usePortfolioService = (fetchResult?: boolean, dataId?: string) => {
         try {
             const query = `
                 query getPortfolios($page: Int!, $limit: Int!, $is_active: Boolean, $keyword: String) {
-                    getPortfolios(pagination: { page: $page, limit: $limit }, sort: { column: UPDATED_AT, direction: DESC }, is_active: $is_active) {
+                    getPortfolios(pagination: { page: $page, limit: $limit }, sort: { column: UPDATED_AT, direction: DESC }, is_active: $is_active, keyword: $keyword) {
                         items {
                             id
                             category

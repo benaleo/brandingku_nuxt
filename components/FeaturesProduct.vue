@@ -221,7 +221,8 @@ async function quickAdd(product: FeaturedProductItem) {
                         <p class="mt-0.5 truncate text-xs text-gray-500">
                           {{ product.category }}
                         </p>
-                        <div class="flex justify-between items-center mt-2">
+                        <!-- a product without a price stays without one instead of showing Rp. 0 -->
+                        <div v-if="Number(product.price) > 0" class="flex justify-between items-center mt-2">
                           <span class="text-sm font-bold"
                             >Rp. {{ product.price }}
                             <span class="text-xs text-gray-500"
