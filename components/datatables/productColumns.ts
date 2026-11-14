@@ -61,6 +61,11 @@ export const productColumns: ColumnDef<Product>[] = [
         },
     },
     {
+        accessorKey: 'slug',
+        header: 'Slug',
+        cell: ({row}) => h('span', {class: 'font-mono text-xs'}, row.original.slug),
+    },
+    {
         accessorKey: 'name',
         header: 'Nama Produk',
     },
