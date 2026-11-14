@@ -56,11 +56,10 @@ const categoryFilters = computed(() => {
   return filters
 })
 
-useHead({
+usePageSeo({
   title: pageTitle,
-  meta: [
-    { name: 'description', content: pageDescription }
-  ]
+  description: pageDescription,
+  image: () => category.value?.banner_image || category.value?.cover_image,
 })
 
 // Handle filter click - select subcategory when filter is clicked
@@ -107,11 +106,11 @@ definePageMeta({
       </div>
     </div>
     
-    <!-- Error State -->
-    <div v-else-if="categoryError" class="relative bg-red-50 border border-red-200 text-red-800 px-4 pt-28 pb-16 sm:px-8 md:pt-36">
+    <!-- Error State; also covers a slug the API answers with no category -->
+    <div v-else-if="categoryError || !category" class="relative bg-red-50 border border-red-200 text-red-800 px-4 pt-28 pb-16 sm:px-8 md:pt-36">
       <div class="relative max-w-4xl mx-auto text-center">
         <h1 class="text-3xl md:text-4xl font-bold mb-4">{{ $t('app.categoryPage.detail.notFound') }}</h1>
-        <p class="text-lg md:text-xl mb-6 break-words">{{ categoryError }}</p>
+        <p v-if="categoryError" class="text-lg md:text-xl mb-6 break-words">{{ categoryError }}</p>
         <button @click="$router.push('/')" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
           {{ $t('app.categoryPage.detail.backHome') }}
         </button>

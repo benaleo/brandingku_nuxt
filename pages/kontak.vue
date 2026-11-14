@@ -7,8 +7,12 @@ const { phone, email, address, hours, mapsUrl, phoneHref, emailHref } = useSiteS
 const siteUrl = useRuntimeConfig().public.BASE_URL
 const { t } = useI18n()
 
+usePageSeo({
+  title: () => t('app.contactPage.metaTitle'),
+  description: () => t('app.contactPage.metaDescription'),
+})
+
 useHead({
-  title: computed(() => t('app.contactPage.metaTitle')),
   script: [{
     type: 'application/ld+json',
     // structured data so search engines can show the business contact details

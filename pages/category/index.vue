@@ -165,12 +165,10 @@ onMounted(() => {
 })
 
 // Page metadata
-useHead(() => ({
-  title: t('app.categoryPage.metaTitle'),
-  meta: [
-    { name: 'description', content: t('app.categoryPage.metaDescription') }
-  ]
-}))
+usePageSeo({
+  title: () => t('app.categoryPage.metaTitle'),
+  description: () => t('app.categoryPage.metaDescription'),
+})
 </script>
 
 <style scoped>

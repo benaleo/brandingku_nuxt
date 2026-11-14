@@ -1,7 +1,8 @@
 {
   "app": {
     "meta": {
-      "title": "Brandingku - Supplier Merchandise Terbaik"
+      "title": "Brandingku - Supplier Merchandise Terbaik",
+      "description": "Supplier merchandise custom dan corporate gift dengan cetak logo: tumbler, kaos, tas, payung, dan lainnya. Harga grosir, bisa satuan sampai partai besar."
     },
     "nav": {
       "home": "Home",
@@ -264,7 +265,8 @@
         "requestQuote": "Minta penawaran",
         "brandingSamples": "Contoh Hasil Branding",
         "brandingSamplesHint": "Contoh hasil tiap teknik branding untuk produk ini.",
-        "brandingServices": "Layanan Branding"
+        "brandingServices": "Layanan Branding",
+        "metaDescription": "{name} custom dengan logo perusahaan. Lihat pilihan warna, teknik branding, dan harga grosir di Brandingku."
       },
       "quickViewDialog": {
         "category": "Kategori:",
@@ -276,7 +278,8 @@
         "chatAdmin": "Chat dengan Admin",
         "thisProduct": "produk ini",
         "interestedMessage": "Halo admin, saya tertarik dengan {name}.\n{url}"
-      }
+      },
+      "metaDescription": "Katalog merchandise custom Brandingku dengan pilihan teknik branding dan harga grosir per jumlah pesanan."
     },
     "contactPage": {
       "metaTitle": "Kontak - Brandingku",
@@ -318,7 +321,8 @@
       "support247": "Dukungan 24/7",
       "reportTitle": "Laporan Keberlanjutan 2024",
       "reportText": "Baca bagaimana kami membantu 500+ brand mengurangi limbah plastik hingga 40%.",
-      "viewReport": "Lihat Laporan"
+      "viewReport": "Lihat Laporan",
+      "metaDescription": "Hubungi Brandingku untuk penawaran merchandise custom dan corporate gift lewat WhatsApp, email, atau formulir inquiry."
     },
     "aboutPage": {
       "metaTitle": "Tentang Kami - Brandingku",

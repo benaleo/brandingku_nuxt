@@ -41,10 +41,12 @@ const images = computed(() =>
 
 const askSimilar = () => openChat(t('app.portfolioPage.similarTopic', { title: portfolio.value?.title || '' }))
 
-useHead(() => ({
-  title: portfolio.value ? t('app.portfolioDetail.metaTitle', { title: portfolio.value.title }) : t('app.portfolioPage.metaTitle'),
-  meta: [{ name: 'description', content: portfolio.value?.subtitle || t('app.portfolioPage.metaDescription') }],
-}))
+usePageSeo({
+  title: () => (portfolio.value ? t('app.portfolioDetail.metaTitle', { title: portfolio.value.title }) : t('app.portfolioPage.metaTitle')),
+  description: () => portfolio.value?.subtitle || t('app.portfolioPage.metaDescription'),
+  image: () => images.value[0],
+  type: 'article',
+})
 </script>
 
 <template>

@@ -170,12 +170,10 @@
 const { t } = useI18n()
 
 // Page metadata
-useHead(() => ({
-  title: t('app.tncPage.metaTitle'),
-  meta: [
-    { name: 'description', content: t('app.tncPage.metaDescription') }
-  ]
-}))
+usePageSeo({
+  title: () => t('app.tncPage.metaTitle'),
+  description: () => t('app.tncPage.metaDescription'),
+})
 
 // Active section highlighting
 onMounted(() => {

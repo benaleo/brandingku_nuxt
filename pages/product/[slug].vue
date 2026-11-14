@@ -22,7 +22,6 @@ const {
   data: detail,
   loading,
   error,
-  refetch,
   setSlug,
 } = useProductDetail(slug.value);
 const config = useRuntimeConfig();
@@ -354,19 +353,75 @@ watch(
   { immediate: true }
 );
 
-useHead(() => ({
-  // lifts the chat widget above the mobile action bar
-  htmlAttrs: { class: "has-bottom-bar" },
-  title: detail.value?.name
-    ? t("app.productPage.detail.metaTitle", { name: detail.value.name })
-    : t("app.productPage.detail.metaFallback"),
-}));
+// lifts the chat widget above the mobile action bar
+useHead({ htmlAttrs: { class: "has-bottom-bar" } });
 
-// Handle same-route param changes
+usePageSeo({
+  title: () =>
+    detail.value?.name
+      ? t("app.productPage.detail.metaTitle", { name: detail.value.name })
+      : t("app.productPage.detail.metaFallback"),
+  description: () =>
+    detail.value?.description ||
+    (detail.value?.name ? t("app.productPage.detail.metaDescription", { name: detail.value.name }) : ""),
+  image: () => (detail.value?.images[0] ? `${STORAGE_URL}${detail.value.images[0]}` : null),
+});
+
+// structured data so search engines can show the product with price and stock
+const siteOrigin = useSiteOrigin();
+useHead({
+  script: [{
+    type: "application/ld+json",
+    key: "product-schema",
+    innerHTML: computed(() => {
+      const p = detail.value;
+      if (!p) return "";
+      const url = `${siteOrigin}/product/${encodeURIComponent(p.slug)}`;
+      return JSON.stringify([
+        {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: p.name,
+          sku: p.slug,
+          url,
+          image: p.images.map((img) => `${STORAGE_URL}${img}`),
+          ...(toPlainText(p.description) ? { description: toPlainText(p.description) } : {}),
+          ...(p.category ? { category: p.category } : {}),
+          brand: { "@type": "Brand", name: "Brandingku" },
+          // price is the lowest per-piece price; unpriced products carry no offer rather than a Rp0 one
+          ...(p.price > 0
+            ? {
+                offers: {
+                  "@type": "Offer",
+                  url,
+                  priceCurrency: "IDR",
+                  price: p.price,
+                  availability: p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                  itemCondition: "https://schema.org/NewCondition",
+                  seller: { "@type": "Organization", name: "Brandingku" },
+                },
+              }
+            : {}),
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: siteOrigin },
+            { "@type": "ListItem", position: 2, name: t("app.productPage.title"), item: `${siteOrigin}/product` },
+            { "@type": "ListItem", position: 3, name: p.name, item: url },
+          ],
+        },
+      // "<" escaped so a closing script tag inside a description cannot end the block
+      ]).replace(/</g, "\\u003c");
+    }),
+  }],
+});
+
+// Handle same-route param changes; the new slug refetches through useProductDetail
 watch(slug, (val) => {
   selectedBrandings.value = [];
   setSlug(val);
-  refetch();
 });
 
 definePageMeta({

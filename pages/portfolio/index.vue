@@ -96,10 +96,10 @@ const askSimilar = () => {
   openChat(t('app.portfolioPage.similarTopic', { title }))
 }
 
-useHead(() => ({
-  title: t('app.portfolioPage.metaTitle'),
-  meta: [{ name: 'description', content: t('app.portfolioPage.metaDescription') }],
-}))
+usePageSeo({
+  title: () => t('app.portfolioPage.metaTitle'),
+  description: () => t('app.portfolioPage.metaDescription'),
+})
 </script>
 
 <template>

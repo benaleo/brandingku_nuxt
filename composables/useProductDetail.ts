@@ -1,4 +1,4 @@
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useGql } from '~/composables/useGql'
 
 export type ProductDetail = {
@@ -37,179 +37,182 @@ export type ProductDetail = {
 
 export const useProductDetail = (initialSlug: string) => {
   const { gqlFetch } = useGql()
+  // captured in setup; the fetcher runs after an await where the request context is gone
+  const event = useRequestEvent()
 
-  const data = ref<ProductDetail | null>(null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
   const slug = ref<string>(initialSlug || '')
 
-  const fetchBySlug = async () => {
-    if (!slug.value) {
-      error.value = 'Invalid product slug'
-      return
-    }
-    loading.value = true
-    error.value = null
-    try {
-      const query = `
-        query GetProductsForDetail($slug: String!) {
-          getProductDetailSlug(slug: $slug) {
+  // null when the API doesn't know the slug
+  const fetchBySlug = async (): Promise<ProductDetail | null> => {
+    const query = `
+      query GetProductsForDetail($slug: String!) {
+        getProductDetailSlug(slug: $slug) {
+          id
+          name
+          slug
+          description
+          image
+          category { id name }
+          is_highlight
+          is_recommended
+          is_upsell
+          galleries { id image orders }
+          colors { id name image orders }
+          additionals {
             id
             name
-            slug
-            description
-            image
-            category { id name }
-            is_highlight
-            is_recommended
-            is_upsell
-            galleries { id image orders }
-            colors { id name image orders }
-            additionals {
-              id
-              name
-              price
-              moq
-              stock
-              discount
-              discount_type
-              attributes
-              price_tiers { min_qty price }
-            }
-            brandings { branding_method_id name description tiers { min_qty price } }
-            branding_samples { branding_method_id name description image }
-            created_at
-            updated_at
+            price
+            moq
+            stock
+            discount
+            discount_type
+            attributes
+            price_tiers { min_qty price }
           }
+          brandings { branding_method_id name description tiers { min_qty price } }
+          branding_samples { branding_method_id name description image }
+          created_at
+          updated_at
         }
-      `
-      const res = await gqlFetch<{ getProductDetailSlug: any }>(query, { slug: slug.value }, { auth: true })
-      // the API answers an unknown slug with null
-      const p = res?.getProductDetailSlug
-      if (!p) throw new Error('Product not found')
-
-      // images: main image, then galleries, then colour pictures, each path once
-      const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
-      galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
-      const colorRows = (Array.isArray(p.colors) ? [...p.colors] : [])
-        .sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
-      const images: string[] = []
-      for (const img of [p.image, ...galleries.map((g: any) => g?.image), ...colorRows.map((c: any) => c?.image)]) {
-        if (img && !images.includes(img)) images.push(img)
       }
-      const colorVariants = colorRows
-        .filter((c: any) => c?.name)
-        .map((c: any) => ({ name: String(c.name), image: c.image || p.image || '' }))
+    `
+    const res = await gqlFetch<{ getProductDetailSlug: any }>(query, { slug: slug.value }, { auth: true })
+    // the API answers an unknown slug with null
+    const p = res?.getProductDetailSlug
+    if (!p) {
+      // a real 404 instead of a 200 "not found" page, so search engines drop the url
+      if (event) setResponseStatus(event, 404)
+      return null
+    }
 
-      // Compute pricing from additionals
-      let minBase = Infinity
-      let minAfter = Infinity
-      let anyStock = false
+    // images: main image, then galleries, then colour pictures, each path once
+    const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
+    galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
+    const colorRows = (Array.isArray(p.colors) ? [...p.colors] : [])
+      .sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
+    const images: string[] = []
+    for (const img of [p.image, ...galleries.map((g: any) => g?.image), ...colorRows.map((c: any) => c?.image)]) {
+      if (img && !images.includes(img)) images.push(img)
+    }
+    const colorVariants = colorRows
+      .filter((c: any) => c?.name)
+      .map((c: any) => ({ name: String(c.name), image: c.image || p.image || '' }))
 
-      const allAttributes: { key: string; value: string }[] = []
-      for (const a of p.additionals || []) {
-        const base = Number(a?.price) || 0
-        minBase = Math.min(minBase, base)
-        let after = base
-        const discount = Number(a?.discount) || 0
-        if (discount > 0) {
-          if ((a?.discount_type || '').toUpperCase() === 'PERCENTAGE') after = base - (base * discount) / 100
-          else after = base - discount
-        }
-        if (after < 0) after = 0
-        minAfter = Math.min(minAfter, after)
+    // Compute pricing from additionals
+    let minBase = Infinity
+    let minAfter = Infinity
+    let anyStock = false
 
-        if (Number(a?.stock) > 0) anyStock = true
+    const allAttributes: { key: string; value: string }[] = []
+    for (const a of p.additionals || []) {
+      const base = Number(a?.price) || 0
+      minBase = Math.min(minBase, base)
+      let after = base
+      const discount = Number(a?.discount) || 0
+      if (discount > 0) {
+        if ((a?.discount_type || '').toUpperCase() === 'PERCENTAGE') after = base - (base * discount) / 100
+        else after = base - discount
+      }
+      if (after < 0) after = 0
+      minAfter = Math.min(minAfter, after)
 
-        // Parse attributes JSON
-        try {
-          const parsed = JSON.parse(a?.attributes || '[]')
-          if (Array.isArray(parsed)) {
-            for (const it of parsed) {
-              if (it && typeof it.key === 'string' && typeof it.value === 'string') {
-                allAttributes.push({ key: it.key, value: it.value })
-              }
+      if (Number(a?.stock) > 0) anyStock = true
+
+      // Parse attributes JSON
+      try {
+        const parsed = JSON.parse(a?.attributes || '[]')
+        if (Array.isArray(parsed)) {
+          for (const it of parsed) {
+            if (it && typeof it.key === 'string' && typeof it.value === 'string') {
+              allAttributes.push({ key: it.key, value: it.value })
             }
           }
-        } catch (_) {
-          /* ignore */
         }
+      } catch (_) {
+        /* ignore */
       }
-      if (!isFinite(minBase)) minBase = 0
-      if (!isFinite(minAfter)) minAfter = minBase
+    }
+    if (!isFinite(minBase)) minBase = 0
+    if (!isFinite(minAfter)) minAfter = minBase
 
-      // Deduplicate attributes and derive colors/sizes
-      const seen = new Set<string>()
-      const details: { key: string; value: string }[] = []
-      for (const kv of allAttributes) {
-        const sig = `${kv.key}::${kv.value}`
-        if (!seen.has(sig)) {
-          seen.add(sig)
-          details.push(kv)
-        }
+    // Deduplicate attributes and derive colors/sizes
+    const seen = new Set<string>()
+    const details: { key: string; value: string }[] = []
+    for (const kv of allAttributes) {
+      const sig = `${kv.key}::${kv.value}`
+      if (!seen.has(sig)) {
+        seen.add(sig)
+        details.push(kv)
       }
-      const colors = [...new Set(details.filter(kv => /color/i.test(kv.key)).map(kv => kv.value))]
-      const sizes = [...new Set(details.filter(kv => /size/i.test(kv.key)).map(kv => kv.value))]
+    }
+    const colors = [...new Set(details.filter(kv => /color/i.test(kv.key)).map(kv => kv.value))]
+    const sizes = [...new Set(details.filter(kv => /size/i.test(kv.key)).map(kv => kv.value))]
 
-      data.value = {
-        id: String(p.id),
-        name: p.name,
-        slug: p.slug,
-        category: p?.category?.name,
-        description: p?.description,
-        images,
-        colorVariants,
-        price: Number(minAfter.toFixed(2)),
-        originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
-        colors,
-        sizes,
-        details,
-        inStock: anyStock,
-        additionals: (p.additionals || []).map((a: any) => ({
-          id: String(a.id),
-          name: a.name || '',
-          price: Number(a.price) || 0,
-          moq: Number(a.moq) || 0,
-          stock: Number(a.stock) || 0,
-          discount: Number(a.discount) || 0,
-          discount_type: String(a.discount_type || 'AMOUNT'),
-          attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
-          price_tiers: (a.price_tiers || [])
-            .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
-            .sort((x: any, y: any) => x.min_qty - y.min_qty),
-        })),
-        brandings: (p.brandings || []).map((b: any) => ({
+    return {
+      id: String(p.id),
+      name: p.name,
+      slug: p.slug,
+      category: p?.category?.name,
+      description: p?.description,
+      images,
+      colorVariants,
+      price: Number(minAfter.toFixed(2)),
+      originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
+      colors,
+      sizes,
+      details,
+      inStock: anyStock,
+      additionals: (p.additionals || []).map((a: any) => ({
+        id: String(a.id),
+        name: a.name || '',
+        price: Number(a.price) || 0,
+        moq: Number(a.moq) || 0,
+        stock: Number(a.stock) || 0,
+        discount: Number(a.discount) || 0,
+        discount_type: String(a.discount_type || 'AMOUNT'),
+        attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
+        price_tiers: (a.price_tiers || [])
+          .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
+          .sort((x: any, y: any) => x.min_qty - y.min_qty),
+      })),
+      brandings: (p.brandings || []).map((b: any) => ({
+        id: Number(b.branding_method_id),
+        name: String(b.name || ''),
+        description: String(b.description || ''),
+        tiers: (b.tiers || [])
+          .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
+          .sort((x: any, y: any) => x.min_qty - y.min_qty),
+      })),
+      samples: (p.branding_samples || [])
+        .filter((b: any) => b?.image)
+        .map((b: any) => ({
           id: Number(b.branding_method_id),
           name: String(b.name || ''),
           description: String(b.description || ''),
-          tiers: (b.tiers || [])
-            .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
-            .sort((x: any, y: any) => x.min_qty - y.min_qty),
+          image: String(b.image || ''),
         })),
-        samples: (p.branding_samples || [])
-          .filter((b: any) => b?.image)
-          .map((b: any) => ({
-            id: Number(b.branding_method_id),
-            name: String(b.name || ''),
-            description: String(b.description || ''),
-            image: String(b.image || ''),
-          })),
-      }
-    } catch (e: any) {
-      error.value = e?.message || 'Failed to fetch product detail'
-      data.value = null
-    } finally {
-      loading.value = false
     }
   }
 
-  onMounted(fetchBySlug)
+  // fetched during SSR so crawlers and link previews get the product, not a skeleton;
+  // the key follows the slug, so setSlug refetches on its own
+  const { data, status, error: fetchError, refresh } = useAsyncData(
+    () => `product-detail-${slug.value}`,
+    () => (slug.value ? fetchBySlug() : Promise.resolve(null)),
+  )
+
+  const error = computed<string | null>(() => {
+    if (!slug.value) return 'Invalid product slug'
+    if (fetchError.value) return fetchError.value.message || 'Failed to fetch product detail'
+    if (status.value === 'success' && !data.value) return 'Product not found'
+    return null
+  })
 
   return {
-    data: computed(() => data.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
-    refetch: fetchBySlug,
+    data: computed(() => data.value ?? null),
+    loading: computed(() => status.value === 'pending'),
+    error,
+    refetch: () => refresh(),
     setSlug: (s: string) => { slug.value = s },
   }
 }
