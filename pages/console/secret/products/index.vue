@@ -60,6 +60,16 @@
         />
       </div>
     </div>
+
+    <ElementsConfirmDialog
+      v-model:open="flagOpen"
+      :title="`${flagEnabled ? 'Nonaktifkan' : 'Aktifkan'} ${flagLabel} produk?`"
+      :description="flagTarget ? `${flagTarget.product.name} akan ${flagEnabled ? 'dinonaktifkan' : 'diaktifkan'} di website.` : ''"
+      :confirm-label="flagEnabled ? 'Nonaktifkan' : 'Aktifkan'"
+      :icon="flagEnabled ? CircleX : CircleCheck"
+      :busy="flagBusy"
+      @confirm="confirmFlag"
+    />
   </div>
 </template>
 
@@ -76,7 +86,7 @@ import FieldXSelectSimple from "~/components/forms/fields/FieldXSelectSimple.vue
 import FieldXSelectWithGroupParent from "~/components/forms/fields/FieldXSelectWithGroupParent.vue";
 import {useOptionProductCategories} from "~/composables/useOptionProductCategories";
 import type { ProductGallery } from "~/types/products.type";
-import { Upload } from 'lucide-vue-next'
+import { CircleCheck, CircleX, Upload } from 'lucide-vue-next'
 
 const router = useRouter()
 const { canVisit } = useConsoleAccess()
@@ -92,6 +102,7 @@ const {
   setParams,
   params,
   deleteProductById,
+  setProductFlags,
 } = useProductService(true, undefined, { sortBy: 'updated_at,desc' })
 
 // Filter options (empty category / 'all' clears the filter)
@@ -182,8 +193,47 @@ const handleProductGalleries = async (id: string, createdGalleries: ProductGalle
   }
 }
 
+// toggling Highlight / Active asks for confirmation, then updates only that flag
+type FlagKey = 'is_highlight' | 'is_active'
+const flagTarget = ref<{ product: any; key: FlagKey } | null>(null)
+const flagBusy = ref(false)
+const flagOpen = computed({
+  get: () => flagTarget.value !== null,
+  set: (value: boolean) => { if (!value) flagTarget.value = null },
+})
+const flagEnabled = computed(() => Boolean(flagTarget.value?.product?.[flagTarget.value.key]))
+const flagLabel = computed(() => (flagTarget.value?.key === 'is_highlight' ? 'highlight' : 'aktif'))
+
+const openFlagDialog = (product: any, key: FlagKey) => { flagTarget.value = { product, key } }
+
+const confirmFlag = async () => {
+  const target = flagTarget.value
+  if (!target) return
+  flagBusy.value = true
+  try {
+    const next = !target.product[target.key]
+    await setProductFlags(target.product.id, target.key === 'is_highlight' ? { is_highlight: next } : { is_active: next })
+    datas.value = (datas.value || []).map((product: any) =>
+      String(product.id) === String(target.product.id)
+        ? { ...product, [target.key]: next, updated_at: new Date().toISOString() }
+        : product,
+    )
+    toast.success(next ? `Produk dijadikan ${flagLabel.value}.` : `Produk tidak lagi ${flagLabel.value}.`)
+    flagTarget.value = null
+  } catch (error) {
+    toast.error(getErrorMessage(error))
+  } finally {
+    flagBusy.value = false
+  }
+}
+
 // stable reference so typing in the search box doesn't re-render every table row
-const tableMeta = { handleDelete, handleProductGalleries }
+const tableMeta = {
+  handleDelete,
+  handleProductGalleries,
+  toggleHighlight: (product: any) => openFlagDialog(product, 'is_highlight'),
+  toggleActive: (product: any) => openFlagDialog(product, 'is_active'),
+}
 
 const pageTitle = 'Produk';
 

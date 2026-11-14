@@ -488,11 +488,28 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         return await response.json()
     }
 
+    const setProductFlags = async (
+        id: string | number,
+        flags: { is_active?: boolean; is_highlight?: boolean },
+    ) => {
+        const res = await gqlFetch<{ setProductFlags: { id: number; is_active: boolean; is_highlight: boolean; updated_at: string } }>(
+            `mutation setProductFlags($id: Int!, $is_active: Boolean, $is_highlight: Boolean) {
+                setProductFlags(id: $id, is_active: $is_active, is_highlight: $is_highlight) {
+                    id is_active is_highlight updated_at
+                }
+            }`,
+            { id: Number(id), ...flags },
+            { auth: true },
+        )
+        return res.setProductFlags
+    }
+
     return {
         datas,
         loading,
         error,
         pagination,
+        setProductFlags,
         reFetch: refetch,
         getProducts,
         createProduct,
