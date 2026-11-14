@@ -37,12 +37,18 @@ const activeCategoryId = computed(() => selectedSubCategory.value?.id || categor
 
 const subCategories = computed(() => category.value?.sub || [])
 
-const pageTitle = computed(() => {
-  return category.value?.meta_title || category.value?.name || t('app.categoryPage.detail.fallbackTitle')
-})
+// the API's meta_title/meta_description are a fixed English template, so the head copy is built here
+const pageTitle = computed(() =>
+  category.value?.name
+    ? t('app.categoryPage.detail.metaTitle', { name: category.value.name })
+    : t('app.categoryPage.detail.fallbackTitle')
+)
 
+// the category's own description when it says something; otherwise a keyword sentence from its name
 const pageDescription = computed(() => {
-  return category.value?.meta_description || category.value?.description || ''
+  const own = toPlainText(category.value?.description)
+  if (own.length >= 70) return own
+  return category.value?.name ? t('app.categoryPage.detail.metaDescription', { name: category.value.name }) : ''
 })
 
 // Category filters from sub categories

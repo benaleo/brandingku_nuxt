@@ -161,7 +161,9 @@
         "sourcing": "Learn about our sourcing →",
         "sustainability": "98% SUSTAINABILITY RATING",
         "chooseCategory": "Choose a category",
-        "resetFilter": "Reset"
+        "resetFilter": "Reset",
+        "metaTitle": "Custom Logo {name} - Brandingku",
+        "metaDescription": "Custom {name} with your company logo for souvenirs and corporate gifts. Choose the model, branding technique and wholesale price for your order quantity at Brandingku."
       },
       "catalog": "Catalog",
       "downloadCatalogOf": "Download the {name} catalog"

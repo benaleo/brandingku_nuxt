@@ -36,12 +36,20 @@ const fetchAll = async (field: 'getProducts' | 'getPortfolios'): Promise<Dated[]
   return out
 }
 
-// only top-level categories have their own url; sub categories are a ?sub= filter on the parent
+// only top-level categories have their own url; sub categories are a ?sub= filter on the parent.
+// empty categories are left out: a page with no products is a thin page search engines penalise
 const fetchCategories = async (): Promise<Dated[]> => {
-  const data = await backendGql<{ getProductCategories: (Dated & { parent_id?: number | null; is_active?: boolean })[] }>(
-    `{ getProductCategories { slug parent_id is_active updated_at } }`,
+  const data = await backendGql<{ getProductCategories: (Dated & { id: number; parent_id?: number | null; is_active?: boolean })[] }>(
+    `{ getProductCategories { id slug parent_id is_active updated_at } }`,
   )
-  return data.getProductCategories.filter((c) => !c.parent_id && c.is_active !== false)
+  const parents = data.getProductCategories.filter((c) => !c.parent_id && c.is_active !== false)
+  const counts = await Promise.all(parents.map((c) =>
+    backendGql<{ getProducts: { page_info: { total_items: number } } }>(
+      `query count($id: Int) { getProducts(pagination: { page: 1, limit: 1 }, category_id: $id, is_active: true) { page_info { total_items } } }`,
+      { id: c.id },
+    ).then((r) => r.getProducts.page_info.total_items, () => 1),
+  ))
+  return parents.filter((_, i) => counts[i]! > 0)
 }
 
 const escapeXml = (s: string) =>

@@ -11,6 +11,7 @@ usePageSeo({
   title: () => t("app.meta.title"),
   description: () => t("app.meta.description"),
 });
+useOrganizationSchema();
 
 definePageMeta({
   layout: "default",
