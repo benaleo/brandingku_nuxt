@@ -23,6 +23,7 @@ const current = computed(() => {
 })
 const hasMany = computed(() => props.images.length > 1)
 
+const strip = ref<HTMLElement | null>(null)
 const dragX = ref(0)
 const dragging = ref(false)
 let startX = 0
@@ -71,6 +72,13 @@ const onPointerUp = () => {
   else if (dragX.value >= threshold) go(-1)
   dragX.value = 0
 }
+
+// keep the active thumbnail visible when the picture changes
+watch([current, () => props.open], ([index, open]) => {
+  if (!open || !strip.value) return
+  const item = strip.value.children[index] as HTMLElement | undefined
+  item?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+})
 
 watch(
   () => props.open,
@@ -123,12 +131,12 @@ onBeforeUnmount(() => {
         <ChevronRight class="size-6" />
       </button>
 
-      <figure class="max-h-[88vh] max-w-[92vw] select-none">
+      <figure class="flex max-h-[88vh] max-w-[92vw] select-none flex-col items-center">
         <img
           :src="images[current]"
           :alt="alt || ''"
           draggable="false"
-          class="max-h-[80vh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
+          class="max-h-[68vh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
           :style="{
             transform: dragX ? `translateX(${dragX}px)` : 'none',
             transition: dragging ? 'none' : 'transform 150ms ease',
@@ -140,8 +148,34 @@ onBeforeUnmount(() => {
           @pointerup="onPointerUp"
           @pointercancel="onPointerUp"
         />
-        <figcaption class="mt-3 flex items-center justify-center gap-2 text-sm text-white/90">
+        <figcaption class="mt-3 flex w-full flex-col items-center gap-2 text-sm text-white/90">
           <span v-if="hasMany">{{ current + 1 }} / {{ images.length }}</span>
+          <!-- thumbnail strip: jump to any picture without closing the preview -->
+          <div
+            v-if="hasMany"
+            ref="strip"
+            class="flex max-w-[92vw] items-center gap-2 overflow-x-auto px-1 pb-1"
+          >
+            <button
+              v-for="(image, index) in images"
+              :key="index"
+              type="button"
+              class="shrink-0 overflow-hidden rounded-md transition"
+              :class="index === current
+                ? 'ring-2 ring-white'
+                : 'opacity-60 ring-1 ring-white/30 hover:opacity-100'"
+              :aria-label="alt || ''"
+              :aria-current="index === current ? 'true' : undefined"
+              @click.stop="emit('update:index', index)"
+            >
+              <img
+                :src="image"
+                :alt="alt || ''"
+                draggable="false"
+                class="h-14 w-14 object-cover"
+              />
+            </button>
+          </div>
         </figcaption>
       </figure>
     </div>
