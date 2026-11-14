@@ -80,6 +80,26 @@
         </div>
       </section>
 
+      <!-- profit, only for accounts that can see capital prices -->
+      <section v-if="data?.profit" aria-label="Laba" class="space-y-2">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div v-for="p in profitCards" :key="p.label" class="min-w-0 rounded-xl border bg-card p-3 sm:p-4">
+            <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <component :is="p.icon" class="size-4"/> {{ p.label }}
+            </div>
+            <p class="mt-2 text-lg font-bold leading-tight tabular-nums sm:text-2xl">{{ p.value }}</p>
+            <p v-if="p.note" class="mt-1 text-xs text-muted-foreground">{{ p.note }}</p>
+            <p v-if="p.delta" class="mt-1 flex items-center gap-1 text-xs" :class="p.delta.tone">
+              <component :is="p.delta.icon" class="size-3.5"/>
+              <span>{{ p.delta.text }}</span>
+            </p>
+          </div>
+        </div>
+        <p v-if="data.profit.missing_cost_items > 0" class="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+          {{ data.profit.missing_cost_items }} item belum punya harga modal — laba bisa terlalu tinggi
+        </p>
+      </section>
+
       <!-- trend -->
       <section aria-labelledby="trend-title" class="rounded-xl border bg-card p-4">
         <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -257,6 +277,17 @@ const delta = (m: DashboardMetric) => {
   if (Math.abs(pct) < 0.05) return {icon: Minus, tone: 'text-muted-foreground', text: 'Sama seperti periode sebelumnya'}
   return pct > 0 ? {icon: ArrowUpRight, tone: 'text-green-700', text} : {icon: ArrowDownRight, tone: 'text-red-600', text}
 }
+
+const profitCards = computed(() => {
+  const p = data.value?.profit
+  if (!p) return []
+  const margin = p.sales > 0 ? (p.gross_profit / p.sales) * 100 : 0
+  return [
+    {label: 'Pemasukan (order lunas)', icon: Wallet, value: formatRupiah(p.sales), note: `${p.orders} order lunas`, delta: delta({current: p.sales, previous: p.previous_sales})},
+    {label: 'Modal (HPP)', icon: Package, value: formatRupiah(p.cost), note: '', delta: null},
+    {label: 'Laba produk', icon: Percent, value: formatRupiah(p.gross_profit), note: `Margin ${margin.toLocaleString('id-ID', {maximumFractionDigits: 1})}% · biaya branding belum dihitung`, delta: delta({current: p.gross_profit, previous: p.previous_gross_profit})},
+  ]
+})
 
 const kpis = computed(() => {
   const d = data.value

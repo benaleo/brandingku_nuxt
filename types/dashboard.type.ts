@@ -31,6 +31,16 @@ export interface DashboardAttention {
   unread_chats: number
 }
 
+export interface DashboardProfit {
+  sales: number
+  cost: number
+  gross_profit: number
+  orders: number
+  previous_sales: number
+  previous_gross_profit: number
+  missing_cost_items: number
+}
+
 export interface Dashboard {
   days: number
   bucket: 'day' | 'week' | 'month'
@@ -46,4 +56,6 @@ export interface Dashboard {
   top_products: DashboardProduct[]
   recent_orders: DashboardOrder[]
   attention: DashboardAttention
+  // null when the account cannot see capital prices
+  profit: DashboardProfit | null
 }

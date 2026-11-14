@@ -1,6 +1,6 @@
 import { useGql } from '~/composables/useGql'
 import type { EmailAttachmentInput } from '~/types/admin-smtp.type'
-import type { CheckoutInput, CheckoutItemInput, CheckoutPreview, MyOrderSummary, Order, PaymentPlanInput, ProductionStep } from '~/types/order.type'
+import type { AdminOrderInput, CheckoutInput, CheckoutItemInput, CheckoutPreview, MyOrderSummary, Order, PaymentPlanInput, ProductionStep } from '~/types/order.type'
 
 const DOC_FIELDS = `
   id number type status public_token issue_date due_date total amount_due paid_amount
@@ -183,6 +183,32 @@ export const useOrderService = () => {
   }
 
   // console
+  const previewAdminOrder = async (input: AdminOrderInput) => {
+    const res = await gqlFetch<{ previewAdminOrder: CheckoutPreview }>(
+      `query previewAdminOrder($input: AdminOrderInput!) {
+        previewAdminOrder(input: $input) {
+          lines {
+            product_id product_additional_id product_name product_slug product_image variant_name quantity moq stock unit_price original_unit_price line_total note problem
+            branding_unit_price brandings { branding_method_id name unit_price min_qty available }
+          }
+          subtotal discount voucher_code voucher_message tax_mode tax_rate_bps tax_base tax_total total can_pay
+        }
+      }`,
+      { input },
+      { auth: true },
+    )
+    return res.previewAdminOrder
+  }
+
+  const adminCreateOrder = async (input: AdminOrderInput, idempotencyKey: string) => {
+    const res = await gqlFetch<{ adminCreateOrder: Order }>(
+      `mutation adminCreateOrder($input: AdminOrderInput!, $key: String!) { adminCreateOrder(input: $input, idempotency_key: $key) { ${ORDER_FIELDS} } }`,
+      { input, key: idempotencyKey },
+      { auth: true },
+    )
+    return res.adminCreateOrder
+  }
+
   const getOrders = async (page: number, limit: number, filters: { status?: string; type?: string; keyword?: string }) => {
     const res = await gqlFetch<{ getOrders: OrderPage }>(
       `query getOrders($page: Int, $limit: Int, $status: String, $type: String, $keyword: String) {
@@ -266,6 +292,6 @@ export const useOrderService = () => {
     previewCheckout, placeOrder, requestQuotation, respondQuotation, startOnlinePayment, getMyOrders, getMyOrderSummary, getMyOrder, cancelMyOrder, submitPaymentProof,
     previewPaymentPlan, choosePaymentPlan, reviewProgress,
     getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, createQuotationFromOrder, verifyPayment, rejectPayment,
-    addOrderProgress,
+    addOrderProgress, previewAdminOrder, adminCreateOrder,
   }
 }
