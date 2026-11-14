@@ -59,6 +59,15 @@ export const orderColumns: ColumnDef<Order>[] = [
         },
     },
     {
+        accessorKey: 'due_date',
+        header: 'Target selesai',
+        cell: ({row}) => {
+            const o = row.original
+            const late = !!o.due_date && o.due_date < todayISO() && !['completed', 'cancelled', 'expired', 'rejected'].includes(o.status)
+            return h('span', {class: ['whitespace-nowrap', late && 'font-medium text-red-600']}, o.due_date ? formatDateOnly(o.due_date) : '-')
+        },
+    },
+    {
         accessorKey: 'created_at',
         header: 'Dibuat',
         cell: ({row}) => h('span', {class: 'whitespace-nowrap'}, formatDateTime(row.original.created_at)),

@@ -28,10 +28,16 @@ export type ProductBranding = {
   // tiers are the product's own price, not the category's
   custom_price: boolean
   is_active: boolean
+  // false: the admin excluded this method for the product
+  is_offered: boolean
+  // product | category | '' (no price anywhere)
+  price_source: 'product' | 'category' | ''
+  // the category the price comes from when price_source is category
+  category_name: string
 }
 
 // image: base64 untuk unggah baru, path tersimpan untuk dipertahankan, kosong untuk menghapus
-export type ProductBrandingInput = { branding_method_id: number; custom_tiers?: BrandingTier[]; image?: string }
+export type ProductBrandingInput = { branding_method_id: number; custom_tiers?: BrandingTier[]; image?: string; is_offered?: boolean }
 
 // a branding chosen for a cart or checkout line, priced at the line's quantity
 export type LineBranding = { branding_method_id: number; name: string; unit_price: number; min_qty: number; available: boolean }

@@ -79,6 +79,9 @@
                     <input v-model="row.brandingIds" type="checkbox" :value="b.branding_method_id">
                     {{ b.name }}
                     <span v-if="!b.priced" class="text-xs text-amber-700">belum ada harga</span>
+                    <span v-else class="text-xs text-muted-foreground">
+                      {{ formatRupiah(catalogBrandingPrice(b, row.quantity)) }}/pcs · {{ b.category_name ? `harga kategori ${b.category_name}` : 'harga produk' }}
+                    </span>
                   </label>
                 </div>
                 <div v-if="row.brandingIds.length" class="mt-2 grid gap-3 sm:grid-cols-2">
@@ -102,6 +105,44 @@
                 </div>
               </div>
             </template>
+          </div>
+        </section>
+
+        <!-- payment flow and due date -->
+        <section class="space-y-3 rounded-xl border bg-card p-4">
+          <h2 class="font-semibold">Pembayaran dan jadwal</h2>
+          <div class="inline-flex rounded-lg border p-1 text-sm">
+            <button v-for="f in FLOWS" :key="f.value" type="button" class="rounded-md px-3 py-1.5"
+                    :class="form.payment_flow === f.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
+                    @click="form.payment_flow = f.value">{{ f.label }}</button>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            {{ staged
+              ? 'Harga sudah disepakati: order langsung masuk deal, lalu pembayaran pertama, tahap produksi, dan pelunasan. Voucher tidak berlaku.'
+              : 'Satu invoice, customer membayar penuh.' }}
+          </p>
+          <div v-if="staged" class="space-y-3 rounded-lg border bg-muted/30 p-3">
+            <Label class="text-xs">Pembayaran pertama</Label>
+            <select v-model="form.first_payment" class="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <option value="customer">Customer yang pilih (DP atau lunas)</option>
+              <option value="dp">DP</option>
+              <option value="full">Langsung pelunasan</option>
+            </select>
+            <template v-if="form.first_payment === 'dp'">
+              <div class="inline-flex rounded-lg border p-1 text-sm">
+                <button v-for="m in DP_MODES" :key="m.value" type="button" class="rounded-md px-3 py-1.5"
+                        :class="form.dp_mode === m.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
+                        @click="form.dp_mode = m.value">{{ m.label }}</button>
+              </div>
+              <Input v-if="form.dp_mode === 'percent'" v-model="form.dp_percent" type="number" min="1" max="99" step="any" placeholder="Persentase DP, mis. 30"/>
+              <Input v-else v-model="form.dp_amount" type="number" min="1" placeholder="Nominal DP"/>
+              <p v-if="dpInvalid" class="text-xs text-red-600">{{ dpInvalid }}</p>
+            </template>
+          </div>
+          <div>
+            <Label class="text-xs">Tanggal dibutuhkan (opsional)</Label>
+            <ElementsDateTimeInput v-model="form.due_date" :min="todayISO()" class="mt-1"/>
+            <p class="mt-1 text-xs text-muted-foreground">Tanggal customer butuh barangnya, bukan batas pembayaran.</p>
           </div>
         </section>
 
@@ -140,11 +181,12 @@
               <Label class="text-xs">Ongkir</Label>
               <Input v-model="form.shipping_fee" type="number" min="0" class="mt-1" placeholder="Kosongkan bila ongkir belum diketahui"/>
               <p v-if="shippingFeeInvalid" class="mt-1 text-xs text-red-600">Ongkir tidak boleh negatif.</p>
+              <p v-else-if="staged" class="mt-1 text-xs text-muted-foreground">Wajib diisi pada order bertahap, isi 0 bila gratis ongkir.</p>
               <p v-else class="mt-1 text-xs text-muted-foreground">Bila dikosongkan, order berstatus "menunggu ongkir" sampai ongkir diisi.</p>
             </div>
           </div>
           <div><Label class="text-xs">Catatan order</Label><Textarea v-model="form.notes" rows="2" maxlength="1000" class="mt-1"/></div>
-          <div><Label class="text-xs">Kode voucher</Label><Input v-model="form.voucher_code" maxlength="50" class="mt-1"/></div>
+          <div v-if="!staged"><Label class="text-xs">Kode voucher</Label><Input v-model="form.voucher_code" maxlength="50" class="mt-1"/></div>
         </section>
       </div>
 
@@ -175,9 +217,15 @@
               <div v-if="preview.tax_total" class="flex justify-between"><dt class="text-muted-foreground">Pajak ({{ formatBps(preview.tax_rate_bps) }})</dt><dd class="tabular-nums">{{ formatRupiah(preview.tax_total) }}</dd></div>
               <div v-if="form.delivery_method === 'delivery'" class="flex justify-between">
                 <dt class="text-muted-foreground">Ongkir</dt>
-                <dd class="tabular-nums">{{ preview.shipping_fee > 0 ? formatRupiah(preview.shipping_fee) : 'Menunggu ongkir' }}</dd>
+                <dd class="tabular-nums">{{ preview.shipping_fee > 0 ? formatRupiah(preview.shipping_fee) : staged && hasShippingFee ? 'Gratis' : 'Menunggu ongkir' }}</dd>
               </div>
               <div class="flex justify-between text-base font-bold"><dt>Total</dt><dd class="tabular-nums">{{ formatRupiah(preview.total) }}</dd></div>
+              <div v-if="staged && preview.first_payment_amount != null" class="flex justify-between">
+                <dt class="text-muted-foreground">Tagihan pertama</dt><dd class="tabular-nums">{{ formatRupiah(preview.first_payment_amount) }}</dd>
+              </div>
+              <div v-if="staged && preview.first_payment_amount != null" class="flex justify-between">
+                <dt class="text-muted-foreground">Sisa pelunasan</dt><dd class="tabular-nums">{{ formatRupiah(preview.total - preview.first_payment_amount) }}</dd>
+              </div>
             </dl>
             <p v-if="preview.lines.length && preview.lines.every(l => l.blocked)" class="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
               Total Rp 0 karena semua item tidak dihitung. Isi harga produk atau harga branding pada item yang bermasalah.
@@ -235,7 +283,8 @@ import {useBrandingService} from '~/services/branding.service'
 import {useCustomerAddressService} from '~/services/customer.service'
 import {invoiceErrorMessage} from '~/services/invoice.service'
 import type {Customer, CustomerAddress, CustomerAddressInput} from '~/types/customer.type'
-import type {AdminOrderInput, CheckoutPreview} from '~/types/order.type'
+import type {BrandingTier} from '~/types/branding.type'
+import type {AdminOrderInput, CheckoutPreview, PaymentPlanInput} from '~/types/order.type'
 
 type Variant = { id: number; name: string; price: number; moq: number }
 type Row = {
@@ -244,7 +293,7 @@ type Row = {
   results: { id: number; name: string; slug: string }[]
   product: { id: number; name: string; slug: string } | null
   variants: Variant[]
-  brandings: { branding_method_id: number; name: string; priced: boolean }[]
+  brandings: { branding_method_id: number; name: string; priced: boolean; tiers: BrandingTier[]; category_name: string }[]
   variantId: number
   quantity: number
   brandingIds: number[]
@@ -263,6 +312,8 @@ const {gqlFetch} = useGql()
 const {previewAdminOrder, adminCreateOrder} = useOrderService()
 const {getProductBrandings} = useBrandingService()
 
+const FLOWS = [{value: 'direct', label: 'Langsung'}, {value: 'staged', label: 'Bertahap (DP, produksi, pelunasan)'}] as const
+const DP_MODES = [{value: 'percent', label: 'Persen'}, {value: 'amount', label: 'Nominal'}] as const
 const METHODS = [{value: 'delivery', label: 'Pengiriman'}, {value: 'pickup', label: 'Ambil di tempat'}] as const
 // one key per form: a double submit or a retry returns the same order
 const idempotencyKey = newIdempotencyKey()
@@ -280,7 +331,15 @@ const form = reactive({
   notes: '',
   voucher_code: '',
   shipping_fee: '' as string | number,
+  due_date: '',
+  payment_flow: 'direct' as 'direct' | 'staged',
+  // staged: 'customer' lets the customer choose DP or full on their order page
+  first_payment: 'customer' as 'customer' | 'dp' | 'full',
+  dp_mode: 'percent' as 'percent' | 'amount',
+  dp_percent: 30 as string | number,
+  dp_amount: '' as string | number,
 })
+const staged = computed(() => form.payment_flow === 'staged')
 
 // address book
 const {getCustomerAddresses, createCustomerAddress, updateCustomerAddress, deleteCustomerAddress} = useCustomerAddressService()
@@ -481,7 +540,10 @@ const pickProduct = async (row: Row, p: { id: number; name: string; slug: string
     // only active variants can be ordered
     row.variants = detail.getProductDetail.additionals.filter(a => a.is_active !== false)
       .map(a => ({id: Number(a.id), name: a.name, price: a.price, moq: a.moq}))
-    row.brandings = brandings.filter(b => b.is_active).map(b => ({branding_method_id: b.branding_method_id, name: b.name, priced: b.tiers.length > 0}))
+    row.brandings = brandings.filter(b => b.is_active && b.is_offered).map(b => ({
+      branding_method_id: b.branding_method_id, name: b.name, priced: b.tiers.length > 0, tiers: b.tiers,
+      category_name: b.price_source === 'category' ? b.category_name : '',
+    }))
     if (row.variants.length === 1) row.variantId = row.variants[0].id
   } catch (e: any) {
     toast.error(invoiceErrorMessage(e, 'Detail produk gagal dimuat'))
@@ -521,6 +583,27 @@ watch(() => rows.value.map(r => r.brandingIds.join(',')), () => {
 })
 
 // form -> input
+// catalog price per piece at the quantity; below the smallest tier admin orders charge the lowest tier
+const catalogBrandingPrice = (b: { tiers: BrandingTier[] }, qty: number) =>
+  brandingPriceAt(b.tiers, qty) ?? b.tiers.find(t => t.min_qty === brandingMinQty(b.tiers))?.price ?? 0
+const firstPaymentInput = (): PaymentPlanInput | null => {
+  if (!staged.value || form.first_payment === 'customer') return null
+  if (form.first_payment === 'full') return {plan: 'full'}
+  return form.dp_mode === 'percent'
+    ? {plan: 'dp', dp_percent_bps: Math.round(Number(form.dp_percent) * 100)}
+    : {plan: 'dp', dp_amount: Math.round(Number(form.dp_amount))}
+}
+const dpInvalid = computed(() => {
+  if (!staged.value || form.first_payment !== 'dp') return ''
+  if (form.dp_mode === 'percent') {
+    const p = Number(form.dp_percent)
+    return !Number.isFinite(p) || p <= 0 || p >= 100 ? 'Persentase DP harus di atas 0 dan di bawah 100.' : ''
+  }
+  const a = Number(form.dp_amount)
+  if (!Number.isFinite(a) || a < 1) return 'Nominal DP harus lebih dari 0.'
+  const total = preview.value?.total
+  return total && a >= total ? 'Nominal DP harus di bawah total.' : ''
+})
 const hasShippingFee = computed(() => form.shipping_fee !== '' && form.shipping_fee != null)
 const shippingFeeInvalid = computed(() => hasShippingFee.value && !(Number(form.shipping_fee) >= 0))
 const hasPrice = (r: Row) => r.unitPrice !== '' && r.unitPrice != null
@@ -559,7 +642,10 @@ const orderInput = (): AdminOrderInput | null => {
     shipping_city: delivery ? form.shipping_city.trim() : undefined,
     shipping_postal_code: delivery ? form.shipping_postal_code.trim() || undefined : undefined,
     notes: form.notes.trim() || undefined,
-    voucher_code: form.voucher_code.trim() || undefined,
+    voucher_code: staged.value ? undefined : form.voucher_code.trim() || undefined,
+    due_date: form.due_date || undefined,
+    payment_flow: form.payment_flow,
+    first_payment: firstPaymentInput(),
     shipping_fee: delivery && hasShippingFee.value && !shippingFeeInvalid.value ? Math.round(Number(form.shipping_fee)) : undefined,
   }
 }
@@ -570,6 +656,7 @@ const missingField = (): string | null => {
   if (!itemsInput().length) return 'Item'
   if (rows.value.some(priceInvalid)) return 'Harga per pcs (harus lebih dari 0)'
   if (rows.value.some(anyBrandingPriceInvalid)) return 'Harga branding per pcs (harus lebih dari 0)'
+  if (staged.value && form.delivery_method === 'delivery' && !hasShippingFee.value) return 'Ongkir (isi 0 bila gratis)'
   if (form.delivery_method === 'delivery' && shippingFeeInvalid.value) return 'Ongkir (tidak boleh negatif)'
   const required: [string, string][] = [[form.customer_name, 'Nama'], [form.customer_phone, 'Telepon']]
   if (form.delivery_method === 'delivery') {
@@ -587,6 +674,7 @@ const submitHint = computed(() => {
   const p = preview.value
   if (!p) return ''
   if (p.lines.some(l => l.blocked)) return 'Ada item yang tidak dihitung. Perbaiki item bermasalah dulu.'
+  if (dpInvalid.value) return dpInvalid.value
   if (!p.can_pay) return 'Order belum bisa dibuat. Periksa item dan harga.'
   return ''
 })
@@ -614,7 +702,7 @@ const loadPreview = async () => {
 }
 
 watch(
-  () => [customer.value?.id, form.delivery_method, form.voucher_code, form.shipping_fee, JSON.stringify(itemsInput())],
+  () => [customer.value?.id, form.delivery_method, form.voucher_code, form.shipping_fee, form.due_date, form.payment_flow, JSON.stringify(firstPaymentInput()), JSON.stringify(itemsInput())],
   () => {
     clearTimeout(previewTimer)
     previewTimer = setTimeout(loadPreview, 500)

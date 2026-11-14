@@ -4,7 +4,7 @@ import type {
 } from '~/types/branding.type'
 
 const METHOD_FIELDS = 'id name description is_active orders created_at updated_at'
-const PRODUCT_BRANDING_FIELDS = 'branding_method_id name description image tiers { min_qty price } custom_price is_active'
+const PRODUCT_BRANDING_FIELDS = 'branding_method_id name description image tiers { min_qty price } custom_price is_active is_offered price_source category_name'
 
 export const useBrandingService = () => {
   const { gqlFetch } = useGql()
