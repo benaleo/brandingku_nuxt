@@ -345,10 +345,7 @@ watch(
   detail,
   (v) => {
     if (!v) return;
-    // product colour variants first, else colours from the variant attributes
-    if (!selectedColor.value) {
-      selectedColor.value = v.colorVariants?.[0]?.name || v.colors?.[0] || "";
-    }
+    // no colour is chosen up front: the gallery opens on the product's main picture
     // default variant: first additional name
     if (!selectedVariantName.value && (v.additionals?.length || 0) > 0) {
       selectedVariantName.value = v.additionals?.[0]?.name || "";
@@ -356,15 +353,6 @@ watch(
   },
   { immediate: true }
 );
-
-// when variant changes, adjust selectedColor to first variant color if available;
-// product colour variants are independent of the price variant and stay as chosen
-watch(selectedVariantName, () => {
-  if (detail.value?.colorVariants?.length) return;
-  if (variantColors.value && variantColors.value.length) {
-    selectedColor.value = variantColors.value[0] || "";
-  }
-});
 
 useHead(() => ({
   // lifts the chat widget above the mobile action bar

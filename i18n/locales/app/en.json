@@ -175,7 +175,9 @@
         "previous": "Previous",
         "next": "Next"
       },
-      "back": "Go back"
+      "back": "Go back",
+      "previousImage": "Previous image",
+      "nextImage": "Next image"
     },
     "productPage": {
       "title": "Brandingku Products",
