@@ -15,3 +15,26 @@ export interface Customer {
   last_order_at: string | null
   created_at: string
 }
+
+// admin-only address book entry of a customer
+export interface CustomerAddress {
+  id: number
+  user_id: number
+  label: string
+  recipient_name: string
+  phone: string
+  address: string
+  city: string
+  postal_code: string
+  created_at: string
+  updated_at: string
+}
+
+export type CustomerAddressInput = {
+  label?: string
+  recipient_name: string
+  phone: string
+  address: string
+  city: string
+  postal_code?: string
+}

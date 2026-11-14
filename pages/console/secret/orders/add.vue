@@ -41,14 +41,14 @@
               <div class="min-w-0 flex-1">
                 <Label class="text-xs">Produk</Label>
                 <div v-if="row.product" class="mt-1 flex items-center justify-between gap-2 text-sm">
-                  <span class="font-medium">{{ row.product.name }}</span>
+                  <span class="font-medium">[{{ row.product.slug }}] - {{ row.product.name }}</span>
                   <Button variant="ghost" size="sm" @click="clearProduct(row)">Ganti</Button>
                 </div>
                 <div v-else>
                   <Input v-model="row.keyword" class="mt-1" placeholder="Cari produk…" @input="searchProducts(row)"/>
                   <ul v-if="row.results.length" class="mt-2 max-h-56 divide-y overflow-auto rounded-lg border bg-background">
                     <li v-for="p in row.results" :key="p.id">
-                      <button type="button" class="w-full px-3 py-2 text-left text-sm hover:bg-muted" @click="pickProduct(row, p)">{{ p.name }}</button>
+                      <button type="button" class="w-full px-3 py-2 text-left text-sm hover:bg-muted" @click="pickProduct(row, p)">[{{ p.slug }}] - {{ p.name }}</button>
                     </li>
                   </ul>
                 </div>
@@ -78,7 +78,15 @@
                          :class="row.brandingIds.includes(b.branding_method_id) && 'border-green-600 bg-green-50'">
                     <input v-model="row.brandingIds" type="checkbox" :value="b.branding_method_id">
                     {{ b.name }}
+                    <span v-if="!b.priced" class="text-xs text-amber-700">belum ada harga</span>
                   </label>
+                </div>
+                <div v-if="row.brandingIds.length" class="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div v-for="id in row.brandingIds" :key="id">
+                    <Label class="text-xs">Harga branding per pcs · {{ row.brandings.find(b => b.branding_method_id === id)?.name }}</Label>
+                    <Input v-model="row.brandingPrices[id]" type="number" min="1" class="mt-1" placeholder="Opsional, kosongkan untuk harga katalog"/>
+                    <p v-if="brandingPriceInvalid(row, id)" class="mt-1 text-xs text-red-600">Harga harus lebih dari 0, atau kosongkan.</p>
+                  </div>
                 </div>
               </div>
 
@@ -110,12 +118,30 @@
             <div><Label class="text-xs">Telepon *</Label><Input v-model="form.customer_phone" maxlength="40" class="mt-1"/></div>
             <div class="sm:col-span-2"><Label class="text-xs">Perusahaan</Label><Input v-model="form.customer_company" maxlength="150" class="mt-1"/></div>
           </div>
+          <div v-if="form.delivery_method === 'delivery' && customer" class="space-y-2 rounded-lg border bg-muted/30 p-3">
+            <Label class="text-xs">Buku alamat customer</Label>
+            <select v-model.number="selectedAddressId" class="h-9 w-full rounded-md border bg-background px-3 text-sm" @change="pickAddress">
+              <option :value="0">{{ addresses.length ? 'Pilih alamat tersimpan' : 'Belum ada alamat tersimpan' }}</option>
+              <option v-for="a in addresses" :key="a.id" :value="a.id">{{ a.label || 'Tanpa label' }} · {{ a.recipient_name }} · {{ a.city }}</option>
+            </select>
+            <div class="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" :disabled="addressBusy" @click="openSaveAddress">Simpan sebagai alamat baru</Button>
+              <Button v-if="selectedAddress" type="button" variant="outline" size="sm" :disabled="addressBusy || !addressChanged" @click="updateAddress">Perbarui alamat</Button>
+              <Button v-if="selectedAddress" type="button" variant="ghost" size="sm" class="text-red-600" :disabled="addressBusy" @click="deleteOpen = true">Hapus alamat</Button>
+            </div>
+          </div>
           <div v-if="form.delivery_method === 'delivery'" class="grid gap-3 sm:grid-cols-2">
             <div><Label class="text-xs">Nama penerima *</Label><Input v-model="form.shipping_name" maxlength="150" class="mt-1"/></div>
             <div><Label class="text-xs">Telepon penerima *</Label><Input v-model="form.shipping_phone" maxlength="40" class="mt-1"/></div>
             <div class="sm:col-span-2"><Label class="text-xs">Alamat *</Label><Textarea v-model="form.shipping_address" rows="2" maxlength="500" class="mt-1"/></div>
             <div><Label class="text-xs">Kota *</Label><Input v-model="form.shipping_city" maxlength="100" class="mt-1"/></div>
-            <div><Label class="text-xs">Kode pos</Label><Input v-model="form.shipping_postal_code" maxlength="20" class="mt-1"/></div>
+            <div><Label class="text-xs">Kode pos</Label><Input v-model="form.shipping_postal_code" maxlength="10" class="mt-1"/></div>
+            <div class="sm:col-span-2">
+              <Label class="text-xs">Ongkir</Label>
+              <Input v-model="form.shipping_fee" type="number" min="0" class="mt-1" placeholder="Kosongkan bila ongkir belum diketahui"/>
+              <p v-if="shippingFeeInvalid" class="mt-1 text-xs text-red-600">Ongkir tidak boleh negatif.</p>
+              <p v-else class="mt-1 text-xs text-muted-foreground">Bila dikosongkan, order berstatus "menunggu ongkir" sampai ongkir diisi.</p>
+            </div>
           </div>
           <div><Label class="text-xs">Catatan order</Label><Textarea v-model="form.notes" rows="2" maxlength="1000" class="mt-1"/></div>
           <div><Label class="text-xs">Kode voucher</Label><Input v-model="form.voucher_code" maxlength="50" class="mt-1"/></div>
@@ -140,32 +166,63 @@
                 Branding: {{ l.brandings.map(b => `${b.name} +${formatRupiah(b.unit_price)}`).join(', ') }}
               </p>
               <p class="text-right font-medium tabular-nums">{{ formatRupiah(l.line_total) }}</p>
-              <p v-if="l.problem" class="rounded-md border border-yellow-300 bg-yellow-50 px-2 py-1 text-xs text-yellow-800">{{ l.problem }}</p>
+              <p v-if="l.blocked" class="rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">{{ l.problem }} (tidak dihitung di total)</p>
+              <p v-else-if="l.problem" class="rounded-md border border-yellow-300 bg-yellow-50 px-2 py-1 text-xs text-yellow-800">{{ l.problem }}</p>
             </div>
             <dl class="space-y-1 text-sm">
               <div class="flex justify-between"><dt class="text-muted-foreground">Subtotal</dt><dd class="tabular-nums">{{ formatRupiah(preview.subtotal) }}</dd></div>
               <div v-if="preview.discount" class="flex justify-between"><dt class="text-muted-foreground">Diskon</dt><dd class="tabular-nums">-{{ formatRupiah(preview.discount) }}</dd></div>
               <div v-if="preview.tax_total" class="flex justify-between"><dt class="text-muted-foreground">Pajak ({{ formatBps(preview.tax_rate_bps) }})</dt><dd class="tabular-nums">{{ formatRupiah(preview.tax_total) }}</dd></div>
+              <div v-if="form.delivery_method === 'delivery'" class="flex justify-between">
+                <dt class="text-muted-foreground">Ongkir</dt>
+                <dd class="tabular-nums">{{ preview.shipping_fee > 0 ? formatRupiah(preview.shipping_fee) : 'Menunggu ongkir' }}</dd>
+              </div>
               <div class="flex justify-between text-base font-bold"><dt>Total</dt><dd class="tabular-nums">{{ formatRupiah(preview.total) }}</dd></div>
             </dl>
+            <p v-if="preview.lines.length && preview.lines.every(l => l.blocked)" class="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+              Total Rp 0 karena semua item tidak dihitung. Isi harga produk atau harga branding pada item yang bermasalah.
+            </p>
             <p v-if="preview.voucher_message" class="text-xs text-muted-foreground">{{ preview.voucher_message }}</p>
           </template>
+          <p v-if="submitHint" class="text-xs text-amber-700">{{ submitHint }}</p>
           <div class="flex gap-2 pt-2">
             <Button variant="outline" class="flex-1" :disabled="saving" @click="router.push('/console/secret/orders')">Batal</Button>
-            <Button variant="primary" class="flex-1" :disabled="saving" @click="submit">
+            <Button variant="primary" class="flex-1" :disabled="saving || submitBlocked" @click="submit">
               <Loader2 v-if="saving" class="mr-1 size-4 animate-spin"/> Buat Order
             </Button>
           </div>
         </section>
       </aside>
     </div>
+
+    <ElementsConfirmDialog
+      v-model:open="labelOpen"
+      title="Simpan alamat baru"
+      description="Beri label agar mudah dikenali, mis. Kantor atau Rumah. Boleh dikosongkan."
+      confirm-label="Simpan"
+      :busy="addressBusy"
+      @confirm="saveNewAddress"
+    >
+      <Input v-model="addressLabel" maxlength="50" class="mt-3" placeholder="Label alamat (opsional)" @keyup.enter="saveNewAddress"/>
+    </ElementsConfirmDialog>
+    <ElementsConfirmDialog
+      v-model:open="deleteOpen"
+      title="Hapus alamat?"
+      :description="selectedAddress ? `${selectedAddress.label || selectedAddress.recipient_name} akan dihapus dari buku alamat customer.` : ''"
+      confirm-label="Hapus"
+      tone="danger"
+      :icon="Trash2"
+      :busy="addressBusy"
+      @confirm="removeAddress"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import {computed, reactive, ref, watch} from 'vue'
 import {toast} from 'vue-sonner'
-import {Loader2} from 'lucide-vue-next'
+import {Loader2, Trash2} from 'lucide-vue-next'
+import ElementsConfirmDialog from '~/components/elements/ConfirmDialog.vue'
 import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import AppTableHeader from '~/components/elements/AppTableHeader.vue'
 import {Button} from '@/components/ui/button'
@@ -175,23 +232,26 @@ import {Textarea} from '@/components/ui/textarea'
 import {useGql} from '~/composables/useGql'
 import {useOrderService} from '~/services/order.service'
 import {useBrandingService} from '~/services/branding.service'
+import {useCustomerAddressService} from '~/services/customer.service'
 import {invoiceErrorMessage} from '~/services/invoice.service'
-import type {Customer} from '~/types/customer.type'
+import type {Customer, CustomerAddress, CustomerAddressInput} from '~/types/customer.type'
 import type {AdminOrderInput, CheckoutPreview} from '~/types/order.type'
 
 type Variant = { id: number; name: string; price: number; moq: number }
 type Row = {
   key: number
   keyword: string
-  results: { id: number; name: string }[]
-  product: { id: number; name: string } | null
+  results: { id: number; name: string; slug: string }[]
+  product: { id: number; name: string; slug: string } | null
   variants: Variant[]
-  brandings: { branding_method_id: number; name: string }[]
+  brandings: { branding_method_id: number; name: string; priced: boolean }[]
   variantId: number
   quantity: number
   brandingIds: number[]
   note: string
   unitPrice: string | number
+  // per-piece branding price override, by branding_method_id
+  brandingPrices: Record<number, string | number>
 }
 
 const pageTitle = 'Buat Order'
@@ -219,7 +279,107 @@ const form = reactive({
   shipping_postal_code: '',
   notes: '',
   voucher_code: '',
+  shipping_fee: '' as string | number,
 })
+
+// address book
+const {getCustomerAddresses, createCustomerAddress, updateCustomerAddress, deleteCustomerAddress} = useCustomerAddressService()
+const addresses = ref<CustomerAddress[]>([])
+const selectedAddressId = ref(0)
+const addressBusy = ref(false)
+const labelOpen = ref(false)
+const addressLabel = ref('')
+const deleteOpen = ref(false)
+const selectedAddress = computed(() => addresses.value.find(a => a.id === selectedAddressId.value) || null)
+const addressInput = (label?: string): CustomerAddressInput => ({
+  label: label?.trim() || undefined,
+  recipient_name: form.shipping_name.trim(),
+  phone: form.shipping_phone.trim(),
+  address: form.shipping_address.trim(),
+  city: form.shipping_city.trim(),
+  postal_code: form.shipping_postal_code.trim() || undefined,
+})
+const addressChanged = computed(() => {
+  const a = selectedAddress.value
+  if (!a) return false
+  const i = addressInput()
+  return a.recipient_name !== i.recipient_name || a.phone !== i.phone || a.address !== i.address || a.city !== i.city || (a.postal_code || '') !== (i.postal_code || '')
+})
+const addressComplete = () => {
+  const i = addressInput()
+  if (i.recipient_name && i.phone && i.address && i.city) return true
+  toast.error('Lengkapi nama penerima, telepon, alamat, dan kota dulu')
+  return false
+}
+const loadAddresses = async () => {
+  const id = customer.value?.id
+  if (!id) return
+  try {
+    const list = await getCustomerAddresses(id)
+    if (customer.value?.id === id) addresses.value = list
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Alamat customer gagal dimuat'))
+  }
+}
+const pickAddress = () => {
+  const a = selectedAddress.value
+  if (!a) return
+  form.shipping_name = a.recipient_name
+  form.shipping_phone = a.phone
+  form.shipping_address = a.address
+  form.shipping_city = a.city
+  form.shipping_postal_code = a.postal_code || ''
+}
+const openSaveAddress = () => {
+  if (!addressComplete()) return
+  addressLabel.value = ''
+  labelOpen.value = true
+}
+const saveNewAddress = async () => {
+  if (!customer.value || addressBusy.value || !addressComplete()) return
+  addressBusy.value = true
+  try {
+    const created = await createCustomerAddress(customer.value.id, addressInput(addressLabel.value))
+    labelOpen.value = false
+    await loadAddresses()
+    selectedAddressId.value = created.id
+    toast.success('Alamat disimpan')
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Alamat gagal disimpan'))
+  } finally {
+    addressBusy.value = false
+  }
+}
+const updateAddress = async () => {
+  const a = selectedAddress.value
+  if (!a || !addressComplete()) return
+  addressBusy.value = true
+  try {
+    await updateCustomerAddress(a.id, addressInput(a.label))
+    await loadAddresses()
+    toast.success('Alamat diperbarui')
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Alamat gagal diperbarui'))
+  } finally {
+    addressBusy.value = false
+  }
+}
+const removeAddress = async () => {
+  const a = selectedAddress.value
+  if (!a) return
+  addressBusy.value = true
+  try {
+    await deleteCustomerAddress(a.id)
+    deleteOpen.value = false
+    selectedAddressId.value = 0
+    await loadAddresses()
+    toast.success('Alamat dihapus')
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Alamat gagal dihapus'))
+  } finally {
+    addressBusy.value = false
+  }
+}
 
 // customer
 const customer = ref<Customer | null>(null)
@@ -263,14 +423,23 @@ const pickCustomer = (c: Customer) => {
   form.shipping_name = c.name || ''
   form.shipping_phone = c.phone || ''
   form.shipping_address = c.address || ''
+  form.shipping_city = ''
+  form.shipping_postal_code = ''
+  form.customer_company = ''
+  selectedAddressId.value = 0
+  loadAddresses()
 }
-const clearCustomer = () => { customer.value = null; customerKeyword.value = '' }
+const clearCustomer = () => {
+  form.shipping_city = ''
+  form.shipping_postal_code = ''
+  form.customer_company = ''
+  customer.value = null; customerKeyword.value = ''; addresses.value = []; selectedAddressId.value = 0 }
 
 // items
 let rowKey = 0
 const newRow = (): Row => ({
   key: ++rowKey, keyword: '', results: [], product: null, variants: [], brandings: [],
-  variantId: 0, quantity: 1, brandingIds: [], note: '', unitPrice: '',
+  variantId: 0, quantity: 1, brandingIds: [], note: '', unitPrice: '', brandingPrices: {},
 })
 const rows = ref<Row[]>([newRow()])
 const addRow = () => rows.value.push(newRow())
@@ -282,21 +451,21 @@ const searchProducts = (row: Row) => {
   if (!keyword) { row.results = []; return }
   productTimers.set(row.key, setTimeout(async () => {
     try {
-      const res = await gqlFetch<{ getProducts: { items: { id: number | string; name: string }[] } }>(
+      const res = await gqlFetch<{ getProducts: { items: { id: number | string; name: string; slug: string }[] } }>(
         `query getProducts($keyword: String) {
-          getProducts(pagination: { page: 1, limit: 10 }, keyword: $keyword, is_active: true) { items { id name } }
+          getProducts(pagination: { page: 1, limit: 10 }, keyword: $keyword, is_active: true) { items { id name slug } }
         }`,
         {keyword},
         {auth: true},
       )
-      row.results = res.getProducts.items.map(p => ({id: Number(p.id), name: p.name}))
+      row.results = res.getProducts.items.map(p => ({id: Number(p.id), name: p.name, slug: p.slug}))
     } catch (e: any) {
       toast.error(invoiceErrorMessage(e, 'Produk gagal dimuat'))
     }
   }, 300))
 }
 
-const pickProduct = async (row: Row, p: { id: number; name: string }) => {
+const pickProduct = async (row: Row, p: { id: number; name: string; slug: string }) => {
   row.product = p
   row.results = []
   row.keyword = ''
@@ -312,7 +481,7 @@ const pickProduct = async (row: Row, p: { id: number; name: string }) => {
     // only active variants can be ordered
     row.variants = detail.getProductDetail.additionals.filter(a => a.is_active !== false)
       .map(a => ({id: Number(a.id), name: a.name, price: a.price, moq: a.moq}))
-    row.brandings = brandings.filter(b => b.is_active)
+    row.brandings = brandings.filter(b => b.is_active).map(b => ({branding_method_id: b.branding_method_id, name: b.name, priced: b.tiers.length > 0}))
     if (row.variants.length === 1) row.variantId = row.variants[0].id
   } catch (e: any) {
     toast.error(invoiceErrorMessage(e, 'Detail produk gagal dimuat'))
@@ -326,6 +495,7 @@ const clearProduct = (row: Row) => {
   row.brandings = []
   row.variantId = 0
   row.brandingIds = []
+  row.brandingPrices = {}
   row.unitPrice = ''
 }
 
@@ -341,15 +511,33 @@ watch(() => rows.value.map(r => `${r.key}:${r.variantId}`), (now, old) => {
   })
 })
 
+// unchecking a branding drops its price override
+watch(() => rows.value.map(r => r.brandingIds.join(',')), () => {
+  rows.value.forEach(r => {
+    Object.keys(r.brandingPrices).forEach(k => {
+      if (!r.brandingIds.includes(Number(k))) delete r.brandingPrices[Number(k)]
+    })
+  })
+})
+
 // form -> input
+const hasShippingFee = computed(() => form.shipping_fee !== '' && form.shipping_fee != null)
+const shippingFeeInvalid = computed(() => hasShippingFee.value && !(Number(form.shipping_fee) >= 0))
 const hasPrice = (r: Row) => r.unitPrice !== '' && r.unitPrice != null
 const priceInvalid = (r: Row) => hasPrice(r) && !(Number(r.unitPrice) > 0)
+const hasBrandingPrice = (r: Row, id: number) => r.brandingPrices[id] !== '' && r.brandingPrices[id] != null
+const brandingPriceInvalid = (r: Row, id: number) => hasBrandingPrice(r, id) && !(Number(r.brandingPrices[id]) > 0)
+const anyBrandingPriceInvalid = (r: Row) => r.brandingIds.some(id => brandingPriceInvalid(r, id))
+const brandingPricesInput = (r: Row) => r.brandingIds
+  .filter(id => hasBrandingPrice(r, id) && !brandingPriceInvalid(r, id))
+  .map(id => ({branding_method_id: id, unit_price: Math.round(Number(r.brandingPrices[id]))}))
 const itemsInput = () => rows.value
   .filter(r => r.variantId > 0 && r.quantity > 0)
   .map(r => ({
     product_additional_id: r.variantId,
     quantity: Math.floor(r.quantity),
     ...(r.brandingIds.length ? {branding_ids: r.brandingIds} : {}),
+    ...(brandingPricesInput(r).length ? {branding_prices: brandingPricesInput(r)} : {}),
     ...(r.note.trim() ? {note: r.note.trim()} : {}),
     ...(hasPrice(r) && !priceInvalid(r) ? {unit_price: Math.round(Number(r.unitPrice))} : {}),
   }))
@@ -372,6 +560,7 @@ const orderInput = (): AdminOrderInput | null => {
     shipping_postal_code: delivery ? form.shipping_postal_code.trim() || undefined : undefined,
     notes: form.notes.trim() || undefined,
     voucher_code: form.voucher_code.trim() || undefined,
+    shipping_fee: delivery && hasShippingFee.value && !shippingFeeInvalid.value ? Math.round(Number(form.shipping_fee)) : undefined,
   }
 }
 
@@ -380,6 +569,8 @@ const missingField = (): string | null => {
   if (!customer.value) return 'Customer'
   if (!itemsInput().length) return 'Item'
   if (rows.value.some(priceInvalid)) return 'Harga per pcs (harus lebih dari 0)'
+  if (rows.value.some(anyBrandingPriceInvalid)) return 'Harga branding per pcs (harus lebih dari 0)'
+  if (form.delivery_method === 'delivery' && shippingFeeInvalid.value) return 'Ongkir (tidak boleh negatif)'
   const required: [string, string][] = [[form.customer_name, 'Nama'], [form.customer_phone, 'Telepon']]
   if (form.delivery_method === 'delivery') {
     required.push([form.shipping_name, 'Nama penerima'], [form.shipping_phone, 'Telepon penerima'], [form.shipping_address, 'Alamat'], [form.shipping_city, 'Kota'])
@@ -391,6 +582,15 @@ const missingField = (): string | null => {
 const preview = ref<CheckoutPreview | null>(null)
 const previewLoading = ref(false)
 const previewError = ref('')
+const submitHint = computed(() => {
+  if (previewLoading.value) return 'Menunggu ringkasan selesai dihitung…'
+  const p = preview.value
+  if (!p) return ''
+  if (p.lines.some(l => l.blocked)) return 'Ada item yang tidak dihitung. Perbaiki item bermasalah dulu.'
+  if (!p.can_pay) return 'Order belum bisa dibuat. Periksa item dan harga.'
+  return ''
+})
+const submitBlocked = computed(() => !!submitHint.value)
 let previewSeq = 0
 let previewTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -414,7 +614,7 @@ const loadPreview = async () => {
 }
 
 watch(
-  () => [customer.value?.id, form.delivery_method, form.voucher_code, JSON.stringify(itemsInput())],
+  () => [customer.value?.id, form.delivery_method, form.voucher_code, form.shipping_fee, JSON.stringify(itemsInput())],
   () => {
     clearTimeout(previewTimer)
     previewTimer = setTimeout(loadPreview, 500)

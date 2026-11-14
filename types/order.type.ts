@@ -203,6 +203,8 @@ export type CheckoutLine = {
   line_total: number
   note: string
   problem: string
+  // excluded from the totals; problem says why
+  blocked: boolean
 }
 
 export type CheckoutPreview = {
@@ -216,6 +218,7 @@ export type CheckoutPreview = {
   tax_base: number
   tax_total: number
   total: number
+  shipping_fee: number
   can_pay: boolean
 }
 
@@ -234,7 +237,9 @@ export type CheckoutInput = {
   notes?: string
 }
 
-export type AdminOrderItemInput = { product_additional_id: number; quantity: number; branding_ids?: number[]; note?: string; unit_price?: number }
+export type AdminBrandingPriceInput = { branding_method_id: number; unit_price: number }
+
+export type AdminOrderItemInput = { product_additional_id: number; quantity: number; branding_ids?: number[]; branding_prices?: AdminBrandingPriceInput[]; note?: string; unit_price?: number }
 
 export type AdminOrderInput = {
   user_id: number
@@ -250,4 +255,5 @@ export type AdminOrderInput = {
   shipping_postal_code?: string
   notes?: string
   voucher_code?: string
+  shipping_fee?: number
 }
