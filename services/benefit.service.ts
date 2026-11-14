@@ -22,7 +22,7 @@ export const useBenefitService = () => {
     try {
       const query = `
         query GetBenefits($page: Int!, $limit: Int!, $is_active: Boolean, $keyword: String) {
-          getBenefits(pagination: { page: $page, limit: $limit }, sort: { column: ORDERS, direction: ASC }, is_active: $is_active) {
+          getBenefits(pagination: { page: $page, limit: $limit }, sort: { column: ORDERS, direction: ASC }, is_active: $is_active, keyword: $keyword) {
             items {
               id
               name
