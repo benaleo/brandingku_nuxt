@@ -72,6 +72,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                                 discount
                                 discount_type
                                 attributes
+                                is_active
                             }
                             created_at
                             updated_at
@@ -162,6 +163,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                             discount
                             discount_type
                             attributes
+                            capital_price
+                            is_active
                             price_tiers { min_qty price }
                         }
                         created_at
@@ -410,6 +413,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                         discount: Number(add.discount) || 0,
                         discount_type: add.discount_type ?? 'AMOUNT',
                         attributes: typeof add.attributes === 'string' ? add.attributes : '[]',
+                        capital_price: add.capital_price === '' || add.capital_price == null ? null : Math.max(0, Math.floor(Number(add.capital_price) || 0)),
+                        is_active: add.is_active !== false,
                     }
 
                     let variantId = hasId ? Number(add.id) : 0

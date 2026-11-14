@@ -18,6 +18,7 @@ export type Product = {
         discount: number,
         discount_type: string,
         attributes: string
+        is_active?: boolean
     }[],
     created_at: string
     updated_at: string
@@ -32,6 +33,9 @@ export type ProductAdditional = {
     discount: number
     discount_type: string
     attributes: string
+    // admin-only cost price, null for non-admins
+    capital_price?: number | null
+    is_active?: boolean
     // wholesale prices: from min_qty pieces the price per piece is price
     price_tiers?: PriceTier[]
     _uniqueKey?: string

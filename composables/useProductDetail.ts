@@ -67,6 +67,7 @@ export const useProductDetail = (initialSlug: string) => {
             discount
             discount_type
             attributes
+            is_active
             price_tiers { min_qty price }
           }
           brandings { branding_method_id name description tiers { min_qty price } }
@@ -98,13 +99,16 @@ export const useProductDetail = (initialSlug: string) => {
       .filter((c: any) => c?.name)
       .map((c: any) => ({ name: String(c.name), image: c.image || p.image || '' }))
 
+    // only active variants count for price, stock and the picker
+    const additionals = (p.additionals || []).filter((a: any) => a?.is_active !== false)
+
     // Compute pricing from additionals
     let minBase = Infinity
     let minAfter = Infinity
     let anyStock = false
 
     const allAttributes: { key: string; value: string }[] = []
-    for (const a of p.additionals || []) {
+    for (const a of additionals) {
       const base = Number(a?.price) || 0
       minBase = Math.min(minBase, base)
       let after = base
@@ -162,7 +166,7 @@ export const useProductDetail = (initialSlug: string) => {
       sizes,
       details,
       inStock: anyStock,
-      additionals: (p.additionals || []).map((a: any) => ({
+      additionals: additionals.map((a: any) => ({
         id: String(a.id),
         name: a.name || '',
         price: Number(a.price) || 0,

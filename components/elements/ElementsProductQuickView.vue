@@ -7,6 +7,7 @@ interface ProductAdditional {
   price?: number
   moq?: number
   stock?: number
+  is_active?: boolean
 }
 
 interface ProductType {
@@ -36,6 +37,8 @@ const open = computed({
   get: () => modelValue.value,
   set: (v: boolean) => emit('update:modelValue', v)
 })
+
+const activeAdditionals = computed(() => (product.value?.additionals || []).filter((a) => a?.is_active !== false))
 
 const productUrl = computed(() => {
   const slug = product.value?.slug || ''
@@ -79,9 +82,9 @@ const chatAboutProduct = () => {
 
           <div>
             <h4 class="font-semibold mb-2">{{ $t('app.productPage.quickViewDialog.options') }}</h4>
-            <div v-if="(product?.additionals || []).length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div v-if="activeAdditionals.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div
-                v-for="(add, idx) in product?.additionals"
+                v-for="(add, idx) in activeAdditionals"
                 :key="idx"
                 class="border rounded p-2 text-sm flex justify-between items-center"
               >

@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -527,11 +528,8 @@ definePageMeta({
           </p>
 
           <!-- Price -->
-          <div class="mt-6 flex items-center gap-3">
-            <span v-if="isAskAdmin" class="text-2xl font-bold text-green-600 md:text-3xl">
-              {{ $t('app.productPage.detail.priceAskAdmin') }}
-            </span>
-            <span v-else class="text-3xl font-bold">
+          <div v-if="!isAskAdmin" class="mt-6 flex items-center gap-3">
+            <span class="text-3xl font-bold">
               {{ formatIDR(displayedPrice) }}
             </span>
             <span
@@ -711,10 +709,6 @@ definePageMeta({
               </table>
             </div>
             <div class="mt-3 text-sm text-gray-700 space-y-1">
-              <div>
-                <span class="text-gray-500">{{ $t('app.productPage.detail.stock') }}</span>
-                <span class="font-medium">{{ displayedStock }}</span>
-              </div>
               <div v-if="displayedMoq != null">
                 <span class="text-gray-500">{{ $t('app.productPage.detail.moq') }}</span>
                 <span class="font-medium">{{ displayedMoq }}</span>
@@ -752,11 +746,9 @@ definePageMeta({
           </div>
 
           <!-- Stock Status -->
-          <div v-if="!isAskAdmin" class="mt-6 text-sm text-gray-600">
-            <div class="flex items-center gap-2">
-              <span v-if="displayedStock > 0">{{ $t('app.productPage.detail.inStock') }}</span>
-              <span v-else>{{ $t('app.productPage.detail.outOfStock') }}</span>
-            </div>
+          <div class="mt-6">
+            <Badge v-if="displayedStock > 0" variant="secondary" class="bg-green-100 text-green-700">{{ $t('app.productPage.detail.available') }}</Badge>
+            <Badge v-else variant="secondary" class="bg-red-100 text-red-700">{{ $t('app.productPage.detail.unavailable') }}</Badge>
           </div>
 
           <!-- Layanan branding: klik nama untuk ganti sample, otomatis berganti tiap 2 detik -->

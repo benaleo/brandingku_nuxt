@@ -16,6 +16,8 @@ export const useProductAdditionalService = () => {
           discount
           discount_type
           attributes
+          capital_price
+          is_active
           product_id
           created_at
           updated_at
@@ -38,6 +40,8 @@ export const useProductAdditionalService = () => {
           discount
           discount_type
           attributes
+          capital_price
+          is_active
           product_id
           created_at
           updated_at
@@ -71,6 +75,8 @@ export const useProductAdditionalService = () => {
         $discount: Int,
         $discount_type: String,
         $attributes: String,
+        $capital_price: Int,
+        $is_active: Boolean,
         $product_id: Int!
       ) {
         createProductAdditional(
@@ -81,6 +87,8 @@ export const useProductAdditionalService = () => {
           discount: $discount,
           discount_type: $discount_type,
           attributes: $attributes,
+          capital_price: $capital_price,
+          is_active: $is_active,
           product_id: $product_id
         ) {
           id
@@ -109,7 +117,9 @@ export const useProductAdditionalService = () => {
         $stock: Int!,
         $discount: Int!,
         $discount_type: String!,
-        $attributes: String!
+        $attributes: String!,
+        $capital_price: Int,
+        $is_active: Boolean
       ) {
         updateProductAdditional(
           id: $id,
@@ -119,7 +129,9 @@ export const useProductAdditionalService = () => {
           stock: $stock,
           discount: $discount,
           discount_type: $discount_type,
-          attributes: $attributes
+          attributes: $attributes,
+          capital_price: $capital_price,
+          is_active: $is_active
         ) {
           id
           name
@@ -142,6 +154,8 @@ export const useProductAdditionalService = () => {
       discount: Number(input.discount ?? 0),
       discount_type: input.discount_type ?? 'AMOUNT',
       attributes: typeof input.attributes === 'string' ? input.attributes : '[]',
+      capital_price: input.capital_price ?? null,
+      is_active: input.is_active ?? true,
     }
     const response = await gqlFetch<{ updateProductAdditional: ProductAdditional }>(mutation, variables, { auth: true })
     return response?.updateProductAdditional
