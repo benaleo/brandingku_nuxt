@@ -6,7 +6,7 @@ import { ImagePlus, Trash2 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 // which branding methods a product offers; each uses its category's price unless the product
-// sets its own. The product form reads payload() and saves it after the product.
+// sets its own. A method with a category price is offered without a row; unchecking it saves an exclusion. The product form reads payload() and saves it after the product.
 const props = defineProps<{ productId?: number | null; categoryId?: number | null; disabled?: boolean }>();
 
 // upload holds a base64 picture chosen in this session; image is the stored path
@@ -56,6 +56,8 @@ const methods = ref<BrandingMethod[]>([]);
 const drafts = ref<Record<number, Draft>>({});
 const defaults = ref<Record<number, BrandingDefault>>({});
 const loaded = ref(false);
+// methods the server already knows for this product (offered or excluded)
+const known = ref<Set<number>>(new Set());
 const loadError = ref("");
 
 onMounted(async () => {
@@ -68,7 +70,7 @@ onMounted(async () => {
     for (const m of all) byMethod[m.id] = { enabled: false, custom: false, tiers: [], image: "", upload: null };
     for (const b of offered) {
       byMethod[b.branding_method_id] = {
-        enabled: true,
+        enabled: b.is_offered,
         custom: b.custom_price,
         tiers: b.custom_price ? sortedTiers(b.tiers) : [],
         image: b.image || "",
@@ -76,9 +78,10 @@ onMounted(async () => {
       };
     }
     // offered methods first, in their saved order, then the rest
-    const rank = new Map(offered.map((b, i) => [b.branding_method_id, i]));
+    const rank = new Map(offered.filter((b) => b.is_offered).map((b, i) => [b.branding_method_id, i]));
     methods.value = [...all].sort((a, b) => (rank.get(a.id) ?? 1e6 + a.orders) - (rank.get(b.id) ?? 1e6 + b.orders));
     drafts.value = byMethod;
+    known.value = new Set(offered.map((b) => b.branding_method_id));
     loaded.value = true;
   } catch (e) {
     loadError.value = getErrorMessage(e);
@@ -93,7 +96,15 @@ watch(
     if (!id) return;
     try {
       const list = await service.getBrandingDefaults(id);
-      if (props.categoryId === id) defaults.value = Object.fromEntries(list.map((d) => [d.branding_method_id, d]));
+      if (props.categoryId !== id) return;
+      defaults.value = Object.fromEntries(list.map((d) => [d.branding_method_id, d]));
+      // a new product offers every method its category prices
+      if (!props.productId) {
+        for (const d of list) {
+          const draft = drafts.value[d.branding_method_id];
+          if (d.tiers.length && draft) draft.enabled = true;
+        }
+      }
     } catch {
       // the hint is optional; saving does not depend on it
     }
@@ -123,16 +134,17 @@ const problem = () => {
 // undefined when the list never loaded, so a failed load does not wipe the saved offers
 const payload = (): ProductBrandingInput[] | undefined => {
   if (!loaded.value) return undefined;
-  return methods.value
-    .filter((m) => drafts.value[m.id]?.enabled)
-    .map((m) => {
-      const d = drafts.value[m.id]!;
-      return {
-        branding_method_id: m.id,
-        custom_tiers: d.custom ? sortedTiers(d.tiers) : [],
-        image: d.upload ?? d.image,
-      };
-    });
+  const out: ProductBrandingInput[] = [];
+  for (const m of methods.value) {
+    const d = drafts.value[m.id];
+    if (!d) continue;
+    if (d.enabled) {
+      out.push({ branding_method_id: m.id, custom_tiers: d.custom ? sortedTiers(d.tiers) : [], image: d.upload ?? d.image, is_offered: true });
+    } else if (known.value.has(m.id) || defaults.value[m.id]?.tiers.length) {
+      out.push({ branding_method_id: m.id, is_offered: false });
+    }
+  }
+  return out;
 };
 
 defineExpose({ payload, problem });

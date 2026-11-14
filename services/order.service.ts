@@ -13,7 +13,7 @@ const ORDER_FIELDS = `
   shipping_fee shipping_note tracking_number notes subtotal discount_total voucher_code
   expires_at paid_at cancelled_at cancel_reason can_cancel can_submit_payment can_respond_quotation can_pay_online
   design_file_path design_file_name created_at updated_at
-  payment_plan production_stage can_review_progress can_ship
+  payment_plan production_stage can_review_progress can_ship due_date placed_by_admin
   payment_options { deal_number deal_total min_dp_amount }
   progress { id stage note decision decision_note decided_at created_at files { file_name content_type size path } }
   documents { ${DOC_FIELDS} }
@@ -31,7 +31,7 @@ const ORDER_FIELDS = `
 `
 const LIST_FIELDS = `
   id code access_token type status customer_name customer_email customer_company delivery_method shipping_city
-  subtotal discount_total created_at expires_at can_cancel can_submit_payment
+  subtotal discount_total created_at expires_at can_cancel can_submit_payment due_date placed_by_admin
   items { id product_name variant_name quantity }
   invoice { id number status total amount_due paid_amount payments { id status } }
   documents { id type status payments { id status } }
@@ -191,7 +191,7 @@ export const useOrderService = () => {
             product_id product_additional_id product_name product_slug product_image variant_name quantity moq stock unit_price original_unit_price line_total note problem
             branding_unit_price brandings { branding_method_id name unit_price min_qty available }
           }
-          subtotal discount voucher_code voucher_message tax_mode tax_rate_bps tax_base tax_total total shipping_fee can_pay
+          subtotal discount voucher_code voucher_message tax_mode tax_rate_bps tax_base tax_total total shipping_fee can_pay first_payment_amount
         }
       }`,
       { input },
@@ -207,6 +207,14 @@ export const useOrderService = () => {
       { auth: true },
     )
     return res.adminCreateOrder
+  }
+
+  const updateOrderDueDate = async (orderId: number, dueDate: string | null) => {
+    await gqlFetch(
+      `mutation updateOrderDueDate($id: Int!, $due: String) { updateOrderDueDate(order_id: $id, due_date: $due) }`,
+      { id: orderId, due: dueDate },
+      { auth: true },
+    )
   }
 
   const getOrders = async (page: number, limit: number, filters: { status?: string; type?: string; keyword?: string }) => {
@@ -292,6 +300,6 @@ export const useOrderService = () => {
     previewCheckout, placeOrder, requestQuotation, respondQuotation, startOnlinePayment, getMyOrders, getMyOrderSummary, getMyOrder, cancelMyOrder, submitPaymentProof,
     previewPaymentPlan, choosePaymentPlan, reviewProgress,
     getOrders, getOrderStatusCounts, getOrder, setOrderShippingFee, updateOrderStatus, cancelOrder, createQuotationFromOrder, verifyPayment, rejectPayment,
-    addOrderProgress, previewAdminOrder, adminCreateOrder,
+    addOrderProgress, previewAdminOrder, adminCreateOrder, updateOrderDueDate,
   }
 }

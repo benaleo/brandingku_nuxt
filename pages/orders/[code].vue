@@ -320,6 +320,7 @@ const eventLabel = (action: string) => te(`app.orderStatus.${action}`) ? t(`app.
               <Badge :class="statusClass">{{ $t(`app.orderStatus.${order.status}`) }}</Badge>
             </div>
             <p class="mt-1 text-sm text-slate-500">{{ $t('app.orderPage.placedAt', {date: formatDateTime(order.created_at)}) }}</p>
+            <p v-if="order.due_date" class="mt-1 text-sm text-slate-500">{{ $t('app.orderPage.dueDate', {date: formatInvoiceDate(order.due_date)}) }}</p>
             <p v-if="order.status === 'awaiting_shipping_fee'" class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $t('app.orderPage.awaitingShippingInfo') }}</p>
             <p v-if="order.status === 'pending_payment' && order.expires_at" class="mt-3 rounded-md bg-sky-50 p-3 text-sm text-sky-800">{{ $t('app.orderPage.payBefore', {date: formatDateTime(order.expires_at)}) }}</p>
             <div v-if="returnedFromGateway && order.can_submit_payment" class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-green-50 p-3 text-sm text-green-800">

@@ -118,6 +118,9 @@ export type PaymentPlanInput = {
 }
 
 export type Order = {
+  // YYYY-MM-DD, null when unset
+  due_date?: string | null
+  placed_by_admin?: boolean
   id: number
   code: string
   // unguessable id of the customer's order page: /orders/<access_token>
@@ -220,6 +223,8 @@ export type CheckoutPreview = {
   total: number
   shipping_fee: number
   can_pay: boolean
+  // staged with a first payment: what the first invoice bills
+  first_payment_amount?: number | null
 }
 
 export type CheckoutInput = {
@@ -256,4 +261,8 @@ export type AdminOrderInput = {
   notes?: string
   voucher_code?: string
   shipping_fee?: number
+  // YYYY-MM-DD
+  due_date?: string
+  payment_flow?: 'direct' | 'staged'
+  first_payment?: PaymentPlanInput | null
 }

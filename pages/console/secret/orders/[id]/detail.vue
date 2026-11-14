@@ -6,7 +6,7 @@
     <div v-else-if="order" class="space-y-6 pb-10">
       <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p class="text-sm text-muted-foreground">{{ order.type === 'quotation' ? 'Permintaan penawaran' : 'Pembelian langsung' }}</p>
+          <p class="text-sm text-muted-foreground">{{ order.type === 'quotation' ? (order.placed_by_admin ? 'Order bertahap (dibuat admin)' : 'Permintaan penawaran') : 'Pembelian langsung' }}</p>
           <h1 class="flex flex-wrap items-center gap-2 text-2xl font-bold">
             {{ order.code }}
             <Badge :class="ORDER_STATUS_STYLE[order.status]">{{ ORDER_STATUS_LABELS[order.status] }}</Badge>
@@ -14,6 +14,11 @@
           <p class="mt-1 text-sm text-muted-foreground">
             Dibuat {{ formatDateTime(order.created_at) }}
             <span v-if="order.expires_at"> · batas bayar {{ formatDateTime(order.expires_at) }}</span>
+            <span v-if="order.placed_by_admin && order.type !== 'quotation'"> · dibuat oleh admin</span>
+          </p>
+          <p class="mt-1 text-sm">
+            Dibutuhkan: <span class="font-medium">{{ order.due_date ? formatDateOnly(order.due_date) : 'belum diatur' }}</span>
+            <button v-if="canUpdate && canEditDueDate" type="button" class="ml-2 text-green-700 hover:underline" @click="openDueDate">Ubah</button>
           </p>
           <p v-if="order.cancel_reason" class="mt-1 text-sm text-red-600">{{ order.cancel_reason }}</p>
           <p v-if="order.status === 'revision_requested' && revisionNote" class="mt-2 rounded-md bg-orange-50 p-2 text-sm text-orange-800">Revisi diminta: {{ revisionNote }}</p>
@@ -78,7 +83,7 @@
       <!-- quotation orders: the customer's first payment, then production step by step -->
       <section v-if="order.type === 'quotation' && (order.payment_plan || order.payment_options)" class="rounded-xl border bg-card p-4 text-sm">
         <p class="font-medium">Pembayaran pertama</p>
-        <p v-if="order.payment_plan" class="mt-1">{{ order.payment_plan === 'dp' ? 'DP, sisanya ditagih otomatis saat siap kirim' : 'Langsung pelunasan' }} · dipilih customer</p>
+        <p v-if="order.payment_plan" class="mt-1">{{ order.payment_plan === 'dp' ? 'DP, sisanya ditagih otomatis saat siap kirim' : 'Langsung pelunasan' }}<template v-if="!order.placed_by_admin"> · dipilih customer</template></p>
         <p v-else class="mt-1 text-muted-foreground">Menunggu customer memilih DP (min. {{ formatRupiah(order.payment_options?.min_dp_amount || 0) }}) atau pelunasan untuk {{ order.payment_options?.deal_number }}.</p>
       </section>
       <ElementsOrderProgressTimeline v-if="order.type === 'quotation' && order.production_stage" :order="order" viewer="staff">
@@ -234,6 +239,22 @@
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <Dialog :open="dueOpen" @update:open="(v: boolean) => { if (!busy) dueOpen = v }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Tanggal dibutuhkan</DialogTitle>
+          <DialogDescription>Tanggal customer butuh barangnya. Kosongkan untuk menghapus.</DialogDescription>
+        </DialogHeader>
+        <ElementsDateTimeInput v-model="dueDate"/>
+        <DialogFooter>
+          <Button variant="outline" :disabled="busy" @click="dueOpen = false">Batal</Button>
+          <Button :disabled="busy" @click="saveDueDate">
+            <Loader2 v-if="busy" class="size-4 animate-spin"/> Simpan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
@@ -267,11 +288,14 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const busy = ref(false)
 const dialog = ref<'ship' | 'cancel' | 'reject' | null>(null)
+const dueOpen = ref(false)
 const dialogText = ref('')
 const rejecting = ref<number | null>(null)
+const dueDate = ref('')
 const shipping = reactive({fee: 0 as number | string, note: '', notify: true})
 
 const canUpdate = computed(() => canAction(route.path, 'update'))
+const canEditDueDate = computed(() => !!order.value && !['cancelled', 'expired', 'rejected', 'completed'].includes(order.value.status))
 const canInvoices = computed(() => canAction('/console/secret/invoices', 'index'))
 const canVerify = computed(() => canAction('/console/secret/invoices', 'update'))
 // quotation production starts with the first payment, and shipping waits for production and the balance
@@ -282,7 +306,7 @@ const next = computed(() => {
 })
 
 const EVENT_LABELS: Record<string, string> = {
-  payment_plan_chosen: 'Pembayaran pertama dipilih', progress_sample: 'Sample dikirim', sample_approved: 'Sample disetujui',
+  payment_plan_chosen: 'Pembayaran pertama dipilih', due_date_set: 'Tanggal dibutuhkan diubah', progress_sample: 'Sample dikirim', sample_approved: 'Sample disetujui',
   sample_revision: 'Revisi sample diminta', progress_mockup: 'Mockup dikirim', mockup_approved: 'Mockup disetujui', mockup_revision: 'Revisi mockup diminta', progress_mass_production: 'Produksi massal diajukan', mass_production_approved: 'Produksi massal disetujui', mass_production_revision: 'Perubahan sebelum produksi massal diminta', progress_qc: 'Quality check selesai',
   progress_ready_to_ship: 'Siap kirim', guarantee_claimed: 'Klaim garansi diajukan', guarantee_approved: 'Klaim garansi disetujui', guarantee_rejected: 'Klaim garansi ditolak', guarantee_resolved: 'Klaim garansi selesai', thank_you_sent: 'Email terima kasih terkirim', thank_you_failed: 'Email terima kasih gagal',
 }
@@ -363,6 +387,24 @@ async function load() {
 }
 onMounted(load)
 watch(dialog, (d) => { if (d) dialogText.value = '' })
+
+const openDueDate = () => {
+  dueDate.value = order.value?.due_date || ''
+  dueOpen.value = true
+}
+const saveDueDate = async () => {
+  busy.value = true
+  try {
+    await service.updateOrderDueDate(order.value!.id, dueDate.value || null)
+    toast.success('Tanggal dibutuhkan disimpan')
+    dueOpen.value = false
+    await load()
+  } catch (e: any) {
+    toast.error(invoiceErrorMessage(e, 'Aksi gagal'))
+  } finally {
+    busy.value = false
+  }
+}
 
 async function act(fn: () => Promise<unknown>, success: string) {
   busy.value = true
