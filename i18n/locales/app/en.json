@@ -1,7 +1,8 @@
 {
   "app": {
     "meta": {
-      "title": "Brandingku - Best Merchandise Supplier"
+      "title": "Brandingku - Best Merchandise Supplier",
+      "description": "Custom merchandise and corporate gift supplier with logo printing: tumblers, t-shirts, bags, umbrellas and more. Wholesale prices from single pieces to bulk orders."
     },
     "nav": {
       "home": "Home",
@@ -160,7 +161,9 @@
         "sourcing": "Learn about our sourcing →",
         "sustainability": "98% SUSTAINABILITY RATING",
         "chooseCategory": "Choose a category",
-        "resetFilter": "Reset"
+        "resetFilter": "Reset",
+        "metaTitle": "Custom Logo {name} - Brandingku",
+        "metaDescription": "Custom {name} with your company logo for souvenirs and corporate gifts. Choose the model, branding technique and wholesale price for your order quantity at Brandingku."
       },
       "catalog": "Catalog",
       "downloadCatalogOf": "Download the {name} catalog"
@@ -264,7 +267,8 @@
         "requestQuote": "Request a quotation",
         "brandingSamples": "Branding Samples",
         "brandingSamplesHint": "Example results of each branding technique for this product.",
-        "brandingServices": "Branding Services"
+        "brandingServices": "Branding Services",
+        "metaDescription": "Custom {name} with your company logo. See colours, branding techniques and wholesale prices at Brandingku."
       },
       "quickViewDialog": {
         "category": "Category:",
@@ -276,7 +280,8 @@
         "chatAdmin": "Chat with Admin",
         "thisProduct": "this product",
         "interestedMessage": "Hi admin, I'm interested in {name}.\n{url}"
-      }
+      },
+      "metaDescription": "Brandingku custom merchandise catalogue with branding options and wholesale pricing by order quantity."
     },
     "contactPage": {
       "metaTitle": "Contact - Brandingku",
@@ -318,7 +323,8 @@
       "support247": "24/7 Support",
       "reportTitle": "Sustainable Report 2024",
       "reportText": "Read about how we helped 500+ brands reduce their plastic waste by 40%.",
-      "viewReport": "View Report"
+      "viewReport": "View Report",
+      "metaDescription": "Contact Brandingku for custom merchandise and corporate gift quotes via WhatsApp, email or the inquiry form."
     },
     "aboutPage": {
       "metaTitle": "About Us - Brandingku",

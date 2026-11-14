@@ -11,10 +11,10 @@ const services = SERVICES
 const serviceName = (key: string) => t(`app.services.menu.${key}`)
 const askService = (key: string) => openChat(t('app.servicesPage.serviceTopic', { service: serviceName(key) }))
 
-useHead(() => ({
-  title: t('app.servicesPage.metaTitle'),
-  meta: [{ name: 'description', content: t('app.servicesPage.metaDescription') }],
-}))
+usePageSeo({
+  title: () => t('app.servicesPage.metaTitle'),
+  description: () => t('app.servicesPage.metaDescription'),
+})
 </script>
 
 <template>

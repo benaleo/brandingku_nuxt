@@ -9,7 +9,7 @@ import { useCookie } from '#app'
 
 type ProductListParams = { keyword?: string; category_id?: number | null; is_active?: boolean; is_highlight?: boolean; sortBy?: string }
 
-export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; params?: ProductListParams } = {}) => {
+export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; params?: ProductListParams; skipInitialFetch?: boolean } = {}) => {
     const { gqlFetch } = useGql()
     const brandingService = useBrandingService()
     const config = useRuntimeConfig()
@@ -185,7 +185,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
 
     // Auto fetch
     onMounted(() => {
-        refetch()
+        if (!options.skipInitialFetch) refetch()
     })
     if (fetchResult) {
         watch(params, () => fetchProducts(), { deep: true })
@@ -511,6 +511,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         pagination,
         setProductFlags,
         reFetch: refetch,
+        fetchProducts,
         getProducts,
         createProduct,
         updateProductById,

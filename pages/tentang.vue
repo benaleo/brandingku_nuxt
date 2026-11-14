@@ -179,10 +179,8 @@
 <script setup lang="ts">
 const { t } = useI18n()
 
-useHead(() => ({
-  title: t('app.aboutPage.metaTitle'),
-  meta: [
-    { name: 'description', content: t('app.aboutPage.metaDescription') }
-  ]
-}))
+usePageSeo({
+  title: () => t('app.aboutPage.metaTitle'),
+  description: () => t('app.aboutPage.metaDescription'),
+})
 </script>

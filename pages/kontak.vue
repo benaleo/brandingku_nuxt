@@ -4,26 +4,14 @@ import { useWebContactService } from '~/services/web-contact.service'
 
 // contact details are editable in the console Options menu and rendered server-side
 const { phone, email, address, hours, mapsUrl, phoneHref, emailHref } = useSiteSettings()
-const siteUrl = useRuntimeConfig().public.BASE_URL
 const { t } = useI18n()
 
-useHead({
-  title: computed(() => t('app.contactPage.metaTitle')),
-  script: [{
-    type: 'application/ld+json',
-    // structured data so search engines can show the business contact details
-    innerHTML: computed(() => JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'Brandingku',
-      ...(siteUrl ? { url: siteUrl } : {}),
-      email: email.value,
-      telephone: phone.value,
-      address: { '@type': 'PostalAddress', streetAddress: address.value },
-      contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer service', telephone: phone.value, email: email.value }],
-    })),
-  }],
-});
+usePageSeo({
+  title: () => t('app.contactPage.metaTitle'),
+  description: () => t('app.contactPage.metaDescription'),
+})
+
+useOrganizationSchema()
 
 const { createInquiry, loading, error } = useWebContactService()
 

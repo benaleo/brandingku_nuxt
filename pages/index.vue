@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from "vue";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FeaturesServices from "~/components/FeaturesServices.vue";
@@ -8,9 +7,11 @@ import FeaturesBenefitFaq from "~/components/FeaturesBenefitFaq.vue";
 
 const { t } = useI18n();
 
-useHead({
-  title: computed(() => t("app.meta.title")),
+usePageSeo({
+  title: () => t("app.meta.title"),
+  description: () => t("app.meta.description"),
 });
+useOrganizationSchema();
 
 definePageMeta({
   layout: "default",

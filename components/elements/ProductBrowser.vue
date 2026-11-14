@@ -70,6 +70,7 @@ const DEFAULT_SORT = sortOptions[0]!.value;
 
 const productService = useProductService(true, undefined, {
   params: { is_active: true, sortBy: DEFAULT_SORT, ...(props.categoryId != null ? { category_id: props.categoryId } : {}) },
+  skipInitialFetch: true,
 });
 const {
   datas: products,
@@ -80,6 +81,22 @@ const {
   setParams,
   changePage,
 } = productService;
+
+// first page is fetched on the server so crawlers get the product links; the payload
+// restores it on hydration without a second request
+const { data: initial } = await useAsyncData(
+  `product-browser-${props.categoryId ?? "all"}-${DEFAULT_SORT}`,
+  async () => {
+    await productService.fetchProducts();
+    return { items: products.value, pageInfo: pageInfo.value, pagination: pagination.value };
+  },
+);
+if (initial.value) {
+  products.value = initial.value.items;
+  pageInfo.value = initial.value.pageInfo;
+  pagination.value = initial.value.pagination;
+  loading.value = false;
+}
 
 // filters reset to the first page; the params watcher in the service refetches
 const applyParams = (next: Record<string, any>) => {

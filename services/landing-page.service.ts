@@ -81,84 +81,78 @@ export const useGetProductCategoryBySlug = (slug: string) => {
   const { gqlFetch } = useGql()
   const config = useRuntimeConfig()
   const STORAGE_URL = config.public.STORAGE_URL
+  const event = useRequestEvent()
 
-  const data = ref<ProductCategoryBySlug | null>(null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-
-  const fetchCategory = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const query = `
-        query GetProductCategoryBySlug($slug: String!) {
-          getProductCategoryBySlug(slug: $slug) {
+  const fetchCategory = async (): Promise<ProductCategoryBySlug | null> => {
+    const query = `
+      query GetProductCategoryBySlug($slug: String!) {
+        getProductCategoryBySlug(slug: $slug) {
+          id
+          slug
+          name
+          description
+          cover_image
+          banner_image
+          meta_title
+          meta_description
+          catalog_file
+          catalog_file_name
+          catalog_url
+          sub {
             id
-            slug
             name
             description
-            cover_image
-            banner_image
-            meta_title
-            meta_description
+            image
+            cover
+            slug
+            total_products
+            is_active
             catalog_file
             catalog_file_name
             catalog_url
-            sub {
-              id
-              name
-              description
-              image
-              cover
-              slug
-              total_products
-              is_active
-              catalog_file
-              catalog_file_name
-              catalog_url
-            }
           }
         }
-      `
-      const res = await gqlFetch<{ getProductCategoryBySlug: ProductCategoryBySlug }>(
-        query,
-        { slug },
-        { auth: true }
-      )
-      const result = res.getProductCategoryBySlug || null
-      
-      // Prepend STORAGE_URL to image URLs
-      if (result) {
-        result.cover_image = result.cover_image ? `${STORAGE_URL}${result.cover_image}` : result.cover_image
-        result.banner_image = result.banner_image ? `${STORAGE_URL}${result.banner_image}` : result.banner_image
-        result.catalog_file = result.catalog_file ? `${STORAGE_URL}${result.catalog_file}` : ''
-        
-        if (result.sub) {
-          result.sub = result.sub.map(subCategory => ({
-            ...subCategory,
-            image: subCategory.image ? `${STORAGE_URL}${subCategory.image}` : subCategory.image,
-            cover: subCategory.cover ? `${STORAGE_URL}${subCategory.cover}` : subCategory.cover,
-            catalog_file: subCategory.catalog_file ? `${STORAGE_URL}${subCategory.catalog_file}` : '',
-          }))
-        }
       }
+    `
+    // an unknown slug answers with a "category not found" error (or null); either way the page
+    // gets a real 404 so search engines drop the url
+    const res = await gqlFetch<{ getProductCategoryBySlug: ProductCategoryBySlug }>(
+      query,
+      { slug },
+      { auth: true }
+    ).catch((e: any) => {
+      if (event && /not found/i.test(e?.message || '')) setResponseStatus(event, 404)
+      throw e
+    })
+    const result = res.getProductCategoryBySlug || null
+    if (!result && event) setResponseStatus(event, 404)
+    
+    // Prepend STORAGE_URL to image URLs
+    if (result) {
+      result.cover_image = result.cover_image ? `${STORAGE_URL}${result.cover_image}` : result.cover_image
+      result.banner_image = result.banner_image ? `${STORAGE_URL}${result.banner_image}` : result.banner_image
+      result.catalog_file = result.catalog_file ? `${STORAGE_URL}${result.catalog_file}` : ''
       
-      data.value = result
-    } catch (e: any) {
-      error.value = e.message || 'Failed to fetch category'
-    } finally {
-      loading.value = false
+      if (result.sub) {
+        result.sub = result.sub.map(subCategory => ({
+          ...subCategory,
+          image: subCategory.image ? `${STORAGE_URL}${subCategory.image}` : subCategory.image,
+          cover: subCategory.cover ? `${STORAGE_URL}${subCategory.cover}` : subCategory.cover,
+          catalog_file: subCategory.catalog_file ? `${STORAGE_URL}${subCategory.catalog_file}` : '',
+        }))
+      }
     }
+
+    return result
   }
 
-  onMounted(() => {
-    fetchCategory()
-  })
+  // fetched during SSR so the category name, description and sub categories reach crawlers
+  const { data, status, error, refresh } = useAsyncData(`product-category-${slug}`, fetchCategory)
 
   return {
-    data: computed(() => data.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
-    refetch: fetchCategory
+    data: computed(() => data.value ?? null),
+    loading: computed(() => status.value === 'pending'),
+    error: computed(() => (error.value ? error.value.message || 'Failed to fetch category' : null)),
+    refetch: () => refresh()
   }
 }
