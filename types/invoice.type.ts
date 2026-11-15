@@ -41,6 +41,8 @@ export type Invoice = {
   parent?: InvoiceLink | null
   children: InvoiceLink[]
   order_id?: number | null
+  order_type?: string
+  order_status?: string
   user_id?: number | null
   customer_name: string
   customer_email: string
@@ -96,7 +98,7 @@ export type InvoiceInput = {
 
 export type InvoiceStatusSummary = { status: InvoiceStatus; count: number; amount_due: number }
 
-export type PublicInvoice = Omit<Invoice, 'id' | 'parent' | 'children' | 'order_id' | 'user_id' | 'public_token' | 'sent_at' | 'paid_at' | 'void_reason' | 'created_by' | 'payments' | 'events' | 'created_at' | 'updated_at'> & {
+export type PublicInvoice = Omit<Invoice, 'id' | 'parent' | 'children' | 'order_id' | 'order_type' | 'order_status' | 'user_id' | 'public_token' | 'sent_at' | 'paid_at' | 'void_reason' | 'created_by' | 'payments' | 'events' | 'created_at' | 'updated_at'> & {
   parent_number?: string | null
   company_name: string
   company_npwp: string

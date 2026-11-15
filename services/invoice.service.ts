@@ -8,7 +8,7 @@ const ITEM_FIELDS = 'id product_id product_additional_id description quantity un
 
 const LIST_FIELDS = `id number type status ${CUSTOMER_FIELDS} issue_date due_date total amount_due paid_amount created_at`
 const DETAIL_FIELDS = `
-  id number type status order_id user_id ${CUSTOMER_FIELDS} issue_date due_date ${AMOUNT_FIELDS}
+  id number type status order_id order_type order_status user_id ${CUSTOMER_FIELDS} issue_date due_date ${AMOUNT_FIELDS}
   notes terms public_token sent_at paid_at void_reason created_by created_at updated_at
   parent { ${LINK_FIELDS} }
   children { ${LINK_FIELDS} }
@@ -93,6 +93,12 @@ export const useInvoiceService = () => {
       { id: dealId, amount: opts.amount ?? null, percent_bps: opts.percent_bps ?? null })
   const createFinal = (dealId: number) =>
     detailMutation('createFinal', '$id: Int!', 'deal_id: $id', { id: dealId })
+  const convertOrderToStaged = async (invoiceId: number, input: { dp_amount?: number; dp_percent_bps?: number }) => {
+    const res = await gqlFetch<{ convertOrderToStaged: number }>(
+      'mutation convertOrderToStaged($id: Int!, $input: AdminDownPaymentInput!) { convertOrderToStaged(invoice_id: $id, input: $input) }',
+      { id: invoiceId, input })
+    return res.convertOrderToStaged
+  }
   const recordPayment = (id: number, input: PaymentInput) =>
     detailMutation('recordInvoicePayment', '$id: Int!, $input: InvoicePaymentInput!', 'id: $id, input: $input', { id, input })
 
@@ -123,7 +129,7 @@ export const useInvoiceService = () => {
 
   return {
     getInvoices, getInvoiceSummary, getInvoice, createInvoice, updateInvoice, deleteInvoice, sendInvoice,
-    voidInvoice, duplicateInvoice, createDeal, createDownPayment, createFinal, recordPayment, getPublicInvoice,
+    voidInvoice, duplicateInvoice, createDeal, createDownPayment, createFinal, convertOrderToStaged, recordPayment, getPublicInvoice,
     verifyPayment, rejectPayment,
   }
 }

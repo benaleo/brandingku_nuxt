@@ -33,8 +33,9 @@
           <Button v-if="actions.deal" size="sm" @click="open('deal')">Buat deal</Button>
           <Button v-if="actions.dp" size="sm" @click="open('dp')">Buat DP</Button>
           <Button v-if="actions.final" size="sm" @click="open('final')">Buat final</Button>
+          <Button v-if="actions.convert" size="sm" @click="open('convert')">Pembayaran DP</Button>
           <Button v-if="actions.payment" size="sm" class="bg-green-600 hover:bg-green-700" @click="open('payment')">
-            <Banknote class="size-4"/> Catat pembayaran
+            <Banknote class="size-4"/> {{ orderPurchase ? 'Pembayaran lunas' : 'Catat pembayaran' }}
           </Button>
           <Button v-if="actions.send" size="sm" class="bg-green-600 hover:bg-green-700" @click="open('send')">
             <Send class="size-4"/> Kirim
@@ -190,7 +191,7 @@
           <Textarea id="void-reason" v-model="voidReason" rows="3" maxlength="500"/>
         </div>
 
-        <div v-else-if="dialog === 'dp'" class="space-y-3 text-sm">
+        <div v-else-if="dialog === 'dp' || dialog === 'convert'" class="space-y-3 text-sm">
           <div class="flex gap-4">
             <label class="flex items-center gap-2"><input v-model="dpMode" type="radio" value="percent"/> Persen</label>
             <label class="flex items-center gap-2"><input v-model="dpMode" type="radio" value="amount"/> Nominal</label>
@@ -200,7 +201,8 @@
             <ElementsRupiahInput v-if="dpMode === 'amount'" id="dp-value" v-model="dpValue"/>
             <Input v-else id="dp-value" v-model="dpValue" type="number" min="0" step="0.01"/>
           </div>
-          <p class="text-muted-foreground">Total deal {{ formatRupiah(inv?.total ?? 0) }} · DP aktif {{ formatRupiah(activeDP) }} · bisa ditagih {{ formatRupiah((inv?.total ?? 0) - activeDP) }}</p>
+          <p v-if="dialog === 'convert'" class="text-muted-foreground">Total order {{ formatRupiah(inv?.total ?? 0) }} · sudah dibayar {{ formatRupiah(inv?.paid_amount ?? 0) }} · DP minimal sebesar yang sudah dibayar</p>
+          <p v-else class="text-muted-foreground">Total deal {{ formatRupiah(inv?.total ?? 0) }} · DP aktif {{ formatRupiah(activeDP) }} · bisa ditagih {{ formatRupiah((inv?.total ?? 0) - activeDP) }}</p>
           <p v-if="dpPreview" class="font-medium">Invoice DP: {{ formatRupiah(dpPreview) }}</p>
         </div>
 
@@ -328,7 +330,7 @@ const actions = computed(() => {
   const can = (a: 'create' | 'update' | 'delete') => canAction(route.path, a)
   const status = i.status === 'overdue' ? 'sent' : i.status
   // purchase invoices of an order are priced and cancelled from the Transaksi page
-  const orderPurchase = i.type === 'invoice' && !!i.order_id
+  const orderPurchase = i.type === 'invoice' && i.order_type === 'purchase'
   const hasMoney = i.paid_amount > 0 || i.payments.some(p => p.status === 'pending')
   return {
     edit: can('update') && status === 'draft' && !['dp', 'final'].includes(i.type) && !orderPurchase,
@@ -341,10 +343,13 @@ const actions = computed(() => {
     deal: can('create') && i.type === 'quotation' && !i.order_id && (status === 'draft' || status === 'sent') && !activeChildren('deal').length,
     dp: can('create') && i.type === 'deal' && status === 'sent' && !activeChildren('final').length && activeDP.value < i.total,
     final: can('create') && i.type === 'deal' && status === 'sent' && !activeChildren('final').length,
+    // overdue is folded into sent above; the API still refuses vouchers and pending proofs
+    convert: canAction('/console/secret/orders', 'update') && orderPurchase && i.order_status === 'pending_payment' && status === 'sent',
   }
 })
+const orderPurchase = computed(() => inv.value?.type === 'invoice' && inv.value.order_type === 'purchase')
 
-type DialogKind = 'send' | 'void' | 'delete' | 'duplicate' | 'deal' | 'dp' | 'final' | 'payment'
+type DialogKind = 'send' | 'void' | 'delete' | 'duplicate' | 'deal' | 'dp' | 'final' | 'payment' | 'convert'
 const dialog = ref<DialogKind | null>(null)
 const busy = ref(false)
 const notify = ref(true)
@@ -364,6 +369,13 @@ function open(kind: DialogKind) {
   notify.value = !!inv.value?.customer_email
   voidReason.value = ''
   payment.amount = remaining.value
+  if (kind === 'convert') {
+    dpMode.value = 'amount'
+    dpValue.value = inv.value?.paid_amount || ''
+  } else if (kind === 'dp') {
+    dpMode.value = 'percent'
+    dpValue.value = 30
+  }
   payment.paid_on = todayISO()
   payment.method = 'bank_transfer'
   payment.payer_name = ''
@@ -374,7 +386,7 @@ function open(kind: DialogKind) {
 
 const dialogTitle = computed(() => ({
   send: `Kirim ${inv.value?.number}`, void: `Void ${inv.value?.number}`, delete: `Hapus ${inv.value?.number}`,
-  duplicate: 'Duplikat dokumen', deal: 'Buat deal', dp: 'Buat invoice DP', final: 'Buat invoice final', payment: 'Catat pembayaran',
+  duplicate: 'Duplikat dokumen', deal: 'Buat deal', dp: 'Buat invoice DP', final: 'Buat invoice final', payment: orderPurchase.value ? 'Pembayaran lunas' : 'Catat pembayaran', convert: 'Pembayaran DP',
 } as Record<DialogKind, string>)[dialog.value!] || '')
 
 const dialogDescription = computed(() => ({
@@ -386,10 +398,11 @@ const dialogDescription = computed(() => ({
   dp: 'Invoice uang muka dibuat sebagai draft. Jika deal memakai PPN, PPN dihitung dari nominal DP.',
   final: `Seluruh item deal ditagih, dikurangi DP aktif ${formatRupiah(activeDP.value)}.`,
   payment: 'Pembayaran yang dicatat admin langsung terverifikasi.',
+  convert: 'Order diubah menjadi bertahap: DP dibayar dulu, lalu produksi (mockup, sample, dst), dan sisanya ditagih saat siap kirim. Pembayaran yang sudah terverifikasi dipindah ke invoice DP.',
 } as Record<DialogKind, string>)[dialog.value!] || '')
 
 const dialogAction = computed(() => ({
-  send: 'Kirim', void: 'Void', delete: 'Hapus', duplicate: 'Duplikat', deal: 'Buat deal', dp: 'Buat DP', final: 'Buat final', payment: 'Simpan',
+  send: 'Kirim', void: 'Void', delete: 'Hapus', duplicate: 'Duplikat', deal: 'Buat deal', dp: 'Buat DP', final: 'Buat final', payment: 'Simpan', convert: 'Ubah ke DP',
 } as Record<DialogKind, string>)[dialog.value!] || 'OK')
 
 function pickProof([file]: File[]) {
@@ -473,6 +486,16 @@ async function confirmDialog() {
         inv.value = created
         toast.success(created.status === 'paid' ? 'Lunas' : 'Pembayaran dicatat')
         break
+      }
+      case 'convert': {
+        const dpInput = dpMode.value === 'percent'
+          ? {dp_percent_bps: Math.round((Number(dpValue.value) || 0) * 100)}
+          : {dp_amount: Math.floor(Number(dpValue.value) || 0)}
+        const orderId = await service.convertOrderToStaged(i.id, dpInput)
+        toast.success('Order diubah menjadi bertahap')
+        dialog.value = null
+        await router.push(`/console/secret/orders/${orderId}/detail`)
+        return
       }
       default: {
         const created = kind === 'duplicate' ? await service.duplicateInvoice(i.id)
