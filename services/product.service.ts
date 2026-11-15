@@ -7,9 +7,9 @@ import { useBrandingService } from '~/services/branding.service'
 import { useRuntimeConfig } from '#app'
 import { useCookie } from '#app'
 
-type ProductListParams = { keyword?: string; category_id?: number | null; is_active?: boolean; is_highlight?: boolean; sortBy?: string }
+type ProductListParams = { keyword?: string; category_id?: number | null; is_active?: boolean; is_highlight?: boolean; sortBy?: string; sort?: string }
 
-export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; params?: ProductListParams; skipInitialFetch?: boolean } = {}) => {
+export const useProductService = (fetchResult?: boolean, dataId?: string, options: { sortBy?: string; limit?: number; params?: ProductListParams; skipInitialFetch?: boolean } = {}) => {
     const { gqlFetch } = useGql()
     const brandingService = useBrandingService()
     const config = useRuntimeConfig()
@@ -20,7 +20,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
     const datas = ref<any>(fetchResult ? [] : null)
     const loading = ref<boolean>(Boolean(fetchResult || dataId))
     const error = ref<string | null>(null)
-    const pagination = ref({ page: 0, limit: 10, total: 0 }) // page is 0-based locally
+    const pagination = ref({ page: 0, limit: options.limit ?? 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
     // initial params go in here so they do not trigger a second fetch via the watcher
     const params = reactive<ProductListParams>({ ...options.params })
@@ -48,8 +48,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
         error.value = null
         try {
             const query = `
-                query getProducts($page: Int!, $limit: Int!, $sortBy: String, $keyword: String, $category_id: Int, $is_active: Boolean, $is_highlight: Boolean) {
-                    getProducts(pagination: { page: $page, limit: $limit, sortBy: $sortBy }, keyword: $keyword, category_id: $category_id, is_active: $is_active, is_highlight: $is_highlight) {
+                query getProducts($page: Int!, $limit: Int!, $sortBy: String, $sort: String, $keyword: String, $category_id: Int, $is_active: Boolean, $is_highlight: Boolean) {
+                    getProducts(pagination: { page: $page, limit: $limit, sortBy: $sortBy }, sort: $sort, keyword: $keyword, category_id: $category_id, is_active: $is_active, is_highlight: $is_highlight) {
                         items {
                             id
                             name
@@ -63,6 +63,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                             is_active
                             is_wishlisted
                             galleries { id image orders }
+                            colors { id name image orders }
                             additionals {
                                 id
                                 name
@@ -99,6 +100,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                     page: serverPage,
                     limit: serverLimit,
                     ...((params.sortBy || options.sortBy) ? { sortBy: params.sortBy || options.sortBy } : {}),
+                    ...(params.sort ? { sort: params.sort } : {}),
                     ...(params.keyword?.trim() ? { keyword: params.keyword.trim() } : {}),
                     ...(params.category_id != null ? { category_id: Number(params.category_id) } : {}),
                     ...(params.is_active != null ? { is_active: Boolean(params.is_active) } : {}),

@@ -192,6 +192,7 @@
       "allProducts": "All products",
       "sort": "Sort",
       "sortOptions": {
+        "featured": "Featured",
         "newest": "Newest",
         "updated": "Recently updated",
         "nameAsc": "Name A - Z",

@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Eye,
   PackageSearch,
   Search,
   SlidersHorizontal,
@@ -59,6 +60,7 @@ const STORAGE_URL = config.public.STORAGE_URL;
 
 // MARK : SORT OPTIONS (backend whitelist: name, created_at, updated_at)
 const sortOptions = [
+  { value: "storefront", labelKey: "featured" },
   { value: "created_at,desc", labelKey: "newest" },
   { value: "updated_at,desc", labelKey: "updated" },
   { value: "name,asc", labelKey: "nameAsc" },
@@ -69,7 +71,8 @@ const sortLabel = (labelKey: string) => t(`app.productPage.sortOptions.${labelKe
 const DEFAULT_SORT = sortOptions[0]!.value;
 
 const productService = useProductService(true, undefined, {
-  params: { is_active: true, sortBy: DEFAULT_SORT, ...(props.categoryId != null ? { category_id: props.categoryId } : {}) },
+  params: { is_active: true, sort: "storefront", ...(props.categoryId != null ? { category_id: props.categoryId } : {}) },
+  limit: 12,
   skipInitialFetch: true,
 });
 const {
@@ -179,13 +182,17 @@ const selectCategory = (id: number | null) => {
 
 // MARK : SORT
 const sortOpen = ref(false);
-const activeSort = computed(() => params.sortBy || DEFAULT_SORT);
+const activeSort = computed(() => params.sort || params.sortBy || DEFAULT_SORT);
 const activeSortLabel = computed(() => {
   const option = sortOptions.find((o) => o.value === activeSort.value);
   return option ? sortLabel(option.labelKey) : "";
 });
 const selectSort = (value: string) => {
-  applyParams({ sortBy: value });
+  applyParams(
+    value === "storefront"
+      ? { sort: "storefront", sortBy: undefined }
+      : { sort: undefined, sortBy: value }
+  );
   sortOpen.value = false;
 };
 
@@ -432,10 +439,19 @@ const goToPage = (p1: number) => {
             </div>
             <button
               type="button"
-              class="absolute inset-x-3 bottom-3 hidden translate-y-2 rounded-full bg-white/95 py-2 text-sm font-medium text-gray-900 opacity-0 shadow transition-all group-hover:translate-y-0 group-hover:opacity-100 lg:block"
+              class="absolute inset-x-3 bottom-3 hidden translate-y-2 items-center justify-center gap-1.5 rounded-full bg-white/95 py-2 text-sm font-medium text-gray-900 opacity-0 shadow transition-all focus-visible:translate-y-0 focus-visible:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none [@media(hover:hover)]:flex"
               @click.prevent.stop="openQuickView(product)"
             >
+              <Eye class="h-4 w-4" aria-hidden="true" />
               {{ $t('app.productPage.quickView') }}
+            </button>
+            <button
+              type="button"
+              class="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow [@media(hover:hover)]:hidden"
+              :aria-label="`${$t('app.productPage.quickView')}: ${product.name}`"
+              @click.prevent.stop="openQuickView(product)"
+            >
+              <Eye class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
           <div class="flex flex-1 flex-col p-3 sm:p-4">
@@ -739,7 +755,6 @@ const goToPage = (p1: number) => {
   <ElementsProductQuickView
     v-model="quickViewOpen"
     :product="selectedProduct"
-    :base-url="config.public.BASE_URL"
     :storage-url="STORAGE_URL"
   />
   </div>

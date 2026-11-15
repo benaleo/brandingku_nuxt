@@ -192,6 +192,7 @@
       "allProducts": "Semua produk",
       "sort": "Urutkan",
       "sortOptions": {
+        "featured": "Pilihan Kami",
         "newest": "Terbaru",
         "updated": "Baru diperbarui",
         "nameAsc": "Nama A - Z",
