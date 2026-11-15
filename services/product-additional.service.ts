@@ -1,5 +1,5 @@
 import { useGql } from '~/composables/useGql'
-import type { ProductAdditional } from '~/types/products.type'
+import type { PriceTier, ProductAdditional } from '~/types/products.type'
 
 export const useProductAdditionalService = () => {
   const { gqlFetch } = useGql()
@@ -53,15 +53,20 @@ export const useProductAdditionalService = () => {
   }
 
   // replaces a variant's wholesale prices
-  const saveProductPriceTiers = async (variantId: number, tiers: { min_qty: number; price: number }[]) => {
+  const saveProductPriceTiers = async (variantId: number, tiers: PriceTier[]) => {
     const mutation = `
       mutation saveProductPriceTiers($id: Int!, $tiers: [ProductPriceTierInput!]!) {
-        saveProductPriceTiers(product_additional_id: $id, tiers: $tiers) { id min_qty price }
+        saveProductPriceTiers(product_additional_id: $id, tiers: $tiers) { id min_qty price capital_price is_active }
       }
     `
     await gqlFetch(mutation, {
       id: variantId,
-      tiers: tiers.map((t) => ({ min_qty: Math.floor(Number(t.min_qty)), price: Math.floor(Number(t.price)) })),
+      tiers: tiers.map((t) => ({
+        min_qty: Math.floor(Number(t.min_qty)),
+        price: Math.floor(Number(t.price)),
+        capital_price: t.capital_price == null || (t.capital_price as any) === '' ? null : Math.max(0, Math.floor(Number(t.capital_price) || 0)),
+        is_active: t.is_active !== false,
+      })),
     }, { auth: true })
   }
 

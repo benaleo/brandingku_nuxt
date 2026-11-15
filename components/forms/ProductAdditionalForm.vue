@@ -154,7 +154,8 @@ function addTier(additional: ProductAdditional) {
   const tiers = additional.price_tiers || []
   const lastQty = tiers.length ? Number(tiers[tiers.length - 1].min_qty) || 0 : 0
   const lastPrice = tiers.length ? Number(tiers[tiers.length - 1].price) || 0 : Number(additional.price) || 0
-  additional.price_tiers = [...tiers, { min_qty: Math.max(lastQty * 2, 50), price: lastPrice }]
+  const lastCapital = tiers.length ? tiers[tiers.length - 1]?.capital_price ?? null : additional.capital_price ?? null
+  additional.price_tiers = [...tiers, { min_qty: Math.max(lastQty * 2, 50), price: lastPrice, capital_price: lastCapital, is_active: true }]
   queueEmit()
 }
 
@@ -172,7 +173,9 @@ function tierProblem(additional: ProductAdditional, idx: number): string {
   if (qty < 2) return "Minimal 2 pcs (1 pcs memakai harga default)"
   if (tiers.some((o, i) => i !== idx && Number(o.min_qty) === qty)) return "Qty sudah dipakai baris lain"
   if (price < 1) return "Harga wajib diisi"
-  const cheaperBefore = [Number(additional.price) || 0, ...tiers.filter((o) => Number(o.min_qty) < qty).map((o) => Number(o.price) || 0)]
+  if (Number(t?.capital_price) < 0) return "Harga modal tidak boleh minus"
+  if (t?.is_active === false) return ""
+  const cheaperBefore = [Number(additional.price) || 0, ...tiers.filter((o) => o.is_active !== false && Number(o.min_qty) < qty).map((o) => Number(o.price) || 0)]
     .filter((p) => p > 0)
   if (cheaperBefore.length && price > Math.min(...cheaperBefore)) return "Tidak boleh lebih mahal dari harga untuk qty lebih kecil"
   return ""
@@ -407,18 +410,24 @@ async function pasteJson(addIdx: number) {
                 <Plus class="size-4" /> Tambah harga grosir
               </Button>
             </div>
-            <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_36px] items-center gap-2 text-xs text-muted-foreground">
-              <span>Mulai qty (pcs)</span><span>Harga per pcs</span><span></span>
+            <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_56px_36px] items-center gap-2 text-xs text-muted-foreground">
+              <span>Mulai qty (pcs)</span><span>Harga per pcs</span><span>Harga modal per pcs</span><span class="text-center">Aktif</span><span></span>
             </div>
-            <div class="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_36px] items-center gap-2">
+            <div class="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_56px_36px] items-center gap-2">
               <Input :model-value="1" disabled aria-label="Qty harga default" />
               <Input type="number" min="0" placeholder="Harga default" aria-label="Harga default" v-model.number="additional.price" />
+              <Input type="number" min="0" placeholder="Modal (admin)" aria-label="Harga modal default" v-model.number="additional.capital_price" />
               <span class="text-center text-xs text-muted-foreground">default</span>
+              <span></span>
             </div>
             <div v-for="(tier, tierIdx) in additional.price_tiers || []" :key="tierIdx" class="mt-2">
-              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_36px] items-center gap-2">
+              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_56px_36px] items-center gap-2" :class="{ 'opacity-60': tier.is_active === false }">
                 <Input type="number" min="2" placeholder="50" :aria-label="`Qty grosir ${tierIdx + 1}`" v-model.number="tier.min_qty" />
                 <Input type="number" min="1" placeholder="25000" :aria-label="`Harga grosir ${tierIdx + 1}`" v-model.number="tier.price" />
+                <Input type="number" min="0" placeholder="Ikut default" :aria-label="`Harga modal grosir ${tierIdx + 1}`" v-model.number="tier.capital_price" />
+                <label class="flex justify-center">
+                  <input type="checkbox" class="size-4 accent-primary" :aria-label="`Aktifkan harga grosir ${tierIdx + 1}`" :checked="tier.is_active !== false" @change="tier.is_active = ($event.target as HTMLInputElement).checked; queueEmit()" />
+                </label>
                 <Button type="button" variant="ghost" size="icon" class="size-9 text-muted-foreground hover:text-red-600" :aria-label="`Hapus harga grosir ${tierIdx + 1}`" @click="removeTier(additional, tierIdx)">
                   <X class="size-4" />
                 </Button>
@@ -427,11 +436,8 @@ async function pasteJson(addIdx: number) {
             </div>
             <p class="mt-2 text-xs text-muted-foreground">
               Qty di bawah harga grosir pertama memakai harga default. Contoh: 50 pcs → Rp 25.000, 250 pcs → Rp 23.000; pembeli 60 pcs dapat Rp 25.000, 300 pcs dapat Rp 23.000.
+              Harga modal hanya terlihat admin; kosong = ikut modal default. Tier nonaktif tidak tampil di produk detail dan tidak dipakai saat order.
             </p>
-          </div>
-          <div class="w-full">
-            <label class="form-label mb-2">Harga modal</label>
-            <Input type="number" min="0" placeholder="Harga modal (hanya admin)" v-model.number="additional.capital_price" />
           </div>
           <div class="w-full">
             <label class="form-label mb-2">Stock</label>

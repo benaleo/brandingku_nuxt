@@ -167,7 +167,7 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                             attributes
                             capital_price
                             is_active
-                            price_tiers { min_qty price }
+                            price_tiers { min_qty price capital_price is_active }
                         }
                         created_at
                         updated_at
