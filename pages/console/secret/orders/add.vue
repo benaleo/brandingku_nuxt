@@ -1,17 +1,17 @@
 <template>
-  <div class="pb-6">
+  <div class="min-w-0 pb-2 max-sm:[&_input:not([type=checkbox]):not([type=radio])]:h-11 max-sm:[&_select]:h-11 max-sm:[&_button]:min-h-10">
     <AppBreadcrumb/>
     <AppTableHeader :pageTitle="pageTitle"/>
 
-    <div class="mt-4 grid gap-6 lg:grid-cols-3">
-      <div class="space-y-6 lg:col-span-2">
+    <div class="mt-4 grid gap-4 sm:gap-6 lg:grid-cols-3">
+      <div class="min-w-0 space-y-4 sm:space-y-6 lg:col-span-2">
         <!-- customer -->
-        <section class="space-y-3 rounded-xl border bg-card p-4">
+        <section class="space-y-3 rounded-xl border bg-card p-3 sm:p-4">
           <h2 class="font-semibold">Customer</h2>
-          <div v-if="customer" class="flex items-start justify-between gap-3 rounded-lg border bg-muted/40 p-3 text-sm">
+          <div v-if="customer" class="flex flex-wrap items-start justify-between gap-3 rounded-lg border bg-muted/40 p-3 text-sm">
             <div class="min-w-0">
-              <p class="font-medium">{{ customer.name }}</p>
-              <p class="text-muted-foreground">{{ customer.email }} · {{ customer.phone || '-' }}</p>
+              <p class="break-words font-medium">{{ customer.name }}</p>
+              <p class="break-all text-muted-foreground">{{ customer.email }} · {{ customer.phone || '-' }}</p>
             </div>
             <Button variant="outline" size="sm" @click="clearCustomer">Ganti</Button>
           </div>
@@ -20,9 +20,9 @@
             <div v-if="customerLoading" class="mt-2 text-xs text-muted-foreground">Mencari…</div>
             <ul v-else-if="customerResults.length" class="mt-2 max-h-64 divide-y overflow-auto rounded-lg border bg-background">
               <li v-for="c in customerResults" :key="c.id">
-                <button type="button" class="w-full px-3 py-2 text-left text-sm hover:bg-muted" @click="pickCustomer(c)">
+                <button type="button" class="w-full px-3 py-3 text-left text-sm hover:bg-muted sm:py-2" @click="pickCustomer(c)">
                   <span class="font-medium">{{ c.name }}</span>
-                  <span class="block text-xs text-muted-foreground">{{ c.email }} · {{ c.phone || '-' }}</span>
+                  <span class="block break-all text-xs text-muted-foreground">{{ c.email }} · {{ c.phone || '-' }}</span>
                 </button>
               </li>
             </ul>
@@ -31,24 +31,24 @@
         </section>
 
         <!-- items -->
-        <section class="space-y-3 rounded-xl border bg-card p-4">
-          <div class="flex items-center justify-between">
+        <section class="space-y-3 rounded-xl border bg-card p-3 sm:p-4">
+          <div class="flex items-center justify-between gap-2">
             <h2 class="font-semibold">Item</h2>
             <Button variant="outline" size="sm" @click="addRow">Tambah item +</Button>
           </div>
-          <div v-for="(row, i) in rows" :key="row.key" class="space-y-3 rounded-lg border p-3">
+          <div v-for="(row, i) in rows" :key="row.key" class="space-y-3 rounded-lg border p-2.5 sm:p-3">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <Label class="text-xs">Produk</Label>
                 <div v-if="row.product" class="mt-1 flex items-center justify-between gap-2 text-sm">
-                  <span class="font-medium">[{{ row.product.slug }}] - {{ row.product.name }}</span>
+                  <span class="min-w-0 break-words font-medium">[{{ row.product.slug }}] - {{ row.product.name }}</span>
                   <Button variant="ghost" size="sm" @click="clearProduct(row)">Ganti</Button>
                 </div>
                 <div v-else>
                   <Input v-model="row.keyword" class="mt-1" placeholder="Cari produk…" @input="searchProducts(row)"/>
                   <ul v-if="row.results.length" class="mt-2 max-h-56 divide-y overflow-auto rounded-lg border bg-background">
                     <li v-for="p in row.results" :key="p.id">
-                      <button type="button" class="w-full px-3 py-2 text-left text-sm hover:bg-muted" @click="pickProduct(row, p)">[{{ p.slug }}] - {{ p.name }}</button>
+                      <button type="button" class="w-full break-words px-3 py-3 text-left text-sm hover:bg-muted sm:py-2" @click="pickProduct(row, p)">[{{ p.slug }}] - {{ p.name }}</button>
                     </li>
                   </ul>
                 </div>
@@ -58,7 +58,7 @@
 
             <template v-if="row.product">
               <div class="grid gap-3 sm:grid-cols-3">
-                <div class="sm:col-span-2">
+                <div class="min-w-0 sm:col-span-2">
                   <Label class="text-xs">Varian</Label>
                   <select v-model.number="row.variantId" class="mt-1 h-9 w-full rounded-md border bg-background px-3 text-sm">
                     <option :value="0" disabled>Pilih varian</option>
@@ -74,7 +74,7 @@
               <div v-if="row.brandings.length">
                 <Label class="text-xs">Branding</Label>
                 <div class="mt-1 flex flex-wrap gap-2">
-                  <label v-for="b in row.brandings" :key="b.branding_method_id" class="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm"
+                  <label v-for="b in row.brandings" :key="b.branding_method_id" class="flex min-h-10 max-w-full cursor-pointer flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md border px-2.5 py-1.5 text-sm"
                          :class="row.brandingIds.includes(b.branding_method_id) && 'border-green-600 bg-green-50'">
                     <input v-model="row.brandingIds" type="checkbox" :value="b.branding_method_id">
                     {{ b.name }}
@@ -109,10 +109,10 @@
         </section>
 
         <!-- payment flow and due date -->
-        <section class="space-y-3 rounded-xl border bg-card p-4">
+        <section class="space-y-3 rounded-xl border bg-card p-3 sm:p-4">
           <h2 class="font-semibold">Pembayaran dan jadwal</h2>
-          <div class="inline-flex rounded-lg border p-1 text-sm">
-            <button v-for="f in FLOWS" :key="f.value" type="button" class="rounded-md px-3 py-1.5"
+          <div class="grid auto-cols-fr grid-flow-col rounded-lg border p-1 text-sm sm:inline-grid">
+            <button v-for="f in FLOWS" :key="f.value" type="button" class="rounded-md px-3 py-2 sm:py-1.5"
                     :class="form.payment_flow === f.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
                     @click="form.payment_flow = f.value">{{ f.label }}</button>
           </div>
@@ -129,8 +129,8 @@
               <option value="full">Langsung pelunasan</option>
             </select>
             <template v-if="form.first_payment === 'dp'">
-              <div class="inline-flex rounded-lg border p-1 text-sm">
-                <button v-for="m in DP_MODES" :key="m.value" type="button" class="rounded-md px-3 py-1.5"
+              <div class="grid auto-cols-fr grid-flow-col rounded-lg border p-1 text-sm sm:inline-grid">
+                <button v-for="m in DP_MODES" :key="m.value" type="button" class="rounded-md px-3 py-2 sm:py-1.5"
                         :class="form.dp_mode === m.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
                         @click="form.dp_mode = m.value">{{ m.label }}</button>
               </div>
@@ -147,10 +147,10 @@
         </section>
 
         <!-- delivery and contact -->
-        <section class="space-y-3 rounded-xl border bg-card p-4">
+        <section class="space-y-3 rounded-xl border bg-card p-3 sm:p-4">
           <h2 class="font-semibold">Pengiriman dan kontak</h2>
-          <div class="inline-flex rounded-lg border p-1 text-sm">
-            <button v-for="m in METHODS" :key="m.value" type="button" class="rounded-md px-3 py-1.5"
+          <div class="grid auto-cols-fr grid-flow-col rounded-lg border p-1 text-sm sm:inline-grid">
+            <button v-for="m in METHODS" :key="m.value" type="button" class="rounded-md px-3 py-2 sm:py-1.5"
                     :class="form.delivery_method === m.value ? 'bg-green-600 font-medium text-white' : 'text-muted-foreground hover:bg-muted'"
                     @click="form.delivery_method = m.value">{{ m.label }}</button>
           </div>
@@ -159,24 +159,44 @@
             <div><Label class="text-xs">Telepon *</Label><Input v-model="form.customer_phone" maxlength="40" class="mt-1"/></div>
             <div class="sm:col-span-2"><Label class="text-xs">Perusahaan</Label><Input v-model="form.customer_company" maxlength="150" class="mt-1"/></div>
           </div>
-          <div v-if="form.delivery_method === 'delivery' && customer" class="space-y-2 rounded-lg border bg-muted/30 p-3">
-            <Label class="text-xs">Buku alamat customer</Label>
-            <select v-model.number="selectedAddressId" class="h-9 w-full rounded-md border bg-background px-3 text-sm" @change="pickAddress">
-              <option :value="0">{{ addresses.length ? 'Pilih alamat tersimpan' : 'Belum ada alamat tersimpan' }}</option>
+          <div v-if="form.delivery_method === 'delivery'" class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <Label class="text-xs">Alamat pengiriman</Label>
+              <Button v-if="customer" type="button" variant="outline" size="sm" :disabled="addressBusy" @click="openAddAddress"><Plus class="size-4"/> Tambah alamat</Button>
+            </div>
+            <select v-if="customer && addresses.length" v-model.number="selectedAddressId" aria-label="Pilih alamat tersimpan"
+                    class="h-9 w-full rounded-md border bg-background px-3 text-sm" @change="pickAddress">
+              <option :value="0">Pilih alamat tersimpan</option>
               <option v-for="a in addresses" :key="a.id" :value="a.id">{{ a.label || 'Tanpa label' }} · {{ a.recipient_name }} · {{ a.city }}</option>
             </select>
-            <div class="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" :disabled="addressBusy" @click="openSaveAddress">Simpan sebagai alamat baru</Button>
-              <Button v-if="selectedAddress" type="button" variant="outline" size="sm" :disabled="addressBusy || !addressChanged" @click="updateAddress">Perbarui alamat</Button>
-              <Button v-if="selectedAddress" type="button" variant="ghost" size="sm" class="text-red-600" :disabled="addressBusy" @click="deleteOpen = true">Hapus alamat</Button>
+            <div v-if="hasShipTo" class="rounded-lg border bg-muted/30 p-3 text-sm">
+              <div class="flex flex-wrap items-center gap-2">
+                <MapPin class="size-4 shrink-0 text-muted-foreground"/>
+                <span class="min-w-0 break-words font-medium">{{ selectedAddress ? (selectedAddress.label || 'Tanpa label') : 'Alamat order' }}</span>
+                <span v-if="addressChanged" class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Diubah untuk order ini</span>
+              </div>
+              <p class="mt-1 break-words">{{ form.shipping_name }} · {{ form.shipping_phone }}</p>
+              <p class="break-words text-muted-foreground">{{ form.shipping_address }}<template v-if="form.shipping_city">, {{ form.shipping_city }}</template> {{ form.shipping_postal_code }}</p>
+              <div v-if="selectedAddress" class="mt-2 flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" :disabled="addressBusy" @click="openEditAddress">Ubah</Button>
+                <Button type="button" variant="ghost" size="sm" class="text-red-600" :disabled="addressBusy" @click="deleteOpen = true">Hapus</Button>
+              </div>
             </div>
+            <p v-else class="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+              {{ customer ? 'Belum ada alamat. Tambah alamat baru atau pilih dari buku alamat.' : 'Pilih customer dulu untuk memakai buku alamat, atau isi alamat langsung.' }}
+            </p>
+            <button v-if="customer" type="button" class="min-h-10 text-sm text-green-700 underline-offset-2 hover:underline" :aria-expanded="editInline" @click="editInline = !editInline">
+              {{ editInline ? 'Tutup ubah alamat' : 'Ubah untuk order ini saja' }}
+            </button>
           </div>
           <div v-if="form.delivery_method === 'delivery'" class="grid gap-3 sm:grid-cols-2">
-            <div><Label class="text-xs">Nama penerima *</Label><Input v-model="form.shipping_name" maxlength="150" class="mt-1"/></div>
-            <div><Label class="text-xs">Telepon penerima *</Label><Input v-model="form.shipping_phone" maxlength="40" class="mt-1"/></div>
-            <div class="sm:col-span-2"><Label class="text-xs">Alamat *</Label><Textarea v-model="form.shipping_address" rows="2" maxlength="500" class="mt-1"/></div>
-            <div><Label class="text-xs">Kota *</Label><Input v-model="form.shipping_city" maxlength="100" class="mt-1"/></div>
-            <div><Label class="text-xs">Kode pos</Label><Input v-model="form.shipping_postal_code" maxlength="10" class="mt-1"/></div>
+            <template v-if="!customer || editInline">
+              <div><Label class="text-xs">Nama penerima *</Label><Input v-model="form.shipping_name" maxlength="150" class="mt-1"/></div>
+              <div><Label class="text-xs">Telepon penerima *</Label><Input v-model="form.shipping_phone" maxlength="40" type="tel" inputmode="tel" class="mt-1"/></div>
+              <div class="sm:col-span-2"><Label class="text-xs">Alamat *</Label><Textarea v-model="form.shipping_address" rows="2" maxlength="500" class="mt-1"/></div>
+              <div><Label class="text-xs">Kota *</Label><Input v-model="form.shipping_city" maxlength="100" class="mt-1"/></div>
+              <div><Label class="text-xs">Kode pos</Label><Input v-model="form.shipping_postal_code" maxlength="10" inputmode="numeric" class="mt-1"/></div>
+            </template>
             <div class="sm:col-span-2">
               <Label class="text-xs">Ongkir</Label>
               <Input v-model="form.shipping_fee" type="number" min="0" class="mt-1" placeholder="Kosongkan bila ongkir belum diketahui"/>
@@ -192,7 +212,7 @@
 
       <!-- summary -->
       <aside class="lg:col-span-1">
-        <section class="space-y-3 rounded-xl border bg-card p-4 lg:sticky lg:top-4">
+        <section class="space-y-3 rounded-xl border bg-card p-3 sm:p-4 lg:sticky lg:top-4">
           <h2 class="font-semibold">Ringkasan</h2>
           <p v-if="previewError" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ previewError }}</p>
           <p v-if="!preview && !previewLoading" class="text-sm text-muted-foreground">Pilih customer dan item untuk melihat harga.</p>
@@ -235,7 +255,7 @@
           <p v-if="submitHint" class="text-xs text-amber-700">{{ submitHint }}</p>
           <div class="flex gap-2 pt-2">
             <Button variant="outline" class="flex-1" :disabled="saving" @click="router.push('/console/secret/orders')">Batal</Button>
-            <Button variant="primary" class="flex-1" :disabled="saving || submitBlocked" @click="submit">
+            <Button variant="primary" class="flex-1 max-lg:hidden" :disabled="saving || submitBlocked" @click="submit">
               <Loader2 v-if="saving" class="mr-1 size-4 animate-spin"/> Buat Order
             </Button>
           </div>
@@ -243,16 +263,21 @@
       </aside>
     </div>
 
-    <ElementsConfirmDialog
-      v-model:open="labelOpen"
-      title="Simpan alamat baru"
-      description="Beri label agar mudah dikenali, mis. Kantor atau Rumah. Boleh dikosongkan."
-      confirm-label="Simpan"
-      :busy="addressBusy"
-      @confirm="saveNewAddress"
-    >
-      <Input v-model="addressLabel" maxlength="50" class="mt-3" placeholder="Label alamat (opsional)" @keyup.enter="saveNewAddress"/>
-    </ElementsConfirmDialog>
+    <!-- phones and tablets: total and submit stay in reach above the bottom nav -->
+    <div class="sticky bottom-[calc(3.6rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-4 border-t bg-background/95 px-4 py-2.5 backdrop-blur min-[769px]:bottom-0 sm:-mx-6 sm:px-6 lg:hidden">
+      <p v-if="submitHint" class="mb-1.5 text-xs text-amber-700">{{ submitHint }}</p>
+      <div class="flex items-center gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-muted-foreground">Total</p>
+          <p class="truncate text-base font-bold tabular-nums">{{ preview ? formatRupiah(preview.total) : '-' }}</p>
+        </div>
+        <Button variant="primary" class="min-h-11 px-6" :disabled="saving || submitBlocked" @click="submit">
+          <Loader2 v-if="saving" class="mr-1 size-4 animate-spin"/> Buat Order
+        </Button>
+      </div>
+    </div>
+
+    <ElementsCustomerAddressDialog v-model:open="addressDialogOpen" :address="addressEditing" :busy="addressBusy" @save="saveAddress"/>
     <ElementsConfirmDialog
       v-model:open="deleteOpen"
       title="Hapus alamat?"
@@ -269,8 +294,9 @@
 <script setup lang="ts">
 import {computed, reactive, ref, watch} from 'vue'
 import {toast} from 'vue-sonner'
-import {Loader2, Trash2} from 'lucide-vue-next'
+import {Loader2, MapPin, Plus, Trash2} from 'lucide-vue-next'
 import ElementsConfirmDialog from '~/components/elements/ConfirmDialog.vue'
+import ElementsCustomerAddressDialog from '~/components/elements/CustomerAddressDialog.vue'
 import AppBreadcrumb from '~/components/elements/AppBreadcrumb.vue'
 import AppTableHeader from '~/components/elements/AppTableHeader.vue'
 import {Button} from '@/components/ui/button'
@@ -346,30 +372,18 @@ const {getCustomerAddresses, createCustomerAddress, updateCustomerAddress, delet
 const addresses = ref<CustomerAddress[]>([])
 const selectedAddressId = ref(0)
 const addressBusy = ref(false)
-const labelOpen = ref(false)
-const addressLabel = ref('')
+const addressDialogOpen = ref(false)
+const addressEditing = ref<CustomerAddress | null>(null)
+const editInline = ref(false)
 const deleteOpen = ref(false)
 const selectedAddress = computed(() => addresses.value.find(a => a.id === selectedAddressId.value) || null)
-const addressInput = (label?: string): CustomerAddressInput => ({
-  label: label?.trim() || undefined,
-  recipient_name: form.shipping_name.trim(),
-  phone: form.shipping_phone.trim(),
-  address: form.shipping_address.trim(),
-  city: form.shipping_city.trim(),
-  postal_code: form.shipping_postal_code.trim() || undefined,
-})
+const hasShipTo = computed(() => !!(form.shipping_name.trim() || form.shipping_address.trim() || form.shipping_city.trim()))
 const addressChanged = computed(() => {
   const a = selectedAddress.value
   if (!a) return false
-  const i = addressInput()
-  return a.recipient_name !== i.recipient_name || a.phone !== i.phone || a.address !== i.address || a.city !== i.city || (a.postal_code || '') !== (i.postal_code || '')
+  return a.recipient_name !== form.shipping_name.trim() || a.phone !== form.shipping_phone.trim() || a.address !== form.shipping_address.trim()
+    || a.city !== form.shipping_city.trim() || (a.postal_code || '') !== form.shipping_postal_code.trim()
 })
-const addressComplete = () => {
-  const i = addressInput()
-  if (i.recipient_name && i.phone && i.address && i.city) return true
-  toast.error('Lengkapi nama penerima, telepon, alamat, dan kota dulu')
-  return false
-}
 const loadAddresses = async () => {
   const id = customer.value?.id
   if (!id) return
@@ -389,36 +403,29 @@ const pickAddress = () => {
   form.shipping_city = a.city
   form.shipping_postal_code = a.postal_code || ''
 }
-const openSaveAddress = () => {
-  if (!addressComplete()) return
-  addressLabel.value = ''
-  labelOpen.value = true
+const openAddAddress = () => {
+  addressEditing.value = null
+  addressDialogOpen.value = true
 }
-const saveNewAddress = async () => {
-  if (!customer.value || addressBusy.value || !addressComplete()) return
+const openEditAddress = () => {
+  if (!selectedAddress.value) return
+  addressEditing.value = selectedAddress.value
+  addressDialogOpen.value = true
+}
+const saveAddress = async (input: CustomerAddressInput) => {
+  if (!customer.value || addressBusy.value) return
+  const editing = addressEditing.value
   addressBusy.value = true
   try {
-    const created = await createCustomerAddress(customer.value.id, addressInput(addressLabel.value))
-    labelOpen.value = false
+    const saved = editing ? await updateCustomerAddress(editing.id, input) : await createCustomerAddress(customer.value.id, input)
+    addressDialogOpen.value = false
     await loadAddresses()
-    selectedAddressId.value = created.id
-    toast.success('Alamat disimpan')
+    selectedAddressId.value = saved.id
+    pickAddress()
+    editInline.value = false
+    toast.success(editing ? 'Alamat diperbarui' : 'Alamat disimpan')
   } catch (e: any) {
-    toast.error(invoiceErrorMessage(e, 'Alamat gagal disimpan'))
-  } finally {
-    addressBusy.value = false
-  }
-}
-const updateAddress = async () => {
-  const a = selectedAddress.value
-  if (!a || !addressComplete()) return
-  addressBusy.value = true
-  try {
-    await updateCustomerAddress(a.id, addressInput(a.label))
-    await loadAddresses()
-    toast.success('Alamat diperbarui')
-  } catch (e: any) {
-    toast.error(invoiceErrorMessage(e, 'Alamat gagal diperbarui'))
+    toast.error(invoiceErrorMessage(e, editing ? 'Alamat gagal diperbarui' : 'Alamat gagal disimpan'))
   } finally {
     addressBusy.value = false
   }
@@ -486,13 +493,15 @@ const pickCustomer = (c: Customer) => {
   form.shipping_postal_code = ''
   form.customer_company = ''
   selectedAddressId.value = 0
+  editInline.value = false
+  addressDialogOpen.value = false
   loadAddresses()
 }
 const clearCustomer = () => {
   form.shipping_city = ''
   form.shipping_postal_code = ''
   form.customer_company = ''
-  customer.value = null; customerKeyword.value = ''; addresses.value = []; selectedAddressId.value = 0 }
+  customer.value = null; customerKeyword.value = ''; addresses.value = []; selectedAddressId.value = 0; editInline.value = false; addressDialogOpen.value = false }
 
 // items
 let rowKey = 0
