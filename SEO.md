@@ -1,6 +1,6 @@
 # SEO Brandingku — status & checklist
 
-Terakhir diperbarui: 14 November 2026. Audit data diambil langsung dari API production (99 produk aktif, 8 kategori induk).
+Terakhir diperbarui: 15 November 2026. Audit data diambil langsung dari website dan API production (99 produk aktif, 8 kategori induk).
 
 Centang `[x]` kalau sudah beres.
 
@@ -17,13 +17,17 @@ Centang `[x]` kalau sudah beres.
 - [x] Produk dan kategori yang tidak ada mengembalikan HTTP 404 (bukan soft-404).
 - [x] Title dan description kategori sekarang berbahasa Indonesia dan memuat keyword ("Tumbler Custom Logo - Brandingku"). Template bahasa Inggris dari API ("Premium X - Corporate Solutions") tidak dipakai lagi.
 - [x] Daftar produk di `/product` dan halaman kategori: halaman pertama dirender di server, jadi link ke produk bisa di-crawl.
+- [x] `/product` menampilkan 12 produk per halaman, urut upsell → recommended → highlight → terbaru di-update.
+- [x] Detail produk punya section **Produk serupa** (carousel, hingga 12 produk dari kategori yang sama) yang dirender di server. Ini menambah internal link antar produk.
+- [x] Testimoni dan portfolio di detail produk hanya dimuat kalau produknya punya, jadi halaman lebih ringan.
 
 ---
 
 ## 2. Langkah setelah deploy (sekali saja)
 
-- [ ] **Pastikan deploy jalan.** Per 14 Nov, `https://brandingku.my.id/sitemap.xml` masih 404, artinya kode baru belum live. Cek tab Actions di GitHub (workflow `nuxthub.yml`) atau deploy manual dengan `pnpm run deploy:cf`.
-- [ ] Buka `https://brandingku.my.id/sitemap.xml` dan `https://brandingku.my.id/robots.txt`, pastikan isinya muncul.
+- [x] **Deploy jalan.** Dicek 15 Nov: `/sitemap.xml` berisi 112 URL (99 produk, 4 kategori berisi, 1 portfolio, halaman statis), produk yang tidak ada mengembalikan 404, dan detail produk punya JSON-LD `Product` + `BreadcrumbList`.
+- [x] `/robots.txt` live dan memuat aturan kita (`Disallow: /console/` dst. + `Sitemap:`). Lihat catatan Cloudflare di bawah.
+- [ ] **Putuskan soal bot AI di Cloudflare.** `robots.txt` yang tampil sekarang ditambahi blok dari fitur *Managed robots.txt* Cloudflare: GPTBot, ClaudeBot, Google-Extended, CCBot, dan bot AI lain diblokir. Googlebot dan Bingbot tetap boleh, jadi ranking Google tidak terpengaruh. Tapi produk tidak akan muncul sebagai sumber di jawaban ChatGPT/Claude/Gemini. Kalau ingin muncul di sana, matikan blok untuk bot AI di Cloudflare → Security → Bots → *Block AI bots* / *Manage robots.txt*.
 - [ ] **Google Search Console** (https://search.google.com/search-console):
   - Tambah property domain `brandingku.my.id` (verifikasi lewat DNS TXT di Cloudflare).
   - Menu *Sitemaps* → submit `https://brandingku.my.id/sitemap.xml`.
@@ -37,7 +41,7 @@ Centang `[x]` kalau sudah beres.
 ## 3. Data yang perlu kamu update di console (dampak terbesar)
 
 ### 3.1 Harga produk — WAJIB
-- [ ] **99 dari 99 produk aktif belum punya harga.** Tanpa harga, Google tidak menampilkan harga atau rich result di hasil pencarian, dan schema `Product` dianggap kurang lengkap.
+- [ ] **99 dari 99 produk aktif masih belum punya harga** (dicek ulang 15 Nov). Tanpa harga, Google tidak menampilkan harga atau rich result di hasil pencarian, dan schema `Product` dianggap kurang lengkap.
   - Isi harga di *Additionals* tiap produk (harga per pcs, plus tier grosir).
   - Kalau harga memang "by request", tetap isi harga mulai dari (harga terendah) supaya bisa tampil "Mulai Rp xx.xxx".
 
@@ -46,23 +50,23 @@ Struktur kategori sekarang dobel. Kategori lama **`usb`, `powerbank`, `mug`, dan
 
 Halaman kategori kosong dinilai Google sebagai halaman tipis, dan itu menurunkan kualitas situs secara keseluruhan. Sitemap sudah otomatis melewati kategori kosong, tapi halamannya masih bisa diakses dari menu.
 
-- [ ] Pilih salah satu: **nonaktifkan** keempat kategori lama, **atau** pindahkan produk ke sana supaya strukturnya tidak dobel.
+- [ ] Keempat kategori lama masih aktif per 15 Nov (sitemap sudah otomatis melewatinya). Pilih salah satu: **nonaktifkan** keempat kategori lama, **atau** pindahkan produk ke sana supaya strukturnya tidak dobel.
 - [ ] Kalau dinonaktifkan, cek menu navbar dan landing page supaya tidak ada link ke kategori yang mati.
-- [ ] Rapikan huruf besar nama kategori. `mug`, `powerbank`, dan sub kategori seperti `arden`, `gelas`, `ceramic` masih huruf kecil, dan nama ini langsung dipakai di title halaman ("mug Custom Logo - Brandingku").
+- [ ] Rapikan huruf besar nama kategori. Per 15 Nov masih ada 12 nama huruf kecil: `mug`, `powerbank`, `pen`, `notebook`, `plastic`, `metal`, `rubber`, `wood`, `gelas`, `ceramic`, `stainless`, `arden`, dan nama ini langsung dipakai di title halaman ("mug Custom Logo - Brandingku").
 
 ### 3.3 Deskripsi kategori
 Deskripsi kategori tampil di halaman kategori dan dipakai sebagai meta description. Kalau isinya di bawah 70 karakter, sistem memakai kalimat template.
 
 | Kategori | Panjang deskripsi sekarang | Status |
 |---|---|---|
-| tumbler | 53 karakter | [ ] tulis ulang |
-| powerbank | 21 karakter | [ ] tulis ulang |
-| gadget | kosong | [ ] tulis |
-| mug | 15 karakter | [ ] tulis ulang |
-| atk | 16 karakter | [ ] tulis ulang |
+| tumbler | 102 karakter | [~] sudah lebih panjang, target 150–300 kata |
+| powerbank | 28 karakter | [ ] tulis ulang |
+| gadget | kosong | [ ] tulis (kategori terbesar, 64 produk) |
+| mug | 22 karakter | [ ] tulis ulang |
+| atk | 23 karakter | [ ] tulis ulang |
 | payung | kosong | [ ] tulis |
-| stationary | kosong | [ ] tulis |
-| usb | 7 karakter | [ ] tulis ulang |
+| stationary | 40 karakter | [ ] tulis ulang |
+| usb | 14 karakter | [ ] tulis ulang |
 
 Panduan menulis (per kategori 150–300 kata):
 - Paragraf pembuka: apa produknya, untuk siapa (kantor, event, seminar, souvenir), dan keyword utama. Contoh: *"Tumbler custom logo untuk souvenir kantor dan corporate gift…"*
@@ -72,7 +76,7 @@ Panduan menulis (per kategori 150–300 kata):
 - Keyword turunan secara natural: "murah", "grosir", "satuan", "Jakarta", "untuk seminar".
 
 ### 3.4 Sub kategori
-- [ ] Ke-33 sub kategori belum punya deskripsi (mis. sub di tumbler 8, gadget 8, usb 4). Isi minimal 1–2 kalimat.
+- [ ] 17 dari 33 sub kategori sudah punya deskripsi; 16 lagi belum. Isi minimal 1–2 kalimat.
 
 ### 3.5 Gambar kategori
 - [ ] Cover halaman detail belum ada untuk: powerbank, gadget, mug, atk, payung, stationary.
@@ -86,7 +90,7 @@ Panduan menulis (per kategori 150–300 kata):
 - [ ] Alt text gambar mengikuti nama produk, jadi cukup pastikan nama produk deskriptif.
 
 ### 3.7 Portfolio
-- [ ] Baru ada **1 portfolio**. Target 10–20: tiap proyek klien (foto hasil, klien, produk, teknik branding). Ini bukti kerja nyata sekaligus konten untuk pencarian "merchandise [industri/klien]".
+- [ ] Masih **1 portfolio** per 15 Nov. Target 10–20: tiap proyek klien (foto hasil, klien, produk, teknik branding). Ini bukti kerja nyata sekaligus konten untuk pencarian "merchandise [industri/klien]".
 - [ ] Subtitle portfolio dipakai sebagai meta description. Tulis 1–2 kalimat, bukan cuma nama teknik ("Engrave Laser").
 
 ---
@@ -118,7 +122,7 @@ Target 2–4 artikel per bulan, tiap artikel menautkan ke 2–3 kategori atau pr
 
 ## 6. Pekerjaan teknis berikutnya (opsional, belum dikerjakan)
 
-- [ ] **Konten homepage dirender di server.** Section produk unggulan, benefit, klien, dan sejenisnya sekarang baru dimuat saat di-scroll (intersection observer). Akibatnya HTML awal homepage tidak berisi satu pun link produk.
+- [ ] **Konten homepage dirender di server.** Dicek 15 Nov: HTML awal homepage masih berisi 0 link produk. Section produk unggulan, benefit, klien, dan sejenisnya sekarang baru dimuat saat di-scroll (intersection observer). Akibatnya HTML awal homepage tidak berisi satu pun link produk.
 - [ ] **Pagination daftar produk bisa di-crawl.** Sekarang hanya halaman 1 (10 produk) yang dirender di server, dan pindah halaman cuma lewat tombol. Produk lain tetap ditemukan lewat sitemap, tapi link `?page=2` akan membantu internal linking.
 - [ ] **Gambar OG default 1200×630.** Sekarang fallback-nya memakai logo loading 612×612. Siapkan desainnya, nanti tinggal dipasang.
 - [ ] **Audit kecepatan (Core Web Vitals):** ukuran gambar produk, LCP homepage, dan font Google yang dimuat dari komponen FAQ.
