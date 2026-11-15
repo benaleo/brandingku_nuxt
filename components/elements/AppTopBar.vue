@@ -5,7 +5,7 @@ import {Menu as MenuIcon} from 'lucide-vue-next'
 import {useCookie} from '#app'
 import {useProfileService} from '~/services/profile.service'
 
-const { access } = useConsoleAccess()
+const { access, can } = useConsoleAccess()
 const { openMobile, setOpenMobile } = useSidebar()
 const service = useProfileService()
 const config = useRuntimeConfig()
@@ -31,7 +31,8 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 flex h-14 w-full items-center justify-end border-b bg-background/80 px-4 backdrop-blur">
+  <header class="sticky top-0 z-30 flex h-14 w-full items-center justify-end gap-1 border-b bg-background/80 px-4 backdrop-blur">
+    <ElementsStaffNotificationBell v-if="can('orders.index')"/>
     <!-- up to 768px the sidebar is a sheet (sliding in from the left), opened from the right of the bar -->
     <button
       type="button"
