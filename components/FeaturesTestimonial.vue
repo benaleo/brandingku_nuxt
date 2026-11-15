@@ -3,33 +3,12 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { ArrowRight } from 'lucide-vue-next'
 import { useElementSize } from '@vueuse/core'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '~/components/ui/carousel'
-import { useTestimonialService } from '~/services/testimonial.service'
-import { useAftercareService } from '~/services/aftercare.service'
+import type { Testimonial } from '~/types/testimonial.type'
 import type { ReviewSummary } from '~/types/aftercare.type'
-import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
 
-// active landing page testimonials, customers' published reviews among them
-const { datas: testimonials, loading, reFetch } = useTestimonialService({ is_active: true, placement: 'landing_page', limit: 12 })
+const props = defineProps<{ testimonials: Testimonial[] | null; score: ReviewSummary | null }>()
+const testimonials = computed(() => props.testimonials || [])
 const { locale } = useI18n()
-const { getTestimonialSummary } = useAftercareService()
-const score = ref<ReviewSummary | null>(null)
-const isInitialLoad = ref(true)
-const shouldLoad = ref(false)
-
-// Set up intersection observer to trigger data loading
-const { target } = useIntersectionObserver(() => {
-  shouldLoad.value = true
-  loadTestimonials()
-})
-
-const loadTestimonials = async () => {
-  if (!shouldLoad.value) return
-  await Promise.all([
-    reFetch(),
-    getTestimonialSummary('landing_page').then(s => { score.value = s }).catch(() => {}),
-  ])
-  isInitialLoad.value = false
-}
 
 // the phone deck: the front card, with the next two peeking out below it
 const front = ref(0)
@@ -59,7 +38,7 @@ const onTouchEnd = (e: TouchEvent) => {
 </script>
 
 <template>
-  <div ref="target" class="w-full overflow-x-clip px-4 py-12 bg-[#F2F4F7]">
+  <div v-if="testimonials.length" class="w-full overflow-x-clip px-4 py-12 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-12">
       <h2 class="text-3xl font-bold text-center text-gray-800" :class="score?.count ? 'mb-3' : 'mb-12'">{{ $t('app.testimonials.title') }}</h2>
       <!-- the overall score of the testimonials shown here -->
@@ -69,70 +48,6 @@ const onTouchEnd = (e: TouchEvent) => {
         <span class="text-sm text-gray-500">{{ $t('app.testimonials.score', { count: score.count }) }}</span>
       </div>
       
-      <div v-if="loading || isInitialLoad" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Skeleton Card 1 -->
-        <div class="bg-white rounded-lg p-6 shadow-sm relative">
-          <div class="text-green-200 text-6xl absolute top-4 right-4 font-serif">"</div>
-          <div class="space-y-3">
-            <Skeleton class="h-4 w-full mb-6" />
-            <Skeleton class="h-4 w-3/4" />
-          </div>
-          <div class="flex items-center mt-6">
-            <Skeleton class="w-12 h-12 rounded-full mr-4" />
-            <div class="space-y-2">
-              <Skeleton class="h-4 w-24" />
-              <Skeleton class="h-3 w-32" />
-              <div class="flex mt-1">
-                <Skeleton v-for="star in 5" :key="star" class="h-4 w-4 mr-1" />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Skeleton Card 2 -->
-        <div class="bg-white rounded-lg p-6 shadow-sm relative">
-          <div class="text-green-200 text-6xl absolute top-4 right-4 font-serif">"</div>
-          <div class="space-y-3">
-            <Skeleton class="h-4 w-full mb-6" />
-            <Skeleton class="h-4 w-2/3" />
-          </div>
-          <div class="flex items-center mt-6">
-            <Skeleton class="w-12 h-12 rounded-full mr-4" />
-            <div class="space-y-2">
-              <Skeleton class="h-4 w-28" />
-              <Skeleton class="h-3 w-36" />
-              <div class="flex mt-1">
-                <Skeleton v-for="star in 5" :key="star" class="h-4 w-4 mr-1" />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Skeleton Card 3 -->
-        <div class="bg-white rounded-lg p-6 shadow-sm relative">
-          <div class="text-green-200 text-6xl absolute top-4 right-4 font-serif">"</div>
-          <div class="space-y-3">
-            <Skeleton class="h-4 w-full mb-6" />
-            <Skeleton class="h-4 w-4/5" />
-          </div>
-          <div class="flex items-center mt-6">
-            <Skeleton class="w-12 h-12 rounded-full mr-4" />
-            <div class="space-y-2">
-              <Skeleton class="h-4 w-20" />
-              <Skeleton class="h-3 w-28" />
-              <div class="flex mt-1">
-                <Skeleton v-for="star in 5" :key="star" class="h-4 w-4 mr-1" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div v-else-if="testimonials.length === 0" class="text-center py-8">
-        <p class="text-gray-600">{{ $t('app.testimonials.empty') }}</p>
-      </div>
-      
-      <template v-else>
         <!-- md and up: one row that slides -->
         <Carousel class="relative hidden md:block" :opts="{ align: 'start', loop: testimonials.length > 3 }">
           <CarouselContent class="-ml-6">
@@ -180,7 +95,6 @@ const onTouchEnd = (e: TouchEvent) => {
             <p class="text-xs text-gray-500 tabular-nums">{{ front + 1 }} / {{ testimonials.length }}</p>
           </div>
         </div>
-      </template>
     </div>
   </div>
 </template>

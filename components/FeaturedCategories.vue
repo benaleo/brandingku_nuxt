@@ -1,54 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { useLandingFeaturedCategories } from "~/services/landing-page.service";
+import { computed } from "vue";
 import type { ProductCategory } from "~/types/products.type";
-import { Button } from "~/components/ui/button";
-import SkeletonFeaturedCategory from "~/components/skeletons/SkeletonFeaturedCategory.vue";
-import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
 
-const { data, loading, error, refetch } = useLandingFeaturedCategories();
-const isInitialLoad = ref(true);
-const shouldLoad = ref(false);
-
-const featuredCategories = computed<ProductCategory[]>(() => data.value || []);
+const props = defineProps<{ categories: ProductCategory[] | null }>();
+const featuredCategories = computed<ProductCategory[]>(() => props.categories || []);
 
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
-
-// Set up intersection observer to trigger data loading
-const { target } = useIntersectionObserver(() => {
-  shouldLoad.value = true
-  loadCategories()
-})
-
-const loadCategories = async () => {
-  if (!shouldLoad.value) return
-  await refetch()
-  isInitialLoad.value = false
-}
-
-// Watch for data changes to complete initial load
-watch(data, (newData) => {
-  if (newData && newData.length > 0 && shouldLoad.value) {
-    isInitialLoad.value = false;
-  }
-});
 </script>
 
 <template>
-  <section ref="target" class="md:pb-24 md:max-w-3/4 mx-auto">
+  <section class="md:pb-24 md:max-w-3/4 mx-auto">
     <div class="container px-4 mx-auto">
       <!-- <div class="relative flex justify-center items-center mb-8">
         <h2 class="text-2xl md:text-3xl font-bold">Shop by Category</h2>
       </div> -->
-      <div v-if="loading || isInitialLoad" class="text-center">
-        <SkeletonFeaturedCategory />
-      </div>
-      <div v-else-if="error" class="text-center py-8">
-        <div class="text-red-500 mb-4">{{ $t('app.categories.failed') }}</div>
-        <Button @click="refetch" variant="outline"> {{ $t('app.categories.retry') }} </Button>
-      </div>
-      <div v-else class="flex justify-center items-center gap-4 flex-wrap">
+      <div v-if="featuredCategories.length" class="flex justify-center items-center gap-4 flex-wrap">
         <Card
           v-for="category in featuredCategories"
           :key="category.id"
