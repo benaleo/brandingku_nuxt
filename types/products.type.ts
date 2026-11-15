@@ -44,6 +44,8 @@ export type ProductAdditional = {
 export type PriceTier = {
     min_qty: number
     price: number
+    capital_price?: number | null
+    is_active?: boolean
 }
 
 export type ProductColor = {

@@ -74,7 +74,7 @@ export const useProductDetail = (initialSlug: string) => {
             attributes
             is_active
             stock_alert_subscribed
-            price_tiers { min_qty price }
+            price_tiers { min_qty price is_active }
           }
           brandings { branding_method_id name description tiers { min_qty price } }
           branding_samples { branding_method_id name description image }
@@ -185,6 +185,7 @@ export const useProductDetail = (initialSlug: string) => {
         attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
         stock_alert_subscribed: !!a.stock_alert_subscribed,
         price_tiers: (a.price_tiers || [])
+          .filter((t: any) => t.is_active !== false)
           .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
           .sort((x: any, y: any) => x.min_qty - y.min_qty),
       })),

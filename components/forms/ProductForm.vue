@@ -63,7 +63,7 @@ const formSchema = toTypedSchema(
           attributes: z.string().optional().default(""),
           capital_price: z.coerce.number().int("Harga modal must be an integer").min(0).nullable().optional(),
           is_active: z.boolean().optional().default(true),
-          price_tiers: z.array(z.object({ min_qty: z.coerce.number(), price: z.coerce.number() })).optional(),
+          price_tiers: z.array(z.object({ min_qty: z.coerce.number(), price: z.coerce.number(), capital_price: z.coerce.number().int().min(0).nullable().optional(), is_active: z.boolean().optional() })).optional(),
         })
       )
       .min(1, "At least one additional is required"),
@@ -232,6 +232,8 @@ const stopInitWatch = watch(
               price_tiers: (add.price_tiers || []).map((t: any) => ({
                 min_qty: Number(t.min_qty) || 0,
                 price: Number(t.price) || 0,
+                capital_price: t.capital_price ?? null,
+                is_active: t.is_active !== false,
               })),
             };
           }
@@ -395,6 +397,8 @@ const handleSubmitForm = handleSubmit(
         price_tiers: ((add as any).price_tiers || []).map((t: any) => ({
           min_qty: Math.floor(Number(t.min_qty) || 0),
           price: Math.floor(Number(t.price) || 0),
+          capital_price: t.capital_price === "" || t.capital_price == null ? null : Math.max(0, Math.floor(Number(t.capital_price) || 0)),
+          is_active: t.is_active !== false,
         })),
       })),
       galleries: galleries.value,

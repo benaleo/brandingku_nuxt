@@ -274,7 +274,8 @@
         "brandingSamples": "Contoh Hasil Branding",
         "brandingSamplesHint": "Contoh hasil tiap teknik branding untuk produk ini.",
         "brandingServices": "Layanan Branding",
-        "metaDescription": "{name} custom dengan logo perusahaan. Lihat pilihan warna, teknik branding, dan harga grosir di Brandingku."
+        "metaDescription": "{name} custom dengan logo perusahaan. Lihat pilihan warna, teknik branding, dan harga grosir di Brandingku.",
+        "quantityLocked": "jumlah tidak dapat diubah"
       },
       "quickViewDialog": {
         "category": "Kategori:",
