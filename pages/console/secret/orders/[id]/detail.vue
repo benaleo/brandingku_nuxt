@@ -386,6 +386,19 @@ async function load() {
   }
 }
 onMounted(load)
+
+// refetch quietly when staff notifications arrive for this order; wait out any action in flight
+const {onNewNotifications} = useStaffNotifications()
+let stale = false
+const refreshIfIdle = async () => {
+  if (busy.value) { stale = true; return }
+  stale = false
+  await load()
+}
+onNewNotifications((items) => {
+  if (items.some(n => n.subject_type === 'order' && n.subject_id === id.value)) refreshIfIdle()
+})
+watch(busy, (b) => { if (!b && stale) refreshIfIdle() })
 watch(dialog, (d) => { if (d) dialogText.value = '' })
 
 const openDueDate = () => {

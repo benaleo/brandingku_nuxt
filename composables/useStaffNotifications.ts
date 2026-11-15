@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, getCurrentScope, onScopeDispose } from 'vue'
 import { toast } from 'vue-sonner'
 import { useGql } from './useGql'
 import type { AppNotification, StaffNotificationFeed } from '~/types/notification.type'
@@ -22,6 +22,8 @@ const emptyFeed = (): StaffNotificationFeed => ({ items: [], unread_count: 0 })
 let stopRealtime: (() => void) | null = null
 let signalTimer: ReturnType<typeof setTimeout> | null = null
 let seen: Set<number> | null = null
+type NewItemsListener = (items: AppNotification[]) => void
+const listeners = new Set<NewItemsListener>()
 
 // the console bell for staff: order and discussion activity from customers, live over the websocket
 export const useStaffNotifications = () => {
@@ -49,9 +51,19 @@ export const useStaffNotifications = () => {
     await refresh()
   }
 
+  // pages react to the same subscription; the callback gets the items that arrived since the last refetch
+  const onNewNotifications = (cb: NewItemsListener) => {
+    listeners.add(cb)
+    const off = () => { listeners.delete(cb) }
+    if (getCurrentScope()) onScopeDispose(off)
+    return off
+  }
+
   const announce = (items: AppNotification[]) => {
-    const fresh = items.filter(n => !n.read && !seen!.has(n.id))
+    const added = items.filter(n => !seen!.has(n.id))
+    const fresh = added.filter(n => !n.read && n.link !== router.currentRoute.value.path)
     items.forEach(n => seen!.add(n.id))
+    if (added.length) listeners.forEach(cb => cb(added))
     // oldest first so the newest ends on top of the stack
     const shown = fresh.slice(0, MAX_TOASTS).reverse()
     for (const n of shown) {
@@ -118,5 +130,5 @@ export const useStaffNotifications = () => {
     feed.value = emptyFeed()
   }
 
-  return { feed, badge, titleOf, timeAgo, refresh, markRead, markAllRead, start, stop }
+  return { feed, badge, titleOf, timeAgo, refresh, markRead, markAllRead, start, stop, onNewNotifications }
 }

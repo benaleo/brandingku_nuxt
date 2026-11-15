@@ -46,11 +46,12 @@ const invoiceUrl = computed(() => inv.value?.public_token ? `/invoice/${inv.valu
 const pdfUrl = computed(() => inv.value?.public_token ? `${String(config.public.API_URL).replace(/\/$/, '')}/invoice/${inv.value.public_token}/pdf` : '')
 const statusClass = computed(() => order.value ? ORDER_STATUS_STYLE[order.value.status] : '')
 
-async function load() {
+async function load(silent = false) {
   try {
     order.value = await getMyOrder(code.value)
     notFound.value = false
-    resetProof()
+    // a background refresh must not wipe a proof form being filled in
+    if (!silent || !order.value.payable_documents.some(d => d.id === payTarget.value)) resetProof()
   } catch (e: any) {
     // a failed refresh keeps the order on screen
     if (order.value) toast.error(cartErrorMessage(e, t('app.orderPage.failed')))
@@ -77,7 +78,24 @@ onMounted(() => {
     router.replace({path: '/console/auth', query: {redirect: route.fullPath}})
     return
   }
-  load()
+  load().then(clearOrderNotifications)
+})
+
+// customer notifications for this order refetch it quietly and are marked read like on open
+const {onNewNotifications, markSubjectRead} = useNotifications()
+const clearOrderNotifications = () => {
+  if (order.value) markSubjectRead('order', order.value.id).catch(() => {})
+}
+let stale = false
+const refreshIfIdle = async () => {
+  if (busy.value || paying.value) { stale = true; return }
+  stale = false
+  await load(true)
+  clearOrderNotifications()
+}
+onNewNotifications((items) => {
+  const id = order.value?.id
+  if (id && items.some(n => n.subject_type === 'order' && n.subject_id === id)) refreshIfIdle()
 })
 
 const proof = reactive({amount: 0 as number | string, paid_on: todayISO(), payer_name: '', note: '', file: null as File | null})
@@ -138,6 +156,7 @@ async function respond(action: 'accept' | 'reject' | 'revise', reason = '') {
 // Midtrans sends the customer back here with ?transaction_status=...; the webhook may land a moment later
 const returnedFromGateway = computed(() => ['settlement', 'capture', 'pending'].includes(String(route.query.transaction_status || '')))
 const paying = ref(false)
+watch([busy, paying], ([b, p]) => { if (!b && !p && stale) refreshIfIdle() })
 async function payOnline() {
   if (!order.value || !targetDoc.value) return
   paying.value = true

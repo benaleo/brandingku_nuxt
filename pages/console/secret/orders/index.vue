@@ -88,9 +88,9 @@ const ATTENTION: OrderStatus[] = ['awaiting_shipping_fee', 'pending_payment', 'p
 const cards = computed(() => ATTENTION.map(s => ({status: s, count: counts.value.find(c => c.status === s)?.count ?? 0})))
 
 let requestId = 0
-async function load() {
+async function load(silent = false) {
   const current = ++requestId
-  loading.value = true
+  if (!silent) loading.value = true
   error.value = null
   try {
     const res = await getOrders(page.value + 1, limit.value, {status: status.value, type: type.value, keyword: keyword.value.trim()})
@@ -122,6 +122,12 @@ watch([status, type], () => { page.value = 0; load() })
 onMounted(() => {
   load()
   loadCounts()
+})
+
+// a staff notification means an order changed: refetch the current page and counts in place
+const {onNewNotifications} = useStaffNotifications()
+onNewNotifications((items) => {
+  if (items.some(n => n.subject_type === 'order')) { load(true); loadCounts() }
 })
 
 useHead({title: pageTitle})
