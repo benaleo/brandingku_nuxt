@@ -27,12 +27,17 @@ export type ProductDetail = {
     attributes: string
     // wholesale prices, lowest quantity first
     price_tiers: { min_qty: number; price: number }[]
+    // the signed-in customer waits for a restock of this variant
+    stock_alert_subscribed: boolean
   }>
   // branding methods the customer can choose, each priced per piece from a minimum quantity
   brandings: { id: number; name: string; description: string; tiers: { min_qty: number; price: number }[] }[]
   // example picture of each branding technique installed on the product; shown even before
   // the branding prices are configured
   samples: { id: number; name: string; description: string; image: string }[]
+  // whether any review / portfolio exists, so the page only fetches those sections when needed
+  haveTestimonial: boolean
+  havePortfolio: boolean
 }
 
 export const useProductDetail = (initialSlug: string) => {
@@ -68,10 +73,13 @@ export const useProductDetail = (initialSlug: string) => {
             discount_type
             attributes
             is_active
+            stock_alert_subscribed
             price_tiers { min_qty price }
           }
           brandings { branding_method_id name description tiers { min_qty price } }
           branding_samples { branding_method_id name description image }
+          have_testimonial
+          have_portfolio
           created_at
           updated_at
         }
@@ -175,6 +183,7 @@ export const useProductDetail = (initialSlug: string) => {
         discount: Number(a.discount) || 0,
         discount_type: String(a.discount_type || 'AMOUNT'),
         attributes: typeof a.attributes === 'string' ? a.attributes : '[]',
+        stock_alert_subscribed: !!a.stock_alert_subscribed,
         price_tiers: (a.price_tiers || [])
           .map((t: any) => ({ min_qty: Number(t.min_qty) || 0, price: Number(t.price) || 0 }))
           .sort((x: any, y: any) => x.min_qty - y.min_qty),
@@ -195,6 +204,8 @@ export const useProductDetail = (initialSlug: string) => {
           description: String(b.description || ''),
           image: String(b.image || ''),
         })),
+      haveTestimonial: !!p.have_testimonial,
+      havePortfolio: !!p.have_portfolio,
     }
   }
 
