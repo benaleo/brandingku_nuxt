@@ -274,7 +274,8 @@
         "brandingSamples": "Branding Samples",
         "brandingSamplesHint": "Example results of each branding technique for this product.",
         "brandingServices": "Branding Services",
-        "metaDescription": "Custom {name} with your company logo. See colours, branding techniques and wholesale prices at Brandingku."
+        "metaDescription": "Custom {name} with your company logo. See colours, branding techniques and wholesale prices at Brandingku.",
+        "quantityLocked": "quantity cannot be changed"
       },
       "quickViewDialog": {
         "category": "Category:",

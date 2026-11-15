@@ -200,13 +200,17 @@ const displayedPrice = computed(() => {
 
 // no price set: the customer has to ask the admin
 const isAskAdmin = computed(() => displayedPrice.value <= 0);
+// without stock there is nothing to set a quantity for; the notify-me button takes over
+const stockAvailable = computed(() => displayedStock.value > 0);
 
 // while typing, follow valid numbers so the price per piece updates live; @change clamps
 const previewQuantity = (value: string) => {
+  if (!stockAvailable.value) return;
   const n = Math.floor(Number(value));
   if (Number.isFinite(n) && n >= minQty.value && n <= 100000) quantity.value = n;
 };
 const setQuantity = (value: number | string) => {
+  if (!stockAvailable.value) return;
   const n = Math.floor(Number(value));
   quantity.value = Number.isFinite(n) ? Math.min(Math.max(n, minQty.value), 100000) : minQty.value;
 };
@@ -707,12 +711,12 @@ definePageMeta({
 
             <div v-if="selectedAdditional" class="mt-4">
               <h3 class="text-sm font-medium mb-2">{{ $t('app.cartPage.quantity') }}</h3>
-              <div class="inline-flex items-center rounded-md border">
+              <div class="inline-flex items-center rounded-md border" :class="{ 'opacity-60': !stockAvailable }">
                 <button
                   type="button"
-                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                   :aria-label="$t('app.cartPage.decrease')"
-                  :disabled="quantity <= minQty"
+                  :disabled="!stockAvailable || quantity <= minQty"
                   @click="setQuantity(quantity - 1)"
                 >
                   <Minus class="size-4" />
@@ -723,20 +727,26 @@ definePageMeta({
                   inputmode="numeric"
                   :min="minQty"
                   :aria-label="$t('app.cartPage.quantity')"
-                  class="h-9 w-20 border-x text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  :title="stockAvailable ? undefined : $t('app.productPage.detail.outOfStock')"
+                  :disabled="!stockAvailable"
+                  class="h-9 w-20 border-x text-center text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                   @input="previewQuantity(($event.target as HTMLInputElement).value)"
                   @change="setQuantity(($event.target as HTMLInputElement).value)"
                 />
                 <button
                   type="button"
-                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50"
+                  class="inline-flex size-9 items-center justify-center text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                   :aria-label="$t('app.cartPage.increase')"
+                  :disabled="!stockAvailable"
                   @click="setQuantity(quantity + 1)"
                 >
                   <Plus class="size-4" />
                 </button>
               </div>
-              <p v-if="minQty > 1" class="mt-1 text-xs text-gray-500">{{ $t('app.cartPage.minQty', { moq: minQty }) }}</p>
+              <p v-if="!stockAvailable" class="mt-1 text-xs font-medium text-red-600">
+                {{ $t('app.productPage.detail.outOfStock') }} — {{ $t('app.productPage.detail.quantityLocked') }}
+              </p>
+              <p v-else-if="minQty > 1" class="mt-1 text-xs text-gray-500">{{ $t('app.cartPage.minQty', { moq: minQty }) }}</p>
               <p v-if="!isAskAdmin && (quantity > 1 || brandingUnit > 0)" class="mt-1 text-sm text-gray-700">
                 {{ $t('app.productPage.detail.subtotalFor', { qty: quantity, total: formatIDR((displayedPrice + brandingUnit) * quantity) }) }}
               </p>
@@ -756,8 +766,11 @@ definePageMeta({
                   <tr
                     v-for="(row, i) in priceRows"
                     :key="row.from"
-                    class="cursor-pointer border-t"
-                    :class="i === activeRow ? 'bg-green-50 font-semibold text-green-800' : 'hover:bg-gray-50'"
+                    class="border-t"
+                    :class="[
+                      i === activeRow ? 'bg-green-50 font-semibold text-green-800' : 'hover:bg-gray-50',
+                      stockAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60',
+                    ]"
                     :aria-current="i === activeRow ? 'true' : undefined"
                     @click="setQuantity(row.from)"
                   >
