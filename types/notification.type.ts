@@ -2,7 +2,7 @@ import type { OrderStatus } from '~/types/order.type'
 
 export interface AppNotification {
   id: number
-  kind: 'order_status' | 'discussion' | 'staff_order' | 'staff_discussion'
+  kind: 'order_status' | 'discussion' | 'staff_order' | 'staff_discussion' | 'stock_available'
   // the order event action for order_status (e.g. quoted, shipped); empty otherwise
   action: string
   subject_type: string

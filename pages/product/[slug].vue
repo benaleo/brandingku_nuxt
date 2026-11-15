@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart, X } from "lucide-vue-next";
+import { ArrowLeftIcon, Bell, BellOff, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart, X } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const route = useRoute();
@@ -25,6 +25,7 @@ const {
   error,
   setSlug,
 } = useProductDetail(slug.value);
+const { gqlFetch } = useGql();
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
@@ -245,6 +246,56 @@ const handleAddToCart = async () => {
     adding.value = false;
   }
 };
+// restock alert for a sold-out variant; guests sign in first and come back here
+const alertBusy = ref(false);
+const toggleStockAlert = async (subscribe: boolean) => {
+  const variant = selectedAdditional.value;
+  if (!variant) return;
+  if (!authToken.value) {
+    router.push({ path: "/console/auth", query: { redirect: route.fullPath } });
+    return;
+  }
+  alertBusy.value = true;
+  try {
+    await gqlFetch(
+      subscribe
+        ? `mutation subscribeStockAlert($id: Int!) { subscribeStockAlert(product_additional_id: $id) }`
+        : `mutation unsubscribeStockAlert($id: Int!) { unsubscribeStockAlert(product_additional_id: $id) }`,
+      { id: Number(variant.id) },
+      { auth: true },
+    );
+    variant.stock_alert_subscribed = subscribe;
+    toast.success(t(subscribe ? "app.productPage.detail.notifyOn" : "app.productPage.detail.notifyOff"));
+  } catch (e: any) {
+    toast.error(e?.message || t("app.productPage.detail.notifyFailed"));
+  } finally {
+    alertBusy.value = false;
+  }
+};
+
+// other products of the category, fetched on the server so the page carries the links
+type SimilarProduct = { id: string; slug: string; name: string; image?: string | null; category?: { name?: string } | null; additionals?: { price: number; is_active?: boolean }[] };
+const { data: similar } = await useAsyncData<SimilarProduct[]>(
+  () => `product-similar-${slug.value}`,
+  async () => {
+    if (!slug.value) return [];
+    try {
+      const res = await gqlFetch<{ getSimilarProducts: SimilarProduct[] }>(
+        `query getSimilarProducts($slug: String!, $limit: Int) {
+          getSimilarProducts(slug: $slug, limit: $limit) {
+            id slug name image category { name } additionals { price is_active }
+          }
+        }`,
+        { slug: slug.value, limit: 8 },
+      );
+      return res?.getSimilarProducts || [];
+    } catch {
+      return [];
+    }
+  },
+  { watch: [slug], default: () => [] },
+);
+
 const { openChat } = useChatWidget();
 const askAdmin = () => {
   const name = detail.value?.name || "";
@@ -543,8 +594,14 @@ definePageMeta({
             {{ $t('app.productPage.detail.brandingTotal', { branding: formatIDR(brandingUnit), total: formatIDR(displayedPrice + brandingUnit) }) }}
           </p>
 
+          <!-- Stock status of the selected variant, above the pickers -->
+          <div class="mt-6" role="status">
+            <Badge v-if="displayedStock > 0" variant="secondary" class="bg-green-100 text-green-700">{{ $t('app.productPage.detail.available') }}</Badge>
+            <Badge v-else variant="secondary" class="bg-red-100 text-red-700">{{ $t('app.productPage.detail.unavailable') }}</Badge>
+          </div>
+
           <!-- Color: the product's colour variants, else colours from the selected variant's attributes -->
-          <div v-if="colorOptions.length" class="mt-8">
+          <div v-if="colorOptions.length" class="mt-6">
             <h3 class="text-sm font-medium mb-2">
               {{ $t('app.productPage.detail.color') }}<span v-if="selectedColor" class="font-normal text-gray-500">: {{ selectedColor }}</span>
             </h3>
@@ -613,7 +670,7 @@ definePageMeta({
             <div v-if="brandingOptions.length" class="mt-6">
               <h3 class="text-sm font-medium">{{ $t('app.productPage.detail.branding') }}</h3>
               <p class="mb-2 text-xs text-gray-500">{{ $t('app.productPage.detail.brandingHint') }}</p>
-              <div class="grid gap-2 sm:grid-cols-2">
+              <div class="flex flex-col gap-2">
                 <button
                   v-for="b in brandingOptions"
                   :key="b.id"
@@ -725,7 +782,24 @@ definePageMeta({
           <div
             class="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur lg:static lg:z-auto lg:mt-8 lg:gap-6 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
           >
-            <template v-if="isAskAdmin">
+            <template v-if="selectedAdditional && displayedStock <= 0">
+              <Button
+                v-if="selectedAdditional.stock_alert_subscribed"
+                variant="outline"
+                class="h-11 flex-1 gap-2 border-green-600 text-green-700 hover:bg-green-50 lg:h-9"
+                :disabled="alertBusy"
+                @click="toggleStockAlert(false)"
+              >
+                <BellOff class="h-4 w-4" />
+                <span class="truncate">{{ $t('app.productPage.detail.notifySubscribed') }}</span>
+                <span class="text-xs font-normal underline">{{ $t('app.productPage.detail.notifyCancel') }}</span>
+              </Button>
+              <Button v-else class="h-11 flex-1 gap-2 bg-green-600 text-white hover:bg-green-700 lg:h-9" :disabled="alertBusy" @click="toggleStockAlert(true)">
+                <Bell class="h-4 w-4" />
+                {{ $t('app.productPage.detail.notifyMe') }}
+              </Button>
+            </template>
+            <template v-else-if="isAskAdmin">
               <Button variant="outline" class="h-11 flex-1 gap-2 border-green-600 text-green-700 hover:bg-green-50 lg:h-9" @click="askAdmin">
                 <MessageCircle class="h-4 w-4" />
                 {{ $t('app.productPage.detail.askAdmin') }}
@@ -743,12 +817,6 @@ definePageMeta({
             <Button variant="outline" :aria-label="$t('app.productPage.wishlistAdd')" :title="$t('app.productPage.wishlistAdd')" class="h-11 w-11 shrink-0 border-green-200 text-green-700 hover:bg-green-50 lg:h-9 lg:w-9" @click="handleAddToWishlist">
               <Heart class="size-5" />
             </Button>
-          </div>
-
-          <!-- Stock Status -->
-          <div class="mt-6">
-            <Badge v-if="displayedStock > 0" variant="secondary" class="bg-green-100 text-green-700">{{ $t('app.productPage.detail.available') }}</Badge>
-            <Badge v-else variant="secondary" class="bg-red-100 text-red-700">{{ $t('app.productPage.detail.unavailable') }}</Badge>
           </div>
 
           <!-- Layanan branding: klik nama untuk ganti sample, otomatis berganti tiap 2 detik -->
@@ -835,10 +903,18 @@ definePageMeta({
         </div>
       </div>
 
-      <ElementsProductReviews v-if="Number((detail as any).id)" :key="(detail as any).id" :product-id="Number((detail as any).id)" />
+      <ElementsProductReviews v-if="detail.haveTestimonial && Number((detail as any).id)" :key="(detail as any).id" :product-id="Number((detail as any).id)" />
 
       <!-- client projects that used this product -->
-      <ElementsPortfolioCarousel :product-id="Number((detail as any).id) || null" linked-only />
+      <ElementsPortfolioCarousel v-if="detail.havePortfolio" :product-id="Number((detail as any).id) || null" linked-only />
+
+      <!-- more of the same category -->
+      <section v-if="similar.length" class="mt-10" aria-labelledby="similar-products-title">
+        <h2 id="similar-products-title" class="text-xl font-semibold text-slate-900">{{ $t('app.productPage.detail.similar') }}</h2>
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+          <ElementsProductCard v-for="p in similar" :key="p.id" :product="p" />
+        </div>
+      </section>
     </div>
   </div>
 
