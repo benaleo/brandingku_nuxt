@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import {
   Select,
   SelectContent,
@@ -12,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useProductDetail } from "~/composables/useProductDetail";
 import HeaderProduct from "~/components/HeaderProduct.vue";
-import { ArrowLeftIcon, Bell, BellOff, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart, X } from "lucide-vue-next";
+import { ArrowLeftIcon, ChevronLeft, ChevronRight, Bell, BellOff, Check, Heart, MessageCircle, Minus, Plus, ShoppingCart, X } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const route = useRoute();
@@ -275,6 +277,8 @@ const toggleStockAlert = async (subscribe: boolean) => {
 
 // other products of the category, fetched on the server so the page carries the links
 type SimilarProduct = { id: string; slug: string; name: string; image?: string | null; category?: { name?: string } | null; additionals?: { price: number; is_active?: boolean }[] };
+// pauses while hovered or focused so it never moves under the visitor
+const similarAutoplay = [Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true, stopOnFocusIn: true })];
 const { data: similar } = await useAsyncData<SimilarProduct[]>(
   () => `product-similar-${slug.value}`,
   async () => {
@@ -286,7 +290,7 @@ const { data: similar } = await useAsyncData<SimilarProduct[]>(
             id slug name image category { name } additionals { price is_active }
           }
         }`,
-        { slug: slug.value, limit: 8 },
+        { slug: slug.value, limit: 12 },
       );
       return res?.getSimilarProducts || [];
     } catch {
@@ -910,10 +914,24 @@ definePageMeta({
 
       <!-- more of the same category -->
       <section v-if="similar.length" class="mt-10" aria-labelledby="similar-products-title">
-        <h2 id="similar-products-title" class="text-xl font-semibold text-slate-900">{{ $t('app.productPage.detail.similar') }}</h2>
-        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-          <ElementsProductCard v-for="p in similar" :key="p.id" :product="p" />
-        </div>
+        <Carousel v-slot="{ canScrollPrev, canScrollNext, scrollPrev, scrollNext }" :opts="{ align: 'start', slidesToScroll: 'auto', loop: true }" :plugins="similarAutoplay" class="mt-4">
+          <div class="flex items-center justify-between gap-3">
+            <h2 id="similar-products-title" class="text-xl font-semibold text-slate-900">{{ $t('app.productPage.detail.similar') }}</h2>
+            <div class="flex gap-2">
+              <Button variant="outline" size="icon" class="size-9 rounded-full" :disabled="!canScrollPrev" :aria-label="$t('app.common.previous')" @click="scrollPrev">
+                <ChevronLeft class="size-4" />
+              </Button>
+              <Button variant="outline" size="icon" class="size-9 rounded-full" :disabled="!canScrollNext" :aria-label="$t('app.common.next')" @click="scrollNext">
+                <ChevronRight class="size-4" />
+              </Button>
+            </div>
+          </div>
+          <CarouselContent class="mt-4 -ml-3 sm:-ml-4">
+            <CarouselItem v-for="p in similar" :key="p.id" class="basis-1/2 pl-3 sm:pl-4 md:basis-1/4 lg:basis-1/6">
+              <ElementsProductCard :product="p" class="h-full" />
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
       </section>
     </div>
   </div>
