@@ -16,6 +16,100 @@ export type FeaturedProductItem = {
   cartVariant?: { id: number; moq: number } | null
 }
 
+export const fetchFeaturedProducts = async (gqlFetch: <T>(q: string, v?: Record<string, any>, o?: { auth?: boolean }) => Promise<T>): Promise<FeaturedProductItem[]> => {
+  const query = `
+    query GetProductsFeatured($page: Int!, $limit: Int!, $is_active: Boolean, $sort: String) {
+      getProducts(pagination: { page: $page, limit: $limit }, is_active: $is_active, sort: $sort) {
+        items {
+          id
+          name
+          slug
+          image
+          is_active
+          category { id name }
+          is_highlight
+          is_recommended
+          is_upsell
+          galleries { id image orders }
+          additionals {
+            id
+            name
+            price
+            moq
+            stock
+            discount
+            discount_type
+            attributes
+            is_active
+          }
+          created_at
+          updated_at
+        }
+        page_info {
+          current_page
+          per_page
+          total_items
+          total_pages
+          has_next_page
+          has_previous_page
+          start_item
+          end_item
+        }
+      }
+    }
+  `
+  const res = await gqlFetch<{ getProducts: { items: any[] } }>(query, { page: 1, limit: 20, is_active: true, sort: 'storefront' }, { auth: true })
+  const list = (res?.getProducts?.items || [])
+
+  const items: FeaturedProductItem[] = list.map((p: any) => {
+    const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
+    galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
+    const image = galleries[0]?.image || p.image || undefined
+
+    // active variants only
+    const additionals = (p.additionals || []).filter((a: any) => a?.is_active !== false)
+
+    // compute pricing (min base vs min discounted across additionals)
+    let minBase = Infinity
+    let minAfter = Infinity
+    for (const a of additionals) {
+      const base = Number(a?.price) || 0
+      minBase = Math.min(minBase, base)
+      let after = base
+      const discount = Number(a?.discount) || 0
+      if (discount > 0) {
+        if ((a?.discount_type || '').toUpperCase() === 'PERCENTAGE') {
+          after = base - (base * discount) / 100
+        } else {
+          after = base - discount
+        }
+      }
+      if (after < 0) after = 0
+      minAfter = Math.min(minAfter, after)
+    }
+    if (!isFinite(minBase)) minBase = 0
+    if (!isFinite(minAfter)) minAfter = minBase
+
+    return {
+      id: String(p.id),
+      name: p.name,
+      slug: p.slug,
+      category: p?.category?.name,
+      image,
+      is_highlight: !!p.is_highlight,
+      is_recommended: !!p.is_recommended,
+      is_upsell: !!p.is_upsell,
+      price: Number(minAfter.toFixed(2)),
+      originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
+      cartVariant: additionals.length === 1 && Number(additionals[0]?.price) > 0
+        ? { id: Number(additionals[0].id), moq: Math.max(1, Number(additionals[0].moq) || 1) }
+        : null,
+    }
+  })
+
+  return items
+}
+
 export const useFeaturedProduct = () => {
   const { gqlFetch } = useGql()
 
@@ -27,97 +121,7 @@ export const useFeaturedProduct = () => {
     loading.value = true
     error.value = null
     try {
-      const query = `
-        query GetProductsFeatured($page: Int!, $limit: Int!, $is_active: Boolean) {
-          getProducts(pagination: { page: $page, limit: $limit }, is_active: $is_active) {
-            items {
-              id
-              name
-              slug
-              image
-              is_active
-              category { id name }
-              is_highlight
-              is_recommended
-              is_upsell
-              galleries { id image orders }
-              additionals {
-                id
-                name
-                price
-                moq
-                stock
-                discount
-                discount_type
-                attributes
-                is_active
-              }
-              created_at
-              updated_at
-            }
-            page_info {
-              current_page
-              per_page
-              total_items
-              total_pages
-              has_next_page
-              has_previous_page
-              start_item
-              end_item
-            }
-          }
-        }
-      `
-      const res = await gqlFetch<{ getProducts: { items: any[] } }>(query, { page: 1, limit: 20, is_active: true }, { auth: true })
-      const list = (res?.getProducts?.items || [])
-
-      const items: FeaturedProductItem[] = list.map((p: any) => {
-        const galleries = Array.isArray(p.galleries) ? [...p.galleries] : []
-        galleries.sort((a: any, b: any) => (Number(a?.orders) || 0) - (Number(b?.orders) || 0))
-        const image = galleries[0]?.image || p.image || undefined
-
-        // active variants only
-        const additionals = (p.additionals || []).filter((a: any) => a?.is_active !== false)
-
-        // compute pricing (min base vs min discounted across additionals)
-        let minBase = Infinity
-        let minAfter = Infinity
-        for (const a of additionals) {
-          const base = Number(a?.price) || 0
-          minBase = Math.min(minBase, base)
-          let after = base
-          const discount = Number(a?.discount) || 0
-          if (discount > 0) {
-            if ((a?.discount_type || '').toUpperCase() === 'PERCENTAGE') {
-              after = base - (base * discount) / 100
-            } else {
-              after = base - discount
-            }
-          }
-          if (after < 0) after = 0
-          minAfter = Math.min(minAfter, after)
-        }
-        if (!isFinite(minBase)) minBase = 0
-        if (!isFinite(minAfter)) minAfter = minBase
-
-        return {
-          id: String(p.id),
-          name: p.name,
-          slug: p.slug,
-          category: p?.category?.name,
-          image,
-          is_highlight: !!p.is_highlight,
-          is_recommended: !!p.is_recommended,
-          is_upsell: !!p.is_upsell,
-          price: Number(minAfter.toFixed(2)),
-          originalPrice: minAfter < minBase ? Number(minBase.toFixed(2)) : null,
-          cartVariant: additionals.length === 1 && Number(additionals[0]?.price) > 0
-            ? { id: Number(additionals[0].id), moq: Math.max(1, Number(additionals[0].moq) || 1) }
-            : null,
-        }
-      })
-
-      data.value = items
+      data.value = await fetchFeaturedProducts(gqlFetch)
     } catch (e: any) {
       error.value = e?.message || 'Failed to fetch featured products'
     } finally {

@@ -1,26 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useClientService } from '~/services/client.service'
-import { useIntersectionObserver } from '~/composables/useIntersectionObserver'
+import { computed } from 'vue'
+import type { Client } from '~/types/client.type'
 
-const { datas: clients, loading, reFetch } = useClientService()
-const isInitialLoad = ref(true)
-const shouldLoad = ref(false)
-
-// Set up intersection observer to trigger data loading
-const { target } = useIntersectionObserver(() => {
-  shouldLoad.value = true
-  loadClients()
-})
-
-const loadClients = async () => {
-  if (!shouldLoad.value) return
-  await reFetch()
-  isInitialLoad.value = false
-}
+const props = defineProps<{ clients: Client[] | null }>()
+const clients = computed(() => props.clients || [])
 
 // Get only active clients for display
-const activeClients = computed(() => clients.value.filter(client => client.is_active))
+const activeClients = computed(() => clients.value)
 
 // Duplicate clients for seamless infinite loop
 const duplicatedClients = computed(() => {
@@ -48,23 +34,16 @@ const STORAGE_URL = config.public.STORAGE_URL;
 </script>
 
 <template>
-  <div ref="target" class="w-full px-4 py-12 md:py-16">
+  <div v-if="activeClients.length" class="w-full px-4 py-12 md:py-16">
     <div class="container max-w-6xl mx-auto pb-8 md:pb-12">
       <h2 class="text-2xl md:text-3xl font-bold text-center">{{ $t('app.clients.title') }}</h2>
     </div>
 
     <div class="container max-w-6xl mx-auto overflow-hidden">
       <div class="relative">
-        <!-- Skeleton Loading State -->
-        <div v-if="loading || isInitialLoad" class="flex gap-6 md:gap-12">
-          <div v-for="n in 6" :key="n" class="client-logo shrink-0">
-            <Skeleton class="h-full w-full rounded-lg" />
-          </div>
-        </div>
-
         <!-- Actual Client Display -->
         <!-- fixed logo box per breakpoint: % widths inside the fit-content track resolve to the image's natural size -->
-        <div v-else class="flex animate-scroll gap-6 md:gap-12">
+        <div class="flex animate-scroll gap-6 md:gap-12">
           <div v-for="(client, i) in duplicatedClients" :key="`${client.id ?? client.name}-${i}`" class="client-logo shrink-0">
             <img :src="`${STORAGE_URL}${client.logo}`" :alt="client.name" class="h-full w-full object-contain">
           </div>

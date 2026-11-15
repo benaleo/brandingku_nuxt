@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -11,29 +11,16 @@ import {
 } from "@/components/ui/carousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useFeaturedProduct } from "~/composables/useFeaturedProduct";
-import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
 import { toast } from "vue-sonner";
 import type { FeaturedProductItem } from "~/composables/useFeaturedProduct";
 
 const router = useRouter();
-const { data, loading, error, refetch } = useFeaturedProduct();
-const isInitialLoad = ref(true);
-const shouldLoad = ref(false);
+const props = defineProps<{ products: FeaturedProductItem[] | null }>();
+const data = computed(() => props.products || []);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
 
 const { t } = useI18n();
-const { target } = useIntersectionObserver(() => {
-  shouldLoad.value = true
-  loadProducts()
-})
-
-const loadProducts = async () => {
-  if (!shouldLoad.value) return
-  await refetch()
-  isInitialLoad.value = false
-}
 
 const tabs = computed(() => [
   {
@@ -68,13 +55,6 @@ const filteredProducts = (type: string) => {
   return [];
 };
 
-// Watch for data changes to complete initial load
-watch(data, (newData) => {
-  if (newData && newData.length > 0 && shouldLoad.value) {
-    isInitialLoad.value = false;
-  }
-});
-
 function goTo(slug: string) {
   if (!slug) return;
   router.push(`/product/${slug}`);
@@ -102,10 +82,9 @@ async function quickAdd(product: FeaturedProductItem) {
 </script>
 
 <template>
-  <div ref="target" class="w-full px-4 py-12 md:py-16 bg-[#F2F4F7]">
+  <div class="w-full px-4 py-12 md:py-16 bg-[#F2F4F7]">
     <div class="container max-w-6xl mx-auto py-4 md:py-8">
-      <div v-if="error" class="text-center text-red-500">{{ error }}</div>
-      <div v-else>
+      <div v-if="data.length">
         <Tabs default-value="populer" class="w-full">
           <!-- heading stacks above the tabs on small screens -->
           <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -130,38 +109,15 @@ async function quickAdd(product: FeaturedProductItem) {
             v-for="(val, index) in tabs"
             :key="val.id"
             :value="val.key"
+            force-mount
           >
             <Carousel
               class="relative w-full"
               :opts="{ align: 'start', loop: true }"
             >
               <CarouselContent>
-                <!-- Skeleton Loading State -->
-                <CarouselItem
-                  v-if="loading || isInitialLoad"
-                  v-for="n in 5"
-                  :key="`skeleton-${n}`"
-                  class="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
-                >
-                  <div class="p-1">
-                    <Card class="py-0">
-                      <CardHeader class="relative p-0 aspect-square overflow-hidden">
-                        <Skeleton class="w-full aspect-square rounded-t-lg" />
-                      </CardHeader>
-                      <CardContent class="p-3 space-y-2">
-                        <Skeleton class="h-4 w-3/4" />
-                        <Skeleton class="h-3 w-1/2" />
-                        <div class="flex justify-between items-center mt-3">
-                          <Skeleton class="h-4 w-16" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-                
                 <!-- Actual Product Cards -->
                 <CarouselItem
-                  v-else
                   v-for="product in filteredProducts(val.key)"
                   :key="product.id"
                   class="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
@@ -217,7 +173,9 @@ async function quickAdd(product: FeaturedProductItem) {
                         </div>
                       </CardHeader>
                       <CardContent class="p-3">
-                        <h3 class="line-clamp-2 text-sm font-medium">{{ product.name }}</h3>
+                        <h3 class="line-clamp-2 text-sm font-medium">
+                          <NuxtLink :to="`/product/${product.slug}`" @click.stop>{{ product.name }}</NuxtLink>
+                        </h3>
                         <p class="mt-0.5 truncate text-xs text-gray-500">
                           {{ product.category }}
                         </p>
