@@ -19,6 +19,7 @@ const {t, te} = useI18n()
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
+const mediaUrl = useMediaUrl()
 const token = useCookie<string | null>('token', {sameSite: 'lax'})
 const {getMyOrder, submitPaymentProof, cancelMyOrder, respondQuotation, startOnlinePayment, reviewProgress} = useOrderService()
 const code = computed(() => String(route.params.code || ''))
@@ -30,7 +31,7 @@ const busy = ref(false)
 
 
 const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
-const imageSrc = (image: string) => !image ? '/images/no-image.jpg' : image.startsWith('http') ? image : `${config.public.STORAGE_URL}${image}`
+const imageSrc = (image: string) => !image ? '/images/no-image.jpg' : mediaUrl(image)
 const storageUrl = (path: string) => path.startsWith('http') ? path : `${config.public.STORAGE_URL}${path}`
 
 const inv = computed(() => order.value?.invoice || null)

@@ -39,6 +39,7 @@ export const useGetProductsWithCategorySlug = (categorySlug: string | Ref<string
     const { gqlFetch } = useGql()
     const config = useRuntimeConfig()
     const STORAGE_URL = config.public.STORAGE_URL
+    const mediaUrl = useMediaUrl()
     
     const products = ref<ProductWithCategory[]>([])
     const pageInfo = ref<PageInfo | null>(null)
@@ -99,10 +100,10 @@ export const useGetProductsWithCategorySlug = (categorySlug: string | Ref<string
             
             const newProducts = response.getProductsWithCategorySlug.items.map(product => ({
                 ...product,
-                image: product.image ? `${STORAGE_URL}${product.image}` : '',
+                image: mediaUrl(product.image),
                 galleries: product.galleries?.map(gallery => ({
                     ...gallery,
-                    image: gallery.image ? `${STORAGE_URL}${gallery.image}` : ''
+                    image: mediaUrl(gallery.image)
                 })) || []
             }))
             

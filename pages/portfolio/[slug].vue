@@ -18,6 +18,7 @@ const { t } = useI18n()
 const { gqlFetch } = useGql()
 const { openChat } = useChatWidget()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
+const mediaUrl = useMediaUrl()
 
 // rendered server-side so the project is visible to crawlers; null when missing or inactive
 const { data: portfolio, status } = await useAsyncData(
@@ -36,7 +37,7 @@ const { data: portfolio, status } = await useAsyncData(
 )
 
 const images = computed(() =>
-  (portfolio.value?.galleries || []).map((g) => (g.file.startsWith('http') ? g.file : `${STORAGE_URL}${g.file}`)),
+  (portfolio.value?.galleries || []).map((g) => mediaUrl(g.file)),
 )
 
 const askSimilar = () => openChat(t('app.portfolioPage.similarTopic', { title: portfolio.value?.title || '' }))

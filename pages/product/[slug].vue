@@ -30,6 +30,7 @@ const {
 const { gqlFetch } = useGql();
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+const mediaUrl = useMediaUrl();
 
 // Layanan branding: nama bisa diklik, satu thumbnail 150x150 berganti mengikuti pilihan dan
 // otomatis maju tiap 2 detik. Klik thumbnail membuka preview.
@@ -39,7 +40,7 @@ const sampleList = computed<BrandingSample[]>(() => detail.value?.samples || [])
 const currentIndex = ref(0);
 const currentSample = computed<BrandingSample | null>(() => sampleList.value[currentIndex.value] ?? null);
 const previewSample = ref<BrandingSample | null>(null);
-const sampleSrc = (path: string) => `${STORAGE_URL}${path}`;
+const sampleSrc = (path: string) => mediaUrl(path);
 
 let rotateTimer: ReturnType<typeof setInterval> | null = null;
 const stopRotation = () => {
@@ -373,7 +374,7 @@ const colorOptions = computed<string[]>(() => {
 // the gallery shows the chosen colour's picture, or the main image when it has none
 const focusImage = computed(() => {
   const img = detail.value?.colorVariants?.find((c) => c.name === selectedColor.value)?.image;
-  return img ? `${STORAGE_URL}${img}` : undefined;
+  return img ? mediaUrl(img) : undefined;
 });
 
 const variantColors = computed<string[] | null>(() => {
@@ -424,7 +425,7 @@ usePageSeo({
   description: () =>
     detail.value?.description ||
     (detail.value?.name ? t("app.productPage.detail.metaDescription", { name: detail.value.name }) : ""),
-  image: () => (detail.value?.images[0] ? `${STORAGE_URL}${detail.value.images[0]}` : null),
+  image: () => (detail.value?.images[0] ? mediaUrl(detail.value.images[0]) : null),
 });
 
 // structured data so search engines can show the product with price and stock
@@ -444,7 +445,7 @@ useHead({
           name: p.name,
           sku: p.slug,
           url,
-          image: p.images.map((img) => `${STORAGE_URL}${img}`),
+          image: p.images.map((img) => mediaUrl(img)),
           ...(toPlainText(p.description) ? { description: toPlainText(p.description) } : {}),
           ...(p.category ? { category: p.category } : {}),
           brand: { "@type": "Brand", name: "Brandingku" },
@@ -571,7 +572,7 @@ definePageMeta({
         <!-- Gallery -->
         <div class="-mx-4 sm:mx-0">
           <AtomsProductThumbnail
-            :images="detail.images.map((img: string) => `${STORAGE_URL}${img}`)"
+            :images="detail.images.map((img: string) => mediaUrl(img))"
             :focus="focusImage"
             class="lg:sticky lg:top-24"
           />
@@ -627,7 +628,7 @@ definePageMeta({
               >
                 <img
                   v-if="c.image"
-                  :src="`${STORAGE_URL}${c.image}`"
+                  :src="mediaUrl(c.image)"
                   alt=""
                   class="size-7 rounded-full object-cover"
                   loading="lazy"

@@ -19,6 +19,7 @@ const props = defineProps<{ products: FeaturedProductItem[] | null }>();
 const data = computed(() => props.products || []);
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+const mediaUrl = useMediaUrl();
 
 const { t } = useI18n();
 
@@ -130,7 +131,7 @@ async function quickAdd(product: FeaturedProductItem) {
                         class="relative p-0 aspect-square overflow-hidden opacity-80 hover:opacity-100 transition-opacity"
                       >
                         <img
-                          :src="STORAGE_URL + product.image"
+                          :src="mediaUrl(product.image)"
                           :alt="product.name"
                           class="w-full aspect-square object-cover rounded-t-lg"
                           loading="lazy"

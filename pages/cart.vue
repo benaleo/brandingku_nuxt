@@ -17,6 +17,7 @@ const router = useRouter()
 const { t } = useI18n()
 const config = useRuntimeConfig()
 const STORAGE_URL = config.public.STORAGE_URL
+const mediaUrl = useMediaUrl()
 
 useHead(() => ({
   title: t('app.cartPage.metaTitle'),
@@ -48,7 +49,7 @@ const formatIDR = (value: number) =>
 const imageSrc = (image: string) => {
   if (!image) return '/images/no-image.jpg'
   if (image.startsWith('http') || image.startsWith('data:')) return image
-  return `${STORAGE_URL}${image}`
+  return mediaUrl(image)
 }
 
 // guest lines have no id yet, the variant and its brandings identify them

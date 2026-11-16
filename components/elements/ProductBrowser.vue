@@ -55,6 +55,7 @@ const handleWishlistToggle = async (product: any) => {
 const router = useRouter();
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+const mediaUrl = useMediaUrl();
 
 // MARK : SORT OPTIONS (backend whitelist: name, created_at, updated_at)
 const sortOptions = [
@@ -424,7 +425,7 @@ onBeforeUnmount(() => observer?.disconnect());
           <div class="relative aspect-square overflow-hidden bg-gray-50">
             <img
               v-if="product.image && !brokenImages[product.id]"
-              :src="STORAGE_URL + product.image"
+              :src="mediaUrl(product.image)"
               :alt="product.name"
               loading="lazy"
               class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -692,7 +693,7 @@ onBeforeUnmount(() => observer?.disconnect());
                     <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                       <img
                         v-if="product.image && !brokenImages[product.id]"
-                        :src="STORAGE_URL + product.image"
+                        :src="mediaUrl(product.image)"
                         :alt="product.name"
                         class="h-full w-full object-cover"
                         @error="brokenImages[product.id] = true"
@@ -725,7 +726,6 @@ onBeforeUnmount(() => observer?.disconnect());
   <ElementsProductQuickView
     v-model="quickViewOpen"
     :product="selectedProduct"
-    :storage-url="STORAGE_URL"
   />
   </div>
 </template>
