@@ -109,7 +109,6 @@ async function quickAdd(product: FeaturedProductItem) {
             v-for="(val, index) in tabs"
             :key="val.id"
             :value="val.key"
-            force-mount
           >
             <Carousel
               class="relative w-full"
