@@ -2,27 +2,28 @@
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { NuxtLink } from '#components'
 
-type MainGallery = { id: number; slug: string; title: string; galleries: { file: string }[] }
+type MainGallery = { id: number; image: string; title: string; link: string }
 
 const { gqlFetch } = useGql()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
 
 const { data } = await useAsyncData('landing-main-galleries', async () => {
   const res = await gqlFetch<{ getLandingMainGalleries: MainGallery[] }>(
-    `query landingMainGalleries { getLandingMainGalleries { id slug title galleries { file } } }`,
+    `query landingMainGalleries { getLandingMainGalleries { id image title link } }`,
   )
   return res.getLandingMainGalleries || []
 })
 
 const cards = computed(() =>
-  (data.value || [])
-    .filter((p) => p.galleries?.length)
-    .slice(0, 5)
-    .map((p) => {
-      const f = p.galleries[0]!.file
-      return { id: p.id, slug: p.slug, title: p.title, image: f.startsWith('http') ? f : `${STORAGE_URL}${f}` }
-    }),
+  (data.value || []).slice(0, 5).map((g) => ({
+    ...g,
+    image: g.image.startsWith('http') ? g.image : `${STORAGE_URL}${g.image}`,
+  })),
 )
+
+// the front card is a link only when a target was set; back cards are buttons that bring themselves forward
+const frontProps = (card: MainGallery) =>
+  card.link.startsWith('/') ? { to: card.link } : { to: card.link, external: true, target: '_blank', rel: 'noopener' }
 
 // card indexes from front to back; moving one card at a time keeps the others in their relative order,
 // so nothing pops through the stack while it animates
@@ -114,19 +115,18 @@ onBeforeUnmount(() => clearInterval(timer))
         <div v-if="cards.length" class="relative hidden justify-center lg:flex" @mouseenter="paused = true" @mouseleave="paused = false" @focusin="paused = true" @focusout="paused = false">
           <div class="hero-fan relative aspect-square w-full max-w-md">
             <component
-              :is="pos(i) === 0 ? NuxtLink : 'button'"
+              :is="pos(i) !== 0 ? 'button' : card.link ? NuxtLink : 'div'"
               v-for="(card, i) in cards"
               :key="card.id"
-              v-bind="pos(i) === 0 ? { to: `/portfolio/${card.slug}` } : { type: 'button' }"
+              v-bind="pos(i) !== 0 ? { type: 'button', tabindex: -1 } : card.link ? frontProps(card) : {}"
               class="hero-card absolute inset-0 block overflow-hidden rounded-lg shadow-lg"
               :style="cardStyle(i)"
-              :aria-label="card.title"
-              :tabindex="pos(i) === 0 ? 0 : -1"
+              :aria-label="card.title || undefined"
               @click="pos(i) !== 0 && bringToFront(i)"
             >
               <img
                 :src="card.image"
-                :alt="card.title"
+                :alt="card.title || 'Brandingku'"
                 width="800"
                 height="800"
                 class="h-full w-full object-cover"
@@ -134,7 +134,7 @@ onBeforeUnmount(() => clearInterval(timer))
                 :loading="i === 0 ? 'eager' : 'lazy'"
               />
               <span class="hero-dim absolute inset-0 bg-black" :style="{ opacity: pos(i) * 0.12 }" />
-              <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pt-10 pb-3 text-left text-sm font-semibold text-white transition-opacity duration-300" :class="pos(i) === 0 ? 'opacity-100' : 'opacity-0'">
+              <span v-if="card.title" class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pt-10 pb-3 text-left text-sm font-semibold text-white transition-opacity duration-300" :class="pos(i) === 0 ? 'opacity-100' : 'opacity-0'">
                 {{ card.title }}
               </span>
             </component>

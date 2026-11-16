@@ -5,7 +5,11 @@
 
     <div v-if="loading" class="py-4 text-center">Loading...</div>
     <div v-else-if="error" class="py-4 text-center text-red-500">{{ error }}</div>
-    <form v-else class="editor-form" @submit.prevent="save">
+    <div v-else class="editor-form">
+      <!-- saved on its own, not with the form below -->
+      <FormsMainGalleriesForm :can-edit="canEdit"/>
+    </div>
+    <form v-if="!loading && !error" class="editor-form mt-6" @submit.prevent="save">
       <FormsFormSection
         v-for="section in SECTIONS"
         :key="section.title"
@@ -51,42 +55,6 @@
               :disabled="!canEdit || saving"
             />
             <p class="text-xs text-muted-foreground">{{ field.hint || descriptions[field.key] }}</p>
-          </div>
-
-          <!-- main galleries are stored as one JSON list of portfolio ids -->
-          <div v-if="section.galleries" class="space-y-3 md:col-span-2">
-            <div class="flex items-center justify-between gap-2">
-              <Label>Main Galleries</Label>
-              <Select v-if="canEdit" :model-value="''" :disabled="saving || mainIds.length >= MAX_GALLERIES || !availablePortfolios.length" @update:model-value="addGallery">
-                <SelectTrigger class="w-56" aria-label="Tambah gallery">
-                  <SelectValue placeholder="Tambah gallery"/>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="p in availablePortfolios" :key="p.id" :value="String(p.id)">{{ p.title }}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <p v-if="!mainIds.length" class="text-sm text-muted-foreground">Belum ada gallery. Hero landing page akan menampilkan gambar kosong.</p>
-            <div v-for="(id, i) in mainIds" :key="id" class="flex items-center gap-3 rounded-md border p-2">
-              <img v-if="portfolioCover(id)" :src="portfolioCover(id)" alt="" class="size-12 shrink-0 rounded object-cover">
-              <div v-else class="size-12 shrink-0 rounded bg-muted"/>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium">{{ portfolioMap[id]?.title || `Portfolio #${id} (tidak aktif / dihapus)` }}</p>
-                <p class="text-xs text-muted-foreground">{{ i === 0 ? 'Paling depan' : `Layer ${i + 1}` }} · {{ portfolioMap[id]?.galleries?.length || 0 }} gambar</p>
-              </div>
-              <template v-if="canEdit">
-                <Button type="button" variant="ghost" size="icon" aria-label="Naikkan" :disabled="saving || i === 0" @click="moveGallery(i, -1)">
-                  <ArrowUp class="size-4"/>
-                </Button>
-                <Button type="button" variant="ghost" size="icon" aria-label="Turunkan" :disabled="saving || i === mainIds.length - 1" @click="moveGallery(i, 1)">
-                  <ArrowDown class="size-4"/>
-                </Button>
-                <Button type="button" variant="ghost" size="icon" aria-label="Hapus" :disabled="saving" @click="mainIds.splice(i, 1)">
-                  <Trash2 class="size-4"/>
-                </Button>
-              </template>
-            </div>
-            <p class="text-xs text-muted-foreground">Portfolio aktif yang tampil di hero landing page. Yang pertama paling depan, maksimal {{ MAX_GALLERIES }} layer. Gambar di tiap portfolio bisa digeser dan diklik menuju halamannya.</p>
           </div>
 
           <!-- bank accounts are stored as one JSON setting -->
@@ -143,7 +111,7 @@
 <script setup lang="ts">
 import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {toast} from 'vue-sonner'
-import {ArrowDown, ArrowUp, Loader2, Plus, Trash2} from 'lucide-vue-next'
+import {Loader2, Plus, Trash2} from 'lucide-vue-next'
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
@@ -166,13 +134,11 @@ type Field = {
   wide?: boolean
   options?: { value: string; label: string }[]
 }
-type Section = { title: string; description: string; fields: Field[]; banks?: boolean; galleries?: boolean }
+type Section = { title: string; description: string; fields: Field[]; banks?: boolean }
 
 const BANKS_KEY = 'INVOICE_BANK_ACCOUNTS'
 const TAX_RATE_KEY = 'INVOICE_TAX_RATE_BPS'
 const MAX_BANKS = 5
-const GALLERIES_KEY = 'LANDING_MAIN_GALLERIES'
-const MAX_GALLERIES = 5
 
 const SECTIONS: Section[] = [
   {
@@ -217,12 +183,6 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: 'Main Galleries',
-    description: 'Gallery yang tampil di hero paling atas landing page, bertumpuk seperti kipas. Perubahan langsung berlaku di website.',
-    galleries: true,
-    fields: [],
-  },
-  {
     title: 'Garansi',
     description: 'Berlaku untuk semua pesanan. Setelah pesanan selesai, customer bisa mengajukan klaim (refund atau tukar barang) selama masa garansi.',
     fields: [
@@ -231,7 +191,7 @@ const SECTIONS: Section[] = [
   },
 ]
 
-const KEYS = [...SECTIONS.flatMap(s => s.fields.map(f => f.key)), BANKS_KEY, GALLERIES_KEY]
+const KEYS = [...SECTIONS.flatMap(s => s.fields.map(f => f.key)), BANKS_KEY]
 
 const route = useRoute()
 const {canAction} = useConsoleAccess()
@@ -263,38 +223,6 @@ watch(banks, list => {
 }, {deep: true})
 const addBank = () => banks.value.push({bank: '', number: '', name: ''})
 
-type PortfolioOption = { id: number; title: string; galleries: { file: string }[] }
-const portfolios = ref<PortfolioOption[]>([])
-const portfolioMap = computed(() => Object.fromEntries(portfolios.value.map(p => [p.id, p])) as Record<number, PortfolioOption>)
-const mainIds = ref<number[]>([])
-const availablePortfolios = computed(() => portfolios.value.filter(p => !mainIds.value.includes(p.id)))
-const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
-const portfolioCover = (id: number) => {
-  const f = portfolioMap.value[id]?.galleries?.[0]?.file
-  return f ? (f.startsWith('http') ? f : `${STORAGE_URL}${f}`) : ''
-}
-const parseIds = (raw: string): number[] => {
-  try {
-    const list = JSON.parse(raw || '[]')
-    return Array.isArray(list) ? list.map(Number).filter(n => Number.isInteger(n) && n > 0) : []
-  } catch {
-    return []
-  }
-}
-watch(mainIds, list => {
-  values[GALLERIES_KEY] = JSON.stringify(list)
-}, {deep: true})
-const addGallery = (v: any) => {
-  const id = Number(v)
-  if (id && !mainIds.value.includes(id) && mainIds.value.length < MAX_GALLERIES) mainIds.value.push(id)
-}
-const moveGallery = (i: number, dir: number) => {
-  const j = i + dir
-  const list = mainIds.value
-  if (j < 0 || j >= list.length) return
-  ;[list[i], list[j]] = [list[j]!, list[i]!]
-}
-
 // stored as basis points, edited as a percentage
 // the getter returns a number so a half-typed "11." is not rewritten to "11"
 const taxRatePercent = computed<number | string>({
@@ -317,7 +245,6 @@ function apply(settings: AppSetting[]) {
   const map: Record<string, string> = Object.fromEntries(settings.map(s => [s.key, s.value]))
   // Go escapes characters like & in JSON; re-serialize so the comparison matches the editor
   map[BANKS_KEY] = JSON.stringify(parseBanks(map[BANKS_KEY] ?? '[]'))
-  map[GALLERIES_KEY] = JSON.stringify(parseIds(map[GALLERIES_KEY] ?? '[]'))
   original.value = map
   descriptions.value = Object.fromEntries(settings.map(s => [s.key, s.description]))
   reset()
@@ -328,26 +255,11 @@ function apply(settings: AppSetting[]) {
 function reset() {
   for (const k of KEYS) values[k] = original.value[k] ?? ''
   banks.value = parseBanks(original.value[BANKS_KEY] ?? '[]')
-  mainIds.value = parseIds(original.value[GALLERIES_KEY] ?? '[]')
-}
-
-async function loadPortfolios() {
-  try {
-    const res = await useGql().gqlFetch<{ getPortfolios: { items: PortfolioOption[] } }>(
-      `query optionPortfolios { getPortfolios(pagination: { page: 1, limit: 100 }, sort: { column: UPDATED_AT, direction: DESC }, is_active: true) { items { id title galleries { file } } } }`,
-      undefined,
-      {auth: true},
-    )
-    portfolios.value = res?.getPortfolios?.items || []
-  } catch {
-    portfolios.value = []
-  }
 }
 
 onMounted(async () => {
   try {
-    const [settings] = await Promise.all([getAppSettings(), loadPortfolios()])
-    apply(settings)
+    apply(await getAppSettings())
   } catch (e: any) {
     error.value = e?.message || 'Gagal memuat options'
   } finally {
@@ -364,7 +276,6 @@ async function save() {
     apply(await updateAppSettings(changed))
     // refresh the cached public settings used by the footer in this session
     await refreshNuxtData('site-settings')
-    await refreshNuxtData('landing-main-galleries')
     toast.success('Options berhasil disimpan')
   } catch (e: any) {
     toast.error(String(e?.message || 'Gagal menyimpan options').replace(/^\[GQL\] Request failed:\s*/, ''))
