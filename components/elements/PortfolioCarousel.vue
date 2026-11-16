@@ -17,6 +17,7 @@ const props = defineProps<{ productId?: number | null; excludeId?: number; linke
 
 const { gqlFetch } = useGql()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
+const mediaUrl = useMediaUrl()
 
 const LIMIT = 10
 const QUERY = `
@@ -59,7 +60,7 @@ watch(() => [props.productId, props.excludeId, props.linkedOnly], load)
 const coverOf = (p: PortfolioCard) => {
   const file = p.galleries?.[0]?.file
   if (!file) return ''
-  return file.startsWith('http') ? file : `${STORAGE_URL}${file}`
+  return mediaUrl(file)
 }
 
 // header arrows drive the carousel through its exposed api

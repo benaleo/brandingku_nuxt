@@ -11,6 +11,7 @@ const config = useRuntimeConfig()
 
 useHead(() => ({ title: t('app.wishlistPage.metaTitle') }))
 const STORAGE_URL = config.public.STORAGE_URL
+const mediaUrl = useMediaUrl()
 
 const { token, items, loading, error, fetchWishlists, deleteWishlist } = useWishlist()
 
@@ -42,7 +43,7 @@ const normalizedItems = computed(() => {
 const imageSrc = (image: string | null) => {
   if (!image) return '/images/no-image.jpg'
   if (image.startsWith('http') || image.startsWith('data:')) return image
-  return `${STORAGE_URL}${image}`
+  return mediaUrl(image)
 }
 
 const handleRemove = async (productId: number) => {

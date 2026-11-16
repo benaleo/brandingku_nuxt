@@ -16,6 +16,7 @@ const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
 const STORAGE_URL = config.public.STORAGE_URL
+const mediaUrl = useMediaUrl()
 const token = useCookie<string | null>('token', {sameSite: 'lax'})
 const {previewCheckout, placeOrder, requestQuotation} = useOrderService()
 const {getUserProfile} = useUserProfile()
@@ -60,7 +61,7 @@ const form = reactive({
 })
 
 const formatIDR = (v: number) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(v || 0)
-const imageSrc = (image: string) => !image ? '/images/no-image.jpg' : image.startsWith('http') ? image : `${STORAGE_URL}${image}`
+const imageSrc = (image: string) => !image ? '/images/no-image.jpg' : mediaUrl(image)
 const taxRate = computed(() => preview.value ? formatBps(preview.value.tax_rate_bps) : '')
 
 async function loadPreview(voucher = appliedVoucher.value) {

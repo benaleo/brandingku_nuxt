@@ -19,6 +19,7 @@ const { t } = useI18n()
 const { gqlFetch } = useGql()
 const { openChat } = useChatWidget()
 const STORAGE_URL = useRuntimeConfig().public.STORAGE_URL
+const mediaUrl = useMediaUrl()
 
 const PAGE_SIZE = 12
 const PORTFOLIOS_QUERY = `
@@ -74,7 +75,7 @@ const visibleItems = computed(() =>
   activeCategory.value ? items.value.filter((p) => p.category === activeCategory.value) : items.value
 )
 
-const imageUrl = (file: string) => (file.startsWith('http') ? file : `${STORAGE_URL}${file}`)
+const imageUrl = (file: string) => mediaUrl(file)
 const coverOf = (p: PortfolioItem) => (p.galleries?.[0]?.file ? imageUrl(p.galleries[0].file) : '')
 
 // project viewer

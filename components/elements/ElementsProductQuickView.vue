@@ -32,7 +32,6 @@ interface ProductType {
 const props = defineProps<{
   modelValue: boolean
   product: ProductType | null
-  storageUrl: string
 }>()
 
 const emit = defineEmits<{
@@ -47,6 +46,7 @@ const open = computed({
 const { t, locale } = useI18n()
 const config = useRuntimeConfig()
 const { openChat } = useChatWidget()
+const mediaUrl = useMediaUrl()
 
 const productPath = computed(() => `/product/${props.product?.slug || ''}`)
 
@@ -86,7 +86,7 @@ const shortDescription = computed(() =>
     .trim(),
 )
 
-const toUrl = (img?: string) => (img ? (img.startsWith('http') ? img : props.storageUrl + img) : '')
+const toUrl = mediaUrl
 const images = computed(() => {
   const p = props.product
   if (!p) return []

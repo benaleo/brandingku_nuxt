@@ -17,8 +17,6 @@ import {
   ArrowDownUp,
   Check,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   PackageSearch,
   Search,
@@ -57,6 +55,7 @@ const handleWishlistToggle = async (product: any) => {
 const router = useRouter();
 const config = useRuntimeConfig();
 const STORAGE_URL = config.public.STORAGE_URL;
+const mediaUrl = useMediaUrl();
 
 // MARK : SORT OPTIONS (backend whitelist: name, created_at, updated_at)
 const sortOptions = [
@@ -82,7 +81,8 @@ const {
   pagination,
   params,
   setParams,
-  changePage,
+  loadingMore,
+  loadMore,
 } = productService;
 
 // first page is fetched on the server so crawlers get the product links; the payload
@@ -280,35 +280,35 @@ const openQuickView = (product: any) => {
   quickViewOpen.value = true;
 };
 
-// MARK : PAGINATION (UI uses 1-based labels)
+// MARK : LOAD MORE
 const listTop = ref<HTMLElement | null>(null);
 const scrollToList = () => {
   listTop.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const totalItems = computed(() => Number(pageInfo.value?.total_items || 0));
-const totalPages = computed(() => Number(pageInfo.value?.total_pages || 1));
-const currentPageLabel = computed(() =>
-  Number(pageInfo.value?.current_page || pagination.value.page + 1)
-);
-// current page with one neighbour each side, plus first and last
-const pageItems = computed<(number | "…")[]>(() => {
-  const total = totalPages.value;
-  const cur = currentPageLabel.value;
-  const pages = new Set([1, total, cur - 1, cur, cur + 1]);
-  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
-  const out: (number | "…")[] = [];
-  sorted.forEach((p, i) => {
-    if (i && p - sorted[i - 1]! > 1) out.push("…");
-    out.push(p);
-  });
-  return out;
-});
-const goToPage = (p1: number) => {
-  if (p1 < 1 || p1 > totalPages.value || p1 === currentPageLabel.value) return;
-  changePage(p1 - 1);
-  scrollToList();
+const hasMore = computed(() => !!pageInfo.value?.has_next_page);
+
+// reaching the end of the list (just above the footer) loads the next page without a click
+const sentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
+const watchSentinel = () => {
+  observer?.disconnect();
+  if (sentinel.value && observer) observer.observe(sentinel.value);
 };
+onMounted(() => {
+  if (!("IntersectionObserver" in window)) return;
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) loadMore();
+  });
+  watchSentinel();
+});
+// observe again after each page: a sentinel that stays in view does not fire twice
+watch([sentinel, () => products.value?.length, loading], async () => {
+  await nextTick();
+  watchSentinel();
+});
+onBeforeUnmount(() => observer?.disconnect());
 
 </script>
 
@@ -425,7 +425,7 @@ const goToPage = (p1: number) => {
           <div class="relative aspect-square overflow-hidden bg-gray-50">
             <img
               v-if="product.image && !brokenImages[product.id]"
-              :src="STORAGE_URL + product.image"
+              :src="mediaUrl(product.image)"
               :alt="product.name"
               loading="lazy"
               class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -437,6 +437,7 @@ const goToPage = (p1: number) => {
             >
               {{ product.name?.charAt(0) }}
             </div>
+            <ElementsProductBadges :product="product" />
             <button
               type="button"
               class="absolute inset-x-3 bottom-3 hidden translate-y-2 items-center justify-center gap-1.5 rounded-full bg-white/95 py-2 text-sm font-medium text-gray-900 opacity-0 shadow transition-all focus-visible:translate-y-0 focus-visible:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none [@media(hover:hover)]:flex"
@@ -521,43 +522,13 @@ const goToPage = (p1: number) => {
       </Button>
     </div>
 
-    <!-- MARK : PAGINATION -->
-    <nav
-      v-if="totalPages > 1"
-      class="mt-10 flex items-center justify-center gap-1 sm:gap-2"
-      :aria-label="$t('app.productPage.pagination')"
-    >
-      <Button
-        variant="outline"
-        size="icon"
-        :aria-label="$t('app.productPage.prevPage')"
-        :disabled="!pageInfo?.has_previous_page"
-        @click="goToPage(currentPageLabel - 1)"
-      >
-        <ChevronLeft class="h-4 w-4" />
+    <!-- MARK : LOAD MORE -->
+    <div v-if="!loading && (products || []).length && hasMore" class="mt-10 flex flex-col items-center">
+      <Button variant="outline" :disabled="loadingMore" @click="loadMore">
+        {{ loadingMore ? $t('app.productPage.loading') : $t('app.productPage.loadMore') }}
       </Button>
-      <template v-for="(p, i) in pageItems" :key="`${p}-${i}`">
-        <span v-if="p === '…'" class="px-1 text-gray-400">…</span>
-        <Button
-          v-else
-          size="icon"
-          :variant="p === currentPageLabel ? 'default' : 'outline'"
-          :aria-current="p === currentPageLabel ? 'page' : undefined"
-          @click="goToPage(p)"
-        >
-          {{ p }}
-        </Button>
-      </template>
-      <Button
-        variant="outline"
-        size="icon"
-        :aria-label="$t('app.productPage.nextPage')"
-        :disabled="!pageInfo?.has_next_page"
-        @click="goToPage(currentPageLabel + 1)"
-      >
-        <ChevronRight class="h-4 w-4" />
-      </Button>
-    </nav>
+      <div ref="sentinel" class="h-px w-full" aria-hidden="true" />
+    </div>
   </section>
 
   <!-- MARK : FILTER SHEET -->
@@ -722,7 +693,7 @@ const goToPage = (p1: number) => {
                     <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                       <img
                         v-if="product.image && !brokenImages[product.id]"
-                        :src="STORAGE_URL + product.image"
+                        :src="mediaUrl(product.image)"
                         :alt="product.name"
                         class="h-full w-full object-cover"
                         @error="brokenImages[product.id] = true"
@@ -755,7 +726,6 @@ const goToPage = (p1: number) => {
   <ElementsProductQuickView
     v-model="quickViewOpen"
     :product="selectedProduct"
-    :storage-url="STORAGE_URL"
   />
   </div>
 </template>

@@ -183,6 +183,7 @@
       "nextImage": "Next image"
     },
     "productPage": {
+      "badge": {"promo": "Promo", "highlight": "Popular", "recommended": "Recommended"},
       "title": "Brandingku Products",
       "listTitle": "Active Products",
       "loading": "Loading products...",
@@ -216,6 +217,7 @@
       "emptyTitle": "No products found",
       "emptyDescription": "Try another keyword or choose a different category.",
       "resetFilter": "Reset filters",
+      "loadMore": "Load more",
       "pagination": "Product pages",
       "prevPage": "Previous page",
       "nextPage": "Next page",

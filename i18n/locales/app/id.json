@@ -183,6 +183,7 @@
       "nextImage": "Gambar berikutnya"
     },
     "productPage": {
+      "badge": {"promo": "Promo", "highlight": "Populer", "recommended": "Rekomendasi"},
       "title": "Produk Brandingku",
       "listTitle": "Daftar Produk Aktif",
       "loading": "Memuat produk...",
@@ -216,6 +217,7 @@
       "emptyTitle": "Produk tidak ditemukan",
       "emptyDescription": "Coba kata kunci lain atau pilih kategori yang berbeda.",
       "resetFilter": "Reset filter",
+      "loadMore": "Muat lebih banyak",
       "pagination": "Halaman produk",
       "prevPage": "Halaman sebelumnya",
       "nextPage": "Halaman berikutnya",
