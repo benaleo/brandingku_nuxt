@@ -183,6 +183,7 @@
       "nextImage": "Next image"
     },
     "productPage": {
+      "badge": {"promo": "Promo", "highlight": "Popular", "recommended": "Recommended"},
       "title": "Brandingku Products",
       "listTitle": "Active Products",
       "loading": "Loading products...",

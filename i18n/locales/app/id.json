@@ -183,6 +183,7 @@
       "nextImage": "Gambar berikutnya"
     },
     "productPage": {
+      "badge": {"promo": "Promo", "highlight": "Populer", "recommended": "Rekomendasi"},
       "title": "Produk Brandingku",
       "listTitle": "Daftar Produk Aktif",
       "loading": "Memuat produk...",

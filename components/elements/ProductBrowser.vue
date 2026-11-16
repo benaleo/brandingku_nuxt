@@ -437,6 +437,7 @@ const goToPage = (p1: number) => {
             >
               {{ product.name?.charAt(0) }}
             </div>
+            <ElementsProductBadges :product="product" />
             <button
               type="button"
               class="absolute inset-x-3 bottom-3 hidden translate-y-2 items-center justify-center gap-1.5 rounded-full bg-white/95 py-2 text-sm font-medium text-gray-900 opacity-0 shadow transition-all focus-visible:translate-y-0 focus-visible:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none [@media(hover:hover)]:flex"
