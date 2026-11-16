@@ -19,6 +19,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
     // State mimicking useApiFetch interface
     const datas = ref<any>(fetchResult ? [] : null)
     const loading = ref<boolean>(Boolean(fetchResult || dataId))
+    // true while loadMore appends the next page; the list stays on screen
+    const loadingMore = ref(false)
     const error = ref<string | null>(null)
     const pagination = ref({ page: 0, limit: options.limit ?? 10, total: 0 }) // page is 0-based locally
     const pageInfo = ref<{ current_page?: number; per_page?: number; total_items?: number; total_pages?: number; has_next_page?: boolean; has_previous_page?: boolean; start_item?: number; end_item?: number } | null>(null)
@@ -41,10 +43,16 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
     let requestSeq = 0
 
     // GraphQL queries
-    const fetchProducts = async () => {
+    // append=true adds the next page to the list instead of replacing it
+    const fetchProducts = async (append: boolean | Event = false) => {
         if (!fetchResult) return
+        const more = append === true
         const seq = ++requestSeq
-        loading.value = true
+        if (more) loadingMore.value = true
+        else {
+            loading.value = true
+            loadingMore.value = false
+        }
         error.value = null
         try {
             const query = `
@@ -123,12 +131,26 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
                 pagination.value.total = list.length
             }
 
-            datas.value = list
+            datas.value = more ? [...(datas.value || []), ...list.filter((p: any) => !(datas.value || []).some((o: any) => o.id === p.id))] : list
         } catch (e: any) {
-            if (seq === requestSeq) error.value = e?.message || 'Failed to load products'
+            if (seq === requestSeq) {
+                error.value = e?.message || 'Failed to load products'
+                // the page that failed to load is tried again on the next call
+                if (more) pagination.value.page = Math.max(0, pagination.value.page - 1)
+            }
         } finally {
-            if (seq === requestSeq) loading.value = false
+            if (seq === requestSeq) {
+                loading.value = false
+                loadingMore.value = false
+            }
         }
+    }
+
+    const hasMore = () => Boolean(pageInfo.value?.has_next_page)
+    const loadMore = async () => {
+        if (!fetchResult || loading.value || loadingMore.value || !hasMore()) return
+        pagination.value.page += 1
+        await fetchProducts(true)
     }
 
     const fetchDetail = async (id: number) => {
@@ -514,6 +536,8 @@ export const useProductService = (fetchResult?: boolean, dataId?: string, option
     return {
         datas,
         loading,
+        loadingMore,
+        loadMore,
         error,
         pagination,
         setProductFlags,
